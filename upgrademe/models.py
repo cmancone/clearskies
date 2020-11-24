@@ -11,6 +11,7 @@ class Models(ABC, ConditionParser):
     group_by_column = None
     limit_start = None
     limit_length = None
+    select = None
     must_rexecute = True
 
     def __init__(self, cursor):
@@ -22,18 +23,21 @@ class Models(ABC, ConditionParser):
         self.joins = []
         self.limit_start = 0
         self.limit_length = None
+        self.selects = None
         self.must_rexecute = True
 
-    @property
     @abstractmethod
     def model_class(self):
         """ Return the model class that this models object will find/return instances of """
         pass
 
     def clone(self):
-        clone = self.__class__(self.cursor)
+        clone = self._blank()
         clone.configuration = self.configuration
         return clone
+
+    def _blank(self):
+        return self.__class__(self.cursor)
 
     @property
     def configuration(self):
@@ -45,6 +49,7 @@ class Models(ABC, ConditionParser):
             'joins': self.joins,
             'limit_start': self.limit_start,
             'limit_length': self.limit_length,
+            'selects': self.selects,
         }
 
     @configuration.setter
@@ -56,10 +61,20 @@ class Models(ABC, ConditionParser):
         self.joins = configuration['joins']
         self.limit_start = configuration['limit_start']
         self.limit_length = configuration['limit_length']
+        self.selects = configuration['selects']
 
+    @property
     def table_name(self):
         """ Returns the name of the table for the model class """
-        return self.model_class().table_name
+        return self.model(None).table_name
+
+    def select(self, selects):
+        return self.clone().select_in_place(selects)
+
+    def select_in_place(self, selects):
+        self.selects = selects
+        self.must_rexecute = True
+        return self
 
     def where(self, condition):
         """ Adds the given condition to the query and returns a new Models object """
@@ -131,7 +146,7 @@ class Models(ABC, ConditionParser):
         Down the line we may use the model configuration to check what columns are valid sort/group/search targets
         """
         pass
-        # if not self.model_class.has_column(column_name):
+        # if not self.model_class().has_column(column_name):
         #     raise ValueError(f'Invalid column {column_name}')
 
     def limit(self, start, length):
@@ -143,6 +158,33 @@ class Models(ABC, ConditionParser):
         self.must_rexecute = True
         return self
 
-    #def find(self, condition):
-        #""" Returns the first model where {field}={value} """
-        #return self.where(condition).first()
+    def find(self, condition):
+        """ Returns the first model where condition """
+        return self._blank().where(condition).first()
+
+    def as_sql(self):
+        select = self.selects if self.selects else '*'
+        wheres = 'WHERE ' + ' AND '.join(self.conditions) if self.conditions else ''
+        joins = ' '.join(self.joins)
+        if self.sorts:
+            order_by = 'ORDER BY ' + ', '.join(map(lambda sort: '%s %s' % (sort['column'], sort['direction']), self.sorts))
+        else:
+            order_by = ''
+        group_by = 'GROUP BY ' + self.group_by_column if self.group_by_column else ''
+        limit = f'LIMIT {self.limit_start}, {self.limit_length}' if self.limit_start else ''
+        return f'SELECT {select} FROM {self.table_name} {joins} {wheres} {group_by} {order_by} {limit}'.strip()
+
+    def as_count_sql(self):
+        # note that this won't work if we start including a HAVING clause
+        wheres = 'WHERE ' + ' AND '.join(self.conditions) if self.conditions else ''
+        joins = ' '.join(filter(lambda join: 'LEFT JOIN' not in join, self.joins))
+        if not self.group_by_column:
+            return f'SELECT COUNT(*) FROM {self.table_name} {joins} {wheres}'
+        else:
+            return f'SELECT COUNT(SELECT 1 FROM {self.table_name} {joins} {wheres} GROUP BY {self.group_by_column})'
+
+    def model(self, data):
+        model_class = self.model_class()
+        model = model_class(self.cursor)
+        model.data = data
+        return model
