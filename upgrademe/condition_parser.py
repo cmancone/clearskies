@@ -4,6 +4,8 @@ class ConditionParser:
         '!=',
         '<=',
         '>=',
+        '>',
+        '<',
         '=',
         'in',
         'is not null',
@@ -18,6 +20,8 @@ class ConditionParser:
         '<=': 2,
         '>=': 2,
         '!=': 2,
+        '>': 1,
+        '<': 1,
         '=': 1,
         'in': 2,
         'is not null': 11,
@@ -33,6 +37,8 @@ class ConditionParser:
         '>=': True,
         '!=': True,
         '=': True,
+        '<': True,
+        '>': True,
     }
 
     operators_without_placeholders = {
