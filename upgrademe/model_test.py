@@ -1,25 +1,23 @@
 import unittest
 from unittest.mock import MagicMock
-from .models import Models
 from .model import Model
 
 
 class User(Model):
     def __init__(self, cursor):
-        pass
+        super().__init__(cursor)
 
     @property
     def table_name(self):
         return 'users'
 
+    def pre_save(self, data):
+        self.pre_save_data = data
+        return {**data, **{'age': 5}}
 
-class Users(Models):
-    def __init__(self, cursor):
-        super().__init__(cursor)
-
-    def model_class(self):
-        return User
-
+    def post_save(self, data, id):
+        self.post_save_data = data
+        self.post_save_id = id
 
 class TestModels(unittest.TestCase):
     def setUp(self):

@@ -4,7 +4,7 @@ from .condition_parser import ConditionParser
 
 class Models(ABC, ConditionParser):
     # The database connection
-    cursor = None
+    _cursor = None
     conditions = None
     sorts = None
     parameters = None
@@ -17,7 +17,7 @@ class Models(ABC, ConditionParser):
     count = None
 
     def __init__(self, cursor):
-        self.cursor = cursor
+        self._cursor = cursor
         self.conditions = []
         self.sorts = []
         self.parameters = []
@@ -40,7 +40,7 @@ class Models(ABC, ConditionParser):
         return clone
 
     def _blank(self):
-        return self.__class__(self.cursor)
+        return self.__class__(self._cursor)
 
     @property
     def configuration(self):
@@ -191,14 +191,21 @@ class Models(ABC, ConditionParser):
 
     def __len__(self):
         if self.must_recount:
-            self.cursor.execute(self.as_count_sql(), self.parameters)
-            result = self.cursor.fetchone()
+            self._cursor.execute(self.as_count_sql(), self.parameters)
+            result = self._cursor.next()
             self.count = result[0] if type(result) == tuple else result['count']
             self.must_recount = False
         return self.count
 
+    def __iter__(self):
+        self._cursor.execute(self.as_sql(), self.parameters)
+        return self
+
+    def __next__(self):
+        return self.model(self._cursor.next())
+
     def model(self, data):
         model_class = self.model_class()
-        model = model_class(self.cursor)
+        model = model_class(self._cursor)
         model.data = data
         return model
