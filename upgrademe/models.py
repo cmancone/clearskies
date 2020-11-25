@@ -13,6 +13,8 @@ class Models(ABC, ConditionParser):
     limit_length = None
     select = None
     must_rexecute = True
+    must_recount = True
+    count = None
 
     def __init__(self, cursor):
         self.cursor = cursor
@@ -25,6 +27,7 @@ class Models(ABC, ConditionParser):
         self.limit_length = None
         self.selects = None
         self.must_rexecute = True
+        self.must_recount = True
 
     @abstractmethod
     def model_class(self):
@@ -87,6 +90,7 @@ class Models(ABC, ConditionParser):
         self.conditions.append(condition_data['parsed'])
         self.parameters.extend(condition_data['values'])
         self.must_rexecute = True
+        self.must_recount = True
         return self
 
     def join(self, join):
@@ -97,6 +101,7 @@ class Models(ABC, ConditionParser):
             raise ValueError("Invalid join string.  Should be '(LEFT|INNER|WHATEVER)? JOIN table ON condition'")
         self.joins.append(join)
         self.must_rexecute = True
+        self.must_recount = True
         return self
 
     def group_by(self, group_column):
@@ -106,6 +111,7 @@ class Models(ABC, ConditionParser):
         self._validate_column(group_column)
         self.group_by_column = group_column
         self.must_rexecute = True
+        self.must_recount = True
         return self
 
     def sort_by(self, primary_column, primary_direction, secondary_column=None, secondary_direction=None):
@@ -179,9 +185,17 @@ class Models(ABC, ConditionParser):
         wheres = 'WHERE ' + ' AND '.join(self.conditions) if self.conditions else ''
         joins = ' '.join(filter(lambda join: 'LEFT JOIN' not in join, self.joins))
         if not self.group_by_column:
-            return f'SELECT COUNT(*) FROM {self.table_name} {joins} {wheres}'
+            return f'SELECT COUNT(*) AS count FROM {self.table_name} {joins} {wheres}'
         else:
-            return f'SELECT COUNT(SELECT 1 FROM {self.table_name} {joins} {wheres} GROUP BY {self.group_by_column})'
+            return f'SELECT COUNT(SELECT 1 FROM {self.table_name} {joins} {wheres} GROUP BY {self.group_by_column}) AS count'
+
+    def __len__(self):
+        if self.must_recount:
+            self.cursor.execute(self.as_count_sql(), self.parameters)
+            result = self.cursor.fetchone()
+            self.count = result[0] if type(result) == tuple else result['count']
+            self.must_recount = False
+        return self.count
 
     def model(self, data):
         model_class = self.model_class()

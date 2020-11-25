@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import MagicMock
 from .models import Models
 from .model import Model
 
@@ -79,7 +80,7 @@ class TestModels(unittest.TestCase):
             .limit(5, 10) \
             .select('*')
         self.assertEquals(
-            'SELECT COUNT(*) FROM users JOIN posts ON posts.user_id=users.id WHERE age>? AND age<?',
+            'SELECT COUNT(*) AS count FROM users JOIN posts ON posts.user_id=users.id WHERE age>? AND age<?',
             users.as_count_sql()
         )
 
@@ -93,6 +94,15 @@ class TestModels(unittest.TestCase):
             .group_by('cat_id') \
             .select('*')
         self.assertEquals(
-            'SELECT COUNT(SELECT 1 FROM users JOIN posts ON posts.user_id=users.id WHERE age>? GROUP BY cat_id)',
+            'SELECT COUNT(SELECT 1 FROM users JOIN posts ON posts.user_id=users.id WHERE age>? GROUP BY cat_id) AS count',
             users.as_count_sql()
         )
+
+    def test_len(self):
+        cursor = type('', (), {
+            'execute': MagicMock(),
+            'fetchone': MagicMock(return_value=(10,))
+        })()
+        count = len(Users(cursor).where("age>5"))
+        cursor.execute.assert_called_with('SELECT COUNT(*) AS count FROM users  WHERE age>?', ['5'])
+        self.assertEquals(10, count)
