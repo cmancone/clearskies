@@ -5,17 +5,20 @@ from .model import Model
 
 
 class User(Model):
-    def __init__(self, cursor):
-        pass
+    def __init__(self, cursor, column):
+        super().__init__(cursor, column)
 
     @property
     def table_name(self):
         return 'users'
 
+    def columns_configuration(self):
+        return []
+
 
 class Users(Models):
-    def __init__(self, cursor):
-        super().__init__(cursor)
+    def __init__(self, cursor, columns):
+        super().__init__(cursor, columns)
 
     def model_class(self):
         return User
@@ -26,7 +29,7 @@ class TestModels(unittest.TestCase):
         pass
 
     def test_configure(self):
-        users = Users('cursor') \
+        users = Users('cursor', 'columns') \
             .where("age>5") \
             .where("age<10") \
             .group_by('last_name') \
@@ -45,15 +48,14 @@ class TestModels(unittest.TestCase):
         self.assertEquals('*', users.configuration['selects'])
 
     def test_table_name(self):
-        self.assertEquals('users', Users('cursor').table_name)
+        self.assertEquals('users', Users('cursor', 'columns').table_name)
 
     def test_build_model(self):
-        user = Users('cursor').model({'id': 2, 'age': 5})
-        self.assertEquals(2, user.id)
-        self.assertEquals(5, user.age)
+        user = Users('cursor', 'columns').model({'id': 2, 'age': 5})
+        self.assertEquals(User, type(user))
 
     def test_as_sql(self):
-        users = Users('cursor') \
+        users = Users('cursor', 'columns') \
             .where("age>5") \
             .where("age<10") \
             .group_by('last_name') \
@@ -67,11 +69,11 @@ class TestModels(unittest.TestCase):
         )
 
     def test_as_sql_empty(self):
-        users = Users('cursor')
+        users = Users('cursor', 'columns')
         self.assertEquals("SELECT * FROM users", users.as_sql())
 
     def test_as_count_sql(self):
-        users = Users('cursor') \
+        users = Users('cursor', 'columns') \
             .where("age>5") \
             .where("age<10") \
             .sort_by('created', 'desc') \
@@ -85,7 +87,7 @@ class TestModels(unittest.TestCase):
         )
 
     def test_as_count_sql_with_group_by(self):
-        users = Users('cursor') \
+        users = Users('cursor', 'columns') \
             .where("age>5") \
             .sort_by('created', 'desc') \
             .join('JOIN posts ON posts.user_id=users.id') \
@@ -103,6 +105,6 @@ class TestModels(unittest.TestCase):
             'execute': MagicMock(),
             'next': MagicMock(return_value=(10,))
         })()
-        count = len(Users(cursor).where("age>5"))
+        count = len(Users(cursor, 'columns').where("age>5"))
         cursor.execute.assert_called_with('SELECT COUNT(*) AS count FROM users  WHERE age>?', ['5'])
         self.assertEquals(10, count)

@@ -2,11 +2,17 @@ from abc import ABC, abstractmethod
 
 
 class Model(ABC):
+    _columns = None
+    _configured_columns = None
     _cursor = None
     _data = None
+    _transformed = None
 
-    def __init__(self, cursor):
+    def __init__(self, cursor, columns):
         self._cursor = cursor
+        self._columns = columns
+        self._transformed = {}
+        self._data = {}
 
     @property
     @abstractmethod
@@ -14,13 +20,33 @@ class Model(ABC):
         """ Return the name of the table that the model uses for data storage """
         pass
 
-    def __getattr__(self, attribute_name):
+    @abstractmethod
+    def columns_configuration(self):
+        """ Returns an ordered dictionary with the configuration for the columns """
+        pass
+
+    def columns(self):
+        if self._configured_columns is None:
+            self._configured_columns = self._columns.configure(self.columns_configuration())
+        return self._configured_columns
+
+    def __getattr__(self, column_name):
         # this should be adjusted to only return None for empty records if the attribute name corresponds
         # to an actual column in the table.
         if not self.exists:
             return None
 
-        return self._data[attribute_name]
+        if column_name not in self._transformed:
+            if column_name not in self._data:
+                raise KeyError(f"Unknown column '{column_name}' requested from model '{self.__class__.__name__}'")
+
+            self._transformed[column_name] = \
+                self.columns()[column_name].from_database(self._data[column_name]) \
+                if column_name in self.columns() \
+                else self._data[column_name]
+
+        return self._transformed[attribute_name]
+
 
     @property
     def exists(self):
@@ -42,17 +68,18 @@ class Model(ABC):
         """
         if not len(data):
             raise ValueError("You have to pass in something to save!")
+        columns = self.columns
 
-        data = self.columns_pre_save(data)
+        data = self.columns_pre_save(data, columns)
         data = self.pre_save(data)
         if data is None:
             raise ValueError("pre_save forgot to return the data array!")
 
-        [sql, parameters] = self._data_to_query(data)
+        [sql, parameters] = self._data_to_query(data, columns)
         self._cursor.execute(sql, parameters)
         id = self.id if self.exists else self._cursor.lastrowid
 
-        data = self.columns_post_save(data, id)
+        data = self.columns_post_save(data, id, columns)
         data = self.post_save(data, id)
         if data is None:
             raise ValueError("post_save forgot to return the data array!")
@@ -60,7 +87,14 @@ class Model(ABC):
         self.data = data
         return True
 
-    def _data_to_query(self, data):
+    def _data_to_query(self, data, columns):
+        for column in columns:
+            data = column.to_database(data)
+            if data is None:
+                raise ValueError(
+                    f'Column {column.name} of type {column.__class__.__name__} did not return any data for to_database'
+                )
+
         if self.exists:
             return self._data_to_update_query(data)
         else:
@@ -80,8 +114,14 @@ class Model(ABC):
         placeholders = ', '.join(['?' for i in range(len(data))])
         return [f'INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})', data.values()]
 
-    def columns_pre_save(self, data):
+    def columns_pre_save(self, data, columns):
         """ Uses the column information present in the model to make any necessary changes before saving """
+        for column in columns:
+            data = column.pre_save(data)
+            if data is None:
+                raise ValueError(
+                    f'Column {column.name} of type {column.__class__.__name__} did not return any data for pre_save'
+                )
         return data
 
     def pre_save(self, data):
@@ -92,8 +132,14 @@ class Model(ABC):
         """
         return data
 
-    def columns_post_save(self, data, id):
+    def columns_post_save(self, data, id, columns):
         """ Uses the column information present in the model to make additional changes as needed after saving """
+        for column in columns:
+            data = column.post_save(data, id)
+            if data is None:
+                raise ValueError(
+                    f'Column {column.name} of type {column.__class__.__name__} did not return any data for post_save'
+                )
         return data
 
     def post_save(self, data, id):

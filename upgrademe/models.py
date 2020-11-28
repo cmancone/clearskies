@@ -5,6 +5,7 @@ from .condition_parser import ConditionParser
 class Models(ABC, ConditionParser):
     # The database connection
     _cursor = None
+    _columns = None
     conditions = None
     sorts = None
     parameters = None
@@ -16,8 +17,9 @@ class Models(ABC, ConditionParser):
     must_recount = True
     count = None
 
-    def __init__(self, cursor):
+    def __init__(self, cursor, columns):
         self._cursor = cursor
+        self._columns = columns
         self.conditions = []
         self.sorts = []
         self.parameters = []
@@ -40,7 +42,7 @@ class Models(ABC, ConditionParser):
         return clone
 
     def _blank(self):
-        return self.__class__(self._cursor)
+        return self.__class__(self._cursor, self._columns)
 
     @property
     def configuration(self):
@@ -206,6 +208,6 @@ class Models(ABC, ConditionParser):
 
     def model(self, data):
         model_class = self.model_class()
-        model = model_class(self._cursor)
+        model = model_class(self._cursor, self._columns)
         model.data = data
         return model
