@@ -2,14 +2,6 @@ from collections import OrderedDict
 
 
 class Columns:
-    """
-    If True (the default) data for this column will be saved to the database assuming the same column name
-
-    This should be disabled if the data can't just go directly in, for instance with a many-to-many relationship
-    where it gets sent to a separate table.
-    """
-    def save_directly_to_database = True
-
     def __init__(self, object_graph):
         self.object_graph = object_graph
 

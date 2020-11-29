@@ -1,5 +1,5 @@
 from .column import Column
 
 
-def String(Column):
+class String(Column):
     pass

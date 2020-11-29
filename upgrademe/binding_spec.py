@@ -1,6 +1,9 @@
 import pinject
 import requests
 from .columns import Columns
+import os
+from .environment import Environment
+from .secrets import Secrets
 
 
 class BindingSpec(pinject.BindingSpec):
@@ -26,3 +29,6 @@ class BindingSpec(pinject.BindingSpec):
 
     def provide_columns(self):
         return Columns(self.provide_object_graph())
+
+    def provide_environment(self):
+        return Environment(os.getcwd(), os.environ, Secrets(requests))

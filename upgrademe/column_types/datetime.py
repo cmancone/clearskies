@@ -11,5 +11,7 @@ class DateTime(Column):
             return data
 
         # hopefully this is a Python datetime object...
-        data[self.name] = data[self.name].strftime('%Y-%m-%d %H:%M:%S')
-        return data
+        return {
+            **data,
+            **{self.name: data[self.name].strftime('%Y-%m-%d %H:%M:%S')}
+        }

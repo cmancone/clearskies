@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from collections import OrderedDict
+from .column_types import Integer
 
 
 class Model(ABC):
@@ -15,23 +17,28 @@ class Model(ABC):
         self._data = {}
 
     @property
-    @abstractmethod
     def table_name(self):
         """ Return the name of the table that the model uses for data storage """
-        pass
+        singular = self.__class__.__name__.lower()
+        return singular[:-1] + 'ies' if singular[-1] == 'y' else f'{singular}s'
 
     @abstractmethod
     def columns_configuration(self):
         """ Returns an ordered dictionary with the configuration for the columns """
         pass
 
+    def all_columns(self):
+        default = OrderedDict([('id', {'class': Integer})])
+        default.update(self.columns_configuration())
+        return default
+
     def columns(self):
         if self._configured_columns is None:
-            self._configured_columns = self._columns.configure(self.columns_configuration())
+            self._configured_columns = self._columns.configure(self.all_columns(), self.__class__)
         return self._configured_columns
 
     def __getattr__(self, column_name):
-        # this should be adjusted to only return None for empty records if the attribute name corresponds
+        # this should be adjusted to only return None for empty records if the column name corresponds
         # to an actual column in the table.
         if not self.exists:
             return None
@@ -45,7 +52,7 @@ class Model(ABC):
                 if column_name in self.columns() \
                 else self._data[column_name]
 
-        return self._transformed[attribute_name]
+        return self._transformed[column_name]
 
 
     @property
@@ -68,7 +75,7 @@ class Model(ABC):
         """
         if not len(data):
             raise ValueError("You have to pass in something to save!")
-        columns = self.columns
+        columns = self.columns()
 
         data = self.columns_pre_save(data, columns)
         data = self.pre_save(data)
@@ -84,21 +91,24 @@ class Model(ABC):
         if data is None:
             raise ValueError("post_save forgot to return the data array!")
 
-        self.data = data
+        self._cursor.execute(f'SELECT * FROM `{self.table_name}` WHERE id=?', id)
+        self._data = self._cursor.next()._asdict()
+        self._transformed = {}
         return True
 
     def _data_to_query(self, data, columns):
-        for column in columns:
-            data = column.to_database(data)
-            if data is None:
+        save_data = {**data}
+        for column in columns.values():
+            save_data = column.to_database(save_data)
+            if save_data is None:
                 raise ValueError(
                     f'Column {column.name} of type {column.__class__.__name__} did not return any data for to_database'
                 )
 
         if self.exists:
-            return self._data_to_update_query(data)
+            return self._data_to_update_query(save_data)
         else:
-            return self._data_to_insert_query(data)
+            return self._data_to_insert_query(save_data)
 
     def _data_to_update_query(self, data):
         query_parts = []
@@ -107,16 +117,16 @@ class Model(ABC):
             query_parts.append(f'`{key}`=?')
             parameters.append(val)
         updates = ', '.join(query_parts)
-        return [f'UPDATE {self.table_name} SET {updates} WHERE id={self.id}', parameters]
+        return [f'UPDATE `{self.table_name}` SET {updates} WHERE id=?', [*parameters, self.id]]
 
     def _data_to_insert_query(self, data):
         columns = '`' + '`, `'.join(data.keys()) + '`'
         placeholders = ', '.join(['?' for i in range(len(data))])
-        return [f'INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})', data.values()]
+        return [f'INSERT INTO `{self.table_name}` ({columns}) VALUES ({placeholders})', list(data.values())]
 
     def columns_pre_save(self, data, columns):
         """ Uses the column information present in the model to make any necessary changes before saving """
-        for column in columns:
+        for column in columns.values():
             data = column.pre_save(data)
             if data is None:
                 raise ValueError(
@@ -134,7 +144,7 @@ class Model(ABC):
 
     def columns_post_save(self, data, id, columns):
         """ Uses the column information present in the model to make additional changes as needed after saving """
-        for column in columns:
+        for column in columns.values():
             data = column.post_save(data, id)
             if data is None:
                 raise ValueError(
