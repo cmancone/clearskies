@@ -6,6 +6,8 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+akeyless-cloud-id = "*"
+akeyless-python = {git = "https://github.com/akeylesslabs/akeyless-python.git"}
 
 [requires]
 python_version = "3.7"

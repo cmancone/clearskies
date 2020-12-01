@@ -11,49 +11,55 @@ class Environment:
     is assumed to be a string.
     """
     _env_file_config = None
+    _resolved_values = None
 
-    def __init__(self, root_directory, os_environ, secrets):
-        self.root_directory = root_directory
+    def __init__(self, env_file_path, os_environ, secrets):
+        self.env_file_path = env_file_path
         self.os_environ = os_environ
         self.secrets = secrets
+        self._resolved_values = {}
 
     def get(self, name):
-        if name in self.os_environ:
-            return self.os_environ[name]
-
         self._load_env_file()
-        return self._get_from_env_file(name)
+        if name in self.os_environ[name]:
+            return self.resolve(self.os_environ[name])
+        if name in self._env_file_config:
+            return self.resolve(self._env_file_config[name])
+
+        raise ValueError(f"Could not find environment config '{name}' in environment or .env file")
 
     def _load_env_file(self):
         if self._env_file_config is not None:
             return
 
         self.env_file_config = {}
-        with open(f'{self.root_directory}/.env', 'r') as env_file:
+        with open(env_file_path, 'r') as env_file:
+            line_number = 0
             for line in env_file.readlines():
-                (key, value) = self._parse_env_line(line)
+                line_number += 1
+                (key, value) = self._parse_env_line(line, line_number)
                 if key is None:
                     continue
 
                 self.env_file_config[key] = value
 
-    def _parse_env_line(line):
+    def _parse_env_line(self, line, line_number):
         line = line.strip()
         if not line:
             return (None, None)
         if not '=' in line:
-            return (None, None)
+            raise ValueError(f"Parse error in environment line #{line_number}: should be 'key=value'")
         if line[0] == '#':
-            return (None,,None)
+            return (None, None)
 
         equal_index = line.index('=')
         return (line[:equal_index].strip(), line[equal_index+1:].strip())
 
-    def _get_from_env_file(self, name):
-        if name not in self._env_file_config:
-            raise KeyError(f"Requested environment variable '{name}' was not found in .env file")
+    def resolve_value(self, value):
+        if value[:9] != 'secret://':
+            return value
 
-        value = self._env_file_config[name]
-        if value[:9] == 'secret://':
-            return self.secrets.get(value[9:])
-        return value
+        secret_path = value[9:]
+        if secret_path not in self._resolved_values:
+            self._resolved_values[secret_path] = self.secrets.get(value[9:])
+        return self._resolved_values[secret_path]

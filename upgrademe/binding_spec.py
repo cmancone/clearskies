@@ -4,6 +4,8 @@ from .columns import Columns
 import os
 from .environment import Environment
 from .secrets import Secrets
+from akeyless_cloud_id import CloudId
+import akeyless
 
 
 class BindingSpec(pinject.BindingSpec):
@@ -30,5 +32,9 @@ class BindingSpec(pinject.BindingSpec):
     def provide_columns(self):
         return Columns(self.provide_object_graph())
 
-    def provide_environment(self):
-        return Environment(os.getcwd(), os.environ, Secrets(requests))
+    def provide_secrets(self):
+        cloud_id = CloudId()
+        return Secrets(akeyless, os.environ['akeyless_access_id'], cloud_id.generate())
+
+    def provide_environment(self, secrets):
+        return Environment(os.getcwd() + '/.env', os.environ, secrets)
