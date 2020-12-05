@@ -15,16 +15,14 @@ class EnvironmentTest(unittest.TestCase):
 
     def test_get_from_env(self):
         self.assertEquals('yup', self.environment.get('env_in_environment'))
-        #self.akeyless.Auth = MagicMock(return_value='Auth')
-        #self.akeyless.GetSecretValue = MagicMock(return_value='SecretValueBody')
-        #self.api.auth = MagicMock(return_value=type('', (), {'token': 'mytoken'}))
-        #self.api.get_secret_value = MagicMock(return_value={'/my/secret/path': 'my_secret'})
 
-        #secrets = Secrets(self.akeyless, 'access-id', 'cloud-id')
-        #my_secret = secrets.get('/my/secret/path')
+    def test_get_from_file(self):
+        self.assertEquals('sup', self.environment.get('anothervalue'))
 
-        #self.assertEquals('my_secret', my_secret)
-        #self.akeyless.Auth.assert_called_with(access_id='access-id', access_type='aws_iam', cloud_id='cloud-id')
-        #self.api.auth.assert_called_with('Auth')
-        #self.akeyless.GetSecretValue.assert_called_with(names=['/my/secret/path'], token='mytoken')
-        #self.api.get_secret_value.assert_called_with('SecretValueBody')
+    def test_get_from_env_resolve_secret(self):
+        self.assertEquals('my_secret', self.environment.get('also'))
+        self.secrets.get.assert_called_with('/another/secret/path')
+
+    def test_get_from_file_resolve_secret(self):
+        self.assertEquals('my_secret', self.environment.get('to_secrets'))
+        self.secrets.get.assert_called_with('/path/to/secret')

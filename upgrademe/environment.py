@@ -21,13 +21,10 @@ class Environment:
 
     def get(self, name):
         self._load_env_file()
-        print(self.os_environ)
-        print(name)
-        if name in self.os_environ[name]:
-            print('found!')
-            return self.resolve(self.os_environ[name])
+        if name in self.os_environ:
+            return self.resolve_value(self.os_environ[name])
         if name in self._env_file_config:
-            return self.resolve(self._env_file_config[name])
+            return self.resolve_value(self._env_file_config[name])
 
         raise ValueError(f"Could not find environment config '{name}' in environment or .env file")
 
@@ -66,5 +63,5 @@ class Environment:
         if secret_path[0] != '/':
             secret_path = f'/{secret_path}'
         if secret_path not in self._resolved_values:
-            self._resolved_values[secret_path] = self.secrets.get(value[9:])
+            self._resolved_values[secret_path] = self.secrets.get(secret_path)
         return self._resolved_values[secret_path]
