@@ -1,3 +1,6 @@
+import os.path
+
+
 class Environment:
     """
     This loads up the environment configuration for the application.
@@ -14,7 +17,7 @@ class Environment:
     _resolved_values = None
 
     def __init__(self, env_file_path, os_environ, secrets):
-        self.env_file_path = env_file_path
+        self._env_file_path = env_file_path
         self.os_environ = os_environ
         self.secrets = secrets
         self._resolved_values = {}
@@ -33,7 +36,10 @@ class Environment:
             return
 
         self._env_file_config = {}
-        with open(self.env_file_path, 'r') as env_file:
+        if not os.path.isfile(self._env_file_path):
+            return
+
+        with open(self._env_file_path, 'r') as env_file:
             line_number = 0
             for line in env_file.readlines():
                 line_number += 1

@@ -38,3 +38,13 @@ class BindingSpec(pinject.BindingSpec):
 
     def provide_environment(self, secrets):
         return Environment(os.getcwd() + '/.env', os.environ, secrets)
+
+    def provide_cursor(self, environment):
+        import mariadb
+        connection = mariadb.connect(
+            user=environment.get('db_username'),
+            password=environment.get('db_password'),
+            host=environment.get('db_host'),
+            database=environment.get('db_database')
+        )
+        return connection.cursor(named_tuple=True)
