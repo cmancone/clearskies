@@ -2,20 +2,28 @@ import unittest
 from unittest.mock import MagicMock, call
 from .model import Model
 from .columns import Columns
-from .column_types import String, DateTime, Integer
+from .column_types import Column, String, DateTime, Integer
 from collections import namedtuple, OrderedDict
 from datetime import datetime
 
 
+class ProvideTest(Column):
+    def can_provide(self, column_name):
+        return column_name == 'blahbblah'
+
+    def provide(self, data, column_name):
+        return data['name'] + ' blahblah'
+
 class User(Model):
-    def __init__(self, cursor, columns):
-        super().__init__(cursor, columns)
+    def __init__(self, backend, columns):
+        super().__init__(backend, columns)
 
     def columns_configuration(self):
         return OrderedDict([
             ('name', {'class': String}),
             ('birth_date', {'class': DateTime}),
-            ('age', {'class': Integer})
+            ('age', {'class': Integer}),
+            ('whatever', {'class': ProvideTest})
         ])
 
     def pre_save(self, data):
@@ -36,24 +44,70 @@ class ModelTest(unittest.TestCase):
         self.columns = Columns(self.object_graph)
 
     def test_create(self):
-        user_record = namedtuple('user', ['id', 'name', 'birth_date', 'age'])
-        new_user = user_record('5', 'Conor', '2020-11-28 12:30:45', '1')
-        cursor = type('', (), {
-            'execute': MagicMock(),
-            'next': MagicMock(return_value=new_user),
-            'lastrowid': 5,
+        new_user = {'id': '5', 'name': 'Conor', 'birth_date': '2020-11-28 12:30:45', 'age': '1'}
+        backend = type('', (), {
+            'create': MagicMock(return_value=new_user),
         })()
 
         birth_date = datetime.strptime('2020-11-28 12:30:45', '%Y-%m-%d %H:%M:%S')
-        user = User(cursor, self.columns)
+        user = User(backend, self.columns)
         user.save({'name': 'Conor', 'birth_date': birth_date, 'age': '1'})
         self.assertEquals('Conor', user.name)
         self.assertEquals(birth_date, user.birth_date)
         self.assertEquals(1, user.age)
         self.assertEquals(5, user.id)
-        cursor.execute.assert_has_calls([
-            call('INSERT INTO `users` (`name`, `birth_date`, `age`, `test`) VALUES (?, ?, ?, ?)', ['Conor', '2020-11-28 12:30:45', '1', 'thingy']),
-            call('SELECT * FROM `users` WHERE id=?', 5),
-        ])
+        backend.create.assert_called_with({
+            'name': 'Conor',
+            'birth_date': '2020-11-28 12:30:45',
+            'age': '1',
+            'test': 'thingy',
+        },  user)
         self.assertEquals({'name': 'Conor', 'birth_date': birth_date, 'age': '1', 'test': 'thingy'}, user.post_save_data)
         self.assertEquals(5, user.post_save_id)
+
+    def test_update(self):
+        old_user = {'id': '5', 'name': 'Ronoc', 'birth_date': '2019-11-28 23:30:30', 'age': '2'}
+        new_user = {'id': '5', 'name': 'Conor', 'birth_date': '2020-11-28 12:30:45', 'age': '1'}
+        backend = type('', (), {
+            'update': MagicMock(return_value=new_user),
+        })()
+
+        birth_date = datetime.strptime('2020-11-28 12:30:45', '%Y-%m-%d %H:%M:%S')
+        user = User(backend, self.columns)
+        user.data = old_user
+        user.save({'name': 'Conor', 'birth_date': birth_date, 'age': '1'})
+        self.assertEquals('Conor', user.name)
+        self.assertEquals(birth_date, user.birth_date)
+        self.assertEquals(1, user.age)
+        self.assertEquals(5, user.id)
+        backend.update.assert_called_with(5, {
+            'name': 'Conor',
+            'birth_date': '2020-11-28 12:30:45',
+            'age': '1',
+            'test': 'thingy',
+        },  user)
+        self.assertEquals({'name': 'Conor', 'birth_date': birth_date, 'age': '1', 'test': 'thingy'}, user.post_save_data)
+        self.assertEquals(5, user.post_save_id)
+
+    def test_column_provide(self):
+        user = User('cursor', self.columns)
+        user.data = {
+            'id': 5,
+            'name': 'hey'
+        }
+        self.assertEquals('hey blahblah', user.blahbblah)
+
+    def test_get_simple(self):
+        user = User('cursor', self.columns)
+        user.data = {'id': 5, 'name': 'hey'}
+        self.assertEquals(5, user.id)
+        self.assertEquals('hey', user.name)
+        self.assertEquals(True, user.exists)
+        with self.assertRaises(KeyError) as context:
+            user.blah
+        self.assertEquals("\"Unknown column 'blah' requested from model 'User'\"", str(context.exception))
+
+    def test_get_simple_empty(self):
+        user = User('cursor', self.columns)
+        self.assertEquals(False, user.exists)
+        self.assertEquals(None, user.id)

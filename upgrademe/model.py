@@ -6,12 +6,12 @@ from .column_types import Integer
 class Model(ABC):
     _columns = None
     _configured_columns = None
-    _cursor = None
+    _backend = None
     _data = None
     _transformed = None
 
-    def __init__(self, cursor, columns):
-        self._cursor = cursor
+    def __init__(self, backend, columns):
+        self._backend = backend
         self._columns = columns
         self._transformed = {}
         self._data = {}
@@ -43,21 +43,34 @@ class Model(ABC):
         if not self.exists:
             return None
 
+        # everything in self._data came directly out of the database, but we don't want to send that off.
+        # instead, the corresponding column has an opportunity to make changes as needed.  Moreover,
+        # it could be that the requested column_name doesn't even exist directly in self._data, but
+        # can be provided by a column.  Therefore, we're going to do some work to fulfill the request,
+        # raise an Error if we *really* can't fulfill it, and store the results in self._transformed
+        # as a simple local cache (self._transformed is cleared during a save operation)
         if column_name not in self._transformed:
+            columns = self.columns()
             if column_name not in self._data:
-                raise KeyError(f"Unknown column '{column_name}' requested from model '{self.__class__.__name__}'")
+                for column in columns.values():
+                    if column.can_provide(column_name):
+                        self._transformed[column_name] = column.provide(self._data, column_name)
+                        break
+                if not column_name in self._transformed:
+                    raise KeyError(f"Unknown column '{column_name}' requested from model '{self.__class__.__name__}'")
 
-            self._transformed[column_name] = \
-                self.columns()[column_name].from_database(self._data[column_name]) \
-                if column_name in self.columns() \
-                else self._data[column_name]
+            else:
+                self._transformed[column_name] = \
+                    self.columns()[column_name].from_database(self._data[column_name]) \
+                    if column_name in self.columns() \
+                    else self._data[column_name]
 
         return self._transformed[column_name]
 
 
     @property
     def exists(self):
-        return 'id' in self._data and self._data['id']
+        return True if ('id' in self._data and self._data['id']) else False
 
     @property
     def data(self):
@@ -82,47 +95,21 @@ class Model(ABC):
         if data is None:
             raise ValueError("pre_save forgot to return the data array!")
 
-        [sql, parameters] = self._data_to_query(data, columns)
-        self._cursor.execute(sql, parameters)
-        id = self.id if self.exists else self._cursor.lastrowid
+        to_save = self._to_backend(data, columns)
+        if self.exists:
+            new_data = self._backend.update(self.id, to_save, self)
+        else:
+            new_data = self._backend.create(to_save, self)
+        id = int(new_data['id'])
 
         data = self.columns_post_save(data, id, columns)
         data = self.post_save(data, id)
         if data is None:
             raise ValueError("post_save forgot to return the data array!")
 
-        self._cursor.execute(f'SELECT * FROM `{self.table_name}` WHERE id=?', id)
-        self._data = self._cursor.next()._asdict()
+        self._data = new_data
         self._transformed = {}
         return True
-
-    def _data_to_query(self, data, columns):
-        save_data = {**data}
-        for column in columns.values():
-            save_data = column.to_database(save_data)
-            if save_data is None:
-                raise ValueError(
-                    f'Column {column.name} of type {column.__class__.__name__} did not return any data for to_database'
-                )
-
-        if self.exists:
-            return self._data_to_update_query(save_data)
-        else:
-            return self._data_to_insert_query(save_data)
-
-    def _data_to_update_query(self, data):
-        query_parts = []
-        parameters = []
-        for (key, val) in data.items():
-            query_parts.append(f'`{key}`=?')
-            parameters.append(val)
-        updates = ', '.join(query_parts)
-        return [f'UPDATE `{self.table_name}` SET {updates} WHERE id=?', [*parameters, self.id]]
-
-    def _data_to_insert_query(self, data):
-        columns = '`' + '`, `'.join(data.keys()) + '`'
-        placeholders = ', '.join(['?' for i in range(len(data))])
-        return [f'INSERT INTO `{self.table_name}` ({columns}) VALUES ({placeholders})', list(data.values())]
 
     def columns_pre_save(self, data, columns):
         """ Uses the column information present in the model to make any necessary changes before saving """
@@ -141,6 +128,17 @@ class Model(ABC):
         It is passed in the data being saved and it should return the same data with adjustments as needed
         """
         return data
+
+    def _to_backend(self, data, columns):
+        backend_data = {**data}
+        for column in columns.values():
+            backend_data = column.to_database(backend_data)
+            if backend_data is None:
+                raise ValueError(
+                    f'Column {column.name} of type {column.__class__.__name__} did not return any data for to_database'
+                )
+
+        return backend_data
 
     def columns_post_save(self, data, id, columns):
         """ Uses the column information present in the model to make additional changes as needed after saving """

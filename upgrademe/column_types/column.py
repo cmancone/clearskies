@@ -59,3 +59,24 @@ class Column(ABC):
         and what is in the object.
         """
         return data
+
+    def can_provide(self, column_name):
+        """
+        This works together with self.provide to load ancillary data
+
+        For instance, a foreign key will have an "id" column such as `user_id` but it can also load up
+        the user model, which you expect to happen by requesting `model.user`.  If a model receives a
+        request for a column name that it doesn't recognize, it will loop through all the columns and
+        call `can_provide` with the column name.  We then have to return True or False to denote whether
+        or not we can provide the thing being requested.  If we return True then the model will then
+        call `column.provide` with the data from the model and the requested column name
+        """
+        return False
+
+    def provide(self, data, column_name):
+        """
+        This is called if the column declares that it can provide something, and should return the value
+
+        See can_provide for more details on the flow here
+        """
+        pass
