@@ -4,11 +4,10 @@ from .condition_parser import ConditionParser
 
 class Models(ABC, ConditionParser):
     # The database connection
-    _cursor = None
+    _backend = None
     _columns = None
     conditions = None
     sorts = None
-    parameters = None
     group_by_column = None
     limit_start = None
     limit_length = None
@@ -17,12 +16,11 @@ class Models(ABC, ConditionParser):
     must_recount = True
     count = None
 
-    def __init__(self, cursor, columns):
-        self._cursor = cursor
+    def __init__(self, backend, columns):
+        self._backend = backend
         self._columns = columns
         self.conditions = []
         self.sorts = []
-        self.parameters = []
         self.group_by_column = None
         self.joins = []
         self.limit_start = 0
@@ -42,14 +40,13 @@ class Models(ABC, ConditionParser):
         return clone
 
     def _blank(self):
-        return self.__class__(self._cursor, self._columns)
+        return self.__class__(self._backend, self._columns)
 
     @property
     def configuration(self):
         return {
             'conditions': self.conditions,
             'sorts': self.sorts,
-            'parameters': self.parameters,
             'group_by_column': self.group_by_column,
             'joins': self.joins,
             'limit_start': self.limit_start,
@@ -61,7 +58,6 @@ class Models(ABC, ConditionParser):
     def configuration(self, configuration):
         self.conditions = configuration['conditions']
         self.sorts = configuration['sorts']
-        self.parameters = configuration['parameters']
         self.group_by_column = configuration['group_by_column']
         self.joins = configuration['joins']
         self.limit_start = configuration['limit_start']
@@ -87,10 +83,7 @@ class Models(ABC, ConditionParser):
 
     def where_in_place(self, condition):
         """ Adds the given condition to the query for the current Models object """
-        condition_data = self.parse_condition(condition)
-        self._validate_column(condition_data['column'])
-        self.conditions.append(condition_data['parsed'])
-        self.parameters.extend(condition_data['values'])
+        self.conditions.append(self.parse_condition(condition))
         self.must_rexecute = True
         self.must_recount = True
         return self
@@ -170,44 +163,20 @@ class Models(ABC, ConditionParser):
         """ Returns the first model where condition """
         return self._blank().where(condition).first()
 
-    def as_sql(self):
-        select = self.selects if self.selects else '*'
-        wheres = 'WHERE ' + ' AND '.join(self.conditions) if self.conditions else ''
-        joins = ' '.join(self.joins)
-        if self.sorts:
-            order_by = 'ORDER BY ' + ', '.join(map(lambda sort: '%s %s' % (sort['column'], sort['direction']), self.sorts))
-        else:
-            order_by = ''
-        group_by = 'GROUP BY ' + self.group_by_column if self.group_by_column else ''
-        limit = f'LIMIT {self.limit_start}, {self.limit_length}' if self.limit_start else ''
-        return f'SELECT {select} FROM {self.table_name} {joins} {wheres} {group_by} {order_by} {limit}'.strip()
-
-    def as_count_sql(self):
-        # note that this won't work if we start including a HAVING clause
-        wheres = 'WHERE ' + ' AND '.join(self.conditions) if self.conditions else ''
-        joins = ' '.join(filter(lambda join: 'LEFT JOIN' not in join, self.joins))
-        if not self.group_by_column:
-            return f'SELECT COUNT(*) AS count FROM {self.table_name} {joins} {wheres}'
-        else:
-            return f'SELECT COUNT(SELECT 1 FROM {self.table_name} {joins} {wheres} GROUP BY {self.group_by_column}) AS count'
-
     def __len__(self):
         if self.must_recount:
-            self._cursor.execute(self.as_count_sql(), self.parameters)
-            result = self._cursor.next()
-            self.count = result[0] if type(result) == tuple else result['count']
+            self.count = self._backend.count(self.configuration)
             self.must_recount = False
         return self.count
 
     def __iter__(self):
-        self._cursor.execute(self.as_sql(), self.parameters)
-        return self
+        return self._backend.iterator(self.configuration)
 
     def __next__(self):
-        return self.model(self._cursor.next())
+        return self.model(self._backend.next())
 
     def model(self, data):
         model_class = self.model_class()
-        model = model_class(self._cursor, self._columns)
+        model = model_class(self._backend, self._columns)
         model.data = data
         return model

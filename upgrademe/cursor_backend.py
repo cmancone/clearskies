@@ -4,6 +4,21 @@ from .backend import Backend
 class CursorBackend(Backend):
     _cursor = None
 
+    _allowed_configs = [
+        'table_name',
+        'conditions',
+        'sorts',
+        'parameters',
+        'group_by_column',
+        'limit_start',
+        'limit_length',
+        'select',
+    ]
+
+    _required_configs = [
+        'table_name',
+    ]
+
     def __init__(self, cursor):
         self._cursor = cursor
 
@@ -16,7 +31,12 @@ class CursorBackend(Backend):
         updates = ', '.join(query_parts)
 
         self._cursor.execute(f'UPDATE `{model.table_name}` SET {updates} WHERE id=?', [*parameters, id])
-        return self._fetch(f'SELECT * FROM `{model.table_name}` WHERE id=?', [id])
+
+        self.iterator({
+            'table_name': model.table_name,
+            'wheres': [{'column': 'id': 'operator': '=', 'value': id}]
+        })
+        return self.next()
 
     def create(self, data, model):
         columns = '`' + '`, `'.join(data.keys()) + '`'
@@ -27,9 +47,74 @@ class CursorBackend(Backend):
             list(data.values())
         )
 
-        id = self._cursor.lastrowid
-        return self._fetch(f'SELECT * FROM `{model.table_name}` WHERE id=?', [id])
+        self.iterator({
+            'table_name': model.table_name,
+            'wheres': [{'column': 'id': 'operator': '=', 'values': [self._cursor.lastrowid]}]
+        })
+        return self.next()
 
-    def _fetch(self, query, parameters):
+    def length(self, configuration):
+        self._check_query_configuration(configuration)
+        [query, parameters] = self.as_count_sql(configuration)
         self._cursor.execute(query, parameters)
+        result = self._cursor.next()
+        return result[0] if type(result) == tuple else result['count']
+
+    def iterator(self, configuration):
+        self._check_query_configuration(configuration)
+        [query, parameters] = self.as_sql(configuration)
+        self._cursor.execute(query, parameters)
+        return self
+
+    def __next__(self):
         return self._cursor.next()
+
+    def as_sql(self, configuration):
+        [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration['wheres'])
+        select = configuration['selects'] if configuration['selects'] else '*'
+        joins = ' '.join(configuration['joins'])
+        if configuration['sorts']:
+            order_by = 'ORDER BY ' + ', '.join(map(lambda sort: '%s %s' % (sort['column'], sort['direction']), configuration['sorts']))
+        else:
+            order_by = ''
+        group_by = 'GROUP BY ' + configuration['group_by_column'] if configuration['group_by_column'] else ''
+        limit = f'LIMIT {configuration['limit_start']}, {configuration['limit_length']}' if configuration['limit_start'] else ''
+        return [
+            f'SELECT {select} FROM {configuration['table_name']} {joins} {wheres} {group_by} {order_by} {limit}'.strip(),
+            parameters
+        ]
+
+    def as_count_sql(self, configuration):
+        # note that this won't work if we start including a HAVING clause
+        [wheres, parameters] = self._conditions_as_wheres_and_parameters(
+            configuration['wheres'] if 'wheres' in configuration else []
+        )
+        # we also don't currently support parameters in the join clause - I'll probably need that though
+        joins = ' '.join(filter(lambda join: 'LEFT JOIN' not in join, configuration['joins']))
+        if not configuration['group_by_column']:
+            query = f'SELECT COUNT(*) AS count FROM {configuration['table_name']} {joins} {wheres}'
+        else:
+            query = f'SELECT COUNT(SELECT 1 FROM {configuration['table_name']} {joins} {wheres} GROUP BY {configuration['group_by_column']}) AS count'
+        return [query, parameters]
+
+    def _conditions_as_wheres_and_parameters(conditions):
+        if not conditions:
+            return ['', []]
+
+        parameters = []
+        where_parts = []
+        for condition in configuration['conditions']:
+            parameters.extend(condition['values'])
+            where_parts.append(condition['parsed'])
+        return ['WHERE' + ' AND '.join(where_parts), parameters]
+
+    def _check_query_configuration(self, configuration):
+        for key in configuration,keys():
+            if key not in self._allowed_configs:
+                raise KeyError(
+                    f"CursorBackend does not support config '{configuration}'. You may be using the wrong backend"
+                )
+
+        for key in self._required_configs:
+            if key not in configuration:
+                raise KeyError(f'Missing required configuration key {configuration}')
