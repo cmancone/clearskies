@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 from .models import Models
 from .model import Model
 
@@ -26,7 +26,12 @@ class Users(Models):
 
 class TestModels(unittest.TestCase):
     def setUp(self):
-        pass
+        self.backend = type('', (), {
+            'count': MagicMock(return_value=10),
+            'iterator': MagicMock(),
+            'next': MagicMock(return_value={'id': 5, 'my': 'data'}),
+        })()
+        self.backend.iterator = MagicMock(return_value=self.backend)
 
     def test_configure(self):
         users = Users('cursor', 'columns') \
@@ -37,9 +42,24 @@ class TestModels(unittest.TestCase):
             .join('LEFT JOIN posts ON posts.user_id=users.id') \
             .limit(5, 10) \
             .select('*')
-        self.assertEquals('age>?', users.configuration['conditions'][0])
-        self.assertEquals('age<?', users.configuration['conditions'][1])
-        self.assertEquals(['5', '10'], users.configuration['parameters'])
+        self.assertEquals(
+            {
+                'column': 'age',
+                'operator': '>',
+                'values': ['5'],
+                'parsed': 'age>?',
+            },
+            users.configuration['conditions'][0]
+        )
+        self.assertEquals(
+            {
+                'column': 'age',
+                'operator': '<',
+                'values': ['10'],
+                'parsed': 'age<?',
+            },
+            users.configuration['conditions'][1]
+        )
         self.assertEquals({'column': 'created', 'direction': 'desc'}, users.configuration['sorts'][0])
         self.assertEquals('last_name', users.configuration['group_by_column'])
         self.assertEquals('LEFT JOIN posts ON posts.user_id=users.id', users.configuration['joins'][0])
@@ -55,7 +75,7 @@ class TestModels(unittest.TestCase):
         self.assertEquals(User, type(user))
 
     def test_as_sql(self):
-        users = Users('cursor', 'columns') \
+        users = Users(self.backend, 'columns') \
             .where("age>5") \
             .where("age<10") \
             .group_by('last_name') \
@@ -63,48 +83,66 @@ class TestModels(unittest.TestCase):
             .join('LEFT JOIN posts ON posts.user_id=users.id') \
             .limit(5, 10) \
             .select('*')
-        self.assertEquals(
-            'SELECT * FROM users LEFT JOIN posts ON posts.user_id=users.id WHERE age>? AND age<? GROUP BY last_name ORDER BY created desc LIMIT 5, 10',
-            users.as_sql()
-        )
+        iterator = users.__iter__()
+        self.assertEquals(self.backend, iterator)
+        self.backend.iterator.assert_has_calls([
+            call({
+                'conditions': [
+                    {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
+                    {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'}
+                ],
+                'sorts': [
+                    {'column': 'created', 'direction': 'desc'}
+                ],
+                'group_by_column': 'last_name',
+                'joins': ['LEFT JOIN posts ON posts.user_id=users.id'],
+                'limit_start': 5,
+                'limit_length': 10,
+                'selects': '*'
+            })
+        ])
+        user = users.__next__()
+        self.assertEquals(User, user.__class__)
+        self.assertEquals({'id': 5, 'my': 'data'}, user._data)
+        self.backend.next.assert_has_calls([call()])
 
-    def test_as_sql_empty(self):
-        users = Users('cursor', 'columns')
-        self.assertEquals("SELECT * FROM users", users.as_sql())
+    #def test_as_sql_empty(self):
+        #users = Users(self.backend, 'columns')
+        #self.assertEquals("SELECT * FROM users", users.as_sql())
 
-    def test_as_count_sql(self):
-        users = Users('cursor', 'columns') \
-            .where("age>5") \
-            .where("age<10") \
-            .sort_by('created', 'desc') \
-            .join('JOIN posts ON posts.user_id=users.id') \
-            .join('LEFT JOIN more_posts ON posts.user_id=users.id') \
-            .limit(5, 10) \
-            .select('*')
-        self.assertEquals(
-            'SELECT COUNT(*) AS count FROM users JOIN posts ON posts.user_id=users.id WHERE age>? AND age<?',
-            users.as_count_sql()
-        )
+    #def test_as_count_sql(self):
+        #users = Users('cursor', 'columns') \
+            #.where("age>5") \
+            #.where("age<10") \
+            #.sort_by('created', 'desc') \
+            #.join('JOIN posts ON posts.user_id=users.id') \
+            #.join('LEFT JOIN more_posts ON posts.user_id=users.id') \
+            #.limit(5, 10) \
+            #.select('*')
+        #self.assertEquals(
+            #'SELECT COUNT(*) AS count FROM users JOIN posts ON posts.user_id=users.id WHERE age>? AND age<?',
+            #users.as_count_sql()
+        #)
 
-    def test_as_count_sql_with_group_by(self):
-        users = Users('cursor', 'columns') \
-            .where("age>5") \
-            .sort_by('created', 'desc') \
-            .join('JOIN posts ON posts.user_id=users.id') \
-            .join('LEFT JOIN more_posts ON posts.user_id=users.id') \
-            .limit(5, 10) \
-            .group_by('cat_id') \
-            .select('*')
-        self.assertEquals(
-            'SELECT COUNT(SELECT 1 FROM users JOIN posts ON posts.user_id=users.id WHERE age>? GROUP BY cat_id) AS count',
-            users.as_count_sql()
-        )
+    #def test_as_count_sql_with_group_by(self):
+        #users = Users('cursor', 'columns') \
+            #.where("age>5") \
+            #.sort_by('created', 'desc') \
+            #.join('JOIN posts ON posts.user_id=users.id') \
+            #.join('LEFT JOIN more_posts ON posts.user_id=users.id') \
+            #.limit(5, 10) \
+            #.group_by('cat_id') \
+            #.select('*')
+        #self.assertEquals(
+            #'SELECT COUNT(SELECT 1 FROM users JOIN posts ON posts.user_id=users.id WHERE age>? GROUP BY cat_id) AS count',
+            #users.as_count_sql()
+        #)
 
-    def test_len(self):
-        cursor = type('', (), {
-            'execute': MagicMock(),
-            'next': MagicMock(return_value=(10,))
-        })()
-        count = len(Users(cursor, 'columns').where("age>5"))
-        cursor.execute.assert_called_with('SELECT COUNT(*) AS count FROM users  WHERE age>?', ['5'])
-        self.assertEquals(10, count)
+    #def test_len(self):
+        #cursor = type('', (), {
+            #'execute': MagicMock(),
+            #'next': MagicMock(return_value=(10,))
+        #})()
+        #count = len(Users(cursor, 'columns').where("age>5"))
+        #cursor.execute.assert_called_with('SELECT COUNT(*) AS count FROM users  WHERE age>?', ['5'])
+        #self.assertEquals(10, count)
