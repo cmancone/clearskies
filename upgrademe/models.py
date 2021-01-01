@@ -11,7 +11,7 @@ class Models(ABC, ConditionParser):
     group_by_column = None
     limit_start = None
     limit_length = None
-    select = None
+    selects = None
     must_rexecute = True
     must_recount = True
     count = None
