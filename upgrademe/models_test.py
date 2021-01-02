@@ -106,43 +106,45 @@ class TestModels(unittest.TestCase):
         self.assertEquals({'id': 5, 'my': 'data'}, user._data)
         self.backend.next.assert_has_calls([call()])
 
-    #def test_as_sql_empty(self):
-        #users = Users(self.backend, 'columns')
-        #self.assertEquals("SELECT * FROM users", users.as_sql())
+    def test_as_sql_empty(self):
+        users = Users(self.backend, 'columns')
+        users.__iter__()
+        self.backend.iterator.assert_has_calls([
+            call({
+                'conditions': [],
+                'sorts': [],
+                'group_by_column': None,
+                'joins': [],
+                'limit_start': 0,
+                'limit_length': None,
+                'selects': None,
+            })
+        ])
 
-    #def test_as_count_sql(self):
-        #users = Users('cursor', 'columns') \
-            #.where("age>5") \
-            #.where("age<10") \
-            #.sort_by('created', 'desc') \
-            #.join('JOIN posts ON posts.user_id=users.id') \
-            #.join('LEFT JOIN more_posts ON posts.user_id=users.id') \
-            #.limit(5, 10) \
-            #.select('*')
-        #self.assertEquals(
-            #'SELECT COUNT(*) AS count FROM users JOIN posts ON posts.user_id=users.id WHERE age>? AND age<?',
-            #users.as_count_sql()
-        #)
-
-    #def test_as_count_sql_with_group_by(self):
-        #users = Users('cursor', 'columns') \
-            #.where("age>5") \
-            #.sort_by('created', 'desc') \
-            #.join('JOIN posts ON posts.user_id=users.id') \
-            #.join('LEFT JOIN more_posts ON posts.user_id=users.id') \
-            #.limit(5, 10) \
-            #.group_by('cat_id') \
-            #.select('*')
-        #self.assertEquals(
-            #'SELECT COUNT(SELECT 1 FROM users JOIN posts ON posts.user_id=users.id WHERE age>? GROUP BY cat_id) AS count',
-            #users.as_count_sql()
-        #)
-
-    #def test_len(self):
-        #cursor = type('', (), {
-            #'execute': MagicMock(),
-            #'next': MagicMock(return_value=(10,))
-        #})()
-        #count = len(Users(cursor, 'columns').where("age>5"))
-        #cursor.execute.assert_called_with('SELECT COUNT(*) AS count FROM users  WHERE age>?', ['5'])
-        #self.assertEquals(10, count)
+    def test_length(self):
+        users = Users(self.backend, 'columns') \
+            .where("age>5") \
+            .where("age<10") \
+            .sort_by('created', 'desc') \
+            .join('JOIN posts ON posts.user_id=users.id') \
+            .join('LEFT JOIN more_posts ON posts.user_id=users.id') \
+            .limit(5, 10) \
+            .select('*')
+        count = len(users)
+        self.assertEquals(10, count)
+        self.backend.count.assert_has_calls([
+            call({
+                'conditions': [
+                    {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
+                    {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'}
+                ],
+                'sorts': [
+                    {'column': 'created', 'direction': 'desc'}
+                ],
+                'group_by_column': None,
+                'joins': ['JOIN posts ON posts.user_id=users.id', 'LEFT JOIN more_posts ON posts.user_id=users.id'],
+                'limit_start': 5,
+                'limit_length': 10,
+                'selects': '*',
+            })
+        ])
