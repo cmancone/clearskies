@@ -1,5 +1,7 @@
 import pinject
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 from .columns import Columns
 import os
 from .environment import Environment
@@ -12,7 +14,16 @@ class BindingSpec(pinject.BindingSpec):
     object_graph = None
 
     def provide_requests(self):
-        return requests
+        retry_strategy = Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            backoff_factor=1,
+            method_whitelist=['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH']
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        http = requests.Session()
+        http.mount("https://", adapter)
+        return http
 
     def provide_object_graph(self):
         """

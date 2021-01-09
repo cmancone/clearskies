@@ -8,7 +8,6 @@ class CursorBackend(Backend):
         'table_name',
         'wheres',
         'sorts',
-        'parameters',
         'group_by_column',
         'limit_start',
         'limit_length',
