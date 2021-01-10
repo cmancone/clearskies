@@ -72,7 +72,7 @@ class ApiBackend(Backend):
             raise ValueError("Must call iterator before calling next")
 
         self._iterator_index += 1
-        if self._iterator_index >= len(self.records):
+        if self._iterator_index >= len(self._records):
             raise StopIteration
         return self._records[self._iterator_index]
 

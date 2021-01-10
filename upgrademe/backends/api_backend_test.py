@@ -61,3 +61,33 @@ class ApiBackendTest(unittest.TestCase):
                 'length': 100,
             }
         )
+
+    def test_query(self):
+        response = type('', (), {'json': lambda: {"data":[{"id": 5}, {"id": 10}]}})
+        self.requests.get = MagicMock(return_value=response)
+        iterator = self.backend.iterator({
+            'wheres': [
+                {'column': 'age', 'operator': '<=', 'values': [10], 'parsed': ''},
+                {'column': 'id', 'operator': '=', 'values': [123], 'parsed': ''},
+            ],
+            'sorts': [{'column': 'age', 'direction': 'desc'}],
+            'limit_start': 200,
+            'limit_length': 100,
+        })
+        self.requests.get.assert_called_with(
+            'https://example.com',
+            headers={'Authorization': 'Bearer: asdfer'},
+            json={
+                'wheres': [
+                    {'column': 'age', 'operator': '<=', 'values': [10]},
+                    {'column': 'id', 'operator': '=', 'values': [123]},
+                ],
+                'sorts': [{'column': 'age', 'direction': 'desc'}],
+                'start': 200,
+                'length': 100,
+            }
+        )
+
+        self.assertEquals({"id": 5}, iterator.next())
+        self.assertEquals({"id": 10}, iterator.next())
+        self.assertRaises(StopIteration, iterator.next)
