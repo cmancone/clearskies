@@ -1,0 +1,87 @@
+from abc import ABC, abstractmethod
+
+
+class Base(ABC):
+    _configuration = None
+    _configuration_defaults = {}
+    _global_configuration_defaults = {}
+
+    def __init__(self, request, authentication):
+        self._request = request
+        self._authentication = authentication
+        self._configuration = None
+
+    @abstractmethod
+    def handle(self):
+        pass
+
+    def configure(self, configuration):
+        for key in configuration.keys():
+            if key not in self._configuration_defaults and key not in self._global_configuration_defaults:
+                class_name = self.__class__.__name__
+                raise KeyError(f"Attempt to set unkown configuration setting '{key}' for handler '{class_name}'")
+
+        self._check_configuration(configuration)
+        self._configuration = self._finalize_configuration(self.apply_default_configuation(configuration))
+
+    def _check_configuration(self, configuration):
+        pass
+
+    def apply_default_configuation(self, configuration):
+        return {
+            **self._global_configuration_defaults,
+            **self._configuration_defaults,
+            **configuration,
+        }
+
+    def configuration(self, key):
+        if self._configuration is None:
+            raise ValueError("Cannot fetch configuration values before setting the configuration")
+        if key not in self._configuration:
+            class_name = self.__class__.__name__
+            raise KeyError(f"Configuration key '{key}' does not exist for handler '{class_name}'")
+        return self._configuration[key]
+
+    def _finalize_configuration(self, configuration):
+        return configuration
+
+    def __call__(self):
+        if self._configuration is None:
+            raise ValueError("Must configure handler before calling")
+        if not self._authentication.authenticate(self._request):
+            return self.error('Not Authorized', 401)
+
+        return self.handle()
+
+    def error(self, message, status_code):
+        return self.respond({'status': 'clientError', 'error': message}, status_code)
+
+    def success(self, data, number_results=None, page_length=None, page_number=None):
+        response_data = {'status': 'success', 'data': data, 'pagination': {}}
+
+        if number_results is not None:
+            for value in [number_results, page_length, page_number]:
+                if value is not None and type(value) != int:
+                    raise ValueError("number_results, page_length, and page_number must all be integers")
+
+            response_data['pagination'] = {
+                'numberResults': number_results,
+                'pageLength': page_length,
+                'pageNumber': page_number
+            }
+
+        return self.respond(response_data, 200)
+
+    def respond(self, response_data, status_code):
+        return (self._normalize_response(response_data), status_code)
+
+    def _normalize_response(self, response_data):
+        if not 'status' in response_data:
+            raise ValueError("Huh, status got left out somehow")
+        if not 'error' in response_data:
+            response_data['error'] = ''
+        if not 'data' in response_data:
+            response_data['data'] = []
+        if not 'pagination' in response_data:
+            response_data['pagination'] = {}
+        return response_data
