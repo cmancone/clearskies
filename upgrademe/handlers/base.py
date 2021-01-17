@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from .exceptions import ClientError, InputError
 
 
 class Base(ABC):
@@ -51,7 +52,17 @@ class Base(ABC):
         if not self._authentication.authenticate(self._request):
             return self.error('Not Authorized', 401)
 
-        return self.handle()
+        try:
+            response = self.handle()
+        except ClientError as client_error:
+            return self.error(str(client_error), 400)
+        except InputError as input_error:
+            return self.input_errors(input_error.errors)
+
+        return response
+
+    def input_errors(self, errors, status_code=200):
+        return self.respond({'status': 'inputErrors', 'inputErrors': errors}, status_code)
 
     def error(self, message, status_code):
         return self.respond({'status': 'clientError', 'error': message}, status_code)
@@ -84,4 +95,18 @@ class Base(ABC):
             response_data['data'] = []
         if not 'pagination' in response_data:
             response_data['pagination'] = {}
+        if not 'inputErrors' in response_data:
+            response_data['inputErrors'] = {}
         return response_data
+
+    def json_body(self, required=True):
+        json = self._request.get_json(force=True, silent=True)
+        # if we get None then either the body was not JSON or was empty.
+        # If it is required then we have an exception either way.  If it is not required
+        # then we have an exception if a body was provided but it was not JSON.  We can check for this
+        # if json is None and there is an actual request body.  If json is none, the body is empty,
+        # and it was not required, then we can just return None
+        if json is None:
+            if required or self._request.get_data():
+                raise ClientError("Request body was not valid JSON")
+        return json

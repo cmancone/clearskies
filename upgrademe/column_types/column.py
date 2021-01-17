@@ -7,10 +7,10 @@ class Column(ABC):
             raise ValueError(f"Missing name for column in '{model_class.__name__}'")
         self.model_class = model_class
         self.name = name
-        self._validate_configuration(configuration)
+        self._check_configuration(configuration)
         self.configuration = self._finalize_configuration(configuration)
 
-    def _validate_configuration(self, configuration):
+    def _check_configuration(self, configuration):
         """ Check the configuration and throw exceptions as needed """
         pass
 

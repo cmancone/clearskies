@@ -58,6 +58,7 @@ class BaseTest(unittest.TestCase):
             'error': '',
             'data': [1, 2, 3],
             'pagination': {},
+            'inputErrors': {},
         }, data)
         self.assertEquals(200, code)
 
@@ -69,6 +70,7 @@ class BaseTest(unittest.TestCase):
             'error': '',
             'data': [1, 2, 3],
             'pagination': {'numberResults': 3, 'pageLength': 10, 'pageNumber': 1},
+            'inputErrors': {},
         }, data)
         self.assertEquals(200, code)
 
@@ -80,8 +82,24 @@ class BaseTest(unittest.TestCase):
             'error': 'bah',
             'data': [],
             'pagination': {},
+            'inputErrors': {},
         }, data)
         self.assertEquals(400, code)
+
+    def test_input_errors(self):
+        handle = Handle('request', 'authentication')
+        (data, code) = handle.input_errors({'age': 'required', 'date': 'tomorrow'})
+        self.assertEquals({
+            'status': 'inputErrors',
+            'error': '',
+            'data': [],
+            'pagination': {},
+            'inputErrors': {
+                'age': 'required',
+                'date': 'tomorrow',
+            },
+        }, data)
+        self.assertEquals(200, code)
 
     def test_handle(self):
         authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
@@ -93,6 +111,7 @@ class BaseTest(unittest.TestCase):
             'error': '',
             'data': [1, 2, 3],
             'pagination': {},
+            'inputErrors': {},
         }, data)
         self.assertEquals(200, code)
         authentication.authenticate.assert_called_with('request')
