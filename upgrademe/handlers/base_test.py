@@ -1,7 +1,11 @@
 import unittest
 from unittest.mock import MagicMock, call
 from .base import Base
+from .exceptions import ClientError, InputError
 
+
+def raise_exception(exception):
+    raise exception
 
 class Handle(Base):
     _global_configuration_defaults = {
@@ -115,3 +119,39 @@ class BaseTest(unittest.TestCase):
         }, data)
         self.assertEquals(200, code)
         authentication.authenticate.assert_called_with('request')
+
+    def test_error(self):
+        authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
+        handle = Handle('request', authentication)
+        handle.configure({})
+        handle.handle = lambda: raise_exception(ClientError('sup'))
+        (data, code) = handle()
+        self.assertEquals({
+            'status': 'clientError',
+            'error': 'sup',
+            'data': [],
+            'pagination': {},
+            'inputErrors': {},
+        }, data)
+        self.assertEquals(400, code)
+
+    def test_input_error(self):
+        authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
+        handle = Handle('request', authentication)
+        handle.configure({})
+        handle.handle = lambda: raise_exception(InputError({'id': 'required'}))
+        (data, code) = handle()
+        self.assertEquals({
+            'status': 'inputErrors',
+            'error': '',
+            'data': [],
+            'pagination': {},
+            'inputErrors': {'id': 'required'},
+        }, data)
+        self.assertEquals(200, code)
+
+
+    ###############
+    ###### HERE!!!!!!!!!!!
+    ## we need tests for the get_json() method, and we should also verify that Base gives
+    # the proper response if the handle() method throws client or input errors
