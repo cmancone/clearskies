@@ -150,8 +150,41 @@ class BaseTest(unittest.TestCase):
         }, data)
         self.assertEquals(200, code)
 
+    def test_json_body(self):
+        request = type('', (), {'get_json': MagicMock(return_value={"sup": "hey"})})
+        handle = Handle(request, 'authentication')
+        body = handle.json_body()
+        self.assertEquals({'sup': 'hey'}, body)
+        request.get_json.assert_called_with(force=True, silent=True)
 
-    ###############
-    ###### HERE!!!!!!!!!!!
-    ## we need tests for the get_json() method, and we should also verify that Base gives
-    # the proper response if the handle() method throws client or input errors
+    def test_json_body_required(self):
+        request = type('', (), {'get_json': MagicMock(return_value=None)})
+        handle = Handle(request, 'authentication')
+        with self.assertRaises(ClientError) as context:
+            handle.json_body()
+        self.assertEquals(
+            "Request body was not valid JSON",
+            str(context.exception)
+        )
+
+    def test_json_body_not_required_invalid(self):
+        request = type('', (), {
+            'get_json': MagicMock(return_value=None),
+            'get_data': MagicMock(return_value='hey'),
+        })
+        handle = Handle(request, 'authentication')
+        with self.assertRaises(ClientError) as context:
+            handle.json_body(required=False)
+        self.assertEquals(
+            "Request body was not valid JSON",
+            str(context.exception)
+        )
+
+    def test_json_body_not_required_empty(self):
+        request = type('', (), {
+            'get_json': MagicMock(return_value=None),
+            'get_data': MagicMock(return_value=''),
+        })
+        handle = Handle(request, 'authentication')
+        body = handle.json_body(required=False)
+        self.assertEquals(None, body)
