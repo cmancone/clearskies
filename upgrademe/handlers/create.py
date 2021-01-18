@@ -1,10 +1,13 @@
 from .base import Base
+from .exceptions import InputError
 
 
 class Create(Base):
     _request = None
     _models = None
     _authentication = None
+    _writeable_columns = None
+    _readable_columns = None
 
     _configuration_defaults = {
         'columns': None,
@@ -15,6 +18,20 @@ class Create(Base):
     def __init__(self, request, authentication, models):
         super().__init__(request, authentication)
         self._models = models
+
+    def handle(self):
+        model = self._models.blank()
+        columns = model.columns()
+        input_data = self.json_body()
+        input_errors = {
+            **self._extra_column_errors(input_data, columns),
+            **self._find_input_errors(input_data, columns),
+        }
+        if input_errors:
+            raise InputError(input_errors)
+        model.save(input_data)
+
+        return self.success(self._model_as_json(model, columns))
 
     def _check_configuration(self, configuration):
         has_columns = 'columns' in configuration and configuration['columns'] is not None
@@ -40,5 +57,45 @@ class Create(Base):
                 f", not {str(type(configuration['columns']))}"
             )
 
-    def handle(self):
-        pass
+        if has_columns and not configuration['columns']
+            raise KeyError(f"{error_prefix} you must specify at least one column for 'columns'")
+        if has_writeable and not configuration['writeable_columns']
+            raise KeyError(f"{error_prefix} you must specify at least one column for 'writeable_columns'")
+        if has_readable and not configuration['readable_columns']
+            raise KeyError(f"{error_prefix} you must specify at least one column for 'readable_columns'")
+
+    def _get_writeable_columns(self, columns):
+        if self._writeable_columns is None:
+            writeable_column_names = self.configuration('columns')
+            if writeable_column_names is None:
+                writeable_column_names = self.configuration('writeable_columns')
+            writeable_columns = {}
+            for column_name in writeable_column_names:
+                if column_name not in columns:
+                    class_name = self.__class__.__name__
+                    model_class = self._models.model_class().__name__
+                    raise ValueError(
+                        f"Handler {class_name} was configured with writable column '{column_name}' but this " +
+                        f"column doesn't exist for model {model_class}"
+                    )
+                writeable_columns[column_name] = columns[column_name]
+            self._writeable_columns = writeable_column_names
+
+        return self._writeable_columns
+
+    def _extra_column_errors(self, input_data, columns):
+        input_errors = {}
+        allowed = self._get_writeable_columns(columns)
+        for column_name in input_data.keys():
+            if column_name not in allowed:
+                input_errors[column_name] = f"Input column '{column_name}' is not an allowed column")
+        return input_errors
+
+    def _find_input_errors(self, input_data, columns):
+        input_errors = {}
+        for column in self._get_writeable_columns(columns).values():
+            input_errors = {
+                **input_errors,
+                **column.input_errors(input_data),
+            }
+        return input_errors

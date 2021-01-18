@@ -35,11 +35,11 @@ class Models(ABC, ConditionParser):
         pass
 
     def clone(self):
-        clone = self._blank()
+        clone = self.blank()
         clone.configuration = self.configuration
         return clone
 
-    def _blank(self):
+    def blank(self):
         return self.__class__(self._backend, self._columns)
 
     @property
@@ -161,7 +161,7 @@ class Models(ABC, ConditionParser):
 
     def find(self, condition):
         """ Returns the first model where condition """
-        return self._blank().where(condition).first()
+        return self.blank().where(condition).first()
 
     def __len__(self):
         if self.must_recount:
