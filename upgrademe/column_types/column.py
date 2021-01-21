@@ -35,6 +35,12 @@ class Column(ABC):
         """
         return data
 
+    def to_json(self, model):
+        """
+        Grabs the column out of the model and converts it into a representation that can be turned into JSON
+        """
+        return model.__getattr__(self.name)
+
     def pre_save(self, data):
         """
         Make any changes needed to the data before starting the save process

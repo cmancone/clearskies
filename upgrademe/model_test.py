@@ -4,7 +4,7 @@ from .model import Model
 from .columns import Columns
 from .column_types import Column, String, DateTime, Integer
 from collections import namedtuple, OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class ProvideTest(Column):
@@ -49,7 +49,7 @@ class ModelTest(unittest.TestCase):
             'create': MagicMock(return_value=new_user),
         })()
 
-        birth_date = datetime.strptime('2020-11-28 12:30:45', '%Y-%m-%d %H:%M:%S')
+        birth_date = datetime.strptime('2020-11-28 12:30:45', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
         user = User(backend, self.columns)
         user.save({'name': 'Conor', 'birth_date': birth_date, 'age': '1'})
         self.assertEquals('Conor', user.name)
@@ -72,7 +72,7 @@ class ModelTest(unittest.TestCase):
             'update': MagicMock(return_value=new_user),
         })()
 
-        birth_date = datetime.strptime('2020-11-28 12:30:45', '%Y-%m-%d %H:%M:%S')
+        birth_date = datetime.strptime('2020-11-28 12:30:45', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
         user = User(backend, self.columns)
         user.data = old_user
         user.save({'name': 'Conor', 'birth_date': birth_date, 'age': '1'})

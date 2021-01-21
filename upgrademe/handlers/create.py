@@ -1,5 +1,6 @@
 from .base import Base
 from .exceptions import InputError
+from collections import OrderedDict
 
 
 class Create(Base):
@@ -64,24 +65,31 @@ class Create(Base):
         if has_readable and not configuration['readable_columns']
             raise KeyError(f"{error_prefix} you must specify at least one column for 'readable_columns'")
 
+    def _get_rw_columns(self, columns, rw_type):
+        column_names = self.configuration('columns')
+        if column_names is None:
+            column_names = self.configuration(f'{rw_type}_columns')
+        wr_columns = OrderedDict()
+        for column_name in column_names:
+            if column_name not in columns:
+                class_name = self.__class__.__name__
+                model_class = self._models.model_class().__name__
+                raise ValueError(
+                    f"Handler {class_name} was configured with {rw_type} column '{column_name}' but this " +
+                    f"column doesn't exist for model {model_class}"
+                )
+            wr_columns[column_name] = columns[column_name]
+        return wr_columns
+
     def _get_writeable_columns(self, columns):
         if self._writeable_columns is None:
-            writeable_column_names = self.configuration('columns')
-            if writeable_column_names is None:
-                writeable_column_names = self.configuration('writeable_columns')
-            writeable_columns = {}
-            for column_name in writeable_column_names:
-                if column_name not in columns:
-                    class_name = self.__class__.__name__
-                    model_class = self._models.model_class().__name__
-                    raise ValueError(
-                        f"Handler {class_name} was configured with writable column '{column_name}' but this " +
-                        f"column doesn't exist for model {model_class}"
-                    )
-                writeable_columns[column_name] = columns[column_name]
-            self._writeable_columns = writeable_column_names
-
+            self._writeable_columns = self._get_rw_columns(columns, 'writeable')
         return self._writeable_columns
+
+    def _get_readable_columns(self, columns):
+        if self._readable_columns is None:
+            self._readable_columns = self._get_rw_columns(columns, 'readable')
+        return self._readable_columns
 
     def _extra_column_errors(self, input_data, columns):
         input_errors = {}
@@ -99,3 +107,8 @@ class Create(Base):
                 **column.input_errors(input_data),
             }
         return input_errors
+
+    def _model_as_json(self, model, columns):
+        json = OrderedDict()
+        for self._get_readable_columns(columns).values() as column:
+            json[column.name] = column.to_json(model)
