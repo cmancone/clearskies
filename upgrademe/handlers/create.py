@@ -26,7 +26,7 @@ class Create(Base):
         input_data = self.json_body()
         input_errors = {
             **self._extra_column_errors(input_data, columns),
-            **self._find_input_errors(input_data, columns),
+            **self._find_input_errors(model, input_data, columns),
         }
         if input_errors:
             raise InputError(input_errors)
@@ -99,12 +99,12 @@ class Create(Base):
                 input_errors[column_name] = f"Input column '{column_name}' is not an allowed column")
         return input_errors
 
-    def _find_input_errors(self, input_data, columns):
+    def _find_input_errors(self, model, input_data, columns):
         input_errors = {}
         for column in self._get_writeable_columns(columns).values():
             input_errors = {
                 **input_errors,
-                **column.input_errors(input_data),
+                **column.input_errors(model, input_data),
             }
         return input_errors
 

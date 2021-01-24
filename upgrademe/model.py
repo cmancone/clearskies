@@ -37,6 +37,9 @@ class Model(ABC):
             self._configured_columns = self._columns.configure(self.all_columns(), self.__class__)
         return self._configured_columns
 
+    def __getitem__(self, column_name):
+        return self.__getattr__(column_name)
+
     def __getattr__(self, column_name):
         # this should be adjusted to only return None for empty records if the column name corresponds
         # to an actual column in the table.
