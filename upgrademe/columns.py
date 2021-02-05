@@ -31,9 +31,6 @@ class Columns:
         column.configure(name, configuration, model_class)
         return column
 
-    ## I need tests for this and then I need to update the column class to use them with the check_input method,
-    ## and then I need to write tests for the Create class
-
     def _resolve_input_requirements(self, input_requirements, column_name, model_class_name):
         error_prefix = f"Configuration error for column '{column_name}' in model '{model_class_name}':"
         if not hasattr(input_requirements, '__iter__'):

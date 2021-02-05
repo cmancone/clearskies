@@ -2,21 +2,50 @@ from abc import ABC
 
 
 class Column(ABC):
+    configuration = None
+    common_configs = [
+        'input_requirements',
+    ]
+    my_configs = []
+    required_configs = []
+
     def configure(self, name, configuration, model_class):
         if not name:
             raise ValueError(f"Missing name for column in '{model_class.__name__}'")
         self.model_class = model_class
         self.name = name
+        configuration = self._finalize_configuration(configuration)
         self._check_configuration(configuration)
-        self.configuration = self._finalize_configuration(configuration)
+        self.configuration = configuration
 
     def _check_configuration(self, configuration):
         """ Check the configuration and throw exceptions as needed """
-        pass
+        for key in self.required_configs:
+            if key not in configuration:
+                raise KeyError(
+                    f"Missing required configuration '{key}' for column '{self.name}' in '{self.model_class.__name__}'"
+                )
+        for key in configuration.keys():
+            if key not in self.common_configs and key not in self.my_configs:
+                raise KeyError(
+                    f"Configuration '{key}' not allowed for column '{self.name}' in '{self.model_class.__name__}'"
+                )
 
     def _finalize_configuration(self, configuration):
         """ Make any changes to the configuration/fill in defaults """
+        if not 'input_requirements' in configuration:
+            configuration['input_requirements'] = []
+        if 'class' in configuration:
+            del configuration['class']
         return configuration
+
+    def config(self, key):
+        if not key in self.configuration:
+            raise KeyError(
+                f"column '{self.__class__.__name__}' does not have a configuration named '{key}'"
+            )
+
+        return self.configuration[key]
 
     def from_database(self, value):
         """
@@ -40,6 +69,15 @@ class Column(ABC):
         Grabs the column out of the model and converts it into a representation that can be turned into JSON
         """
         return model.__getattr__(self.name)
+
+    def input_errors(self, model, data):
+        errors = {}
+        for requirement in self.config('input_requirements'):
+            error = requirement.check(self, model, data)
+            if error:
+                errors[self.column_name] = error
+
+        return errors
 
     def pre_save(self, data):
         """

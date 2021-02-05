@@ -9,7 +9,7 @@ class JSONTest(unittest.TestCase):
 
     def test_to_database(self):
         json = JSON()
-        json.configure('some_data', 'hey', JSON)
+        json.configure('some_data', {}, JSON)
         for_database = json.to_database({
             'some_data': {'peeps': [1, 2, 3], 'more_peeps': "okay"},
             'more_data': {'okay': 'hey'},

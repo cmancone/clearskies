@@ -18,7 +18,7 @@ class DateTimeTest(unittest.TestCase):
 
     def test_to_database(self):
         date = DateTime()
-        date.configure('created', {}, 'model')
+        date.configure('created', {}, int)
         data = date.to_database({'created': datetime.strptime('2021-01-07 22:45:13', '%Y-%m-%d %H:%M:%S')})
         self.assertEquals('2021-01-07 22:45:13', data['created'])
 
@@ -26,6 +26,6 @@ class DateTimeTest(unittest.TestCase):
         some_day = datetime.strptime('2021-01-07 22:45:13', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
         model = type('', (), {'__getattr__': MagicMock(return_value=some_day)})()
         date = DateTime()
-        date.configure('created', {}, 'model')
+        date.configure('created', {}, int)
         self.assertEquals('2021-01-07T22:45:13+00:00', date.to_json(model))
         model.__getattr__.assert_called_with('created')
