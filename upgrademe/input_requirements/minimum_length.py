@@ -7,12 +7,12 @@ class MinimumLength(Requirement):
     def configure(self, *arguments):
         if len(arguments) < 1:
             raise ValueError(
-                f"Must provide the minimum length to use the MinimumLength class for column {self.column_name}"
+                f"Must provide the minimum length to use the MinimumLength class for column '{self.column_name}'"
             )
-        minimum_length = type(arguments[0])
+        minimum_length = arguments[0]
         if type(minimum_length) != int:
             raise ValueError(
-                f"Minimum length must be an int to use the MinimumLength class for column {self.column_name}"
+                f"Minimum length must be an int to use the MinimumLength class for column '{self.column_name}'"
             )
         self.minimum_length = minimum_length
 
