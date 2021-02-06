@@ -71,13 +71,19 @@ class Column(ABC):
         return model.__getattr__(self.name)
 
     def input_errors(self, model, data):
-        errors = {}
-        for requirement in self.config('input_requirements'):
-            error = requirement.check(self, model, data)
-            if error:
-                errors[self.column_name] = error
+        error = self.check_input(model, data)
+        if error:
+            return {self.name: error}
 
-        return errors
+        for requirement in self.config('input_requirements'):
+            error = requirement.check(model, data)
+            if error:
+                return {self.name: error}
+
+        return {}
+
+    def check_input(self, model, data):
+        return ''
 
     def pre_save(self, data):
         """
