@@ -21,7 +21,7 @@ class Create(Base):
         self._models = models
 
     def handle(self):
-        model = self._models.blank()
+        model = self._models.empty_model()
         columns = model.columns()
         input_data = self.json_body()
         input_errors = {
@@ -58,11 +58,11 @@ class Create(Base):
                 f", not {str(type(configuration['columns']))}"
             )
 
-        if has_columns and not configuration['columns']
+        if has_columns and not configuration['columns']:
             raise KeyError(f"{error_prefix} you must specify at least one column for 'columns'")
-        if has_writeable and not configuration['writeable_columns']
+        if has_writeable and not configuration['writeable_columns']:
             raise KeyError(f"{error_prefix} you must specify at least one column for 'writeable_columns'")
-        if has_readable and not configuration['readable_columns']
+        if has_readable and not configuration['readable_columns']:
             raise KeyError(f"{error_prefix} you must specify at least one column for 'readable_columns'")
 
     def _get_rw_columns(self, columns, rw_type):
@@ -96,7 +96,7 @@ class Create(Base):
         allowed = self._get_writeable_columns(columns)
         for column_name in input_data.keys():
             if column_name not in allowed:
-                input_errors[column_name] = f"Input column '{column_name}' is not an allowed column")
+                input_errors[column_name] = f"Input column '{column_name}' is not an allowed column"
         return input_errors
 
     def _find_input_errors(self, model, input_data, columns):
@@ -110,5 +110,7 @@ class Create(Base):
 
     def _model_as_json(self, model, columns):
         json = OrderedDict()
-        for self._get_readable_columns(columns).values() as column:
+        json['id'] = int(model.id)
+        for column in self._get_readable_columns(columns).values():
             json[column.name] = column.to_json(model)
+        return json

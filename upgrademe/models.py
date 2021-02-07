@@ -180,3 +180,6 @@ class Models(ABC, ConditionParser):
         model = model_class(self._backend, self._columns)
         model.data = data
         return model
+
+    def empty_model(self):
+        return self.model({})

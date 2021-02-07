@@ -1,7 +1,17 @@
 from ..models import Models as ModelsBase
+from ..model import Model as ModelBase
 from ..columns import Columns
 import pinject
 
+
+class Model(ModelBase):
+    _columns_configuration = None
+
+    def set_columns_configuration(self, columns_configuration):
+        self._columns_configuration = columns_configuration
+
+    def columns_configuration(self):
+        return self._columns_configuration
 
 class Models(ModelsBase):
     _model_configuration = None
@@ -19,6 +29,19 @@ class Models(ModelsBase):
             self,
             Columns(pinject.new_object_graph())
         )
+
+    def model(self, data):
+        model_class = self.model_class()
+        model = model_class(self._backend, self._columns)
+        model.set_columns_configuration(self._model_configuration)
+        model.data = data
+        return model
+
+    def model_class(self):
+        return Model
+
+    def blank(self):
+        return self.__class__(self._model_configuration)
 
     def add_update_response(self, data):
         if self.update_responses is None:
