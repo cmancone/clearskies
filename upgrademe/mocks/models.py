@@ -22,6 +22,13 @@ class Models(ModelsBase):
     search_responses = None
     iterating = None
     iterator_index = None
+    iterated = None
+
+    @classmethod
+    def reset(cls):
+        cls.updated = None
+        cls.created = None
+        cls.iterated = None
 
     def __init__(self, model_configuration):
         self._model_configuration = model_configuration
@@ -41,7 +48,12 @@ class Models(ModelsBase):
         return Model
 
     def blank(self):
-        return self.__class__(self._model_configuration)
+        blank = self.__class__(self._model_configuration)
+        blank.create_responses = self.create_responses
+        blank.update_responses = self.update_responses
+        blank.search_responses = self.search_responses
+        return blank
+
 
     def add_update_response(self, data):
         if self.update_responses is None:
@@ -54,9 +66,17 @@ class Models(ModelsBase):
         self.create_responses.append(data)
 
     def add_search_response(self, data):
+        # We're expecting a list because a search implicitly returns multiple records.  Technically, we're also
+        # okay with tuples, but this is the most straight-forward way to get what we want and should avoid weird
+        # errors without causing serious issues later.
+        if type(data) != list:
+            raise ValueError("A list should be passed into to 'add_search_response'")
         if self.search_responses is None:
             self.search_responses = []
         self.search_responses.append(data)
+
+    def clear_search_responses(self):
+        self.search_responses = None
 
     # our mock models also acts as the backend for the mock model
     def update(self, id, data, model):
@@ -64,9 +84,9 @@ class Models(ModelsBase):
             raise ValueError("Must set update data through 'models.add_update_response' before attempting to update")
         if not len(self.update_responses):
             raise ValueError("Ran out of responses while processing an update!")
-        if self.updated is None:
-            self.updated = []
-        self.updated.append({'id': id, 'data': data, 'model': model})
+        if Models.updated is None:
+            Models.updated = []
+        Models.updated.append({'id': id, 'data': data, 'model': model})
         return self.update_responses.pop(0)
 
     def create(self, data, model):
@@ -74,9 +94,9 @@ class Models(ModelsBase):
             raise ValueError("Must set create data through 'models.add_create_response' before attempting to create")
         if not len(self.create_responses):
             raise ValueError("Ran out of responses while processing an create!")
-        if self.created is None:
-            self.created = []
-        self.created.append({'data': data, 'model': model})
+        if Models.created is None:
+            Models.created = []
+        Models.created.append({'data': data, 'model': model})
         return self.create_responses.pop(0)
 
     def count(self, configuration):
@@ -87,10 +107,13 @@ class Models(ModelsBase):
     def iterator(self, configuration):
         if self.search_responses is None:
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
+        if Models.iterated == None:
+            Models.iterated = []
+        Models.iterated.append(configuration)
         self.iterator_index = -1
         self.iterating = self.search_responses.pop(0)
 
-    def next(self, configuration):
+    def next(self):
         self.iterator_index += 1
         if self.iterator_index >= len(self.iterating):
             raise StopIteration()

@@ -183,3 +183,10 @@ class Models(ABC, ConditionParser):
 
     def empty_model(self):
         return self.model({})
+
+    def first(self):
+        self.__iter__()
+        try:
+            return self.__next__()
+        except StopIteration:
+            return self.empty_model()

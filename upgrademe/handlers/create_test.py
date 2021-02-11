@@ -8,6 +8,7 @@ from ..authentication import Public, SecretBearer
 
 class CreateTest(unittest.TestCase):
     def setUp(self):
+        Models.reset()
         self.models = Models({
             'name': {'class': String, 'input_requirements': [Required]},
             'email': {'class': String, 'input_requirements': [Required, (MaximumLength, 15)]},
@@ -73,7 +74,7 @@ class CreateTest(unittest.TestCase):
         self.assertEquals(1, response_data['id'])
         self.assertEquals(10, response_data['age'])
         self.assertTrue('email' not in response_data)
-        self.assertEquals({'name': 'Conor', 'age': 10}, self.models.created[0]['data'])
+        self.assertEquals({'name': 'Conor', 'age': 10}, Models.created[0]['data'])
 
     def test_extra_columns(self):
         create = Create(
@@ -114,13 +115,13 @@ class CreateTest(unittest.TestCase):
         self.assertEquals(1, response_data['id'])
         self.assertEquals(10, response_data['age'])
         self.assertEquals('default@email.com', response_data['email'])
-        self.assertEquals({'name': 'Conor', 'age': 10}, self.models.created[0]['data'])
+        self.assertEquals({'name': 'Conor', 'age': 10}, Models.created[0]['data'])
 
-    def test_auth(self):
+    def test_auth_failure(self):
         create = Create(
             Request(
                 json={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-                headers={'Authentication': 'Bearer qwerty'},
+                headers={'Authorization': 'Bearer qwerty'},
             ),
             SecretBearer('asdfer'),
             self.models
@@ -130,3 +131,22 @@ class CreateTest(unittest.TestCase):
         self.assertEquals(401, response[1])
         self.assertEquals('clientError', response[0]['status'])
         self.assertEquals('Not Authorized', response[0]['error'])
+
+    def test_auth_success(self):
+        self.models.add_create_response({
+            'id': 1,
+            'name': 'Conor',
+            'email': 'default@email.com',
+            'age': 10,
+        })
+        create = Create(
+            Request(
+                json={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+                headers={'Authorization': 'Bearer asdfer'},
+            ),
+            SecretBearer('asdfer'),
+            self.models
+        )
+        create.configure({'columns': ['name', 'email', 'age']})
+        response = create()
+        self.assertEquals(200, response[1])
