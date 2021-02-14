@@ -31,6 +31,13 @@ class CursorBackendTest(unittest.TestCase):
         ])
         self.assertEquals({'my': 'data'}, new_data)
 
+    def test_delete(self):
+        status = self.backend.delete(5, self.model)
+        self.cursor.execute.assert_has_calls([
+            call('DELETE FROM `my_table` WHERE id=?', [5]),
+        ])
+        self.assertEquals(True, status)
+
     def test_count_group(self):
         Count = namedtuple('Count', 'count')
         self.cursor.next = MagicMock(return_value=Count(count=10))

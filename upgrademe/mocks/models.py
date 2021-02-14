@@ -17,6 +17,7 @@ class Models(ModelsBase):
     _model_configuration = None
     updated = None
     created = None
+    deleted = None
     create_responses = None
     update_responses = None
     search_responses = None
@@ -98,6 +99,12 @@ class Models(ModelsBase):
             Models.created = []
         Models.created.append({'data': data, 'model': model})
         return self.create_responses.pop(0)
+
+    def delete(self, id, model):
+        if Models.deleted is None:
+            Models.deleted = []
+        Models.deleted.append({'id': id, 'model': model})
+        return True
 
     def count(self, configuration):
         if self.search_responses is None:

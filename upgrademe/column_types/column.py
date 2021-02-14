@@ -110,6 +110,18 @@ class Column(ABC):
         """
         return data
 
+    def pre_delete(self, model):
+        """
+        Make any changes needed to the data before starting the delete process
+        """
+        pass
+
+    def post_delete(self, model):
+        """
+        Make any changes needed to the data before finishing the delete process
+        """
+        pass
+
     def can_provide(self, column_name):
         """
         This works together with self.provide to load ancillary data

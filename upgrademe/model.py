@@ -114,6 +114,22 @@ class Model(ABC):
         self._transformed = {}
         return True
 
+    def delete(self, except_if_not_exists=True):
+        if not self.exists:
+            if except_if_not_exists:
+                raise ValueError("Cannot delete model that already exists")
+            return True
+
+        columns = self.columns()
+        self.columns_pre_delete(columns)
+        self.pre_delete()
+
+        self._backend.delete(self.id, self)
+
+        self.columns_post_delete(columns)
+        self.post_delete()
+        return True
+
     def columns_pre_save(self, data, columns):
         """ Uses the column information present in the model to make any necessary changes before saving """
         for column in columns.values():
@@ -161,3 +177,33 @@ class Model(ABC):
         either the original data array or an adjusted one if appropriate.
         """
         return data
+
+    def pre_save(self, data):
+        """
+        A hook to extend so you can provide additional pre-save logic as needed
+
+        It is passed in the data being saved and it should return the same data with adjustments as needed
+        """
+        return data
+
+    def columns_pre_delete(self, columns):
+        """ Uses the column information present in the model to make any necessary changes before deleting """
+        for column in columns.values():
+            column.pre_delete(self)
+
+    def pre_delete(self):
+        """
+        A hook to extend so you can provide additional pre-delete logic as needed
+        """
+        pass
+
+    def columns_post_delete(self, columns):
+        """ Uses the column information present in the model to make any necessary changes after deleting """
+        for column in columns.values():
+            column.post_delete(self)
+
+    def post_delete(self):
+        """
+        A hook to extend so you can provide additional post-delete logic as needed
+        """
+        pass

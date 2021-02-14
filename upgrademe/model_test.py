@@ -89,6 +89,20 @@ class ModelTest(unittest.TestCase):
         self.assertEquals({'name': 'Conor', 'birth_date': birth_date, 'age': '1', 'test': 'thingy'}, user.post_save_data)
         self.assertEquals(5, user.post_save_id)
 
+    def test_delete(self):
+        user_data = {'id': '5', 'name': 'Ronoc', 'birth_date': '', 'age': '2'}
+        backend = type('', (), {
+            'delete': MagicMock(return_value=True),
+        })()
+
+        user = User(backend, self.columns)
+        user.data = user_data
+        user.delete()
+        # for now, the model isn't cleared (in case the information is needed for reference)
+        self.assertEquals(True, user.exists)
+        self.assertEquals('Ronoc', user.name)
+        backend.delete.assert_called_with(5, user)
+
     def test_column_provide(self):
         user = User('cursor', self.columns)
         user.data = {

@@ -33,7 +33,7 @@ class ApiBackend(Backend):
             json=data,
         )
 
-        return response['data']
+        return response.json()['data']
 
     def create(self, data, model):
         response = self._requests.post(
@@ -42,7 +42,16 @@ class ApiBackend(Backend):
             json=data,
         )
 
-        return response['data']
+        return response.json()['data']
+
+    def delete(self, id, model):
+        response = self._requests.delete(
+            self.url,
+            headers=self._auth.headers(),
+            json={'id': id}
+        )
+
+        return response.json()['status'] == 'success'
 
     def count(self, configuration):
         configuration = self._check_query_configuration(configuration)

@@ -53,6 +53,13 @@ class CursorBackend(Backend):
         })
         return self.next()
 
+    def delete(self, id, model):
+        self._cursor.execute(
+            f'DELETE FROM `{model.table_name}` WHERE id=?',
+            [id]
+        )
+        return True
+
     def count(self, configuration):
         configuration = self._check_query_configuration(configuration)
         [query, parameters] = self.as_count_sql(configuration)

@@ -11,6 +11,10 @@ class Backend(ABC):
         pass
 
     @abstractmethod
+    def delete(self, id):
+        pass
+
+    @abstractmethod
     def count(self, configuration):
         pass
 
