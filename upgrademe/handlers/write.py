@@ -42,11 +42,11 @@ class Write(Base):
         for config_name in ['columns', 'writeable_columns', 'readable_columns']:
             if config_name not in configuration or configuration[config_name] is not None:
                 continue
-            if type(configuration[config_name]) == list:
+            if hasattr(configuration[config_name], '__iter__'):
                 continue
             raise ValueError(
                 f"{error_prefix} '{config_name}' should be a list of column names " +
-                f", not {str(type(configuration['columns']))}"
+                f", not {str(type(configuration[config_name]))}"
             )
 
         if has_columns and not configuration['columns']:

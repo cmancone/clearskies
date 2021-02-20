@@ -190,3 +190,7 @@ class Models(ABC, ConditionParser):
             return self.__next__()
         except StopIteration:
             return self.empty_model()
+
+    def columns(self):
+        model = self.model({})
+        return model.columns()
