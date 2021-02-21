@@ -110,3 +110,10 @@ class Base(ABC):
             if required or self._request.get_data():
                 raise ClientError("Request body was not valid JSON")
         return json
+
+    def _model_as_json(self, model, columns):
+        json = OrderedDict()
+        json['id'] = int(model.id)
+        for column in self._get_readable_columns(columns).values():
+            json[column.name] = column.to_json(model)
+        return json

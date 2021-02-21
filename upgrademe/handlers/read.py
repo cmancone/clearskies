@@ -19,8 +19,8 @@ class Read(Base):
         'group_by': '',
         'default_sort_column': '',
         'default_sort_direction': 'asc',
-        'default_page_length': 100,
-        'max_page_length': 200,
+        'default_limit': 100,
+        'max_limit': 200,
     }
 
     def __init__(self, request, authentication, models):
@@ -37,28 +37,106 @@ class Read(Base):
             models = models.join(join)
         if self.configuration('group_by'):
             models = models.group_by(self.configuration('group_by'))
+        models = models.limit(0, self.configuration('default_limit'))
 
         request_data = self.json_body(self, False)
         if request_data:
             error = self._check_request_data(request_data)
             if error:
                 return self.error(error, 400)
+            models = self._configure_models_from_request_data(models, request_data)
+
+        return self.success({
+            [self._model_as_json(model, self._columns) for model in models],
+            number_results=len(models),
+            page_length=None,
+            page_number=None
+        })
+
+    def _configure_models_from_request_data(self, models, request_data):
+        start = 0
+        limit = self.configuration('default_limit')
+        if 'start' in request_data:
+            start = request_data['start']
+        if 'limit' in request_data:
+            limit = request_data['limit']
+        models = models.limit(start, limit)
+        if 'sort' in request_data:
+            primary_column = request_data['sort'][0]['column']
+            primary_direction = request_data['sort'][0]['direction']
+            secondary_column = None
+            secondary_direction = None
+            if len(request_data['sort']) == 2:
+                secondary_column = request_data['sort'][1]['column']
+                secondary_direction = request_data['sort'][1]['direction']
+            models = models.sort_by(
+                primary_column,
+                primary_direction,
+                secondary_column=secondary_column,
+                secondary_direction=secondary_direction
+            )
+        if 'where' in request_data:
+            for where in request_data['where']:
+                column = self._columns[where['column']]
+                models = models.where(
+                    column.build_condition(
+                        where['value'],
+                        operator=where['operator'] if 'operator' in where else None
+                    )
+                )
+        return models
+
 
     def _check_request_data(self, request_data):
         # first, check that they didn't provide something unexpected
-        allowed_request_keys = ['where', 'sort', 'direction', 'page', 'limit']
+        allowed_request_keys = ['where', 'sort', 'start', 'limit']
         for key in request_data.keys():
             if key not in allowed_request_keys:
                 return f"Invalid request parameter: '{key}'"
-        for key_name in ['page', 'limit']:
+        for key_name in ['start', 'limit']:
             if key_name in request_data and type(request_data[key_name]) != int:
-                return f"Invalid request data: '{key_name}' should be an integer"
-        if 'direction' in request_data:
-            if type(request_data['direction']) != str:
-                return f"Invalid request data: 'direction' should be a string"
-            normalized_direction = request_data['direction'].strip().lower()
-            if normalized_direction != 'asc' and normalized_direction != 'desc':
-                return f"Invalid request data: 'direction' should be 'asc' or 'desc'"
+                return f"Invalid request: '{key_name}' should be an integer"
+        if 'limit' in request_data and request_data['limit'] > self.configuration('max_limit'):
+            return f"Invalid request: 'limit' must be at most {self.configuration('max_limit')}"
+        sort = self._fetch_normalized_sort_from_request_data(request_data)
+        if 'sort' in request_data:
+            if type(request_data['sort']) != list:
+                return "Invalid request: if provided, 'sort' must be a list of " + \
+                    "objects with 'column' and 'direction' keys"
+            if len(request_data['sort']) > 2:
+                return "Invalid request: at most 2 sort directives may be specified"
+            allowed_sort_columns = self.configuration('sortable_columns')
+            if not allowed_sort_columns:
+                allowed_sort_columns = self._columns
+            for (index, sort) in enumerate(request_data['sort']):
+                error_prefix = "Invalid request: 'sort' must be a list of objects with 'column' and 'direction'" + \
+                    f" keys, but entry #{index+1}"
+                if type(sort) != dict:
+                    return f"{error_prefix} was not an object"
+                if 'column' not in sort or 'direction' not in sort or not sort['column'] or not sort['direction']:
+                    return f"{error_prefix} did not declare both 'column' and 'direction'"
+                if len(sort) != 2:
+                    return f"{error_prefix} had extra keys present"
+                if sort['direction'].lower() not in ['asc', 'desc']:
+                    return "Invalid request: sort direction must be 'asc' or 'desc'" + \
+                        f" but found something else in sort entry #{index+1}"
+                if sort['column'] not in allowed_sort_columns:
+                    return f"Invalid request: invalid sort column specified in sort entry #{index+1}"
+        if 'where' in request_data:
+            if type(request_data['where']) != list:
+                return "Invalid request: if provided, 'where' must be a list of objects"
+            for (index, where) in enumerate(request_data['where']):
+                if type(where) != object:
+                    return f"Invalid request: 'where' must be a list of objects, entry #{index+1} was not an object"
+                if 'column' not in where or not where['column']:
+                    return f"Invalid request: 'column' missing in 'where' entry #{index+1}"
+                if where['column'] not in self.configuration('searchable_columns'):
+                    return f"Invalid request: invalid search column specified in where entry #{index+1}"
+                if 'value' not in where:
+                    return f"Invalid request: 'value' missing in 'where' entry #{index+1}"
+                if 'operator' in where and not self._columns[where['column']].is_allowed_operator(where['operator']):
+                    return f"Invalid request: given operator is not allowed for column in 'where' entry #{index+1}"
+
 
     def _check_configuration(self, configuration):
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)

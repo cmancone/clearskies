@@ -64,13 +64,13 @@ class ApiBackendTest(unittest.TestCase):
             headers={'Authorization': 'Bearer: asdfer'},
             json={
                 'count_only': True,
-                'wheres': [
+                'where': [
                     {'column': 'age', 'operator': '<=', 'values': [10]},
                     {'column': 'id', 'operator': '=', 'values': [123]},
                 ],
-                'sorts': [{'column': 'age', 'direction': 'desc'}],
+                'sort': [{'column': 'age', 'direction': 'desc'}],
                 'start': 200,
-                'length': 100,
+                'limit': 100,
             }
         )
 
@@ -90,13 +90,13 @@ class ApiBackendTest(unittest.TestCase):
             'https://example.com',
             headers={'Authorization': 'Bearer: asdfer'},
             json={
-                'wheres': [
+                'where': [
                     {'column': 'age', 'operator': '<=', 'values': [10]},
                     {'column': 'id', 'operator': '=', 'values': [123]},
                 ],
-                'sorts': [{'column': 'age', 'direction': 'desc'}],
+                'sort': [{'column': 'age', 'direction': 'desc'}],
                 'start': 200,
-                'length': 100,
+                'limit': 100,
             }
         )
 

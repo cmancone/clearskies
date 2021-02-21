@@ -142,3 +142,21 @@ class Column(ABC):
         See can_provide for more details on the flow here
         """
         pass
+
+    def build_condition(self, value, operator=None):
+        """
+        This is called by the read (and related) handlers to turn user input into a condition.
+
+        Note that these conditions aren't passed directly into a query and so do not attempt to escape
+        any input.  Instead, they are normally parsed by the condition parser before being sent into
+        the backend (which may not be an SQL backend anyway!)
+
+        As a result, this is perfectly safe for any user input, assuming normal system flow.
+        """
+        return f"{self.name}={value}"
+
+    def is_allowed_operator(self, operator):
+        """
+        This is called when processing user data to decide if the end-user is specifying an allowed operator
+        """
+        return operator == '='

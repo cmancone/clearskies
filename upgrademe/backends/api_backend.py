@@ -99,10 +99,10 @@ class ApiBackend(Backend):
 
     def _as_post_data(self, configuration):
         return {
-            'wheres': list(map(lambda where: self._where_for_post(where), configuration['wheres'])),
-            'sorts': configuration['sorts'],
+            'where': list(map(lambda where: self._where_for_post(where), configuration['wheres'])),
+            'sort': configuration['sorts'],
             'start': configuration['limit_start'],
-            'length': configuration['limit_length'],
+            'limit': configuration['limit_length'],
         }
 
     def _where_for_post(self, where):
