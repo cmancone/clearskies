@@ -29,3 +29,25 @@ class DateTimeTest(unittest.TestCase):
         date.configure('created', {}, int)
         self.assertEquals('2021-01-07T22:45:13+00:00', date.to_json(model))
         model.__getattr__.assert_called_with('created')
+
+    def test_is_allowed_operator(self):
+        date = DateTime()
+        for operator in ['=', '<', '>', '<=', '>=']:
+            self.assertTrue(date.is_allowed_operator(operator))
+        for operator in ['==', '<=>']:
+            self.assertFalse(date.is_allowed_operator(operator))
+
+    def test_build_condition(self):
+        date = DateTime()
+        date.configure('created', {}, int)
+        self.assertEquals('created=2021-01-07 22:45:13', date.build_condition('2021-01-07 22:45:13 UTC'))
+        self.assertEquals(
+            'created<2021-01-07 21:45:13',
+            date.build_condition('2021-01-07 22:45:13 UTC+1', operator='<')
+        )
+
+    def test_check_search_value(self):
+        date = DateTime()
+        self.assertEquals('', date.check_search_value('2021-01-07 22:45:13 UTC'))
+        self.assertEquals('given value did not appear to be a valid date', date.check_search_value('asdf'))
+        self.assertEquals('date is missing timezone information', date.check_search_value('2021-01-07 22:45:13'))

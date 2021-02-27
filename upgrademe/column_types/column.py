@@ -147,9 +147,10 @@ class Column(ABC):
         """
         This is called by the read (and related) handlers to turn user input into a condition.
 
-        Note that these conditions aren't passed directly into a query and so do not attempt to escape
-        any input.  Instead, they are normally parsed by the condition parser before being sent into
-        the backend (which may not be an SQL backend anyway!)
+        Note that this may look like it is vulnerable to SQLi, but it isn't.  These conditions aren't passed directly
+        into a query.  Rather, they are parsed by the condition parser before being sent into the backend.
+        The condition parser can safely reconstruct the original piecesk, and the backend can then use the data
+        safely (and remember, the backend may not be an SQL anyway)
 
         As a result, this is perfectly safe for any user input, assuming normal system flow.
         """
@@ -160,3 +161,6 @@ class Column(ABC):
         This is called when processing user data to decide if the end-user is specifying an allowed operator
         """
         return operator == '='
+
+    def check_search_value(self, value):
+        return ''

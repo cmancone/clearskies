@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from .exceptions import ClientError, InputError
+from collections import OrderedDict
 
 
 class Base(ABC):
@@ -67,18 +68,18 @@ class Base(ABC):
     def error(self, message, status_code):
         return self.respond({'status': 'clientError', 'error': message}, status_code)
 
-    def success(self, data, number_results=None, page_length=None, page_number=None):
+    def success(self, data, number_results=None, start=None, limit=None):
         response_data = {'status': 'success', 'data': data, 'pagination': {}}
 
         if number_results is not None:
-            for value in [number_results, page_length, page_number]:
+            for value in [number_results, start, limit]:
                 if value is not None and type(value) != int:
-                    raise ValueError("number_results, page_length, and page_number must all be integers")
+                    raise ValueError("number_results, start, and limit must all be integers")
 
             response_data['pagination'] = {
                 'numberResults': number_results,
-                'pageLength': page_length,
-                'pageNumber': page_number
+                'start': start,
+                'limit': limit
             }
 
         return self.respond(response_data, 200)

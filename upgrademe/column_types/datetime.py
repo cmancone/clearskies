@@ -1,5 +1,6 @@
 from .column import Column
 from datetime import datetime, timezone
+import dateparser
 
 
 class DateTime(Column):
@@ -19,3 +20,23 @@ class DateTime(Column):
 
     def to_json(self, model):
         return model.__getattr__(self.name).isoformat()
+
+    def build_condition(self, value, operator=None):
+        date = dateparser.parse(value).astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        if not operator:
+            operator = '='
+        return f"{self.name}{operator}{date}"
+
+    def is_allowed_operator(self, operator):
+        """
+        This is called when processing user data to decide if the end-user is specifying an allowed operator
+        """
+        return operator in ['=', '<', '>', '<=', '>=']
+
+    def check_search_value(self, value):
+        value = dateparser.parse(value)
+        if not value:
+            return 'given value did not appear to be a valid date'
+        if not value.tzinfo:
+            return 'date is missing timezone information'
+        return ''

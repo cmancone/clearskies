@@ -37,20 +37,22 @@ class Read(Base):
             models = models.join(join)
         if self.configuration('group_by'):
             models = models.group_by(self.configuration('group_by'))
-        models = models.limit(0, self.configuration('default_limit'))
+        start = 0
+        limit = self.configuration('default_limit')
+        models = models.limit(start, limit)
 
         request_data = self.json_body(self, False)
         if request_data:
             error = self._check_request_data(request_data)
             if error:
                 return self.error(error, 400)
-            models = self._configure_models_from_request_data(models, request_data)
+            [models, start, limit] = self._configure_models_from_request_data(models, request_data)
 
         return self.success({
             [self._model_as_json(model, self._columns) for model in models],
             number_results=len(models),
-            page_length=None,
-            page_number=None
+            start=start,
+            limit=limit
         })
 
     def _configure_models_from_request_data(self, models, request_data):
@@ -84,7 +86,7 @@ class Read(Base):
                         operator=where['operator'] if 'operator' in where else None
                     )
                 )
-        return models
+        return [models, start, limit]
 
 
     def _check_request_data(self, request_data):
@@ -136,6 +138,9 @@ class Read(Base):
                     return f"Invalid request: 'value' missing in 'where' entry #{index+1}"
                 if 'operator' in where and not self._columns[where['column']].is_allowed_operator(where['operator']):
                     return f"Invalid request: given operator is not allowed for column in 'where' entry #{index+1}"
+                value_error = self._columns[where['column']].check_search_value(where['value'])
+                if value_error:
+                    return f"Invalid request: {value_error} for 'where' entry #{index+1}"
 
 
     def _check_configuration(self, configuration):
