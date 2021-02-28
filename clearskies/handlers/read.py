@@ -41,19 +41,21 @@ class Read(Base):
         limit = self.configuration('default_limit')
         models = models.limit(start, limit)
 
-        request_data = self.json_body(self, False)
+        request_data = self.json_body(False)
         if request_data:
             error = self._check_request_data(request_data)
             if error:
                 return self.error(error, 400)
             [models, start, limit] = self._configure_models_from_request_data(models, request_data)
+        if not models.sorts:
+            models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
 
-        return self.success({
+        return self.success(
             [self._model_as_json(model, self._columns) for model in models],
             number_results=len(models),
             start=start,
             limit=limit
-        })
+        )
 
     def _configure_models_from_request_data(self, models, request_data):
         start = 0
@@ -100,7 +102,6 @@ class Read(Base):
                 return f"Invalid request: '{key_name}' should be an integer"
         if 'limit' in request_data and request_data['limit'] > self.configuration('max_limit'):
             return f"Invalid request: 'limit' must be at most {self.configuration('max_limit')}"
-        sort = self._fetch_normalized_sort_from_request_data(request_data)
         if 'sort' in request_data:
             if type(request_data['sort']) != list:
                 return "Invalid request: if provided, 'sort' must be a list of " + \
@@ -128,7 +129,7 @@ class Read(Base):
             if type(request_data['where']) != list:
                 return "Invalid request: if provided, 'where' must be a list of objects"
             for (index, where) in enumerate(request_data['where']):
-                if type(where) != object:
+                if type(where) != dict:
                     return f"Invalid request: 'where' must be a list of objects, entry #{index+1} was not an object"
                 if 'column' not in where or not where['column']:
                     return f"Invalid request: 'column' missing in 'where' entry #{index+1}"
@@ -161,33 +162,38 @@ class Read(Base):
                         f"{error_prefix} '{config_name}' references column named {column_name} " +
                         f"but this column does not exist for model '{model_class_name}'"
                     )
+        if not 'default_sort_column' in configuration:
+            raise ValueError(f"{error_prefix} missing required configuration 'default_sort_column'")
 
         # sortable_columns, wheres, and joins should all be iterables
-        for config_name in ['sortable_columns', 'where', 'join']:
-            if not hasattr(configuration[config_name], '__iter__'):
+        for (config_name, contents) in {'sortable_columns': 'column names', 'where': 'conditions', 'join': 'joins'}.items():
+            if config_name not in configuration:
+                continue
+            if not hasattr(configuration[config_name], '__iter__') or type(configuration[config_name]) == str:
                 raise ValueError(
-                    f"{error_prefix} '{config_name}' should be an iterable of column names " +
+                    f"{error_prefix} '{config_name}' should be an iterable of {contents} " +
                     f", not {str(type(configuration[config_name]))}"
                 )
 
         # checks for sortable_columns
-        for column_name in configuration['sortable_columns']:
-            if column_name not in self._columns:
-                raise ValueError(
-                    f"{error_prefix} 'sortable_columns' references column named {column_name} " +
-                    f"but this column does not exist for model '{model_class_name}'"
-                )
+        if 'sortable_columns' in configuration:
+            for column_name in configuration['sortable_columns']:
+                if column_name not in self._columns:
+                    raise ValueError(
+                        f"{error_prefix} 'sortable_columns' references column named {column_name} " +
+                        f"but this column does not exist for model '{model_class_name}'"
+                    )
 
         # common checks for group_by and default_sort_column
         for config_name in ['group_by', 'default_sort_column']:
-            if configuration[config_name] and configuration[config_name] not in self._columns:
+            if config_name in configuration and configuration[config_name] and configuration[config_name] not in self._columns:
                 raise ValueError(
                     f"{error_prefix} '{config_name}' references column named {column_name} " +
                     f"but this column does not exist for model '{model_class_name}'"
                 )
 
         for config_name in ['default_page_length', 'max_page_length']:
-            if type(configuration[config_name]) != int:
+            if config_name in configuration and type(configuration[config_name]) != int:
                 raise ValueError(
                     f"{error_prefix} '{config_name}' should be an int, not {str(type(configuration[config_name]))}"
                 )

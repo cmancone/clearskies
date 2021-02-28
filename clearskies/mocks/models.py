@@ -119,6 +119,7 @@ class Models(ModelsBase):
         Models.iterated.append(configuration)
         self.iterator_index = -1
         self.iterating = self.search_responses.pop(0)
+        return self
 
     def next(self):
         self.iterator_index += 1
