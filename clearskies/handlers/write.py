@@ -7,6 +7,7 @@ from abc import abstractmethod
 class Write(Base):
     _request = None
     _models = None
+    _columns = None
     _authentication = None
     _writeable_columns = None
     _readable_columns = None
@@ -20,6 +21,7 @@ class Write(Base):
     def __init__(self, request, authentication, models):
         super().__init__(request, authentication)
         self._models = models
+        self._columns = self._models.columns()
 
     @abstractmethod
     def handle(self):
@@ -55,44 +57,54 @@ class Write(Base):
             raise KeyError(f"{error_prefix} you must specify at least one column for 'writeable_columns'")
         if has_readable and not configuration['readable_columns']:
             raise KeyError(f"{error_prefix} you must specify at least one column for 'readable_columns'")
+        writeable_columns = configuration['writeable_columns'] if has_writeable else configuration['columns']
+        for column_name in writeable_columns:
+            if column_name not in self._columns:
+                raise KeyError(f"{error_prefix} specified writeable column '{column_name}' does not exist")
+            if not self._columns[column_name].is_writeable:
+                raise KeyError(f"{error_prefix} specified writeable column '{column.name}' is not writeable")
+        readable_columns = configuration['readable_columns'] if has_readable else configuration['columns']
+        for column_name in readable_columns:
+            if column_name not in self._columns:
+                raise KeyError(f"{error_prefix} specified readable column '{column_name}' does not exist")
 
-    def _get_rw_columns(self, columns, rw_type):
+    def _get_rw_columns(self, rw_type):
         column_names = self.configuration('columns')
         if column_names is None:
             column_names = self.configuration(f'{rw_type}_columns')
         wr_columns = OrderedDict()
         for column_name in column_names:
-            if column_name not in columns:
+            if column_name not in self._columns:
                 class_name = self.__class__.__name__
                 model_class = self._models.model_class().__name__
                 raise ValueError(
-                    f"Handler {class_name} was configured with {rw_type} column '{column_name}' but this " +
-                    f"column doesn't exist for model {model_class}"
+                    f"Configuration error for {self.__class__.__name__}: handler was configured with {rw_type} " + \
+                    f"column '{column_name}' but this column doesn't exist for model {model_class}"
                 )
-            wr_columns[column_name] = columns[column_name]
+            wr_columns[column_name] = self._columns[column_name]
         return wr_columns
 
-    def _get_writeable_columns(self, columns):
+    def _get_writeable_columns(self):
         if self._writeable_columns is None:
-            self._writeable_columns = self._get_rw_columns(columns, 'writeable')
+            self._writeable_columns = self._get_rw_columns('writeable')
         return self._writeable_columns
 
-    def _get_readable_columns(self, columns):
+    def _get_readable_columns(self):
         if self._readable_columns is None:
-            self._readable_columns = self._get_rw_columns(columns, 'readable')
+            self._readable_columns = self._get_rw_columns('readable')
         return self._readable_columns
 
-    def _extra_column_errors(self, input_data, columns):
+    def _extra_column_errors(self, input_data):
         input_errors = {}
-        allowed = self._get_writeable_columns(columns)
+        allowed = self._get_writeable_columns()
         for column_name in input_data.keys():
             if column_name not in allowed:
                 input_errors[column_name] = f"Input column '{column_name}' is not an allowed column"
         return input_errors
 
-    def _find_input_errors(self, model, input_data, columns):
+    def _find_input_errors(self, model, input_data):
         input_errors = {}
-        for column in self._get_writeable_columns(columns).values():
+        for column in self._get_writeable_columns().values():
             input_errors = {
                 **input_errors,
                 **column.input_errors(model, input_data),

@@ -51,7 +51,7 @@ class Read(Base):
             models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
 
         return self.success(
-            [self._model_as_json(model, self._columns) for model in models],
+            [self._model_as_json(model) for model in models],
             number_results=len(models),
             start=start,
             limit=limit
@@ -198,25 +198,25 @@ class Read(Base):
                     f"{error_prefix} '{config_name}' should be an int, not {str(type(configuration[config_name]))}"
                 )
 
-    def _get_columns(self, columns, column_type):
+    def _get_columns(self, column_type):
         resolved_columns = OrderedDict()
         for column_name in self.configuration(f'{column_type}_columns'):
-            if column_name not in columns:
+            if column_name not in self._columns:
                 class_name = self.__class__.__name__
                 model_class = self._models.model_class().__name__
                 raise ValueError(
                     f"Handler {class_name} was configured with {column_type} column '{column_name}' but this " +
                     f"column doesn't exist for model {model_class}"
                 )
-            resolved_columns[column_name] = columns[column_name]
+            resolved_columns[column_name] = self._columns[column_name]
         return resolved_columns
 
-    def _get_readable_columns(self, columns):
+    def _get_readable_columns(self):
         if self._readable_columns is None:
-            self._readable_columns = self._get_columns(columns, 'readable')
+            self._readable_columns = self._get_columns('readable')
         return self._readable_columns
 
-    def _get_searchable_columns(self, columns):
+    def _get_searchable_columns(self):
         if self._searchable_columns is None:
-            self._searchable_columns = self._get_columns(columns, 'searchable')
+            self._searchable_columns = self._get_columns('searchable')
         return self._searchable_columns

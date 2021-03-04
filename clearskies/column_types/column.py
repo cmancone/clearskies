@@ -9,6 +9,10 @@ class Column(ABC):
     my_configs = []
     required_configs = []
 
+    @property
+    def is_writeable(self):
+        return True
+
     def configure(self, name, configuration, model_class):
         if not name:
             raise ValueError(f"Missing name for column in '{model_class.__name__}'")

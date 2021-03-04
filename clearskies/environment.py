@@ -69,5 +69,10 @@ class Environment:
         if secret_path[0] != '/':
             secret_path = f'/{secret_path}'
         if secret_path not in self._resolved_values:
+            if self.secrets is None:
+                raise ValueError(
+                    "References to the secret engine were found in the environment, " + \
+                    "but a secret engine was not provided"
+                )
             self._resolved_values[secret_path] = self.secrets.get(secret_path)
         return self._resolved_values[secret_path]

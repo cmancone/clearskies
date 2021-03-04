@@ -17,13 +17,12 @@ class Update(Write):
             return self.error("Not Found", 404)
         del input_data['id']
 
-        columns = model.columns()
         input_errors = {
-            **self._extra_column_errors(input_data, columns),
-            **self._find_input_errors(model, input_data, columns),
+            **self._extra_column_errors(input_data),
+            **self._find_input_errors(model, input_data),
         }
         if input_errors:
             raise InputError(input_errors)
         model.save(input_data)
 
-        return self.success(self._model_as_json(model, columns))
+        return self.success(self._model_as_json(model))

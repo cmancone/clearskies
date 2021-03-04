@@ -19,3 +19,9 @@ clearskies is a microframework intended especially for developing applications i
  - Anything that even remotely resembles a front end
  - Log handling
  - Basically anything not listed in the "Inside the Box" section above
+
+# Upcoming
+
+ - Rules engine for user-configurable notifications/actions
+ - Integration with [mygrations](https://github.com/cmancone/mygrations) - stateless database migration system
+ - Automatic API documentation generator
