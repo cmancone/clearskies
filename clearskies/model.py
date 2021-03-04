@@ -133,7 +133,7 @@ class Model(ABC):
     def columns_pre_save(self, data, columns):
         """ Uses the column information present in the model to make any necessary changes before saving """
         for column in columns.values():
-            data = column.pre_save(data)
+            data = column.pre_save(data, self)
             if data is None:
                 raise ValueError(
                     f'Column {column.name} of type {column.__class__.__name__} did not return any data for pre_save'
@@ -162,7 +162,7 @@ class Model(ABC):
     def columns_post_save(self, data, id, columns):
         """ Uses the column information present in the model to make additional changes as needed after saving """
         for column in columns.values():
-            data = column.post_save(data, id)
+            data = column.post_save(data, self, id)
             if data is None:
                 raise ValueError(
                     f'Column {column.name} of type {column.__class__.__name__} did not return any data for post_save'

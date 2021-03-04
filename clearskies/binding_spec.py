@@ -6,6 +6,7 @@ from .columns import Columns
 import os
 from .environment import Environment
 from .secrets import Secrets
+import datetime
 
 
 class BindingSpec(pinject.BindingSpec):
@@ -56,3 +57,6 @@ class BindingSpec(pinject.BindingSpec):
             database=environment.get('db_database')
         )
         return connection.cursor(named_tuple=True)
+
+    def provide_now(self):
+        return datetime.datetime.now()

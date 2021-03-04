@@ -89,7 +89,7 @@ class Column(ABC):
     def check_input(self, model, data):
         return ''
 
-    def pre_save(self, data):
+    def pre_save(self, data, model):
         """
         Make any changes needed to the data before starting the save process
 
@@ -104,7 +104,7 @@ class Column(ABC):
         """
         return data
 
-    def post_save(self, data, id):
+    def post_save(self, data, model, id):
         """
         Make any changes needed after saving to the database
 
