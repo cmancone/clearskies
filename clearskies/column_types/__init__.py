@@ -6,3 +6,4 @@ from .integer import Integer
 from .json import JSON
 from .string import String
 from .updated import Updated
+from .belongs_to import BelongsTo

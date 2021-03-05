@@ -5,6 +5,7 @@ class Column(ABC):
     configuration = None
     common_configs = [
         'input_requirements',
+        'class'
     ]
     my_configs = []
     required_configs = []
@@ -18,8 +19,8 @@ class Column(ABC):
             raise ValueError(f"Missing name for column in '{model_class.__name__}'")
         self.model_class = model_class
         self.name = name
-        configuration = self._finalize_configuration(configuration)
         self._check_configuration(configuration)
+        configuration = self._finalize_configuration(configuration)
         self.configuration = configuration
 
     def _check_configuration(self, configuration):
@@ -30,7 +31,7 @@ class Column(ABC):
                     f"Missing required configuration '{key}' for column '{self.name}' in '{self.model_class.__name__}'"
                 )
         for key in configuration.keys():
-            if key not in self.common_configs and key not in self.my_configs:
+            if key not in self.common_configs and key not in self.my_configs and key not in self.required_configs:
                 raise KeyError(
                     f"Configuration '{key}' not allowed for column '{self.name}' in '{self.model_class.__name__}'"
                 )
@@ -39,8 +40,6 @@ class Column(ABC):
         """ Make any changes to the configuration/fill in defaults """
         if not 'input_requirements' in configuration:
             configuration['input_requirements'] = []
-        if 'class' in configuration:
-            del configuration['class']
         return configuration
 
     def config(self, key):
