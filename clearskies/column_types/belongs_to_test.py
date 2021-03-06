@@ -57,6 +57,13 @@ class BelongsToTest(unittest.TestCase):
             Models.counted[0]['conditions']
         )
 
+    def test_check_input_null(self):
+        self.models.add_search_response([{'id': 1}])
+        self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
+        error = self.belongs_to.input_errors('model', {'user_id': None})
+        self.assertEquals({}, error)
+        self.assertEquals(None, Models.counted)
+
     def test_provide(self):
         self.models.add_search_response([{'id': 2, 'name': 'hey'}])
         self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
