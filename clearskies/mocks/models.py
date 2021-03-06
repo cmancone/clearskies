@@ -24,12 +24,14 @@ class Models(ModelsBase):
     iterating = None
     iterator_index = None
     iterated = None
+    counted = None
 
     @classmethod
     def reset(cls):
         cls.updated = None
         cls.created = None
         cls.iterated = None
+        cls.counted = None
 
     def __init__(self, model_configuration):
         self._model_configuration = model_configuration
@@ -109,7 +111,11 @@ class Models(ModelsBase):
     def count(self, configuration):
         if self.search_responses is None:
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
-        return len(self.search_responses[0])
+        if Models.counted == None:
+            Models.counted = []
+        Models.counted.append(configuration)
+        counted = self.search_responses.pop(0)
+        return len(counted)
 
     def iterator(self, configuration):
         if self.search_responses is None:

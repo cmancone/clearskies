@@ -12,7 +12,10 @@ class BelongsTo(Integer):
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
         if self.name[-3:] != '_id':
-            raise ValueError("BelongsTo column name must end in '_id'")
+            raise ValueError(
+                f"Invalid name for column '{self.name}' in '{self.model_class.__name__}' - " + \
+                "BelongsTo column names must end in '_id'"
+            )
 
     def _finalize_configuration(self, configuration):
         configuration = super()._finalize_configuration(configuration)
@@ -33,6 +36,6 @@ class BelongsTo(Integer):
     def provide(self, data, column_name):
         model_column_name = self.config('model_column_name')
         models = self.config('parent_models')
-        if model_column_name not in or not data[model_column_name]:
+        if model_column_name not in data or not data[model_column_name]:
             return models.where(f"{self.name}={data[self.name]}").first()
         return models.empty_model()
