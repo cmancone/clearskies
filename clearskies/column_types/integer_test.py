@@ -19,3 +19,25 @@ class IntegerTest(unittest.TestCase):
         self.assertEquals({}, integer.input_errors('model', {'age': 15}))
         self.assertEquals({}, integer.input_errors('model', {'age': None}))
         self.assertEquals({}, integer.input_errors('model', {}))
+
+    def test_is_allowed_operator(self):
+        integer = Integer()
+        for operator in ['=', '<', '>', '<=', '>=']:
+            self.assertTrue(integer.is_allowed_operator(operator))
+        for operator in ['==', '<=>']:
+            self.assertFalse(integer.is_allowed_operator(operator))
+
+    def test_build_condition(self):
+        integer = Integer()
+        integer.configure('fraction', {}, int)
+        self.assertEquals('fraction=0.2', integer.build_condition(0.2))
+        self.assertEquals(
+            'fraction<10',
+            integer.build_condition(10, operator='<')
+        )
+
+    def test_check_search_value(self):
+        integer = Integer()
+        self.assertEquals('', integer.check_search_value(25))
+        self.assertEquals('', integer.check_search_value(25.0))
+        self.assertEquals('value should be an integer or float', integer.check_search_value('asdf'))

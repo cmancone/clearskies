@@ -7,6 +7,20 @@ class FloatTest(unittest.TestCase):
         float_column = Float()
         self.assertEquals(5.0, float_column.from_database('5'))
 
+    def test_check_input_bad(self):
+        float_column = Float()
+        float_column.configure('age', {}, FloatTest)
+        error = float_column.input_errors('model', {'age': 'asdf'})
+        self.assertEquals({'age': 'Invalid input: age must be an integer or float'}, error)
+
+    def test_check_input_good(self):
+        float_column = Float()
+        float_column.configure('age', {}, FloatTest)
+        self.assertEquals({}, float_column.input_errors('model', {'age': 15.05}))
+        self.assertEquals({}, float_column.input_errors('model', {'age': 15}))
+        self.assertEquals({}, float_column.input_errors('model', {'age': None}))
+        self.assertEquals({}, float_column.input_errors('model', {}))
+
     def test_is_allowed_operator(self):
         float_column = Float()
         for operator in ['=', '<', '>', '<=', '>=']:
