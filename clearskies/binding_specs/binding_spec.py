@@ -60,3 +60,6 @@ class BindingSpec(pinject.BindingSpec):
 
     def provide_now(self):
         return datetime.datetime.now()
+
+    def provide_input_output(self):
+        raise NotImplementedError()
