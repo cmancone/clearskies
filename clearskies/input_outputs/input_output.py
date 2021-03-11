@@ -13,7 +13,7 @@ class InputOutput(ABC):
         pass
 
     def has_header(self, key):
-        return key.upper() in self._response_headers:
+        return key.upper() in self._response_headers
 
     def set_header(self, key, value):
         if self._response_headers is None:

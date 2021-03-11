@@ -2,10 +2,10 @@ import pinject
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-from .columns import Columns
+from ..columns import Columns
 import os
-from .environment import Environment
-from .secrets import Secrets
+from ..environment import Environment
+from ..secrets import Secrets
 import datetime
 
 
