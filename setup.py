@@ -17,8 +17,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='clearskies',
-    version='0.1.0',
+    name='clear-skies',
+    version='0.1.2',
     description='A nano-framework for building microservices in the cloud',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -26,7 +26,6 @@ setup(
     author='Conor Mancone',
     author_email='cmancone@gmail.com',
     license='MIT',
-    download_url='https://github.com/cmancone/clearskies/archive/v0.1.0.tar.gz',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -37,4 +36,7 @@ setup(
         'Programming Language :: Python :: 3',
     ],
     keywords='setuptools development microservices',
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
+    python_requires=">=3.6",
+)

@@ -6,6 +6,12 @@ clearskies is a Python-basd nano-framework intended for developing microservices
 
 Why do I call this a nano-framework?  Because it would be a stretch to call this a micro framework - it's really just a set of loosely coupled classes that play nicely with eachother, and which coordinate via dependency injection.  It's definitely **not** your typical framework, as it tries to automate a completely different list of things.  If you are used to "standard" frameworks then you'll find that this is missing a lot of the tools you take for granted, while helping with other things you never asked a framework to do for you.  Therefore, this probably isn't the tool for you.
 
+# Installation and Usage
+
+```
+pip3 install clear-skies
+```
+
 # Inside the Box
 
  - Fairly standard models and query builder
