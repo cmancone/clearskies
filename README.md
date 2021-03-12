@@ -1,6 +1,6 @@
 # clearskies
 
-clearskies is a Python-basd nano-framework intended for developing microservices in the cloud.  It is mainly intended for building backend API endpoints in lambdas/functions, queue listeners, runners, and the like.
+clearskies is a Python-basd nano-framework intended for developing microservices in the cloud.  It is mainly intended for RESTful API endpoints, queue listeners, runners, and the like.
 
 ## Seriously, a nano framework?
 
@@ -21,6 +21,8 @@ pip3 install clear-skies
  - Built-in conventions for proper secret storage in environment + secret manager
  - Method-based routing capabilities
  - Extensive user input validation and easy-to-understand error messages
+ - Explicit Authentication for API Endpoints
+ - Easy Authorization
  - Easy lifecycle hooks for plug-and-play customization
  - Absolutely everything can be customized and modified - nothing is required
 

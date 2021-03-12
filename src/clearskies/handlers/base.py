@@ -7,9 +7,11 @@ class Base(ABC):
     _configuration = None
     _configuration_defaults = {}
     _global_configuration_defaults = {}
+    _input_output = None
+    _configuration = None
 
-    def __init__(self, request, authentication):
-        self._request = request
+    def __init__(self, input_output, authentication):
+        self._input_output = input_output
         self._authentication = authentication
         self._configuration = None
 
@@ -50,7 +52,7 @@ class Base(ABC):
     def __call__(self):
         if self._configuration is None:
             raise ValueError("Must configure handler before calling")
-        if not self._authentication.authenticate(self._request):
+        if not self._authentication.authenticate(self._input_output):
             return self.error('Not Authorized', 401)
 
         try:
@@ -85,7 +87,7 @@ class Base(ABC):
         return self.respond(response_data, 200)
 
     def respond(self, response_data, status_code):
-        return (self._normalize_response(response_data), status_code)
+        return self._input_output.respond(self._normalize_response(response_data), status_code)
 
     def _normalize_response(self, response_data):
         if not 'status' in response_data:
@@ -101,14 +103,14 @@ class Base(ABC):
         return response_data
 
     def json_body(self, required=True):
-        json = self._request.get_json(force=True, silent=True)
+        json = self._input_output.get_json_body()
         # if we get None then either the body was not JSON or was empty.
         # If it is required then we have an exception either way.  If it is not required
         # then we have an exception if a body was provided but it was not JSON.  We can check for this
         # if json is None and there is an actual request body.  If json is none, the body is empty,
         # and it was not required, then we can just return None
         if json is None:
-            if required or self._request.get_data():
+            if required or self._input_output.has_body():
                 raise ClientError("Request body was not valid JSON")
         return json
 
