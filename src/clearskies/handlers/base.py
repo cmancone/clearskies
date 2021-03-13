@@ -6,7 +6,9 @@ from collections import OrderedDict
 class Base(ABC):
     _configuration = None
     _configuration_defaults = {}
-    _global_configuration_defaults = {}
+    _global_configuration_defaults = {
+        'response_headers': None
+    }
     _input_output = None
     _configuration = None
 
@@ -87,6 +89,9 @@ class Base(ABC):
         return self.respond(response_data, 200)
 
     def respond(self, response_data, status_code):
+        response_headers = self.configuration('response_headers')
+        if response_headers:
+            self._input_output.set_headers(response_headers)
         return self._input_output.respond(self._normalize_response(response_data), status_code)
 
     def _normalize_response(self, response_data):

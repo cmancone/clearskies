@@ -3,20 +3,24 @@ from abc import abstractmethod
 
 
 class Routing(Base):
-    def __init__(self, input_output, authentication):
+    _object_graph = None
+
+    def __init__(self, input_output, authentication, object_graph):
         super().__init__(input_output, authentication)
+        self._object_graph = object_graph
 
     @abstractmethod
     def handler_classes(self):
         pass
 
+    @abstractmethod
     def handle(self):
         pass
 
     def build_handler(self, handler_class, configuration=None):
         if configuration is None:
             configuration = self._configuration
-        handler = handler_class()
+        handler = self._object_graph.provide(handler_class)
         handler_configuration = {}
         for key in handler._configuration_defaults.keys():
             if key in configuration:
@@ -42,10 +46,11 @@ class Routing(Base):
         # of this process)
         used_configs = []
         for handler_class in self.handler_classes():
-            handler = self.build_handler(handler_class)
+            handler = self.build_handler(handler_class, configuration=configuration)
+            used_configs.extend(handler._configuration_defaults.keys())
 
         for key in configuration.keys():
-            if key not in self._configuration_defaults and key not in self._global_configuration_defaults:
+            if key not in used_configs and key not in self._global_configuration_defaults:
                 class_name = self.__class__.__name__
                 raise KeyError(f"Attempt to set unkown configuration setting '{key}' for handler '{class_name}'")
 
@@ -53,19 +58,4 @@ class Routing(Base):
         self._configuration = self._finalize_configuration(self.apply_default_configuation(configuration))
 
     def _check_configuration(self, configuration):
-        # we check configuration by passing our configuration on to Create and Read, since those two
-        # together will check all necessary configuration.  This is mildly tricky though because they have
-        # different configs, and will complain if we pass them something they aren't expecting.
-        # However, we can look at their configuration defaults to see what keys they are expecting,
-        # and only pass those (if present)
-        # also, keep track of the configs they are expecting and make sure we don't have any extras
-        for handler_class in [Create, Read]:
-            handler = handler_class(self._input_output, self._authentication, self._models)
-            handler_config = {}
-            for key in handler._configuration_defaults.keys():
-                if key in configuration:
-                    handler_config[key] = configuration[key]
-            for key in handler._global_configuration_defaults.keys():
-                if key in configuration:
-                    handler_config[key] = configuration[key]
-            handler.configure(configuration)
+        pass
