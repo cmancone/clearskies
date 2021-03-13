@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 
 class Read(Base):
-    _request = None
     _models = None
     _columns = None
     _authentication = None
@@ -23,8 +22,8 @@ class Read(Base):
         'max_limit': 200,
     }
 
-    def __init__(self, request, authentication, models):
-        super().__init__(request, authentication)
+    def __init__(self, input_output, authentication, models):
+        super().__init__(input_output, authentication)
         self._models = models
         self._columns = self._models.columns()
 

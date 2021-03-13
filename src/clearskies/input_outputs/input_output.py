@@ -43,11 +43,14 @@ class InputOutput(ABC):
 
     def get_json_body(self):
         if not self._body_loaded_as_json:
-            self._body_loaded_as_json = True
-            try:
-                self._body_as_json = json.loads(self.get_body())
-            except json.JSONDecodeError:
+            if self.get_body() is None:
                 self._body_as_json = None
+            else:
+                self._body_loaded_as_json = True
+                try:
+                    self._body_as_json = json.loads(self.get_body())
+                except json.JSONDecodeError:
+                    self._body_as_json = None
         return self._body_as_json
 
     @abstractmethod

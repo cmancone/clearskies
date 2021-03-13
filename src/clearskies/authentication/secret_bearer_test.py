@@ -5,25 +5,22 @@ from unittest.mock import MagicMock
 
 class SecretBearerTest(unittest.TestCase):
     def test_headers(self):
-        secret_bearer = SecretBearer('asdferqwerty')
+        secret_bearer = SecretBearer('input_output', 'asdferqwerty')
         self.assertEquals({'Authorization': 'Bearer asdferqwerty'}, secret_bearer.headers())
 
     def test_good_auth(self):
-        headers = type('', (), {'get': MagicMock(return_value='Bearer asdferqwerty')})()
-        request = type('', (), {'headers': headers})()
-        secret_bearer = SecretBearer('asdferqwerty')
-        self.assertTrue(secret_bearer.authenticate(request))
-        request.headers.get.assert_called_with('authorization')
+        input_output = type('', (), {'get_request_header': MagicMock(return_value='Bearer asdferqwerty')})()
+        secret_bearer = SecretBearer(input_output, 'asdferqwerty')
+        self.assertTrue(secret_bearer.authenticate())
+        input_output.get_request_header.assert_called_with('authorization', True)
 
     def test_bad_auth(self):
-        headers = type('', (), {'get': MagicMock(return_value='Bearer Asdferqwerty')})()
-        request = type('', (), {'headers': headers})()
-        secret_bearer = SecretBearer('asdferqwerty')
-        self.assertFalse(secret_bearer.authenticate(request))
-        request.headers.get.assert_called_with('authorization')
+        input_output = type('', (), {'get_request_header': MagicMock(return_value='Bearer Asdferqwerty')})()
+        secret_bearer = SecretBearer(input_output, 'asdferqwerty')
+        self.assertFalse(secret_bearer.authenticate())
+        input_output.get_request_header.assert_called_with('authorization', True)
 
     def test_bad_bearer_auth(self):
-        headers = type('', (), {'get': MagicMock(return_value='Bearer: asdferqwerty')})()
-        request = type('', (), {'headers': headers})()
-        secret_bearer = SecretBearer('asdferqwerty')
-        self.assertFalse(secret_bearer.authenticate(request))
+        input_output = type('', (), {'get_request_header': MagicMock(return_value='Bearer: asdferqwerty')})()
+        secret_bearer = SecretBearer(input_output, 'asdferqwerty')
+        self.assertFalse(secret_bearer.authenticate())

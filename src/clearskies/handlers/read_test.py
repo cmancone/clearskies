@@ -1,6 +1,6 @@
 import unittest
 from .read import Read
-from ..mocks import Models, Request
+from ..mocks import Models, InputOutput
 from ..column_types import String, Integer
 from ..authentication import Public, SecretBearer
 
@@ -23,7 +23,7 @@ class ReadTest(unittest.TestCase):
         ])
 
     def test_simple_read(self):
-        read = Read(Request(), Public(), self.models)
+        read = Read(InputOutput(), Public(), self.models)
         read.configure({
             'readable_columns': ['name', 'email', 'age'],
             'searchable_columns': ['name'],
@@ -49,7 +49,7 @@ class ReadTest(unittest.TestCase):
         }, Models.iterated[0])
 
     def test_configure(self):
-        read = Read(Request(), Public(), self.models)
+        read = Read(InputOutput(), Public(), self.models)
         read.configure({
             'readable_columns': ['name'],
             'searchable_columns': ['name'],
@@ -90,7 +90,7 @@ class ReadTest(unittest.TestCase):
             'start': 10,
             'limit': 5,
         }
-        read = Read(Request(json=user_input), Public(), self.models)
+        read = Read(InputOutput(body=user_input), Public(), self.models)
         read.configure({
             'readable_columns': ['name', 'email', 'age'],
             'searchable_columns': ['email'],

@@ -5,7 +5,7 @@ from abc import abstractmethod
 
 
 class Write(Base):
-    _request = None
+    _input_output = None
     _models = None
     _columns = None
     _authentication = None
@@ -18,8 +18,8 @@ class Write(Base):
         'readable_columns': None,
     }
 
-    def __init__(self, request, authentication, models):
-        super().__init__(request, authentication)
+    def __init__(self, input_output, authentication, models):
+        super().__init__(input_output, authentication)
         self._models = models
         self._columns = self._models.columns()
 

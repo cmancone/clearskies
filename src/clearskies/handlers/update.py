@@ -4,8 +4,8 @@ from collections import OrderedDict
 
 
 class Update(Write):
-    def __init__(self, request, authentication, models):
-        super().__init__(request, authentication, models)
+    def __init__(self, input_output, authentication, models):
+        super().__init__(input_output, authentication, models)
 
     def handle(self):
         input_data = self.json_body()

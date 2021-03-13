@@ -9,4 +9,4 @@ class PublicTest(unittest.TestCase):
         self.assertEquals({}, public.headers())
 
     def test_good_auth(self):
-        self.assertTrue(Public().authenticate('request'))
+        self.assertTrue(Public().authenticate())

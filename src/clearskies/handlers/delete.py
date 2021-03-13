@@ -5,8 +5,8 @@ from .base import Base
 class Delete(Base):
     _models = None
 
-    def __init__(self, request, authentication, models):
-        super().__init__(request, authentication)
+    def __init__(self, input_output, authentication, models):
+        super().__init__(input_output, authentication)
         self._models = models
 
     def handle(self):

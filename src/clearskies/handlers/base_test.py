@@ -123,7 +123,6 @@ class BaseTest(unittest.TestCase):
             'inputErrors': {},
         }, data)
         self.assertEquals(200, code)
-        authentication.authenticate.assert_called_with(self.reflect_output)
 
     def test_error(self):
         authentication = type('', (), {'authenticate': MagicMock(return_value=True)})

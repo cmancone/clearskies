@@ -4,8 +4,8 @@ from collections import OrderedDict
 
 
 class Create(Write):
-    def __init__(self, request, authentication, models):
-        super().__init__(request, authentication, models)
+    def __init__(self, input_output, authentication, models):
+        super().__init__(input_output, authentication, models)
 
     def handle(self):
         model = self._models.empty_model()

@@ -1,6 +1,6 @@
 import unittest
 from .update import Update
-from ..mocks import Models, Request
+from ..mocks import Models, InputOutput
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
@@ -25,7 +25,7 @@ class UpdateTest(unittest.TestCase):
         })
 
         update = Update(
-            Request(json={'id': '5', 'name': 'Conor', 'email': 'c@example.com', 'age': 10}),
+            InputOutput(body={'id': '5', 'name': 'Conor', 'email': 'c@example.com', 'age': 10}),
             Public(),
             self.models
         )
@@ -49,7 +49,7 @@ class UpdateTest(unittest.TestCase):
 
     def test_input_checks(self):
         update = Update(
-            Request(json={'id': 5, 'email': 'cmancone@example.com', 'age': 10}),
+            InputOutput(body={'id': 5, 'email': 'cmancone@example.com', 'age': 10}),
             Public(),
             self.models
         )
@@ -73,7 +73,7 @@ class UpdateTest(unittest.TestCase):
         })
 
         update = Update(
-            Request(json={'id': 5, 'name': 'Conor', 'age': 10}),
+            InputOutput(body={'id': 5, 'name': 'Conor', 'age': 10}),
             Public(),
             self.models
         )
@@ -88,7 +88,7 @@ class UpdateTest(unittest.TestCase):
 
     def test_extra_columns(self):
         update = Update(
-            Request(json={'id': 5, 'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'}),
+            InputOutput(body={'id': 5, 'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'}),
             Public(),
             self.models
         )
@@ -111,7 +111,7 @@ class UpdateTest(unittest.TestCase):
         })
 
         update = Update(
-            Request(json={'id': 5, 'name': 'Conor', 'age': 10}),
+            InputOutput(body={'id': 5, 'name': 'Conor', 'age': 10}),
             Public(),
             self.models
         )
@@ -128,14 +128,11 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals({'name': 'Conor', 'age': 10}, self.models.updated[0]['data'])
 
     def test_auth_failure(self):
-        update = Update(
-            Request(
-                json={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-                headers={'Authorization': 'Bearer qwerty'},
-            ),
-            SecretBearer('asdfer'),
-            self.models
+        input_output = InputOutput(
+            body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            request_headers={'Authorization': 'Bearer qwerty'},
         )
+        update = Update(input_output, SecretBearer(input_output, 'asdfer'), self.models)
         update.configure({'columns': ['name', 'email', 'age']})
         response = update()
         self.assertEquals(401, response[1])
@@ -149,25 +146,21 @@ class UpdateTest(unittest.TestCase):
             'email': 'default@email.com',
             'age': 10,
         })
-        update = Update(
-            Request(
-                json={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-                headers={'Authorization': 'Bearer asdfer'},
-            ),
-            SecretBearer('asdfer'),
-            self.models
+        input_output = InputOutput(
+            body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            request_headers={'Authorization': 'Bearer asdfer'},
         )
+        update = Update(input_output, SecretBearer(input_output, 'asdfer'), self.models)
         update.configure({'columns': ['name', 'email', 'age']})
         response = update()
         self.assertEquals(200, response[1])
 
     def test_require_id_column(self):
         update = Update(
-            Request(
-                json={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-                headers={'Authorization': 'Bearer asdfer'},
+            InputOutput(
+                body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             ),
-            SecretBearer('asdfer'),
+            Public(),
             self.models
         )
         update.configure({'columns': ['name', 'email', 'age']})
@@ -179,11 +172,10 @@ class UpdateTest(unittest.TestCase):
         self.models.clear_search_responses()
         self.models.add_search_response([])
         update = Update(
-            Request(
-                json={'id': 10, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-                headers={'Authorization': 'Bearer asdfer'},
+            InputOutput(
+                body={'id': 10, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             ),
-            SecretBearer('asdfer'),
+            Public(),
             self.models
         )
         update.configure({'columns': ['name', 'email', 'age']})

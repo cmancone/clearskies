@@ -52,7 +52,7 @@ class Base(ABC):
     def __call__(self):
         if self._configuration is None:
             raise ValueError("Must configure handler before calling")
-        if not self._authentication.authenticate(self._input_output):
+        if not self._authentication.authenticate():
             return self.error('Not Authorized', 401)
 
         try:

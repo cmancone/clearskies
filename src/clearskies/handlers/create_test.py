@@ -1,6 +1,6 @@
 import unittest
 from .create import Create
-from ..mocks import Models, Request
+from ..mocks import Models, InputOutput
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
@@ -24,7 +24,7 @@ class CreateTest(unittest.TestCase):
         })
 
         create = Create(
-            Request(json={'name': 'Conor', 'email': 'c@example.com', 'age': 10}),
+            InputOutput(body={'name': 'Conor', 'email': 'c@example.com', 'age': 10}),
             Public(),
             self.models
         )
@@ -39,7 +39,7 @@ class CreateTest(unittest.TestCase):
 
     def test_input_checks(self):
         create = Create(
-            Request(json={'email': 'cmancone@example.com', 'age': 10}),
+            InputOutput(body={'email': 'cmancone@example.com', 'age': 10}),
             Public(),
             self.models
         )
@@ -63,7 +63,7 @@ class CreateTest(unittest.TestCase):
         })
 
         create = Create(
-            Request(json={'name': 'Conor', 'age': 10}),
+            InputOutput(body={'name': 'Conor', 'age': 10}),
             Public(),
             self.models
         )
@@ -78,7 +78,7 @@ class CreateTest(unittest.TestCase):
 
     def test_extra_columns(self):
         create = Create(
-            Request(json={'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'}),
+            InputOutput(body={'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'}),
             Public(),
             self.models
         )
@@ -101,7 +101,7 @@ class CreateTest(unittest.TestCase):
         })
 
         create = Create(
-            Request(json={'name': 'Conor', 'age': 10}),
+            InputOutput(body={'name': 'Conor', 'age': 10}),
             Public(),
             self.models
         )
@@ -118,14 +118,11 @@ class CreateTest(unittest.TestCase):
         self.assertEquals({'name': 'Conor', 'age': 10}, Models.created[0]['data'])
 
     def test_auth_failure(self):
-        create = Create(
-            Request(
-                json={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-                headers={'Authorization': 'Bearer qwerty'},
-            ),
-            SecretBearer('asdfer'),
-            self.models
+        input_output = InputOutput(
+            body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            request_headers={'Authorization': 'Bearer qwerty'},
         )
+        create = Create(input_output, SecretBearer(input_output, 'asdfer'), self.models)
         create.configure({'columns': ['name', 'email', 'age']})
         response = create()
         self.assertEquals(401, response[1])
@@ -139,14 +136,11 @@ class CreateTest(unittest.TestCase):
             'email': 'default@email.com',
             'age': 10,
         })
-        create = Create(
-            Request(
-                json={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-                headers={'Authorization': 'Bearer asdfer'},
-            ),
-            SecretBearer('asdfer'),
-            self.models
+        input_output = InputOutput(
+            body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            request_headers={'Authorization': 'Bearer asdfer'},
         )
+        create = Create(input_output, SecretBearer(input_output, 'asdfer'),self.models)
         create.configure({'columns': ['name', 'email', 'age']})
         response = create()
         self.assertEquals(200, response[1])
