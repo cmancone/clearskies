@@ -7,7 +7,7 @@ from .read import Read
 
 class CRUDByMethod(RequestMethodRouting)
     def __init__(self, input_output, authentication, object_graph):
-        super().__init__(input_output, authentication, object_graph)0
+        super().__init__(input_output, authentication, object_graph)
 
     def method_handler_map(self):
         return {
