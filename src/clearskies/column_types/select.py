@@ -6,9 +6,5 @@ class Select(String):
         'values'
     ]
 
-    def check_input(self, model, data):
-        if not self.name in data or not data[self.name]:
-            return ''
-        if data[self.name] in self.config('values'):
-            return ''
-        return f'Invalid value for {self.name}'
+    def input_error_for_value(self, value):
+        return f'Invalid value for {self.name}' if value not in self.config('values') else ''

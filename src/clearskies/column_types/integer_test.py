@@ -11,7 +11,7 @@ class IntegerTest(unittest.TestCase):
         integer = Integer()
         integer.configure('age', {}, IntegerTest)
         error = integer.input_errors('model', {'age': 'asdf'})
-        self.assertEquals({'age': 'Invalid input: age must be an integer'}, error)
+        self.assertEquals({'age': 'age must be an integer'}, error)
 
     def test_check_input_good(self):
         integer = Integer()
@@ -38,6 +38,7 @@ class IntegerTest(unittest.TestCase):
 
     def test_check_search_value(self):
         integer = Integer()
+        integer.configure('age', {}, IntegerTest)
         self.assertEquals('', integer.check_search_value(25))
-        self.assertEquals('', integer.check_search_value(25.0))
-        self.assertEquals('value should be an integer or float', integer.check_search_value('asdf'))
+        self.assertEquals('age must be an integer', integer.check_search_value(25.0))
+        self.assertEquals('age must be an integer', integer.check_search_value('asdf'))

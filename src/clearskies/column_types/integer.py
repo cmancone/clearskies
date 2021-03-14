@@ -5,13 +5,8 @@ class Integer(Column):
     def from_database(self, value):
         return int(value)
 
-    def check_search_value(self, value):
-        return 'value should be an integer' if type(value) != int else ''
-
-    def check_input(self, model, data):
-        if not self.name in data or isinstance(data[self.name], int) or data[self.name] == None:
-            return ''
-        return f'Invalid input: {self.name} must be an integer'
+    def input_error_for_value(self, value):
+        return f'{self.name} must be an integer' if type(value) != int else ''
 
     def build_condition(self, value, operator=None):
         if not operator:
@@ -20,6 +15,3 @@ class Integer(Column):
 
     def is_allowed_operator(self, operator):
         return operator in ['=', '<', '>', '<=', '>=']
-
-    def check_search_value(self, value):
-        return 'value should be an integer or float' if (type(value) != int and type(value) != float and value is not None) else ''

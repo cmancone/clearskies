@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "e52c3dbc5573fc8474c4f6309897de294c6291df63657ae71e0f679e7c42fc5a"
+            "sha256": "ad35d77bb72b6de9dbb5d2c07d74b9086fd0d9297ea6bd9891da9016473446a5"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -20,6 +20,49 @@
             "hashes": [
                 "sha256:159cc4e01a593706a15cd4e269a0b3345edf3aef8bf9278a57dac8adf5bf1e4a",
                 "sha256:17202df32c7a36e773136ff353aa3767e987f8b3e27374c39fd21a30a803d6f8"
+            ],
+            "index": "pypi",
+            "version": "==1.0.0"
+        },
+        "decorator": {
+            "hashes": [
+                "sha256:41fa54c2a0cc4ba648be4fd43cff00aedf5b9465c9bf18d64325bc225f08f760",
+                "sha256:e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7"
+            ],
+            "version": "==4.4.2"
+        },
+        "dnspython": {
+            "hashes": [
+                "sha256:95d12f6ef0317118d2a1a6fc49aac65ffec7eb8087474158f42f26a639135216",
+                "sha256:e4a87f0b573201a0f3727fa18a516b055fd1107e0e5477cded4a2de497df1dd4"
+            ],
+            "version": "==2.1.0"
+        },
+        "filelock": {
+            "hashes": [
+                "sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59",
+                "sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836"
+            ],
+            "version": "==3.0.12"
+        },
+        "idna": {
+            "hashes": [
+                "sha256:5205d03e7bcbb919cc9c19885f9920d622ca52448306f2377daede5cf3faac16",
+                "sha256:c5b02147e01ea9920e6b0a3f1f7bb833612d507592c837a6c49552768f4054e1"
+            ],
+            "version": "==3.1"
+        },
+        "pinject": {
+            "hashes": [
+                "sha256:0f0a0b14f9df87a85b529a21cdaf530269b1f24fb303d418583a12bb53f69382",
+                "sha256:dfc4981a36d3f7cf2fa82bd8922f713c769004fe7af935def3e2a52147aeda66"
+            ],
+            "index": "pypi",
+            "version": "==0.14.1"
+        },
+        "py3-validate-email": {
+            "hashes": [
+                "sha256:3d54cd631c729a01d87240e1892cf8061ae4ff0254294200d0388d3b5fc1834d"
             ],
             "index": "pypi",
             "version": "==1.0.0"

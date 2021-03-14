@@ -13,5 +13,5 @@ class String(Column):
         """
         return operator == '=' or operator.lower() == 'like'
 
-    def check_search_value(self, value):
+    def input_error_for_value(self, value):
         return 'value should be a string' if type(value) != str else ''

@@ -23,10 +23,8 @@ class BelongsTo(Integer):
         configuration['model_column_name'] = self.name[:-3]
         return configuration
 
-    def check_input(self, model, data):
-        if not self.name in data or not data[self.name]:
-            return ''
-        if not len(self.config('parent_models').where(f"{self.name}={data[self.name]}")):
+    def input_error_for_value(self, value):
+        if not len(self.config('parent_models').where(f"{self.name}={value}")):
             return f'Invalid selection for {self.name}: record does not exist'
         return ''
 

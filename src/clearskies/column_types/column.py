@@ -86,7 +86,9 @@ class Column(ABC):
         return {}
 
     def check_input(self, model, data):
-        return ''
+        if not self.name in data or not data[self.name]:
+            return ''
+        return self.input_error_for_value(data[self.name])
 
     def pre_save(self, data, model):
         """
@@ -166,4 +168,7 @@ class Column(ABC):
         return operator == '='
 
     def check_search_value(self, value):
+        return self.input_error_for_value(value)
+
+    def input_error_for_value(self, value):
         return ''
