@@ -17,6 +17,6 @@ class RequestMethodRouting(Routing):
         request_method = self._input_output.get_request_method()
         method_handler_map = self.method_handler_map()
         if not request_method in method_handler_map:
-            return self.error('Invalid request method')
+            return self.error('Invalid request method', 400)
         handler = self.build_handler(method_handler_map[request_method])
         return handler()

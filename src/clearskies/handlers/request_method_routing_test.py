@@ -3,25 +3,10 @@ from unittest.mock import MagicMock, call
 from .base import Base
 from .request_method_routing import RequestMethodRouting
 from .exceptions import ClientError, InputError
-from ..mocks import InputOutput
-from ..binding_specs import BindingSpec
+from ..mocks import InputOutput, BindingSpec
 import pinject
 from ..authentication import Public
 
-
-class MockBindingSpec(BindingSpec):
-    _input_output = None
-    _authentication = None
-
-    def __init__(self, input_output, authentication):
-        self._input_output = input_output
-        self._authentication = authentication
-
-    def provide_input_output(self):
-        return self._input_output
-
-    def provide_authentication(self):
-        return self._authentication
 
 class Handle(Base):
     _configuration_defaults = {
@@ -29,7 +14,7 @@ class Handle(Base):
     }
 
     def handle(self):
-        return self.success([1, 2, 3])
+        return self.success(self.configuration('age'))
 
 class Router(RequestMethodRouting):
     def __init__(self, input_output, authentication, object_graph):
@@ -47,13 +32,36 @@ class RequestMethodRoutingTest(unittest.TestCase):
 
     def setUp(self):
         self._input_output = InputOutput(request_method='POST')
-        self._object_graph = pinject.new_object_graph(binding_specs=[
-            MockBindingSpec(self._input_output, Public())
-        ])
+        self._object_graph = BindingSpec.get_object_graph(
+            input_output=self._input_output,
+            authentication=Public(),
+        )
 
     def test_route(self):
-        self.assertTrue(True)
-        handle = Router(self._input_output, Public(), self._object_graph)
+        handle = self._object_graph.provide(Router)
         handle.configure({})
         result = handle()
-        self.assertEquals([1, 2, 3], result[0]['data'])
+        self.assertEquals(5, result[0]['data'])
+
+    def test_route_non_method(self):
+        self._input_output.set_request_method('OPTIONS')
+        handle = self._object_graph.provide(Router)
+        handle.configure({})
+        result = handle()
+        self.assertEquals(400, result[1])
+        self.assertEquals('clientError', result[0]['status'])
+        self.assertEquals('Invalid request method', result[0]['error'])
+
+    def test_can_configure(self):
+        handle = self._object_graph.provide(Router)
+        handle.configure({'age': '10'})
+        self.assertEquals('10', handle.configuration('age'))
+
+    def test_configure_errors(self):
+        handle = self._object_graph.provide(Router)
+        with self.assertRaises(KeyError) as context:
+            handle.configure({'bob': 'sup'})
+        self.assertEquals(
+            "\"Attempt to set unkown configuration setting 'bob' for handler 'Router'\"",
+            str(context.exception)
+        )

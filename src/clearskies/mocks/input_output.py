@@ -8,16 +8,9 @@ class InputOutput(input_outputs.InputOutput):
     response = None
 
     def __init__(self, request_headers=None, body=None, request_method='GET'):
-        if body:
-            self._body = body if type(body) == str else json.dumps(body)
-        else:
-            self.body = None
-        self._request_method = request_method.upper()
-        if request_headers is None:
-            request_headers = {}
-        self._request_headers = {}
-        for (key, value) in request_headers.items():
-            self._request_headers[key.lower()] = value
+        self.set_request_method(request_method)
+        self.set_body(body)
+        self.set_request_headers(request_headers)
 
     def respond(self, body, status_code=200):
         self.response = {
@@ -33,8 +26,23 @@ class InputOutput(input_outputs.InputOutput):
     def has_body(self):
         return bool(self._body)
 
+    def set_body(self, body):
+        self._body = None
+        if body:
+            self._body = body if type(body) == str else json.dumps(body)
+
     def get_request_method(self):
         return self._request_method
+
+    def set_request_method(self, request_method):
+        self._request_method = request_method.upper()
+
+    def set_request_headers(self, request_headers):
+        self._request_headers = {}
+        if request_headers is None:
+            request_headers = {}
+        for (key, value) in request_headers.items():
+            self._request_headers[key.lower()] = value
 
     def get_path_info(self):
         return ''
