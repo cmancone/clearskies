@@ -84,7 +84,7 @@ class TestModels(unittest.TestCase):
             .limit(5, 10) \
             .select('*')
         iterator = users.__iter__()
-        self.assertEquals(self.backend, iterator)
+        self.assertEquals(users, iterator)
         self.backend.iterator.assert_has_calls([
             call({
                 'wheres': [

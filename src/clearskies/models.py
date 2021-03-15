@@ -177,7 +177,8 @@ class Models(ABC, ConditionParser):
         return self.count
 
     def __iter__(self):
-        return self._backend.iterator(self.configuration)
+        self._backend.iterator(self.configuration)
+        return self
 
     def __next__(self):
         return self.model(self._backend.next())

@@ -5,7 +5,10 @@ import dateparser
 
 class DateTime(Column):
     def from_database(self, value):
-        date = datetime.strptime(value, '%Y-%m-%d %H:%M:%S') if value else datetime.strptime('1-00-00', '%Y-%m-%d')
+        if type(value) == str:
+            date = datetime.strptime(value, '%Y-%m-%d %H:%M:%S') if value else datetime.strptime('1-00-00', '%Y-%m-%d')
+        else:
+            date = value
         return date.replace(tzinfo=timezone.utc)
 
     def to_database(self, data):

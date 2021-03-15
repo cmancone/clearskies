@@ -13,6 +13,7 @@ class CRUDByMethod(RequestMethodRouting):
         return {
             'CREATE': Create,
             'GET': Read,
-            'POST': Update,
+            'POST': Read,
+            'PATCH': Update,
             'DELETE': Delete,
         }

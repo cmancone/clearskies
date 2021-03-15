@@ -54,9 +54,10 @@ class BindingSpec(pinject.BindingSpec):
             user=environment.get('db_username'),
             password=environment.get('db_password'),
             host=environment.get('db_host'),
-            database=environment.get('db_database')
+            database=environment.get('db_database'),
+            autocommit=True,
         )
-        return connection.cursor(named_tuple=True)
+        return connection.cursor(dictionary=True)
 
     def provide_now(self):
         return datetime.datetime.now()

@@ -39,8 +39,7 @@ class CursorBackendTest(unittest.TestCase):
         self.assertEquals(True, status)
 
     def test_count_group(self):
-        Count = namedtuple('Count', 'count')
-        self.cursor.next = MagicMock(return_value=Count(count=10))
+        self.cursor.next = MagicMock(return_value={"count":10})
         my_count = self.backend.count({
             'table_name': 'my_table',
             'group_by_column': 'age',
@@ -65,8 +64,7 @@ class CursorBackendTest(unittest.TestCase):
         )
 
     def test_count(self):
-        Count = namedtuple('Count', 'count')
-        self.cursor.next = MagicMock(return_value=Count(count=10))
+        self.cursor.next = MagicMock(return_value={"count":10})
         my_count = self.backend.count({
             'table_name': 'my_table',
             'limit_start': 5,

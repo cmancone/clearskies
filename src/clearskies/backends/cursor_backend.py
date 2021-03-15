@@ -65,7 +65,7 @@ class CursorBackend(Backend):
         [query, parameters] = self.as_count_sql(configuration)
         self._cursor.execute(query, parameters)
         result = self._cursor.next()
-        return result[0] if type(result) == tuple else result.count
+        return result[0] if type(result) == tuple else result['count']
 
     def iterator(self, configuration):
         configuration = self._check_query_configuration(configuration)
@@ -74,7 +74,10 @@ class CursorBackend(Backend):
         return self
 
     def next(self):
-        return self._cursor.next()
+        result = self._cursor.next()
+        if result is None:
+            raise StopIteration()
+        return result
 
     def as_sql(self, configuration):
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration['wheres'])
