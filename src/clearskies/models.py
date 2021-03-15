@@ -6,7 +6,7 @@ class Models(ABC, ConditionParser):
     # The database connection
     _backend = None
     _columns = None
-    conditions = None
+    wheres = None
     sorts = None
     group_by_column = None
     limit_start = None
@@ -15,11 +15,12 @@ class Models(ABC, ConditionParser):
     must_rexecute = True
     must_recount = True
     count = None
+    _table_name = None
 
     def __init__(self, backend, columns):
         self._backend = backend
         self._columns = columns
-        self.conditions = []
+        self.wheres = []
         self.sorts = []
         self.group_by_column = None
         self.joins = []
@@ -42,21 +43,27 @@ class Models(ABC, ConditionParser):
     def blank(self):
         return self.__class__(self._backend, self._columns)
 
+    def get_table_name(self):
+        if self._table_name is None:
+            self._table_name = self.empty_model().table_name
+        return self._table_name
+
     @property
     def configuration(self):
         return {
-            'conditions': self.conditions,
+            'wheres': self.wheres,
             'sorts': self.sorts,
             'group_by_column': self.group_by_column,
             'joins': self.joins,
             'limit_start': self.limit_start,
             'limit_length': self.limit_length,
             'selects': self.selects,
+            'table_name': self.get_table_name()
         }
 
     @configuration.setter
     def configuration(self, configuration):
-        self.conditions = configuration['conditions']
+        self.wheres = configuration['wheres']
         self.sorts = configuration['sorts']
         self.group_by_column = configuration['group_by_column']
         self.joins = configuration['joins']
@@ -77,13 +84,13 @@ class Models(ABC, ConditionParser):
         self.must_rexecute = True
         return self
 
-    def where(self, condition):
+    def where(self, where):
         """ Adds the given condition to the query and returns a new Models object """
-        return self.clone().where_in_place(condition)
+        return self.clone().where_in_place(where)
 
-    def where_in_place(self, condition):
+    def where_in_place(self, where):
         """ Adds the given condition to the query for the current Models object """
-        self.conditions.append(self.parse_condition(condition))
+        self.wheres.append(self.parse_condition(where))
         self.must_rexecute = True
         self.must_recount = True
         return self
@@ -159,9 +166,9 @@ class Models(ABC, ConditionParser):
         self.must_rexecute = True
         return self
 
-    def find(self, condition):
+    def find(self, where):
         """ Returns the first model where condition """
-        return self.blank().where(condition).first()
+        return self.blank().where(where).first()
 
     def __len__(self):
         if self.must_recount:

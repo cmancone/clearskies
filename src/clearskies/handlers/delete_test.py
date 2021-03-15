@@ -20,9 +20,9 @@ class DeleteTest(unittest.TestCase):
         delete = Delete(
             InputOutput(body={'id': '5'}),
             Public(),
-            self.models
+            'object_graph'
         )
-        delete.configure({})
+        delete.configure({'models': self.models})
         response = delete()
         self.assertEquals('success', response[0]['status'])
         self.assertEquals(200, response[1])
@@ -30,7 +30,7 @@ class DeleteTest(unittest.TestCase):
         deleted = Models.deleted[0]
         self.assertEquals(5, deleted['id'])
 
-        condition = Models.iterated[0]['conditions'][0]
+        condition = Models.iterated[0]['wheres'][0]
         self.assertEquals('id', condition['column'])
         self.assertEquals(['5'], condition['values'])
         self.assertEquals('=', condition['operator'])

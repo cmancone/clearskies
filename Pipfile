@@ -7,8 +7,9 @@ verify_ssl = true
 
 [packages]
 dateparser = "*"
-py3-validate-email = "*"
 pinject = "*"
+requests = "*"
+mariadb = "*"
 
 [requires]
 python_version = "3.7"

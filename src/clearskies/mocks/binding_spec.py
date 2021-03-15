@@ -34,10 +34,3 @@ class BindingSpec(binding_specs.BindingSpec):
 
     def provide_authentication(self):
         return self._bind['authentication'] if 'authentication' in self._bind else super().provide_authentication()
-
-    @classmethod
-    def get_object_graph(cls, **kwargs):
-        binding_spec = cls(**kwargs)
-        object_graph = pinject.new_object_graph(binding_specs=[binding_spec])
-        binding_spec.object_graph = object_graph
-        return object_graph

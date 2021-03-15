@@ -2,6 +2,7 @@ from .belongs_to import BelongsTo
 from .column import Column
 from .created import Created
 from .datetime import DateTime
+from .email import Email
 from .float import Float
 from .integer import Integer
 from .json import JSON
@@ -25,6 +26,9 @@ def created(name, **kwargs):
 
 def datetime(name, **kwargs):
     return build_column_config(name, DateTime, **kwargs)
+
+def email(name, **kwargs):
+    return build_column_config(name, Email, **kwargs)
 
 def float_column(name, **kwargs):
     return build_column_config(name, Float, **kwargs)

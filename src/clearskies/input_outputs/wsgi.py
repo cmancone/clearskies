@@ -1,5 +1,6 @@
 from .input_output import InputOutput
 import urllib
+import json
 
 
 class WSGI(InputOutput):
@@ -28,7 +29,13 @@ class WSGI(InputOutput):
             f'{status_code} Ok',
             [header for header in self._response_headers.items()]
         )
-        return [body] if type(body) == bytes else [body.encode('utf-8')]
+        if type(body) == bytes:
+            final_body = body
+        elif type(body) == str:
+            final_body = body.encode('utf-8')
+        else:
+            final_body = json.dumps(body).encode('utf-8')
+        return [final_body]
 
     def has_body(self):
         return bool(self.get_body())

@@ -43,7 +43,7 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals(1, len(Models.counted))
         self.assertEquals(
             [{'column': 'user_id', 'operator': '=', 'values': ['5'], 'parsed': 'user_id=?'}],
-            Models.counted[0]['conditions']
+            Models.counted[0]['wheres']
         )
 
     def test_check_input_match(self):
@@ -54,7 +54,7 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals(1, len(Models.counted))
         self.assertEquals(
             [{'column': 'user_id', 'operator': '=', 'values': ['10'], 'parsed': 'user_id=?'}],
-            Models.counted[0]['conditions']
+            Models.counted[0]['wheres']
         )
 
     def test_check_input_null(self):
@@ -76,5 +76,5 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals(1, len(Models.iterated))
         self.assertEquals(
             [{'column': 'user_id', 'operator': '=', 'values': ['2'], 'parsed': 'user_id=?'}],
-            Models.iterated[0]['conditions']
+            Models.iterated[0]['wheres']
         )

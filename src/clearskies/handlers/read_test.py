@@ -1,12 +1,13 @@
 import unittest
 from .read import Read
-from ..mocks import Models, InputOutput
+from ..mocks import Models, InputOutput, BindingSpec
 from ..column_types import String, Integer
 from ..authentication import Public, SecretBearer
 
 
 class ReadTest(unittest.TestCase):
     def setUp(self):
+        self.object_graph = BindingSpec.get_object_graph()
         Models.reset()
         self.models = Models({
             'name': {'class': String},
@@ -23,8 +24,9 @@ class ReadTest(unittest.TestCase):
         ])
 
     def test_simple_read(self):
-        read = Read(InputOutput(), Public(), self.models)
+        read = Read(InputOutput(), Public(), self.object_graph)
         read.configure({
+            'models': self.models,
             'readable_columns': ['name', 'email', 'age'],
             'searchable_columns': ['name'],
             'default_sort_column': 'email',
@@ -39,18 +41,20 @@ class ReadTest(unittest.TestCase):
         self.assertEquals({'id': 8, 'name': 'ronoc', 'email': 'cmancone2@example.com', 'age': 25}, response_data[1])
 
         self.assertEquals({
-            'conditions': [],
+            'wheres': [],
             'sorts': [{'column': 'email', 'direction': 'asc'}],
             'group_by_column': None,
             'joins': [],
             'limit_start': 0,
             'limit_length': 100,
             'selects': None,
+            'table_name': 'models',
         }, Models.iterated[0])
 
     def test_configure(self):
-        read = Read(InputOutput(), Public(), self.models)
+        read = Read(InputOutput(), Public(), self.object_graph)
         read.configure({
+            'models': self.models,
             'readable_columns': ['name'],
             'searchable_columns': ['name'],
             'where': ['age>5', 'age<10'],
@@ -71,7 +75,7 @@ class ReadTest(unittest.TestCase):
         self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 50}, json_response['pagination'])
 
         self.assertEquals({
-            'conditions': [
+            'wheres': [
                 {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
                 {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'},
             ],
@@ -81,6 +85,7 @@ class ReadTest(unittest.TestCase):
             'limit_start': 0,
             'limit_length': 50,
             'selects': None,
+            'table_name': 'models',
         }, Models.iterated[0])
 
     def test_user_input(self):
@@ -90,8 +95,9 @@ class ReadTest(unittest.TestCase):
             'start': 10,
             'limit': 5,
         }
-        read = Read(InputOutput(body=user_input), Public(), self.models)
+        read = Read(InputOutput(body=user_input), Public(), self.object_graph)
         read.configure({
+            'models': self.models,
             'readable_columns': ['name', 'email', 'age'],
             'searchable_columns': ['email'],
             'where': ['age>5', 'age<10'],
@@ -105,7 +111,7 @@ class ReadTest(unittest.TestCase):
         self.assertEquals(2, len(response_data))
         self.assertEquals({'numberResults': 2, 'start': 10, 'limit': 5}, json_response['pagination'])
         self.assertEquals({
-            'conditions': [
+            'wheres': [
                 {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
                 {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'},
                 {'column': 'email', 'operator': 'LIKE', 'values': ['%bob@example.com%'], 'parsed': 'email LIKE ?'},
@@ -116,4 +122,5 @@ class ReadTest(unittest.TestCase):
             'limit_start': 10,
             'limit_length': 5,
             'selects': None,
+            'table_name': 'models',
         }, Models.iterated[0])

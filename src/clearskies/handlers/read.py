@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 
 class Read(Base):
+    _object_graph = None
     _models = None
     _columns = None
     _authentication = None
@@ -10,6 +11,8 @@ class Read(Base):
     _readable_columns = None
 
     _configuration_defaults = {
+        'models': None,
+        'models_class': None,
         'readable_columns': None,
         'searchable_columns': None,
         'sortable_columns': [],
@@ -22,10 +25,9 @@ class Read(Base):
         'max_limit': 200,
     }
 
-    def __init__(self, input_output, authentication, models):
+    def __init__(self, input_output, authentication, object_graph):
         super().__init__(input_output, authentication)
-        self._models = models
-        self._columns = self._models.columns()
+        self._object_graph = object_graph
 
     def handle(self):
         # first configure our models object with the defaults
@@ -142,10 +144,17 @@ class Read(Base):
                 if value_error:
                     return f"Invalid request: {value_error} for 'where' entry #{index+1}"
 
-
     def _check_configuration(self, configuration):
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)
-        model_class_name = str(self._models.model_class())
+        has_models_class = ('models_class' in configuration) and configuration['models_class'] is not None
+        has_models = ('models' in configuration) and configuration['models'] is not None
+        if not has_models and not has_models_class:
+            raise KeyError(f"{error_prefix} you must specify 'models' or 'models_class'")
+        if has_models and has_models_class:
+            raise KeyError(f"{error_prefix} you specified both 'models' and 'models_class', but can only provide one")
+        self._models = self._object_graph.provide(configuration['models_class']) if has_models_class else configuration['models']
+        self._columns = self._models.columns()
+        model_class_name = self._models.__class__.__name__
         # checks for searchable_columns and readable_columns
         for config_name in ['searchable_columns', 'readable_columns']:
             if not config_name in configuration or not configuration[config_name]:

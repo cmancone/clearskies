@@ -49,7 +49,7 @@ class TestModels(unittest.TestCase):
                 'values': ['5'],
                 'parsed': 'age>?',
             },
-            users.configuration['conditions'][0]
+            users.configuration['wheres'][0]
         )
         self.assertEquals(
             {
@@ -58,7 +58,7 @@ class TestModels(unittest.TestCase):
                 'values': ['10'],
                 'parsed': 'age<?',
             },
-            users.configuration['conditions'][1]
+            users.configuration['wheres'][1]
         )
         self.assertEquals({'column': 'created', 'direction': 'desc'}, users.configuration['sorts'][0])
         self.assertEquals('last_name', users.configuration['group_by_column'])
@@ -87,7 +87,7 @@ class TestModels(unittest.TestCase):
         self.assertEquals(self.backend, iterator)
         self.backend.iterator.assert_has_calls([
             call({
-                'conditions': [
+                'wheres': [
                     {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
                     {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'}
                 ],
@@ -98,7 +98,8 @@ class TestModels(unittest.TestCase):
                 'joins': ['LEFT JOIN posts ON posts.user_id=users.id'],
                 'limit_start': 5,
                 'limit_length': 10,
-                'selects': '*'
+                'selects': '*',
+                'table_name': 'users',
             })
         ])
         user = users.__next__()
@@ -111,13 +112,14 @@ class TestModels(unittest.TestCase):
         users.__iter__()
         self.backend.iterator.assert_has_calls([
             call({
-                'conditions': [],
+                'wheres': [],
                 'sorts': [],
                 'group_by_column': None,
                 'joins': [],
                 'limit_start': 0,
                 'limit_length': None,
                 'selects': None,
+                'table_name': 'users',
             })
         ])
 
@@ -134,7 +136,7 @@ class TestModels(unittest.TestCase):
         self.assertEquals(10, count)
         self.backend.count.assert_has_calls([
             call({
-                'conditions': [
+                'wheres': [
                     {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
                     {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'}
                 ],
@@ -146,5 +148,6 @@ class TestModels(unittest.TestCase):
                 'limit_start': 5,
                 'limit_length': 10,
                 'selects': '*',
+                'table_name': 'users',
             })
         ])

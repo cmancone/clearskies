@@ -5,7 +5,7 @@ from .delete import Delete
 from .read import Read
 
 
-class CRUDByMethod(RequestMethodRouting)
+class CRUDByMethod(RequestMethodRouting):
     def __init__(self, input_output, authentication, object_graph):
         super().__init__(input_output, authentication, object_graph)
 

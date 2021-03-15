@@ -13,6 +13,7 @@ class ApiBackend(Backend):
         'sorts',
         'limit_start',
         'limit_length',
+        'table_name',
     ]
 
     _empty_configs = [

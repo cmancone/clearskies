@@ -27,9 +27,9 @@ class UpdateTest(unittest.TestCase):
         update = Update(
             InputOutput(body={'id': '5', 'name': 'Conor', 'email': 'c@example.com', 'age': 10}),
             Public(),
-            self.models
+            'object_graph'
         )
-        update.configure({'columns': ['name', 'email', 'age']})
+        update.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = update()
         response_data = response[0]['data']
         self.assertEquals(200, response[1])
@@ -42,7 +42,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals(5, update['id'])
         self.assertEquals({'name': 'Conor', 'email': 'c@example.com', 'age': 10}, update['data'])
 
-        condition = Models.iterated[0]['conditions'][0]
+        condition = Models.iterated[0]['wheres'][0]
         self.assertEquals('id', condition['column'])
         self.assertEquals(['5'], condition['values'])
         self.assertEquals('=', condition['operator'])
@@ -51,9 +51,9 @@ class UpdateTest(unittest.TestCase):
         update = Update(
             InputOutput(body={'id': 5, 'email': 'cmancone@example.com', 'age': 10}),
             Public(),
-            self.models
+            'object_graph'
         )
-        update.configure({'columns': ['name', 'email', 'age']})
+        update.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = update()
         self.assertEquals(200, response[1])
         self.assertEquals(
@@ -75,9 +75,9 @@ class UpdateTest(unittest.TestCase):
         update = Update(
             InputOutput(body={'id': 5, 'name': 'Conor', 'age': 10}),
             Public(),
-            self.models
+            'object_graph'
         )
-        update.configure({'columns': ['name', 'age']})
+        update.configure({'models': self.models, 'columns': ['name', 'age']})
         response = update()
         response_data = response[0]['data']
         self.assertEquals(200, response[1])
@@ -90,9 +90,9 @@ class UpdateTest(unittest.TestCase):
         update = Update(
             InputOutput(body={'id': 5, 'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'}),
             Public(),
-            self.models
+            'object_graph'
         )
-        update.configure({'columns': ['name', 'age']})
+        update.configure({'models': self.models, 'columns': ['name', 'age']})
         response = update()
         self.assertEquals(
             {
@@ -113,9 +113,10 @@ class UpdateTest(unittest.TestCase):
         update = Update(
             InputOutput(body={'id': 5, 'name': 'Conor', 'age': 10}),
             Public(),
-            self.models
+            'object_graph'
         )
         update.configure({
+            'models': self.models,
             'writeable_columns': ['name', 'age'],
             'readable_columns': ['name', 'age', 'email'],
         })
@@ -132,8 +133,8 @@ class UpdateTest(unittest.TestCase):
             body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             request_headers={'Authorization': 'Bearer qwerty'},
         )
-        update = Update(input_output, SecretBearer(input_output, 'asdfer'), self.models)
-        update.configure({'columns': ['name', 'email', 'age']})
+        update = Update(input_output, SecretBearer(input_output, 'asdfer'), 'object_graph')
+        update.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = update()
         self.assertEquals(401, response[1])
         self.assertEquals('clientError', response[0]['status'])
@@ -150,8 +151,8 @@ class UpdateTest(unittest.TestCase):
             body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             request_headers={'Authorization': 'Bearer asdfer'},
         )
-        update = Update(input_output, SecretBearer(input_output, 'asdfer'), self.models)
-        update.configure({'columns': ['name', 'email', 'age']})
+        update = Update(input_output, SecretBearer(input_output, 'asdfer'), 'object_graph')
+        update.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = update()
         self.assertEquals(200, response[1])
 
@@ -161,9 +162,9 @@ class UpdateTest(unittest.TestCase):
                 body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             ),
             Public(),
-            self.models
+            'object_graph'
         )
-        update.configure({'columns': ['name', 'email', 'age']})
+        update.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = update()
         self.assertEquals(404, response[1])
         self.assertEquals("Missing 'id' in request body", response[0]['error'])
@@ -176,9 +177,9 @@ class UpdateTest(unittest.TestCase):
                 body={'id': 10, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             ),
             Public(),
-            self.models
+            'object_graph'
         )
-        update.configure({'columns': ['name', 'email', 'age']})
+        update.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = update()
         self.assertEquals(404, response[1])
         self.assertEquals("Not Found", response[0]['error'])

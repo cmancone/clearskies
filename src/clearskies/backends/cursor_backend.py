@@ -122,7 +122,7 @@ class CursorBackend(Backend):
 
         for key in self._required_configs:
             if key not in configuration:
-                raise KeyError(f'Missing required configuration key {configuration}')
+                raise KeyError(f'Missing required configuration key {key}')
 
         for key in self._allowed_configs:
             if not key in configuration:

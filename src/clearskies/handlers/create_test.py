@@ -26,9 +26,12 @@ class CreateTest(unittest.TestCase):
         create = Create(
             InputOutput(body={'name': 'Conor', 'email': 'c@example.com', 'age': 10}),
             Public(),
-            self.models
+            'object_graph',
         )
-        create.configure({'columns': ['name', 'email', 'age']})
+        create.configure({
+            'models': self.models,
+            'columns': ['name', 'email', 'age']
+        })
         response = create()
         response_data = response[0]['data']
         self.assertEquals(200, response[1])
@@ -41,9 +44,12 @@ class CreateTest(unittest.TestCase):
         create = Create(
             InputOutput(body={'email': 'cmancone@example.com', 'age': 10}),
             Public(),
-            self.models
+            'object_graph',
         )
-        create.configure({'columns': ['name', 'email', 'age']})
+        create.configure({
+            'models': self.models,
+            'columns': ['name', 'email', 'age']
+        })
         response = create()
         self.assertEquals(200, response[1])
         self.assertEquals(
@@ -65,9 +71,12 @@ class CreateTest(unittest.TestCase):
         create = Create(
             InputOutput(body={'name': 'Conor', 'age': 10}),
             Public(),
-            self.models
+            'object_graph'
         )
-        create.configure({'columns': ['name', 'age']})
+        create.configure({
+            'models': self.models,
+            'columns': ['name', 'age']
+        })
         response = create()
         response_data = response[0]['data']
         self.assertEquals(200, response[1])
@@ -80,9 +89,9 @@ class CreateTest(unittest.TestCase):
         create = Create(
             InputOutput(body={'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'}),
             Public(),
-            self.models
+            'object_graph',
         )
-        create.configure({'columns': ['name', 'age']})
+        create.configure({'models': self.models, 'columns': ['name', 'age']})
         response = create()
         self.assertEquals(
             {
@@ -103,9 +112,10 @@ class CreateTest(unittest.TestCase):
         create = Create(
             InputOutput(body={'name': 'Conor', 'age': 10}),
             Public(),
-            self.models
+            'object_graph'
         )
         create.configure({
+            'models': self.models,
             'writeable_columns': ['name', 'age'],
             'readable_columns': ['name', 'age', 'email'],
         })
@@ -122,8 +132,8 @@ class CreateTest(unittest.TestCase):
             body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             request_headers={'Authorization': 'Bearer qwerty'},
         )
-        create = Create(input_output, SecretBearer(input_output, 'asdfer'), self.models)
-        create.configure({'columns': ['name', 'email', 'age']})
+        create = Create(input_output, SecretBearer(input_output, 'asdfer'), 'object_graph')
+        create.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = create()
         self.assertEquals(401, response[1])
         self.assertEquals('clientError', response[0]['status'])
@@ -140,7 +150,7 @@ class CreateTest(unittest.TestCase):
             body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             request_headers={'Authorization': 'Bearer asdfer'},
         )
-        create = Create(input_output, SecretBearer(input_output, 'asdfer'),self.models)
-        create.configure({'columns': ['name', 'email', 'age']})
+        create = Create(input_output, SecretBearer(input_output, 'asdfer'), 'object_graph')
+        create.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = create()
         self.assertEquals(200, response[1])

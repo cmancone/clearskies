@@ -43,7 +43,7 @@ class BindingSpec(pinject.BindingSpec):
         return Columns(self.provide_object_graph())
 
     def provide_secrets(self):
-        return None
+        return {}
 
     def provide_environment(self, secrets):
         return Environment(os.getcwd() + '/.env', os.environ, secrets)
@@ -63,3 +63,10 @@ class BindingSpec(pinject.BindingSpec):
 
     def provide_input_output(self):
         raise NotImplementedError()
+
+    @classmethod
+    def get_object_graph(cls, *args, **kwargs):
+        binding_spec = cls(*args, **kwargs)
+        object_graph = pinject.new_object_graph(binding_specs=[binding_spec])
+        binding_spec.object_graph = object_graph
+        return object_graph
