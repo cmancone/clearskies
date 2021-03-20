@@ -48,6 +48,9 @@ class WSGI(InputOutput):
     def get_request_method(self):
         return self._from_environment('REQUEST_METHOD')
 
+    def get_script_name(self):
+        return self._from_environment('SCRIPT_NAME')
+
     def get_path_info(self):
         return self._from_environment('PATH_INFO')
 

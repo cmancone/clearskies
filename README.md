@@ -19,18 +19,19 @@ pip3 install clear-skies
  - Ability to use external APIs as a backend
  - Automatic generation of API endpoints via declarative coding conventions
  - Built-in conventions for proper secret storage in environment + secret manager
- - Method-based routing capabilities
+ - Simple routing
+ - Extensive validation of configuration provided by developer and easy-to-understand error messages
  - Extensive user input validation and easy-to-understand error messages
  - Explicit Authentication for API Endpoints
  - Easy Authorization
  - Easy lifecycle hooks for plug-and-play customization
- - Absolutely everything can be customized and modified - nothing is required
+ - Absolutely everything can be customized and modified - no part of clearskies is required
 
 # Upcoming features
 
  - Stateless database migrations via [mygrations](https://github.com/cmancone/mygrations)
  - User-configurable rules engine
- - Auto generated API documentation
+ - Auto generated swagger documentation
 
 # Not Included
 

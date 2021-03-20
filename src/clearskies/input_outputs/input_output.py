@@ -60,8 +60,19 @@ class InputOutput(ABC):
         pass
 
     @abstractmethod
+    def get_script_name(self):
+        pass
+
+    @abstractmethod
     def get_path_info(self):
         pass
+
+    def get_full_path(self):
+        path_info = self.get_path_info()
+        script_name = self.get_script_name()
+        if path_info[0] != '/':
+            path_info = f'/{path_info}'
+        return f'{path_info}{script_name}'.replace('//', '/')
 
     @abstractmethod
     def get_query_string(self):

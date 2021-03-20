@@ -16,7 +16,7 @@ class Delete(Base):
         self._object_graph = object_graph
 
     def handle(self):
-        input_data = self.json_body()
+        input_data = self.request_data()
         if 'id' not in input_data:
             return self.error("Missing 'id' in request body", 404)
         model_id = int(input_data['id'])

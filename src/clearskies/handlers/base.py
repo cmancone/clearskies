@@ -107,6 +107,21 @@ class Base(ABC):
             response_data['inputErrors'] = {}
         return response_data
 
+    def url_data(self, key, required=False):
+        if required:
+            raise ValueError(f"Path data has not been defined for handler '{self.__class__.__name__}'")
+        return ''
+
+    def request_data(self, required=True):
+        request_data = self.json_body(False)
+        if not request_data:
+            if self._input_output.has_body():
+                raise ClientError("Request body was not valid JSON")
+            request_data = {}
+        if self.url_data('id'):
+            request_data['id'] = self.url_data('id')
+        return request_data
+
     def json_body(self, required=True):
         json = self._input_output.get_json_body()
         # if we get None then either the body was not JSON or was empty.

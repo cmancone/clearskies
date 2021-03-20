@@ -42,7 +42,7 @@ class Read(Base):
         limit = self.configuration('default_limit')
         models = models.limit(start, limit)
 
-        request_data = self.json_body(False)
+        request_data = self.request_data(False)
         if request_data:
             error = self._check_request_data(request_data)
             if error:

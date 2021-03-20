@@ -9,7 +9,7 @@ class Create(Write):
 
     def handle(self):
         model = self._models.empty_model()
-        input_data = self.json_body()
+        input_data = self.request_data()
         input_errors = {
             **self._extra_column_errors(input_data),
             **self._find_input_errors(model, input_data),
