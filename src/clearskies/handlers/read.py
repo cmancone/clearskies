@@ -23,6 +23,7 @@ class Read(Base):
         'default_sort_direction': 'asc',
         'default_limit': 100,
         'max_limit': 200,
+        'single_record': False,
     }
 
     def __init__(self, input_output, authentication, object_graph):
@@ -51,11 +52,17 @@ class Read(Base):
         if not models.sorts:
             models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
 
+        if self.configuration('single_record'):
+            json_output = [self._model_as_json(model) for model in models]
+            if not len(json_output):
+                return self.error('Record not found', 400)
+            return self.success(json_output[0])
+
         return self.success(
             [self._model_as_json(model) for model in models],
             number_results=len(models),
             start=start,
-            limit=limit
+            limit=limit,
         )
 
     def _configure_models_from_request_data(self, models, request_data):

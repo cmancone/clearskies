@@ -5,12 +5,32 @@ from .. import input_outputs
 class InputOutput(input_outputs.InputOutput):
     _body = None
     _request_method = None
+    _script_name = ''
+    _path_info = ''
+    _query_string = ''
+    _content_type = ''
+    _protocol = ''
     response = None
 
-    def __init__(self, request_headers=None, body=None, request_method='GET'):
+    def __init__(
+        self,
+        request_headers=None,
+        body=None,
+        request_method='GET',
+        script_name = '',
+        path_info = '',
+        query_string = '',
+        content_type = '',
+        protocol = '',
+    ):
         self.set_request_method(request_method)
         self.set_body(body)
         self.set_request_headers(request_headers)
+        self._script_name = script_name
+        self._path_info = path_info
+        self._query_string = query_string
+        self._content_type = content_type
+        self._protocol = protocol
 
     def respond(self, body, status_code=200):
         self.response = {
@@ -44,17 +64,20 @@ class InputOutput(input_outputs.InputOutput):
         for (key, value) in request_headers.items():
             self._request_headers[key.lower()] = value
 
+    def get_script_name(self):
+        return self._script_name
+
     def get_path_info(self):
-        return ''
+        return self._path_info
 
     def get_query_string(self):
-        return ''
+        return self._query_string
 
     def get_content_type(self):
-        return ''
+        return self._content_type
 
     def get_protocol(self):
-        return ''
+        return self._protocol
 
     def has_request_header(self, header_name):
         return header_name.lower() in self._request_headers

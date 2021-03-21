@@ -70,7 +70,7 @@ class InputOutput(ABC):
     def get_full_path(self):
         path_info = self.get_path_info()
         script_name = self.get_script_name()
-        if path_info[0] != '/':
+        if not path_info or path_info[0] != '/':
             path_info = f'/{path_info}'
         return f'{path_info}{script_name}'.replace('//', '/')
 

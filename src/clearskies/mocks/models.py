@@ -32,6 +32,7 @@ class Models(ModelsBase):
         cls.created = None
         cls.iterated = None
         cls.counted = None
+        cls.deleted = None
 
     def __init__(self, model_configuration):
         self._model_configuration = model_configuration

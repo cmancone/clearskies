@@ -19,6 +19,7 @@ class Write(Base):
         'columns': None,
         'writeable_columns': None,
         'readable_columns': None,
+        'resource_id': None,
     }
 
     def __init__(self, input_output, authentication, object_graph):
@@ -42,6 +43,10 @@ class Write(Base):
         has_columns = 'columns' in configuration and configuration['columns'] is not None
         has_writeable = 'writeable_columns' in configuration and configuration['writeable_columns'] is not None
         has_readable = 'readable_columns' in configuration and configuration['readable_columns'] is not None
+        if not has_columns and not has_writeable:
+            raise KeyError(f"{error_prefix} you must specify 'columns' OR 'writeable_columns'")
+        if not has_columns and not has_readable:
+            raise KeyError(f"{error_prefix} you must specify 'columns' OR 'readable_columns'")
         if has_columns and has_writeable:
             raise KeyError(f"{error_prefix} you must specify 'columns' OR 'writeable_columns', not both")
         if has_columns and has_readable:
@@ -120,3 +125,9 @@ class Write(Base):
                 **column.input_errors(model, input_data),
             }
         return input_errors
+
+    def request_data(self, required=True):
+        request_data = super().request_data(required=required)
+        if self.configuration('resource_id'):
+            request_data['id'] = self.configuration('resource_id')
+        return request_data

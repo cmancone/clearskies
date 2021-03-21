@@ -10,7 +10,7 @@ class Routing(Base):
         self._object_graph = object_graph
 
     @abstractmethod
-    def handler_classes(self):
+    def handler_classes(self, configuration):
         pass
 
     @abstractmethod
@@ -28,8 +28,11 @@ class Routing(Base):
         for key in handler._global_configuration_defaults.keys():
             if key in configuration:
                 handler_configuration[key] = configuration[key]
-        handler.configure(handler_configuration)
+        handler.configure(self._finalize_configuration_for_sub_handler(handler_configuration, handler_class))
         return handler
+
+    def _finalize_configuration_for_sub_handler(self, configuration, handler_class):
+        return configuration
 
     def configure(self, configuration):
         # we need to completely clobber the base configuration process because it expects to have
@@ -45,7 +48,7 @@ class Routing(Base):
         # the handlers (they willl automatically throw exceptions for invalid configurations as part
         # of this process)
         used_configs = []
-        for handler_class in self.handler_classes():
+        for handler_class in self.handler_classes(configuration):
             handler = self.build_handler(handler_class, configuration=configuration)
             used_configs.extend(handler._configuration_defaults.keys())
 

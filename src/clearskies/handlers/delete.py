@@ -9,6 +9,7 @@ class Delete(Base):
     _configuration_defaults = {
         'models': None,
         'models_class': None,
+        'resource_id': None,
     }
 
     def __init__(self, input_output, authentication, object_graph):
@@ -17,10 +18,15 @@ class Delete(Base):
 
     def handle(self):
         input_data = self.request_data()
-        if 'id' not in input_data:
-            return self.error("Missing 'id' in request body", 404)
-        model_id = int(input_data['id'])
-        model = self._models.find(f'id={model_id}')
+        resource_id = None
+        if self.configuration('resource_id'):
+            resource_id = self.configuration('resource_id')
+        elif 'id' in input_data:
+            resource_id = input_data['id']
+        if not resource_id:
+            return self.error("Missing 'id'", 404)
+        resource_id = int(resource_id)
+        model = self._models.find(f'id={resource_id}')
         if not model.exists:
             return self.error("Not Found", 404)
 

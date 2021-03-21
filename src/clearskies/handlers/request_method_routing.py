@@ -10,7 +10,7 @@ class RequestMethodRouting(Routing):
     def method_handler_map(self):
         pass
 
-    def handler_classes(self):
+    def handler_classes(self, configuration):
         return self.method_handler_map().values()
 
     def handle(self):
