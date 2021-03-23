@@ -27,6 +27,9 @@ class ApiBackend(Backend):
         self._requests = requests
         self._auth = auth
 
+    def configure(self):
+        pass
+
     def update(self, id, data, model):
         response = self._requests.patch(
             self.url,

@@ -132,7 +132,9 @@ class CreateTest(unittest.TestCase):
             body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             request_headers={'Authorization': 'Bearer qwerty'},
         )
-        create = Create(input_output, SecretBearer(input_output, 'asdfer'), 'object_graph')
+        secret_bearer = SecretBearer(input_output, 'environment')
+        secret_bearer.configure(secret='asdfer')
+        create = Create(input_output, secret_bearer, 'object_graph')
         create.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = create()
         self.assertEquals(401, response[1])
@@ -150,7 +152,9 @@ class CreateTest(unittest.TestCase):
             body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             request_headers={'Authorization': 'Bearer asdfer'},
         )
-        create = Create(input_output, SecretBearer(input_output, 'asdfer'), 'object_graph')
+        secret_bearer = SecretBearer(input_output, 'environment')
+        secret_bearer.configure(secret='asdfer')
+        create = Create(input_output, secret_bearer, 'object_graph')
         create.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = create()
         self.assertEquals(200, response[1])

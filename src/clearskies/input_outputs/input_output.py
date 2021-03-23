@@ -12,6 +12,9 @@ class InputOutput(ABC):
     def respond(self, body, status_code=200):
         pass
 
+    def configure(self):
+        pass
+
     def has_header(self, key):
         if self._response_headers is None:
             return False

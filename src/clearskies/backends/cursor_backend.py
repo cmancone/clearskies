@@ -22,6 +22,9 @@ class CursorBackend(Backend):
     def __init__(self, cursor):
         self._cursor = cursor
 
+    def configure(self):
+        pass
+
     def update(self, id, data, model):
         query_parts = []
         parameters = []

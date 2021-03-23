@@ -133,7 +133,9 @@ class UpdateTest(unittest.TestCase):
             body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             request_headers={'Authorization': 'Bearer qwerty'},
         )
-        update = Update(input_output, SecretBearer(input_output, 'asdfer'), 'object_graph')
+        secret_bearer = SecretBearer(input_output, 'environment')
+        secret_bearer.configure(secret='asdfer')
+        update = Update(input_output, secret_bearer, 'object_graph')
         update.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = update()
         self.assertEquals(401, response[1])
@@ -151,7 +153,9 @@ class UpdateTest(unittest.TestCase):
             body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
             request_headers={'Authorization': 'Bearer asdfer'},
         )
-        update = Update(input_output, SecretBearer(input_output, 'asdfer'), 'object_graph')
+        secret_bearer = SecretBearer(input_output, 'environment')
+        secret_bearer.configure(secret='asdfer')
+        update = Update(input_output, secret_bearer, 'object_graph')
         update.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
         response = update()
         self.assertEquals(200, response[1])
