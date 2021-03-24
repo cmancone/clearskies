@@ -38,7 +38,6 @@ class BindingSpec(pinject.BindingSpec):
             return self.object_graph.provide(binding)
         return binding
 
-
     def provide_requests(self):
         if 'requests' in self._bind:
             return self.build_from_binding_config('requests')
@@ -109,6 +108,13 @@ class BindingSpec(pinject.BindingSpec):
         if 'authentication' in self._bind:
             return self.build_from_binding_config('authentication')
         raise AttributeError('The dependency injector requested an Authenticaiton method but none has been configured')
+
+    @classmethod
+    def init_application(cls, handler, handler_config, *args, **kwargs):
+        object_graph = cls.get_object_graph(*args, **kwargs)
+        handler = object_graph.provide(handler)
+        handler.configure(handler_config)
+        return handler
 
     @classmethod
     def get_object_graph(cls, *args, **kwargs):

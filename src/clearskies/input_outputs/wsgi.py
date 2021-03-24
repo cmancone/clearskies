@@ -46,7 +46,7 @@ class WSGI(InputOutput):
         return self._cached_body
 
     def get_request_method(self):
-        return self._from_environment('REQUEST_METHOD')
+        return self._from_environment('REQUEST_METHOD').upper()
 
     def get_script_name(self):
         return self._from_environment('SCRIPT_NAME')
