@@ -184,10 +184,13 @@ class Models(ABC, ConditionParser):
         return self.model(self._backend.next())
 
     def model(self, data):
-        model_class = self.model_class()
-        model = model_class(self._backend, self._columns)
+        model = self._build_model()
         model.data = data
         return model
+
+    def _build_model(self):
+        model_class = self.model_class()
+        return model_class(self._backend, self._columns)
 
     def empty_model(self):
         return self.model({})

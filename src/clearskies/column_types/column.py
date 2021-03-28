@@ -5,14 +5,16 @@ class Column(ABC):
     configuration = None
     common_configs = [
         'input_requirements',
-        'class'
+        'class',
+        'is_writeable',
     ]
     my_configs = []
     required_configs = []
 
     @property
     def is_writeable(self):
-        return True
+        is_writeable = self.config('is_writeable', True)
+        return True if (is_writeable or is_writeable is None) else False
 
     def configure(self, name, configuration, model_class):
         if not name:
@@ -35,6 +37,8 @@ class Column(ABC):
                 raise KeyError(
                     f"Configuration '{key}' not allowed for column '{self.name}' in '{self.model_class.__name__}'"
                 )
+        if 'is_writeable' in configuration and type(configuration['is_writeable']) != bool:
+            raise ValueError("'is_writeable' must be a boolean")
 
     def _finalize_configuration(self, configuration):
         """ Make any changes to the configuration/fill in defaults """
@@ -42,8 +46,10 @@ class Column(ABC):
             configuration['input_requirements'] = []
         return configuration
 
-    def config(self, key):
+    def config(self, key, silent=False):
         if not key in self.configuration:
+            if silent:
+                return None
             raise KeyError(
                 f"column '{self.__class__.__name__}' does not have a configuration named '{key}'"
             )
