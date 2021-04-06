@@ -11,18 +11,19 @@ class MemoryTable:
 
     # here be dragons.  This is not a 100% drop-in replacement for the equivalent SQL operators
     _operator_lambda_builders = {
-        '<=>': lambda column, value: lambda row: (row[column] if column in row else None) == value,
-        '!=': lambda column, value: lambda row: (row[column] if column in row else None) != value,
-        '<=': lambda column, value: lambda row: (row[column] if column in row else None) <= value,
-        '>=': lambda column, value: lambda row: (row[column] if column in row else None) >= value,
-        '>': lambda column, value: lambda row: (row[column] if column in row else None) > value,
-        '<': lambda column, value: lambda row: (row[column] if column in row else None) < value,
-        '=': lambda column, value: lambda row: (row[column] if column in row else None) == value,
-        'is not null': lambda column, value: lambda row: (column in row and row[column] is not None),
-        'is null': lambda column, value: lambda row: (column not in row or row[column] is None),
-        'is not': lambda column, value: lambda row: (row[column] if column in row else None) != value,
-        'is': lambda column, value: lambda row: (row[column] if column in row else None) == value,
-        'like': lambda column, value: lambda row: (row[column] if column in row else None) == value,
+        '<=>': lambda column, values: lambda row: (row[column] if column in row else None) == values[0],
+        '!=': lambda column, values: lambda row: (row[column] if column in row else None) != values[0],
+        '<=': lambda column, values: lambda row: (row[column] if column in row else None) <= values[0],
+        '>=': lambda column, values: lambda row: (row[column] if column in row else None) >= values[0],
+        '>': lambda column, values: lambda row: (row[column] if column in row else None) > values[0],
+        '<': lambda column, values: lambda row: (row[column] if column in row else None) < values[0],
+        '=': lambda column, values: lambda row: (row[column] if column in row else None) == values[0],
+        'is not null': lambda column, values: lambda row: (column in row and row[column] is not None),
+        'is null': lambda column, values: lambda row: (column not in row or row[column] is None),
+        'is not': lambda column, values: lambda row: (row[column] if column in row else None) != values[0],
+        'is': lambda column, values: lambda row: (row[column] if column in row else None) == values[0],
+        'like': lambda column, values: lambda row: (row[column] if column in row else None) == values[0],
+        'in': lambda column, values: lambda row: (row[column] if column in row else None) in values,
     }
 
     def __init__(self, model=None):
@@ -101,8 +102,9 @@ class MemoryTable:
 
     def _where_as_filter(where):
         column = where['column']
-        if where['operator'] == '=':
-            return lambda row: (row[column] if column in row else None) == where['values'][0]
+        values = where['values']
+        return self._operator_lambda_builders[where['operator']](column, values)
+
 
 class MemoryBackend(Backend):
     _tables = None
