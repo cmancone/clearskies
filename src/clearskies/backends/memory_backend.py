@@ -30,9 +30,9 @@ class MemoryTable:
         self._column_names = []
         self._rows = []
         self._id_to_index = {}
-        self._table_name = model.table_name
 
         if model is not None:
+            self._table_name = model.table_name
             self._column_names.extend(model.columns_configuration().keys())
 
     def add_index(self, column_name):
@@ -94,13 +94,14 @@ class MemoryTable:
     def rows(self, configuration):
         if 'wheres' in configuration:
             rows = self._rows
-            for where in configuration:
+            for where in configuration['wheres']:
                 rows = filter(self._where_as_filter(where), rows)
             rows = list(rows)
         else:
             rows = [*self._rows]
+        return rows
 
-    def _where_as_filter(where):
+    def _where_as_filter(self, where):
         column = where['column']
         values = where['values']
         return self._operator_lambda_builders[where['operator']](column, values)
