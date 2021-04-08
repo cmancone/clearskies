@@ -47,7 +47,7 @@ class MemoryTable:
         index = self._id_to_index[id]
         if index is None:
             raise ValueError(f"Cannot update record with id of '{id}' because it was already deleted")
-        for column_name in data.items():
+        for column_name in data.keys():
             if column_name not in self._column_names:
                 raise ValueError(
                     f"Cannot update record: column '{column_name}' does not exist in table '{self._table_name}'"
@@ -64,8 +64,8 @@ class MemoryTable:
                 raise ValueError(
                     f"Cannot create record: column '{column_name}' does not exist in table '{self._table_name}'"
                 )
-        self._next_id += 1
         new_id = self._next_id
+        self._next_id += 1
         data['id'] = new_id
         for column_name in self._column_names:
             if column_name not in data:
@@ -77,7 +77,7 @@ class MemoryTable:
     def delete(self, id):
         if id not in self._id_to_index:
             return
-        index = self._id_to_index[id]
+        row_index = self._id_to_index[id]
         if row_index is None:
             return True
         row = self._rows[row_index]
@@ -89,16 +89,28 @@ class MemoryTable:
         self._id_to_index[id] = None
 
     def count(self, configuration):
-        return len(self.rows(configuration))
+        return len(self.rows(configuration, filter_only=True))
 
-    def rows(self, configuration):
-        if 'wheres' in configuration:
-            rows = self._rows
+    def rows(self, configuration, filter_only=False):
+        # this will remove any Nones in self._rows caused by deleted records
+        rows = list(filter(None, self._rows))
+        if 'wheres' in configuration and configuration['wheres']:
             for where in configuration['wheres']:
                 rows = filter(self._where_as_filter(where), rows)
             rows = list(rows)
-        else:
-            rows = [*self._rows]
+        if filter_only:
+            return rows
+        if 'sorts' in configuration and configuration['sorts']:
+            rows.sort(lambda row_a, row_b: self._sort(row_a, row_b, configuration['sorts']))
+        if 'limit_start' in configuration or 'limit_length' in configuration:
+            number_rows = len(rows)
+            start = 0 if 'limit_start' in configuration and configuration['limit_start'] else 0
+            if start >= number_rows:
+                start = number_rows-1
+            end = len(rows)
+            if 'limit_length' in configuration and start + configuration['limit_length'] <= numberr_rows:
+                end = len(rows)
+            rows = rows[start:end]
         return rows
 
     def _where_as_filter(self, where):
@@ -106,6 +118,19 @@ class MemoryTable:
         values = where['values']
         return self._operator_lambda_builders[where['operator']](column, values)
 
+    def _sort(self, row_a, row_b, sorts):
+        for sort in sorts:
+            reverse = 1 if sort['direction'].lower() == 'asc' else -1
+            value_a = row_a[sort['column']] if sort['column'] in row_a else None
+            value_b = row_b[sort['column']] if sort['column'] in row_b else None
+            if value_a == value_b:
+                continue
+            if value_a is None:
+                return -1*reverse
+            if value_b is None:
+                return 1*reverse
+            return reverse*(1 if value_a > value_b else -1)
+        return 0
 
 class MemoryBackend(Backend):
     _tables = None
@@ -116,7 +141,6 @@ class MemoryBackend(Backend):
         'table_name',
         'wheres',
         'sorts',
-        'group_by_column',
         'limit_start',
         'limit_length',
         'selects',
@@ -137,7 +161,7 @@ class MemoryBackend(Backend):
     def create_table(self, model):
         if model.table_name in self._tables:
             return
-        self._tables[model.table_name] = Table(model)
+        self._tables[model.table_name] = MemoryTable(model)
 
     def update(self, id, data, model):
         self.create_table(model)
