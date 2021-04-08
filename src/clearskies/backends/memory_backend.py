@@ -1,5 +1,6 @@
 from .backend import Backend
 from collections import OrderedDict
+from functools import cmp_to_key
 
 
 class MemoryTable:
@@ -101,15 +102,15 @@ class MemoryTable:
         if filter_only:
             return rows
         if 'sorts' in configuration and configuration['sorts']:
-            rows.sort(lambda row_a, row_b: self._sort(row_a, row_b, configuration['sorts']))
+            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: self._sort(row_a, row_b, configuration['sorts'])))
         if 'limit_start' in configuration or 'limit_length' in configuration:
             number_rows = len(rows)
-            start = 0 if 'limit_start' in configuration and configuration['limit_start'] else 0
+            start = configuration['limit_start'] if 'limit_start' in configuration and configuration['limit_start'] else 0
             if start >= number_rows:
                 start = number_rows-1
             end = len(rows)
-            if 'limit_length' in configuration and start + configuration['limit_length'] <= numberr_rows:
-                end = len(rows)
+            if 'limit_length' in configuration and start + configuration['limit_length'] <= number_rows:
+                end = start + configuration['limit_length']
             rows = rows[start:end]
         return rows
 

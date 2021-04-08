@@ -87,6 +87,71 @@ class MemoryBackendTest(unittest.TestCase):
             ]
         })
         self.assertEquals([
-            {'id': 1, 'name': 'Zeb', 'email': 'b@example.com'},
-            {'id': 2, 'name': 'Zeb', 'email': 'a@example.com'},
+            {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
+            {'id': 1, 'name': 'Zeb', 'email': 'a@example.com'},
         ], self.memory_backend._iterator_rows)
+
+        self.memory_backend.iterator({
+            'table_name': 'users',
+            'wheres': [{'column': 'id', 'operator': 'in', 'values': [2, 3]}],
+            'sorts': [
+                {'column': 'name', 'direction': 'ASC'},
+            ]
+        })
+        self.assertEquals([
+            {'id': 3, 'name': 'A', 'email': 'c@example.com'},
+            {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
+        ], self.memory_backend._iterator_rows)
+
+        self.memory_backend.iterator({
+            'table_name': 'users',
+            'wheres': [
+                {'column': 'name', 'operator': '=', 'values': ['Zeb']},
+                {'column': 'email', 'operator': 'like', 'values': ['a@example.com']}
+            ],
+        })
+        self.assertEquals([
+            {'id': 1, 'name': 'Zeb', 'email': 'a@example.com'},
+        ], self.memory_backend._iterator_rows)
+
+        self.memory_backend.iterator({
+            'table_name': 'users',
+            'sorts': [
+                {'column': 'name', 'direction': 'ASC'},
+                {'column': 'email', 'direction': 'DESC'},
+            ],
+        })
+        self.assertEquals([
+            {'id': 3, 'name': 'A', 'email': 'c@example.com'},
+            {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
+            {'id': 1, 'name': 'Zeb', 'email': 'a@example.com'},
+        ], self.memory_backend._iterator_rows)
+
+        self.memory_backend.iterator({
+            'table_name': 'users',
+            'sorts': [
+                {'column': 'name', 'direction': 'ASC'},
+                {'column': 'email', 'direction': 'DESC'},
+            ],
+            'limit_start': 1,
+            'limit_length': 1,
+        })
+        self.assertEquals([
+            {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
+        ], self.memory_backend._iterator_rows)
+
+    def test_count(self):
+        self.memory_backend.create({'name': 'Zeb', 'email': 'a@example.com'}, self.user_model)
+        self.memory_backend.create({'name': 'Zeb', 'email': 'b@example.com'}, self.user_model)
+        self.memory_backend.create({'name': 'A', 'email': 'c@example.com'}, self.user_model)
+        self.assertEquals(
+            2,
+            self.memory_backend.count({
+                'table_name': 'users',
+                'wheres': [{'column': 'name', 'operator': '=', 'values': ['Zeb']}],
+                'sorts': [
+                    {'column': 'email', 'direction': 'DESC'},
+                ],
+                'limit_length': 1
+            })
+        )
