@@ -17,6 +17,7 @@ class InputOutput(input_outputs.InputOutput):
         request_headers=None,
         body=None,
         request_method='GET',
+        request_url = '',
         script_name = '',
         path_info = '',
         query_string = '',
@@ -26,7 +27,7 @@ class InputOutput(input_outputs.InputOutput):
         self.set_request_method(request_method)
         self.set_body(body)
         self.set_request_headers(request_headers)
-        self._script_name = script_name
+        self.set_request_url(request_url, script_name=script_name)
         self._path_info = path_info
         self._query_string = query_string
         self._content_type = content_type
@@ -50,6 +51,11 @@ class InputOutput(input_outputs.InputOutput):
         self._body = None
         if body:
             self._body = body if type(body) == str else json.dumps(body)
+
+    def set_request_url(self, request_url, script_name=''):
+        if request_url and script_name:
+            raise ValueError("You cannot specify both request_url and script_name")
+        self._script_name = request_url if request_url else script_name
 
     def get_request_method(self):
         return self._request_method

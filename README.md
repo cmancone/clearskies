@@ -12,6 +12,10 @@ Why do I call this a nano-framework?  Because it would be a stretch to call this
 pip3 install clear-skies
 ```
 
+For usage examples see:
+
+[https://github.com/cmancone/clearskies-docker-compose](https://github.com/cmancone/clearskies-docker-compose)
+
 # Inside the Box
 
  - Fairly standard models and query builder

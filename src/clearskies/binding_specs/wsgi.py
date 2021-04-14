@@ -12,6 +12,8 @@ class WSGI(BindingSpec):
         self._wsgi_start_response = wsgi_start_response
 
     def provide_input_output(self):
-        if 'input_output' in self._bind:
-            return self.build_from_binding_config('input_output')
+        pre_configured = self._fetch_pre_configured('input_output')
+        if pre_configured is not None:
+            return pre_configured
+
         return WSGIInputOutput(self._wsgi_environment, self._wsgi_start_response)

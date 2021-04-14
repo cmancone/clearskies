@@ -1,6 +1,7 @@
 from .backend import Backend
 from collections import OrderedDict
 from functools import cmp_to_key
+import inspect
 
 
 class MemoryTable:
@@ -11,6 +12,7 @@ class MemoryTable:
     _next_id = 1
 
     # here be dragons.  This is not a 100% drop-in replacement for the equivalent SQL operators
+    # https://codereview.stackexchange.com/questions/259198/in-memory-table-filtering-in-python
     _operator_lambda_builders = {
         '<=>': lambda column, values: lambda row: (row[column] if column in row else None) == values[0],
         '!=': lambda column, values: lambda row: (row[column] if column in row else None) != values[0],
@@ -18,12 +20,12 @@ class MemoryTable:
         '>=': lambda column, values: lambda row: (row[column] if column in row else None) >= values[0],
         '>': lambda column, values: lambda row: (row[column] if column in row else None) > values[0],
         '<': lambda column, values: lambda row: (row[column] if column in row else None) < values[0],
-        '=': lambda column, values: lambda row: (row[column] if column in row else None) == values[0],
+        '=': lambda column, values: lambda row: (str(row[column]) if column in row else None) == str(values[0]),
         'is not null': lambda column, values: lambda row: (column in row and row[column] is not None),
         'is null': lambda column, values: lambda row: (column not in row or row[column] is None),
         'is not': lambda column, values: lambda row: (row[column] if column in row else None) != values[0],
-        'is': lambda column, values: lambda row: (row[column] if column in row else None) == values[0],
-        'like': lambda column, values: lambda row: (row[column] if column in row else None) == values[0],
+        'is': lambda column, values: lambda row: (str(row[column]) if column in row else None) == str(values[0]),
+        'like': lambda column, values: lambda row: (str(row[column]) if column in row else None) == str(values[0]),
         'in': lambda column, values: lambda row: (row[column] if column in row else None) in values,
     }
 
@@ -73,7 +75,7 @@ class MemoryTable:
                 data[column_name] = None
         self._rows.append(data)
         self._id_to_index[new_id] = len(self._rows)-1
-        return self._rows
+        return data
 
     def delete(self, id):
         if id not in self._id_to_index:
@@ -109,7 +111,7 @@ class MemoryTable:
             if start >= number_rows:
                 start = number_rows-1
             end = len(rows)
-            if 'limit_length' in configuration and start + configuration['limit_length'] <= number_rows:
+            if 'limit_length' in configuration and configuration['limit_length'] and start + configuration['limit_length'] <= number_rows:
                 end = start + configuration['limit_length']
             rows = rows[start:end]
         return rows
@@ -160,9 +162,13 @@ class MemoryBackend(Backend):
         pass
 
     def create_table(self, model):
+        """
+        Accepts either a model or a model class and creates a "table" for it
+        """
+        model = self.cheez_model(model)
         if model.table_name in self._tables:
             return
-        self._tables[model.table_name] = MemoryTable(model)
+        self._tables[model.table_name] = MemoryTable(model=model)
 
     def update(self, id, data, model):
         self.create_table(model)
@@ -193,6 +199,11 @@ class MemoryBackend(Backend):
         if self._iterator_index >= len(self._iterator_rows):
             raise StopIteration()
         return self._iterator_rows[self._iterator_index]
+
+    def all_rows(self, table_name):
+        if table_name not in self._tables:
+            raise ValueError(f"Cannot return rows for unknown table '{table_name}'")
+        return self._tables[table_name]._rows
 
     def _check_query_configuration(self, configuration):
         for key in configuration.keys():

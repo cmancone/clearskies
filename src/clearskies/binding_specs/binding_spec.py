@@ -6,6 +6,7 @@ from ..columns import Columns
 import os
 from ..environment import Environment
 from ..secrets import Secrets
+from ..backends import CursorBackend
 import datetime
 import inspect
 from .binding_config import BindingConfig
@@ -14,12 +15,20 @@ from .binding_config import BindingConfig
 class BindingSpec(pinject.BindingSpec):
     object_graph = None
     _bind = None
+    _class_bindings = None
 
     def __init__(self, **kwargs):
         self._bind = kwargs
 
-    def build_from_binding_config(self, binding_name):
-        binding = self._bind[binding_name]
+    def _fetch_pre_configured(self, binding_name):
+        class_bindings = self.__class__._class_bindings if self.__class__._class_bindings is not None else {}
+        if binding_name not in self._bind and binding_name not in class_bindings:
+            return None
+
+        if binding_name in self._bind:
+            binding = self._bind[binding_name]
+        else:
+            binding = class_bindings[binding_name]
         # we have 3 options of what was bound: an actual object, which we just return, a Class name, which we
         # ask the object graph to build, or a dictionary with three keys: ['class', 'args', 'kwargs'].  For the
         # latter we as the object graph to build the class and then pass args and kwargs to the build_configure
@@ -39,8 +48,9 @@ class BindingSpec(pinject.BindingSpec):
         return binding
 
     def provide_requests(self):
-        if 'requests' in self._bind:
-            return self.build_from_binding_config('requests')
+        pre_configured = self._fetch_pre_configured('requests')
+        if pre_configured is not None:
+            return pre_configured
 
         retry_strategy = Retry(
             total=3,
@@ -69,21 +79,30 @@ class BindingSpec(pinject.BindingSpec):
         return self.object_graph
 
     def provide_columns(self):
+        pre_configured = self._fetch_pre_configured('columns')
+        if pre_configured is not None:
+            return pre_configured
+
         return Columns(self.provide_object_graph())
 
     def provide_secrets(self):
-        if 'secrets' in self._bind:
-            return self.build_from_binding_config('secrets')
+        pre_configured = self._fetch_pre_configured('secrets')
+        if pre_configured is not None:
+            return pre_configured
+
         return {}
 
     def provide_environment(self, secrets):
-        if 'environment' in self._bind:
-            return self._bind['environment']
+        pre_configured = self._fetch_pre_configured('environment')
+        if pre_configured is not None:
+            return pre_configured
         return Environment(os.getcwd() + '/.env', os.environ, secrets)
 
     def provide_cursor(self, environment):
-        if 'cursor' in self._bind:
-            return self.build_from_binding_config('cursor')
+        pre_configured = self._fetch_pre_configured('cursor')
+        if pre_configured is not None:
+            return pre_configured
+
         import mariadb
         connection = mariadb.connect(
             user=environment.get('db_username'),
@@ -91,22 +110,36 @@ class BindingSpec(pinject.BindingSpec):
             host=environment.get('db_host'),
             database=environment.get('db_database'),
             autocommit=True,
+            connect_timeout=2,
         )
         return connection.cursor(dictionary=True)
 
+    def provide_cursor_backend(self, cursor):
+        pre_configured = self._fetch_pre_configured('cursor_backend')
+        if pre_configured is not None:
+            return pre_configured
+
+        return CursorBackend(cursor)
+
     def provide_now(self):
-        if 'now' in self._bind:
-            return self.build_from_binding_config('now')
+        pre_configured = self._fetch_pre_configured('now')
+        if pre_configured is not None:
+            return pre_configured
+
         return datetime.datetime.now()
 
     def provide_input_output(self):
-        if 'input_output' in self._bind:
-            return self.build_from_binding_config('input_output')
+        pre_configured = self._fetch_pre_configured('input_output')
+        if pre_configured is not None:
+            return pre_configured
+
         raise AttributeError('The dependency injector requested an InputOutput but none has been configured')
 
     def provide_authentication(self):
-        if 'authentication' in self._bind:
-            return self.build_from_binding_config('authentication')
+        pre_configured = self._fetch_pre_configured('authentication')
+        if pre_configured is not None:
+            return pre_configured
+
         raise AttributeError('The dependency injector requested an Authenticaiton method but none has been configured')
 
     @classmethod
@@ -122,3 +155,14 @@ class BindingSpec(pinject.BindingSpec):
         object_graph = pinject.new_object_graph(binding_specs=[binding_spec])
         binding_spec.object_graph = object_graph
         return object_graph
+
+    @classmethod
+    def bind(cls, configuration):
+        for (key, value) in configuration.items():
+            cls.bind_item(key, value)
+
+    @classmethod
+    def bind_item(cls, key, value):
+        if cls._class_bindings is None:
+            cls._class_bindings = {}
+        cls._class_bindings[key] = value
