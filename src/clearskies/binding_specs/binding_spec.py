@@ -166,3 +166,6 @@ class BindingSpec(pinject.BindingSpec):
         if cls._class_bindings is None:
             cls._class_bindings = {}
         cls._class_bindings[key] = value
+
+        if key == 'cursor_backend' and 'cursor' not in cls._class_bindings:
+            cls._class_bindings['cursor'] = 'dummy_filler'
