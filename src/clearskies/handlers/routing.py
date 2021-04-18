@@ -58,4 +58,4 @@ class Routing(Base):
         self._configuration = self._finalize_configuration(self.apply_default_configuation(configuration))
 
     def _check_configuration(self, configuration):
-        super()._check_configuration()
+        super()._check_configuration(configuration)

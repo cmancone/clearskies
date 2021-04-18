@@ -4,6 +4,7 @@ from ..mocks import Models, InputOutput
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
+from clearskies.mocks import BindingSpec
 
 
 class DeleteTest(unittest.TestCase):
@@ -15,14 +16,17 @@ class DeleteTest(unittest.TestCase):
             'age': {'class': Integer},
         })
         self.models.add_search_response([{'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10}])
+        self.object_graph = BindingSpec.get_object_graph()
 
     def test_delete_flow(self):
         delete = Delete(
             InputOutput(body={'id': '5'}),
-            Public(),
-            'object_graph'
+            self.object_graph,
         )
-        delete.configure({'models': self.models})
+        delete.configure({
+            'models': self.models,
+            'authentication': Public(),
+        })
         response = delete()
         self.assertEquals('success', response[0]['status'])
         self.assertEquals(200, response[1])

@@ -55,7 +55,8 @@ class Read(Base):
             json_output = [self._model_as_json(model) for model in models]
             if not len(json_output):
                 return self.error('Record not found', 400)
-            return self.success(json_output[0])
+            result = self.success(json_output[0])
+            return result
 
         return self.success(
             [self._model_as_json(model) for model in models],
@@ -151,7 +152,7 @@ class Read(Base):
                     return f"Invalid request: {value_error} for 'where' entry #{index+1}"
 
     def _check_configuration(self, configuration):
-        super()._check_configuration()
+        super()._check_configuration(configuration)
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)
         has_models_class = ('models_class' in configuration) and configuration['models_class'] is not None
         has_models = ('models' in configuration) and configuration['models'] is not None

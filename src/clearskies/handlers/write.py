@@ -30,7 +30,7 @@ class Write(Base):
         pass
 
     def _check_configuration(self, configuration):
-        super()._check_configuration()
+        super()._check_configuration(configuration)
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)
         has_models_class = ('models_class' in configuration) and configuration['models_class'] is not None
         has_models = ('models' in configuration) and configuration['models'] is not None

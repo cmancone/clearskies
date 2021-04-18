@@ -4,6 +4,7 @@ from ..mocks import Models, InputOutput
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
+from clearskies.mocks import BindingSpec
 
 
 class CreateTest(unittest.TestCase):
@@ -14,6 +15,7 @@ class CreateTest(unittest.TestCase):
             'email': {'class': String, 'input_requirements': [Required, (MaximumLength, 15)]},
             'age': {'class': Integer},
         })
+        self.object_graph = BindingSpec.get_object_graph()
 
     def test_save_flow(self):
         self.models.add_create_response({
@@ -25,12 +27,12 @@ class CreateTest(unittest.TestCase):
 
         create = Create(
             InputOutput(body={'name': 'Conor', 'email': 'c@example.com', 'age': 10}),
-            Public(),
-            'object_graph',
+            self.object_graph,
         )
         create.configure({
             'models': self.models,
-            'columns': ['name', 'email', 'age']
+            'columns': ['name', 'email', 'age'],
+            'authentication': Public(),
         })
         response = create()
         response_data = response[0]['data']
@@ -43,12 +45,12 @@ class CreateTest(unittest.TestCase):
     def test_input_checks(self):
         create = Create(
             InputOutput(body={'email': 'cmancone@example.com', 'age': 10}),
-            Public(),
-            'object_graph',
+            self.object_graph,
         )
         create.configure({
             'models': self.models,
-            'columns': ['name', 'email', 'age']
+            'columns': ['name', 'email', 'age'],
+            'authentication': Public(),
         })
         response = create()
         self.assertEquals(200, response[1])
@@ -70,12 +72,12 @@ class CreateTest(unittest.TestCase):
 
         create = Create(
             InputOutput(body={'name': 'Conor', 'age': 10}),
-            Public(),
-            'object_graph'
+            self.object_graph,
         )
         create.configure({
             'models': self.models,
-            'columns': ['name', 'age']
+            'columns': ['name', 'age'],
+            'authentication': Public(),
         })
         response = create()
         response_data = response[0]['data']
@@ -88,10 +90,13 @@ class CreateTest(unittest.TestCase):
     def test_extra_columns(self):
         create = Create(
             InputOutput(body={'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'}),
-            Public(),
-            'object_graph',
+            self.object_graph,
         )
-        create.configure({'models': self.models, 'columns': ['name', 'age']})
+        create.configure({
+            'models': self.models,
+            'columns': ['name', 'age'],
+            'authentication': Public(),
+        })
         response = create()
         self.assertEquals(
             {
@@ -111,13 +116,13 @@ class CreateTest(unittest.TestCase):
 
         create = Create(
             InputOutput(body={'name': 'Conor', 'age': 10}),
-            Public(),
-            'object_graph'
+            self.object_graph,
         )
         create.configure({
             'models': self.models,
             'writeable_columns': ['name', 'age'],
             'readable_columns': ['name', 'age', 'email'],
+            'authentication': Public(),
         })
         response = create()
         response_data = response[0]['data']
@@ -134,12 +139,16 @@ class CreateTest(unittest.TestCase):
         )
         secret_bearer = SecretBearer(input_output, 'environment')
         secret_bearer.configure(secret='asdfer')
-        create = Create(input_output, secret_bearer, 'object_graph')
-        create.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
+        create = Create(input_output, self.object_graph)
+        create.configure({
+            'models': self.models,
+            'columns': ['name', 'email', 'age'],
+            'authentication': secret_bearer,
+        })
         response = create()
         self.assertEquals(401, response[1])
         self.assertEquals('clientError', response[0]['status'])
-        self.assertEquals('Not Authorized', response[0]['error'])
+        self.assertEquals('Not Authenticated', response[0]['error'])
 
     def test_auth_success(self):
         self.models.add_create_response({
@@ -154,7 +163,11 @@ class CreateTest(unittest.TestCase):
         )
         secret_bearer = SecretBearer(input_output, 'environment')
         secret_bearer.configure(secret='asdfer')
-        create = Create(input_output, secret_bearer, 'object_graph')
-        create.configure({'models': self.models, 'columns': ['name', 'email', 'age']})
+        create = Create(input_output, self.object_graph)
+        create.configure({
+            'models': self.models,
+            'columns': ['name', 'email', 'age'],
+            'authentication': secret_bearer,
+        })
         response = create()
         self.assertEquals(200, response[1])
