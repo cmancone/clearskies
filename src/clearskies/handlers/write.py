@@ -22,15 +22,15 @@ class Write(Base):
         'resource_id': None,
     }
 
-    def __init__(self, input_output, authentication, object_graph):
-        super().__init__(input_output, authentication)
-        self._object_graph = object_graph
+    def __init__(self, input_output, object_graph):
+        super().__init__(input_output, object_graph)
 
     @abstractmethod
     def handle(self):
         pass
 
     def _check_configuration(self, configuration):
+        super()._check_configuration()
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)
         has_models_class = ('models_class' in configuration) and configuration['models_class'] is not None
         has_models = ('models' in configuration) and configuration['models'] is not None

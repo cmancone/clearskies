@@ -3,11 +3,8 @@ from abc import abstractmethod
 
 
 class Routing(Base):
-    _object_graph = None
-
-    def __init__(self, input_output, authentication, object_graph):
-        super().__init__(input_output, authentication)
-        self._object_graph = object_graph
+    def __init__(self, input_output, object_graph):
+        super().__init__(input_output, object_graph)
 
     @abstractmethod
     def handler_classes(self, configuration):
@@ -61,4 +58,4 @@ class Routing(Base):
         self._configuration = self._finalize_configuration(self.apply_default_configuation(configuration))
 
     def _check_configuration(self, configuration):
-        pass
+        super()._check_configuration()

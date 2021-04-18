@@ -27,8 +27,8 @@ class RestfulAPI(Routing):
     _resource_id = None
     _is_search = False
 
-    def __init__(self, input_output, authentication, object_graph):
-        super().__init__(input_output, authentication, object_graph)
+    def __init__(self, input_output, object_graph):
+        super().__init__(input_output, object_graph)
 
     def handler_classes(self, configuration):
         classes = []
