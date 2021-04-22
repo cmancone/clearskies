@@ -31,7 +31,7 @@ class BelongsToTest(unittest.TestCase):
         with self.assertRaises(KeyError) as context:
             self.belongs_to.configure('user_id', {}, BelongsToTest)
         self.assertEquals(
-            "\"Missing required configuration 'parent_models_class' for column 'user_id' in 'BelongsToTest'\"",
+            "\"Missing required configuration 'parent_models_class' for column 'user_id' in model class 'BelongsToTest'\"",
             str(context.exception)
         )
 
