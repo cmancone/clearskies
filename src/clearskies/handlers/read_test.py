@@ -3,6 +3,7 @@ from .read import Read
 from ..mocks import Models, InputOutput, BindingSpec
 from ..column_types import String, Integer
 from ..authentication import Public, SecretBearer
+from clearskies.mocks import BindingSpec
 
 
 class ReadTest(unittest.TestCase):
@@ -24,12 +25,13 @@ class ReadTest(unittest.TestCase):
         ])
 
     def test_simple_read(self):
-        read = Read(InputOutput(), Public(), self.object_graph)
+        read = Read(InputOutput(), self.object_graph)
         read.configure({
             'models': self.models,
             'readable_columns': ['name', 'email', 'age'],
             'searchable_columns': ['name'],
             'default_sort_column': 'email',
+            'authentication': Public(),
         })
         response = read()
         json_response = response[0]
@@ -52,7 +54,7 @@ class ReadTest(unittest.TestCase):
         }, Models.iterated[0])
 
     def test_configure(self):
-        read = Read(InputOutput(), Public(), self.object_graph)
+        read = Read(InputOutput(), self.object_graph)
         read.configure({
             'models': self.models,
             'readable_columns': ['name'],
@@ -63,6 +65,7 @@ class ReadTest(unittest.TestCase):
             'default_limit': 50,
             'join': ['JOIN users ON users.id=model.id'],
             'group_by': 'id',
+            'authentication': Public(),
         })
         response = read()
         json_response = response[0]
@@ -95,13 +98,14 @@ class ReadTest(unittest.TestCase):
             'start': 10,
             'limit': 5,
         }
-        read = Read(InputOutput(body=user_input), Public(), self.object_graph)
+        read = Read(InputOutput(body=user_input), self.object_graph)
         read.configure({
             'models': self.models,
             'readable_columns': ['name', 'email', 'age'],
             'searchable_columns': ['email'],
             'where': ['age>5', 'age<10'],
             'default_sort_column': 'email',
+            'authentication': Public(),
         })
         response = read()
         json_response = response[0]

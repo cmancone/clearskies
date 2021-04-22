@@ -12,9 +12,8 @@ class Delete(Base):
         'resource_id': None,
     }
 
-    def __init__(self, input_output, authentication, object_graph):
-        super().__init__(input_output, authentication)
-        self._object_graph = object_graph
+    def __init__(self, input_output, object_graph):
+        super().__init__(input_output, object_graph)
 
     def handle(self):
         input_data = self.request_data()

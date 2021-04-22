@@ -7,14 +7,16 @@ class Base(ABC):
     _configuration = None
     _configuration_defaults = {}
     _global_configuration_defaults = {
-        'response_headers': None
+        'response_headers': None,
+        'authentication': None,
     }
     _input_output = None
+    _object_graph = None
     _configuration = None
 
-    def __init__(self, input_output, authentication):
+    def __init__(self, input_output, object_graph):
         self._input_output = input_output
-        self._authentication = authentication
+        self._object_graph = object_graph
         self._configuration = None
 
     @abstractmethod
@@ -31,7 +33,10 @@ class Base(ABC):
         self._configuration = self._finalize_configuration(self.apply_default_configuation(configuration))
 
     def _check_configuration(self, configuration):
-        pass
+        if not 'authentication' in configuration:
+            raise KeyError(
+                f"You must provide authentication in the configuration for handler '{self.__class__.__name__}'"
+            )
 
     def apply_default_configuation(self, configuration):
         return {
@@ -49,13 +54,14 @@ class Base(ABC):
         return self._configuration[key]
 
     def _finalize_configuration(self, configuration):
+        configuration['authentication'] = self._object_graph.build(configuration['authentication'])
         return configuration
 
     def __call__(self):
         if self._configuration is None:
             raise ValueError("Must configure handler before calling")
-        if not self._authentication.authenticate():
-            return self.error('Not Authorized', 401)
+        if not self.configuration('authentication').authenticate():
+            return self.error('Not Authenticated', 401)
 
         try:
             response = self.handle()

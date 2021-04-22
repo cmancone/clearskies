@@ -3,8 +3,8 @@ from abc import abstractmethod
 
 
 class RequestMethodRouting(Routing):
-    def __init__(self, input_output, authentication, object_graph):
-        super().__init__(input_output, authentication, object_graph)
+    def __init__(self, input_output, object_graph):
+        super().__init__(input_output, object_graph)
 
     @abstractmethod
     def method_handler_map(self):
