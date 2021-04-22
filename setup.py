@@ -18,8 +18,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='clear-skies',
-    version='0.1.2',
-    description='A nano-framework for building microservices in the cloud',
+    version='0.2.1',
+    description='A microframework for building microservices in the cloud',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/cmancone/clearskies',
