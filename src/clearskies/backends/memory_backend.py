@@ -4,51 +4,55 @@ from functools import cmp_to_key
 import inspect
 
 
+class Null:
+    def __lt__(self, other):
+        return True
+
+    def __gt__(self, other):
+        return False
+
+    def __eq__(self, other):
+        return isinstance(other, Null) or other is None
+
 class MemoryTable:
     _table_name = None
     _column_names = None
     _rows = None
-    _id_to_index = None
-    _next_id = 1
+    null = None
 
     # here be dragons.  This is not a 100% drop-in replacement for the equivalent SQL operators
     # https://codereview.stackexchange.com/questions/259198/in-memory-table-filtering-in-python
     _operator_lambda_builders = {
-        '<=>': lambda column, values: lambda row: (row[column] if column in row else None) == values[0],
-        '!=': lambda column, values: lambda row: (row[column] if column in row else None) != values[0],
-        '<=': lambda column, values: lambda row: (row[column] if column in row else None) <= values[0],
-        '>=': lambda column, values: lambda row: (row[column] if column in row else None) >= values[0],
-        '>': lambda column, values: lambda row: (row[column] if column in row else None) > values[0],
-        '<': lambda column, values: lambda row: (row[column] if column in row else None) < values[0],
-        '=': lambda column, values: lambda row: (str(row[column]) if column in row else None) == str(values[0]),
-        'is not null': lambda column, values: lambda row: (column in row and row[column] is not None),
-        'is null': lambda column, values: lambda row: (column not in row or row[column] is None),
-        'is not': lambda column, values: lambda row: (row[column] if column in row else None) != values[0],
-        'is': lambda column, values: lambda row: (str(row[column]) if column in row else None) == str(values[0]),
-        'like': lambda column, values: lambda row: (str(row[column]) if column in row else None) == str(values[0]),
-        'in': lambda column, values: lambda row: (row[column] if column in row else None) in values,
+        '<=>': lambda column, values, null: lambda row: row.get(column, null) == values[0],
+        '!=': lambda column, values, null: lambda row: row.get(column, null) != values[0],
+        '<=': lambda column, values, null: lambda row: row.get(column, null) <= values[0],
+        '>=': lambda column, values, null: lambda row: row.get(column, null) >= values[0],
+        '>': lambda column, values, null: lambda row: row.get(column, null) > values[0],
+        '<': lambda column, values, null: lambda row: row.get(column, null) < values[0],
+        '=': lambda column, values, null: lambda row: (str(row[column]) if column in row else null) == str(values[0]),
+        'is not null': lambda column, values, null: lambda row: (column in row and row[column] is not None),
+        'is null': lambda column, values, null: lambda row: (column not in row or row[column] is None),
+        'is not': lambda column, values, null: lambda row: row.get(column, null) != values[0],
+        'is': lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
+        'like': lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
+        'in': lambda column, values, null: lambda row: row.get(column, null) in values,
     }
 
     def __init__(self, model=None):
+        self.null = Null()
         self._column_names = []
         self._rows = []
-        self._id_to_index = {}
 
         if model is not None:
             self._table_name = model.table_name
             self._column_names.extend(model.columns_configuration().keys())
 
-    def add_index(self, column_name):
-        if not column_name in self._indexes:
-            self._indexes[column_name] = OrderedDict()
-        if not column_name in self._column_names:
-            self._column_names.append(column_name)
-
     def update(self, id, data):
-        if id not in self._id_to_index:
+        if id > len(self._rows) or id < 1:
             raise ValueError(f"Cannot update non existent record with id of '{id}'")
-        index = self._id_to_index[id]
-        if index is None:
+        index = id-1
+        row = self._rows[index]
+        if row is None:
             raise ValueError(f"Cannot update record with id of '{id}' because it was already deleted")
         for column_name in data.keys():
             if column_name not in self._column_names:
@@ -67,29 +71,24 @@ class MemoryTable:
                 raise ValueError(
                     f"Cannot create record: column '{column_name}' does not exist in table '{self._table_name}'"
                 )
-        new_id = self._next_id
-        self._next_id += 1
+        new_id = len(self._rows) + 1
         data['id'] = new_id
         for column_name in self._column_names:
             if column_name not in data:
                 data[column_name] = None
-        self._rows.append(data)
-        self._id_to_index[new_id] = len(self._rows)-1
+        self._rows.append({**data})
         return data
 
     def delete(self, id):
-        if id not in self._id_to_index:
-            return
-        row_index = self._id_to_index[id]
-        if row_index is None:
-            return True
-        row = self._rows[row_index]
-        if row is None:
+        if id > len(self._rows) or id < 1:
+            raise ValueError(f"Cannot delete non existent record with id of '{id}'")
+        index = id-1
+        if self._rows[index] is None:
             return True
         # we set the row to None because if we remove it we'll change the indexes of the rest
-        # of the rows, and break our `self._id_to_index` map
-        self._rows[row_index] = None
-        self._id_to_index[id] = None
+        # of the rows, and I like being able to calculate the index from the id
+        self._rows[index] = None
+        return True
 
     def count(self, configuration):
         return len(self.rows(configuration, filter_only=True))
@@ -119,7 +118,7 @@ class MemoryTable:
     def _where_as_filter(self, where):
         column = where['column']
         values = where['values']
-        return self._operator_lambda_builders[where['operator']](column, values)
+        return self._operator_lambda_builders[where['operator']](column, values, self.null)
 
     def _sort(self, row_a, row_b, sorts):
         for sort in sorts:
