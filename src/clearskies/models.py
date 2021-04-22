@@ -36,11 +36,7 @@ class Models(ABC, ConditionParser):
         pass
 
     def clone(self):
-        import datetime
-        now = datetime.datetime.now()
         clone = self.blank()
-        post_blank = datetime.datetime.now()
-        print((post_blank-now).total_seconds())
         clone.configuration = self.configuration
         return clone
 
