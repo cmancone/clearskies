@@ -6,7 +6,7 @@ from ..columns import Columns
 import os
 from ..environment import Environment
 from ..secrets import Secrets
-from ..backends import CursorBackend
+from ..backends import CursorBackend, MemoryBackend
 import datetime
 import inspect
 from .binding_config import BindingConfig
@@ -153,6 +153,13 @@ class BindingSpec(pinject.BindingSpec):
             return pre_configured
 
         return CursorBackend(cursor)
+
+    def provide_memory_backend(self):
+        pre_configured = self._fetch_pre_configured('memory_backend')
+        if pre_configured is not None:
+            return pre_configured
+
+        return MemoryBackend()
 
     def provide_now(self):
         pre_configured = self._fetch_pre_configured('now')

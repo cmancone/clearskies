@@ -178,6 +178,11 @@ class Read(Base):
                         f"{error_prefix} '{config_name}' references column named {column_name} " +
                         f"but this column does not exist for model '{model_class_name}'"
                     )
+                if config_name == 'readable_columns' and not self._columns[column_name].is_readable:
+                    raise ValueError(
+                        f"{error_prefix} '{config_name}' references column named {column_name} " +
+                        f"but this column does not exist for model '{model_class_name}'"
+                    )
         if not 'default_sort_column' in configuration:
             raise ValueError(f"{error_prefix} missing required configuration 'default_sort_column'")
 

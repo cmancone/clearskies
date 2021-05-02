@@ -16,6 +16,10 @@ class Column(ABC):
         is_writeable = self.config('is_writeable', True)
         return True if (is_writeable or is_writeable is None) else False
 
+    @property
+    def is_readable(self):
+        return True
+
     def configure(self, name, configuration, model_class):
         if not name:
             raise ValueError(f"Missing name for column in '{model_class.__name__}'")

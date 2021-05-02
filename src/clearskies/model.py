@@ -54,12 +54,12 @@ class Model(ABC):
         # as a simple local cache (self._transformed is cleared during a save operation)
         if column_name not in self._transformed:
             columns = self.columns()
-            if column_name not in self._data:
+            if column_name not in self._data or self._data[column_name] is None:
                 for column in columns.values():
                     if column.can_provide(column_name):
                         self._transformed[column_name] = column.provide(self._data, column_name)
                         break
-                if not column_name in self._transformed:
+                if column_name not in self._transformed and column_name not in self._data:
                     raise KeyError(f"Unknown column '{column_name}' requested from model '{self.__class__.__name__}'")
 
             else:
