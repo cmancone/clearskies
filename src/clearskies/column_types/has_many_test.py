@@ -87,5 +87,65 @@ class HasManyTest(unittest.TestCase):
         })
 
     def test_as_json(self):
-        self.assertTrue(True)
-        print(self.has_many_users.to_json(self.pending))
+        self.assertEquals([
+            OrderedDict([
+                ('id', self.john_pending.id),
+                ('first_name', self.john_pending.first_name),
+            ]),
+            OrderedDict([
+                ('id', self.jane_pending.id),
+                ('first_name', self.jane_pending.first_name),
+            ]),
+        ], self.has_many_users.to_json(self.pending))
+
+    def test_auto_foreign_column(self):
+        has_many = HasMany(self.object_graph)
+        has_many.configure('users', {'child_models_class': Users}, Status)
+        self.assertEquals('status_id', has_many.config('foreign_column_name'))
+
+    def test_require_child_model_class(self):
+        has_many = HasMany(self.object_graph)
+        with self.assertRaises(KeyError) as context:
+            has_many.configure('users', {}, str)
+        self.assertIn("Missing required configuration 'child_models_class'", str(context.exception))
+
+    def test_required_readable_columns_for_is_readable(self):
+        has_many = HasMany(self.object_graph)
+        with self.assertRaises(ValueError) as context:
+            has_many.configure(
+                'users',
+                {
+                    'child_models_class': Users,
+                    'is_readable': True,
+                },
+                Status,
+            )
+        self.assertIn("must provide 'readable_child_columns' if is_readable is set", str(context.exception))
+
+    def test_readable_columns_iterable(self):
+        has_many = HasMany(self.object_graph)
+        with self.assertRaises(ValueError) as context:
+            has_many.configure(
+                'users',
+                {
+                    'child_models_class': Users,
+                    'is_readable': True,
+                    'readable_child_columns': 5,
+                },
+                Status,
+            )
+        self.assertIn("'readable_child_columns' should be an iterable", str(context.exception))
+
+    def test_readable_columns_invalid_column(self):
+        has_many = HasMany(self.object_graph)
+        with self.assertRaises(ValueError) as context:
+            has_many.configure(
+                'users',
+                {
+                    'child_models_class': Users,
+                    'is_readable': True,
+                    'readable_child_columns': ['asdf'],
+                },
+                Status,
+            )
+        self.assertIn("readable_child_columns' references column named 'asdf' but", str(context.exception))

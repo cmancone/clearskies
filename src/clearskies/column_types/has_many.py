@@ -1,4 +1,6 @@
 from .column import Column
+import re
+from collections import OrderedDict
 
 
 class HasMany(Column):
@@ -41,15 +43,15 @@ class HasMany(Column):
 
         # if readable_child_columns is set then load up the child models/columns now, because we'll need it in the
         # _check_configuration step, but we don't want to load it there because we can't save it back into the config
+        if 'foreign_column_name' not in configuration:
+            configuration['foreign_column_name'] = re.sub(
+                r'(?<!^)(?=[A-Z])',
+                '_',
+                model_class.__name__.replace('_', '')
+            ).lower() + '_id'
         if configuration.get('readable_child_columns'):
             configuration['child_models'] = self.object_graph.provide(configuration['child_models_class'])
             configuration['child_columns'] = configuration['child_models'].columns()
-        ############
-        ############
-        ## HERE!  I need to auto-populate the foreign column name.  I could either reverse the plural or get the
-        # model class from the models object and use that.  The latter will probably be better.
-        if 'foreign_column_name' not in configuration:
-
 
         # continue normally now...
         super().configure(name, configuration, model_class)
@@ -85,7 +87,7 @@ class HasMany(Column):
 
     def get_child_models(self):
         if 'child_models' not in self.configuration:
-            self.configuration['child_models'] = 'child_models_class'
+            self.configuration['child_models'] = self.object_graph.provide(self.config('child_models_class'))
         return self.configuration['child_models']
 
     def get_child_columns(self):
@@ -105,7 +107,8 @@ class HasMany(Column):
         columns = self.get_child_columns()
         for child in model.__getattr__(self.name):
             json = OrderedDict()
-            json['id'] = int(model.id)
-            for column in self.config('readable_child_columns'):
-                json[column_name] = columns[column_name].to_json(model)
-            return json
+            json['id'] = int(child.id)
+            for column_name in self.config('readable_child_columns'):
+                json[column_name] = columns[column_name].to_json(child)
+            children.append(json)
+        return children
