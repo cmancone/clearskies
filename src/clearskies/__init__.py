@@ -5,3 +5,4 @@ from .environment import Environment
 from .models import Models
 from .model import Model
 from .secrets import Secrets
+from .binding_config import BindingConfig

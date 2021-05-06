@@ -1,5 +1,6 @@
 from collections import OrderedDict, Sequence
 import inspect
+from .binding_config import BindingConfig
 
 
 class Columns:
@@ -43,6 +44,9 @@ class Columns:
             args = []
             if inspect.isclass(requirement):
                 requirement_class = requirement
+            elif isinstance(requirement, BindingConfig):
+                requirement_class = requirement.object_class
+                args = requirement.args
             elif isinstance(requirement, Sequence) and type(requirement) != str:
                 if not inspect.isclass(requirement[0]):
                     raise ValueError(

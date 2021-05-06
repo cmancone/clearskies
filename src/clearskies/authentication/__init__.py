@@ -1,4 +1,4 @@
-from ..binding_specs import BindingConfig
+from ..binding_config import BindingConfig
 from .secret_bearer import SecretBearer
 from .public import Public
 

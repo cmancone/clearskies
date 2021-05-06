@@ -4,12 +4,7 @@ from .requirement import Requirement
 class MinimumLength(Requirement):
     minimum_length = None
 
-    def configure(self, *arguments):
-        if len(arguments) < 1:
-            raise ValueError(
-                f"Must provide the minimum length to use the MinimumLength class for column '{self.column_name}'"
-            )
-        minimum_length = arguments[0]
+    def configure(self, minimum_length):
         if type(minimum_length) != int:
             raise ValueError(
                 f"Minimum length must be an int to use the MinimumLength class for column '{self.column_name}'"

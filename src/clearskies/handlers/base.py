@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from .exceptions import ClientError, InputError
 from collections import OrderedDict
+import inspect
 
 
 class Base(ABC):
@@ -9,6 +10,7 @@ class Base(ABC):
     _global_configuration_defaults = {
         'response_headers': None,
         'authentication': None,
+        'output_map': None,
     }
     _input_output = None
     _object_graph = None
@@ -37,6 +39,20 @@ class Base(ABC):
             raise KeyError(
                 f"You must provide authentication in the configuration for handler '{self.__class__.__name__}'"
             )
+        if configuration.get('output_map') is not None:
+            if not callable(configuration['output_map']):
+                raise ValueError("'output_map' should be a callable")
+            signature = inspect.getfullargspec(configuration['output_map'])
+            if len(signature.defaults):
+                raise ValueError(
+                    "'output_map' should be a callable that accepts one parameter: the model. " + \
+                    "However, the provided one accepts kwargs"
+                )
+            if len(signature.args) != 1:
+                raise ValueError(
+                    "'output_map' should be a callable that accepts one parameter: the model. " + \
+                    f"However, the provided one accepts {len(signature.args)}"
+                )
 
     def apply_default_configuation(self, configuration):
         return {
@@ -134,6 +150,9 @@ class Base(ABC):
         return json
 
     def _model_as_json(self, model):
+        if self.configuration('output_map'):
+            return self.configuration('output_map')(model)
+
         json = OrderedDict()
         json['id'] = int(model.id)
         for column in self._get_readable_columns().values():

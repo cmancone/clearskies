@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, call
 from .model import Model
 from .columns import Columns
 from .column_types import String, Integer
-from .input_requirements import Required, MinimumLength, MaximumLength
+from .input_requirements import Required, MinimumLength, MaximumLength, maximum_length
 
 
 class ColumnsTest(unittest.TestCase):
@@ -19,7 +19,7 @@ class ColumnsTest(unittest.TestCase):
         columns = self.columns.configure({
             'first_name': {
                 'class': String,
-                'input_requirements': [Required, (MinimumLength, 2), (MaximumLength, 15)],
+                'input_requirements': [Required, (MinimumLength, 2), maximum_length(15)],
             },
             'last_name': {
                 'class': String,

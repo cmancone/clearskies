@@ -9,7 +9,7 @@ from ..secrets import Secrets
 from ..backends import CursorBackend, MemoryBackend
 import datetime
 import inspect
-from .binding_config import BindingConfig
+from ..binding_config import BindingConfig
 
 
 class ClearSkiesObjectGraph:
