@@ -43,7 +43,7 @@ class Base(ABC):
             if not callable(configuration['output_map']):
                 raise ValueError("'output_map' should be a callable")
             signature = inspect.getfullargspec(configuration['output_map'])
-            if len(signature.defaults):
+            if signature.defaults and len(signature.defaults):
                 raise ValueError(
                     "'output_map' should be a callable that accepts one parameter: the model. " + \
                     "However, the provided one accepts kwargs"
