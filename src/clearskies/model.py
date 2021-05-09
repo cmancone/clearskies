@@ -32,7 +32,11 @@ class Model(ABC):
         default.update(self.columns_configuration())
         return default
 
-    def columns(self):
+    def columns(self, overrides=None):
+        # no caching if we have overrides
+        if overrides is not None:
+            return self._columns.configure(self.all_columns(), self.__class__, overrides=overrides)
+
         if self._configured_columns is None:
             self._configured_columns = self._columns.configure(self.all_columns(), self.__class__)
         return self._configured_columns

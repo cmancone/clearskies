@@ -202,6 +202,6 @@ class Models(ABC, ConditionParser):
         except StopIteration:
             return self.empty_model()
 
-    def columns(self):
+    def columns(self, overrides=None):
         model = self.model({})
-        return model.columns()
+        return model.columns(overrides=None)

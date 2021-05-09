@@ -11,6 +11,7 @@ class Base(ABC):
         'response_headers': None,
         'authentication': None,
         'output_map': None,
+        'column_overrides': None,
     }
     _input_output = None
     _object_graph = None

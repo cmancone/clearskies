@@ -161,7 +161,7 @@ class Read(Base):
         if has_models and has_models_class:
             raise KeyError(f"{error_prefix} you specified both 'models' and 'models_class', but can only provide one")
         self._models = self._object_graph.provide(configuration['models_class']) if has_models_class else configuration['models']
-        self._columns = self._models.columns()
+        self._columns = self._models.columns(overrides=configuration.get('overrides'))
         model_class_name = self._models.__class__.__name__
         # checks for searchable_columns and readable_columns
         for config_name in ['searchable_columns', 'readable_columns']:
