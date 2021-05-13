@@ -62,7 +62,7 @@ class BelongsTo(Integer):
         integer_check = super().input_error_for_value(value)
         if integer_check:
             return integer_check
-        if not len(self.config('parent_models').where(f"{self.name}={value}")):
+        if not len(self.config('parent_models').where(f"id={value}")):
             return f'Invalid selection for {self.name}: record does not exist'
         return ''
 

@@ -20,7 +20,11 @@ class Model(ABC):
     def table_name(self):
         """ Return the name of the table that the model uses for data storage """
         singular = self.__class__.__name__.lower()
-        return singular[:-1] + 'ies' if singular[-1] == 'y' else f'{singular}s'
+        if singular[-1] == 'y':
+            return singular[:-1] + 'ies'
+        if singular[-1] == 's':
+            return singular + 'es'
+        return f'{singular}s'
 
     @abstractmethod
     def columns_configuration(self):
