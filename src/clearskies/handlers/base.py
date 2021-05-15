@@ -8,6 +8,7 @@ class Base(ABC):
     _configuration = None
     _configuration_defaults = {}
     _global_configuration_defaults = {
+        'base_url': '',
         'response_headers': None,
         'authentication': None,
         'output_map': None,

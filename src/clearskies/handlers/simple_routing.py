@@ -15,9 +15,14 @@ class SimpleRouting(Routing):
     def __init__(self, input_output, object_graph):
         super().__init__(input_output, object_graph)
 
-    @abstractmethod
     def handle(self):
-        pass
+        request_method = self._input_output.get_request_method()
+        full_path = self._input_output.get_full_path().strip('/')
+        for route in self._routes:
+            if route.matches(full_path, request_method):
+                return route()
+
+        return self.error('Page not found', 404)
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
