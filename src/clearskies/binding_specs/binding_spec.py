@@ -11,6 +11,19 @@ import datetime
 import inspect
 from ..binding_config import BindingConfig
 
+def _is_injection_ready(value):
+    """
+    Returns True or False to denote if the given value is something that is ready for injection or needs to be built
+
+    Basically, anything that is an "object" is assumed to be injection-ready, which means no further effort
+    is required.  If something is a class then it means we need to build it before injecting it, and if something
+    is an instance of BindingConfig then of course it must be built.
+    """
+    if isinstance(value, BindingConfig):
+        return False
+    if inspect.isclass(value):
+        return False
+    return True
 
 class ClearSkiesObjectGraph:
     """
@@ -182,20 +195,6 @@ class BindingSpec(pinject.BindingSpec):
 
         raise AttributeError('The dependency injector requested an Authenticaiton method but none has been configured')
 
-    def _is_injection_ready(self, value):
-        """
-        Returns True or False to denote if the given value is something that is ready for injection or needs to be built
-
-        Basically, anything that is an "object" is assumed to be injection-ready, which means no further effort
-        is required.  If something is a class then it means we need to build it before injecting it, and if something
-        is an instance of BindingConfig then of course it must be built.
-        """
-        if isinstance(value, BindingConfig):
-            return False
-        if inspect.isclass(value):
-            return False
-        return True
-
     @classmethod
     def init_application(cls, handler, handler_config, *args, **kwargs):
         object_graph = cls.get_object_graph(*args, **kwargs)
@@ -230,5 +229,5 @@ class BindingSpec(pinject.BindingSpec):
         # probably doesn't exist.  Therefore, we override the cursor with junk as well.  This should fix 99.99%
         # of cases but will cause problems if a developer overrides the cursor backend but then still needs the cursor
         # for something else.  This seems unlikely, but will probably come up eventually.
-        if key == 'cursor_backend' and self._is_injection_ready(value) and 'cursor' not in cls._class_bindings:
+        if key == 'cursor_backend' and _is_injection_ready(value) and 'cursor' not in cls._class_bindings:
             cls._class_bindings['cursor'] = 'dummy_filler'

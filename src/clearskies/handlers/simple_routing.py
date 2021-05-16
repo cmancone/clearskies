@@ -1,9 +1,9 @@
-from .routing import Routing
+from .routing import Base
 from abc import abstractmethod
 from .simple_routing_route import SimpleRoutingRoute
 
 
-class SimpleRouting(Routing):
+class SimpleRouting(Base):
     _routes = None
 
     _configuration_defaults = {
@@ -45,10 +45,10 @@ class SimpleRouting(Routing):
         # we're actually going to build our routes, which will implicitly check the configuration too
         self._build_routes(
             configuration['routes'],
-            authorization=configuration.get('authorization'),
+            authentication=configuration.get('authentication'),
         )
 
-    def _build_routes(self, routes, authorization=None):
+    def _build_routes(self, routes, authentication=None):
         self._routes = []
         for (i, route_config) in enumerate(routes):
             if not route_config.get('handler_class'):
@@ -66,7 +66,7 @@ class SimpleRouting(Routing):
                 route_config['handler_class'],
                 route_config['handler_config'],
                 path=route_config.get('path'),
-                method=route_config.get('method'),
-                authorization=authorization,
+                methods=route_config.get('methods'),
+                authentication=authentication,
             )
-            self._routes.append(SimpleRoutingRoute(self._object_graph, route))
+            self._routes.append(route)

@@ -78,8 +78,9 @@ class Base(ABC):
     def __call__(self):
         if self._configuration is None:
             raise ValueError("Must configure handler before calling")
-        if not self.configuration('authentication').authenticate():
-            return self.error('Not Authenticated', 401)
+        if self._configuration.get('authentication'):
+            if not self.configuration('authentication').authenticate():
+                return self.error('Not Authenticated', 401)
 
         try:
             response = self.handle()
