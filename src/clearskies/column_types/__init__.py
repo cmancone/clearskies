@@ -4,6 +4,7 @@ from .created import Created
 from .datetime import DateTime
 from .email import Email
 from .float import Float
+from .has_many import HasMany
 from .integer import Integer
 from .json import JSON
 from .string import String
@@ -32,6 +33,9 @@ def email(name, **kwargs):
 
 def float_column(name, **kwargs):
     return build_column_config(name, Float, **kwargs)
+
+def has_many(name, **kwargs):
+    return build_column_config(name, HasMany, **kwargs)
 
 def integer(name, **kwargs):
     return build_column_config(name, Integer, **kwargs)

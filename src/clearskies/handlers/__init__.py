@@ -7,3 +7,4 @@ from .restful_api import RestfulAPI
 from .routing import Routing
 from .update import Update
 from .write import Write
+from .simple_routing import SimpleRouting
