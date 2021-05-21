@@ -136,8 +136,6 @@ class MemoryTable:
 
 class MemoryBackend(Backend):
     _tables = None
-    _iterator_index = -1
-    _iterator_rows = []
 
     _allowed_configs = [
         'table_name',
@@ -154,8 +152,6 @@ class MemoryBackend(Backend):
 
     def __init__(self):
         self._tables = {}
-        self._iterator_index = -1
-        self._iterator_rows = []
 
     def configure(self):
         pass
@@ -183,21 +179,18 @@ class MemoryBackend(Backend):
 
     def count(self, configuration):
         if configuration['table_name'] not in self._tables:
-            return 0
+            raise ValueError(
+                f"Attempt to count records in non-existent table '{configuration['table_name']} via MemoryBackend"
+            )
         return self._tables[configuration['table_name']].count(configuration)
 
-    def iterator(self, configuration):
+    def records(self, configuration):
         table_name = configuration['table_name']
-        self._iterator_rows = []
-        self._iterator_index = -1
-        if table_name in self._tables:
-            self._iterator_rows = self._tables[table_name].rows(configuration)
-
-    def next(self):
-        self._iterator_index += 1
-        if self._iterator_index >= len(self._iterator_rows):
-            raise StopIteration()
-        return self._iterator_rows[self._iterator_index]
+        if table_name not in self._tables:
+            raise ValueError(
+                f"Attempt to fetch records from non-existent table '{configuration['table_name']} via MemoryBackend"
+            )
+        return self._tables[table_name].rows(configuration)
 
     def all_rows(self, table_name):
         if table_name not in self._tables:

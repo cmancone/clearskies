@@ -118,15 +118,14 @@ class Models(ModelsBase):
         counted = self.search_responses.pop(0)
         return len(counted)
 
-    def iterator(self, configuration):
+    def records(self, configuration):
         if self.search_responses is None:
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
         if Models.iterated == None:
             Models.iterated = []
         Models.iterated.append(configuration)
-        self.iterator_index = -1
-        self.iterating = self.search_responses.pop(0)
-        return self
+        records = self.search_responses.pop(0)
+        return records
 
     def next(self):
         self.iterator_index += 1

@@ -35,11 +35,11 @@ class CursorBackend(Backend):
 
         self._cursor.execute(f'UPDATE `{model.table_name}` SET {updates} WHERE id=?', [*parameters, id])
 
-        self.iterator({
+        results = self.records({
             'table_name': model.table_name,
             'wheres': [{'parsed': 'id=?', 'values': [id]}]
         })
-        return self.next()
+        return results[0]
 
     def create(self, data, model):
         columns = '`' + '`, `'.join(data.keys()) + '`'
@@ -50,11 +50,11 @@ class CursorBackend(Backend):
             list(data.values())
         )
 
-        self.iterator({
+        results = self.records({
             'table_name': model.table_name,
             'wheres': [{'parsed': 'id=?', 'values': [self._cursor.lastrowid]}]
         })
-        return self.next()
+        return results[0]
 
     def delete(self, id, model):
         self._cursor.execute(
@@ -67,20 +67,17 @@ class CursorBackend(Backend):
         configuration = self._check_query_configuration(configuration)
         [query, parameters] = self.as_count_sql(configuration)
         self._cursor.execute(query, parameters)
-        result = self._cursor.next()
-        return result[0] if type(result) == tuple else result['count']
+        for row in self._cursor:
+            return row[0] if type(row) == tuple else row['count']
+        return 0
 
-    def iterator(self, configuration):
+    def records(self, configuration):
+        # I was going to get fancy and have this return an iterator, but since I'm going to load up
+        # everything into a list anyway, I may as well just return the list, right?
         configuration = self._check_query_configuration(configuration)
         [query, parameters] = self.as_sql(configuration)
         self._cursor.execute(query, parameters)
-        return self
-
-    def next(self):
-        result = self._cursor.next()
-        if result is None:
-            raise StopIteration()
-        return result
+        return [row for row in self._cursor]
 
     def as_sql(self, configuration):
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration['wheres'])

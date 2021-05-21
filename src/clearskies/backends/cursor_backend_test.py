@@ -9,8 +9,8 @@ class CursorBackendTest(unittest.TestCase):
         self.model = type('', (), {'table_name': 'my_table'})
         self.cursor = type('', (), {
             'execute': MagicMock(),
-            'next': MagicMock(return_value={'my': 'data'}),
             'lastrowid': 10,
+            '__iter__': lambda x: iter([{'my': 'data'}]),
         })()
         self.backend = CursorBackend(self.cursor)
 
@@ -39,7 +39,13 @@ class CursorBackendTest(unittest.TestCase):
         self.assertEquals(True, status)
 
     def test_count_group(self):
-        self.cursor.next = MagicMock(return_value={"count":10})
+        self.cursor = type('', (), {
+            'execute': MagicMock(),
+            'lastrowid': 10,
+            '__iter__': lambda x: iter([{'count': 10}]),
+        })()
+        self.backend = CursorBackend(self.cursor)
+
         my_count = self.backend.count({
             'table_name': 'my_table',
             'group_by_column': 'age',
@@ -64,7 +70,13 @@ class CursorBackendTest(unittest.TestCase):
         )
 
     def test_count(self):
-        self.cursor.next = MagicMock(return_value={"count":10})
+        self.cursor = type('', (), {
+            'execute': MagicMock(),
+            'lastrowid': 10,
+            '__iter__': lambda x: iter([{'count': 10}]),
+        })()
+        self.backend = CursorBackend(self.cursor)
+
         my_count = self.backend.count({
             'table_name': 'my_table',
             'limit_start': 5,
@@ -85,7 +97,7 @@ class CursorBackendTest(unittest.TestCase):
         )
 
     def test_iterate(self):
-        iterator = self.backend.iterator({
+        results = self.backend.records({
             'table_name': 'my_table',
             'limit_start': 5,
             'limit_length': 10,
@@ -98,7 +110,6 @@ class CursorBackendTest(unittest.TestCase):
                 {'values': ['2', '3'], 'parsed': 'status_id IN (?,?)'},
             ],
         })
-        self.assertEquals(self.backend, iterator)
         self.cursor.execute.assert_called_with(
             'SELECT sup FROM `my_table` ' +
                 'LEFT JOIN dogs ON dogs.id=ages.id ' + \
@@ -109,5 +120,4 @@ class CursorBackendTest(unittest.TestCase):
                 'LIMIT 5, 10',
             [5, '2', '3']
         )
-        record = iterator.next()
-        self.assertEquals({'my': 'data'}, record)
+        self.assertEquals([{'my': 'data'}], results)

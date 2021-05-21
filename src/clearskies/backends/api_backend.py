@@ -6,7 +6,6 @@ class ApiBackend(Backend):
     _requests = None
     _auth = None
     _records = None
-    _iterator_index = None
 
     _allowed_configs = [
         'wheres',
@@ -69,25 +68,14 @@ class ApiBackend(Backend):
         )
         return response.json()['total_matches']
 
-    def iterator(self, configuration):
+    def records(self, configuration):
         configuration = self._check_query_configuration(configuration)
         response = self._requests.get(
             self.url,
             headers=self._auth.headers(),
             json=self._as_post_data(configuration),
         )
-        self._records = response.json()['data']
-        self._iterator_index = -1
-        return self
-
-    def next(self):
-        if self._records is None:
-            raise ValueError("Must call iterator before calling next")
-
-        self._iterator_index += 1
-        if self._iterator_index >= len(self._records):
-            raise StopIteration
-        return self._records[self._iterator_index]
+        return response.json()['data']
 
     def _check_query_configuration(self, configuration):
         for key in configuration.keys():
