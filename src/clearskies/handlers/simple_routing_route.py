@@ -39,5 +39,5 @@ class SimpleRoutingRoute:
                 return False
         return True
 
-    def __call__(self):
-        return self._handler()
+    def __call__(self, input_output):
+        return self._handler(input_output)

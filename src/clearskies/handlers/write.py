@@ -5,7 +5,6 @@ from abc import abstractmethod
 
 
 class Write(Base):
-    _input_output = None
     _object_graph = None
     _models = None
     _columns = None
@@ -22,11 +21,11 @@ class Write(Base):
         'resource_id': None,
     }
 
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
     @abstractmethod
-    def handle(self):
+    def handle(self, input_output):
         pass
 
     def _check_configuration(self, configuration):
@@ -126,8 +125,8 @@ class Write(Base):
             }
         return input_errors
 
-    def request_data(self, required=True):
-        request_data = super().request_data(required=required)
+    def request_data(self, input_output, required=True):
+        request_data = input_output.request_data(required=required)
         if self.configuration('resource_id'):
             request_data['id'] = self.configuration('resource_id')
         return request_data

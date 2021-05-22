@@ -76,7 +76,7 @@ class SimpleRoutingTest(unittest.TestCase):
         })
         self.object_graph = BindingSpec.get_object_graph()
 
-        self.handler = SimpleRouting(self.input_output, self.object_graph)
+        self.handler = SimpleRouting(self.object_graph)
         self.handler.configure({
             'authentication': public(),
             'routes': [
@@ -119,7 +119,7 @@ class SimpleRoutingTest(unittest.TestCase):
     def test_routing_users(self):
         self.input_output.set_request_url('/users/')
         self.input_output.set_request_method('ANY')
-        result = self.handler()
+        result = self.handler(self.input_output)
 
         self.assertEquals(200, result[1])
         self.assertEquals({
@@ -148,7 +148,7 @@ class SimpleRoutingTest(unittest.TestCase):
     def test_routing_statuses(self):
         self.input_output.set_request_url('/statuses/')
         self.input_output.set_request_method('ANY')
-        result = self.handler()
+        result = self.handler(self.input_output)
 
         self.assertEquals(200, result[1])
         self.assertEquals({
@@ -175,7 +175,7 @@ class SimpleRoutingTest(unittest.TestCase):
     def test_routing_secret(self):
         self.input_output.set_request_url('/users/')
         self.input_output.set_request_method('secret')
-        result = self.handler()
+        result = self.handler(self.input_output)
 
         self.assertEquals(200, result[1])
         self.assertEquals({

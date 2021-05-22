@@ -19,15 +19,12 @@ class DeleteTest(unittest.TestCase):
         self.object_graph = BindingSpec.get_object_graph()
 
     def test_delete_flow(self):
-        delete = Delete(
-            InputOutput(body={'id': '5'}),
-            self.object_graph,
-        )
+        delete = Delete(self.object_graph)
         delete.configure({
             'models': self.models,
             'authentication': Public(),
         })
-        response = delete()
+        response = delete(InputOutput(body={'id': '5'}))
         self.assertEquals('success', response[0]['status'])
         self.assertEquals(200, response[1])
 

@@ -32,8 +32,8 @@ class Handle(Base):
         if 'bah' in configuration:
             raise KeyError("BAH!")
 
-    def handle(self):
-        return self.success([1, 2, 3])
+    def handle(self, input_output):
+        return self.success(input_output, [1, 2, 3])
 
 class BaseTest(unittest.TestCase):
     def setUp(self):
@@ -43,7 +43,7 @@ class BaseTest(unittest.TestCase):
         })
 
     def test_configure(self):
-        handle = Handle('request', self.object_graph)
+        handle = Handle(self.object_graph)
         handle.configure({'test': 'okay', 'authentication': 'authentication'})
         self.assertEquals('okay', handle.configuration('test'))
         self.assertEquals(5, handle.configuration('age'))
@@ -52,11 +52,11 @@ class BaseTest(unittest.TestCase):
         self.assertRaises(KeyError, lambda: handle.configuration('sup'))
 
     def test_require_config(self):
-        handle = Handle('request', self.object_graph)
+        handle = Handle(self.object_graph)
         self.assertRaises(ValueError, lambda: handle.configuration('age'))
 
     def test_invalid_configuration(self):
-        handle = Handle('request', self.object_graph)
+        handle = Handle(self.object_graph)
         handle.configure({'authentication': 'authentication'})
         with self.assertRaises(KeyError) as context:
             handle.configure({'whatev': 'hey', 'authentication': 'authentication'})
@@ -66,9 +66,9 @@ class BaseTest(unittest.TestCase):
         )
 
     def test_success(self):
-        handle = Handle(self.reflect_output, self.object_graph)
+        handle = Handle(self.object_graph)
         handle.configure({'authentication': 'authentication'})
-        (data, code) = handle.success([1, 2, 3])
+        (data, code) = handle.success(self.reflect_output, [1, 2, 3])
         self.assertEquals({
             'status': 'success',
             'error': '',
@@ -79,9 +79,9 @@ class BaseTest(unittest.TestCase):
         self.assertEquals(200, code)
 
     def test_pagination(self):
-        handle = Handle(self.reflect_output, self.object_graph)
+        handle = Handle(self.object_graph)
         handle.configure({'authentication': 'authentication'})
-        (data, code) = handle.success([1, 2, 3], number_results=3, limit=10, start=1)
+        (data, code) = handle.success(self.reflect_output, [1, 2, 3], number_results=3, limit=10, start=1)
         self.assertEquals({
             'status': 'success',
             'error': '',
@@ -92,9 +92,9 @@ class BaseTest(unittest.TestCase):
         self.assertEquals(200, code)
 
     def test_error(self):
-        handle = Handle(self.reflect_output, self.object_graph)
+        handle = Handle(self.object_graph)
         handle.configure({'authentication': 'authentication'})
-        (data, code) = handle.error('bah', 400)
+        (data, code) = handle.error(self.reflect_output, 'bah', 400)
         self.assertEquals({
             'status': 'clientError',
             'error': 'bah',
@@ -105,9 +105,9 @@ class BaseTest(unittest.TestCase):
         self.assertEquals(400, code)
 
     def test_input_errors(self):
-        handle = Handle(self.reflect_output, self.object_graph)
+        handle = Handle(self.object_graph)
         handle.configure({'authentication': 'authentication'})
-        (data, code) = handle.input_errors({'age': 'required', 'date': 'tomorrow'})
+        (data, code) = handle.input_errors(self.reflect_output, {'age': 'required', 'date': 'tomorrow'})
         self.assertEquals({
             'status': 'inputErrors',
             'error': '',
@@ -122,11 +122,11 @@ class BaseTest(unittest.TestCase):
 
     def test_handle(self):
         authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
-        handle = Handle(self.reflect_output, self.object_graph)
+        handle = Handle(self.object_graph)
         handle.configure({
             'authentication': authentication,
         })
-        (data, code) = handle()
+        (data, code) = handle(self.reflect_output)
         self.assertEquals({
             'status': 'success',
             'error': '',
@@ -135,15 +135,16 @@ class BaseTest(unittest.TestCase):
             'inputErrors': {},
         }, data)
         self.assertEquals(200, code)
+        authentication.authenticate.assert_called_with(self.reflect_output)
 
     def test_error(self):
         authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
-        handle = Handle(self.reflect_output, self.object_graph)
+        handle = Handle(self.object_graph)
         handle.configure({
             'authentication': authentication,
         })
-        handle.handle = lambda: raise_exception(ClientError('sup'))
-        (data, code) = handle()
+        handle.handle = lambda input_output: raise_exception(ClientError('sup'))
+        (data, code) = handle(self.reflect_output)
         self.assertEquals({
             'status': 'clientError',
             'error': 'sup',
@@ -155,12 +156,12 @@ class BaseTest(unittest.TestCase):
 
     def test_input_error(self):
         authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
-        handle = Handle(self.reflect_output, self.object_graph)
+        handle = Handle(self.object_graph)
         handle.configure({
             'authentication': authentication,
         })
-        handle.handle = lambda: raise_exception(InputError({'id': 'required'}))
-        (data, code) = handle()
+        handle.handle = lambda input_output: raise_exception(InputError({'id': 'required'}))
+        (data, code) = handle(self.reflect_output)
         self.assertEquals({
             'status': 'inputErrors',
             'error': '',
@@ -169,45 +170,3 @@ class BaseTest(unittest.TestCase):
             'inputErrors': {'id': 'required'},
         }, data)
         self.assertEquals(200, code)
-
-    def test_json_body(self):
-        input_output = type('', (), {'get_json_body': MagicMock(return_value={"sup": "hey"})})
-        handle = Handle(input_output, self.object_graph)
-        handle.configure({'authentication': 'authentication'})
-        body = handle.json_body()
-        self.assertEquals({'sup': 'hey'}, body)
-
-    def test_json_body_required(self):
-        input_output = type('', (), {'get_json_body': MagicMock(return_value=None)})
-        handle = Handle(input_output, self.object_graph)
-        handle.configure({'authentication': 'authentication'})
-        with self.assertRaises(ClientError) as context:
-            handle.json_body()
-        self.assertEquals(
-            "Request body was not valid JSON",
-            str(context.exception)
-        )
-
-    def test_json_body_not_required_invalid(self):
-        input_output = type('', (), {
-            'get_json_body': MagicMock(return_value=None),
-            'has_body': MagicMock(return_value=True),
-        })
-        handle = Handle(input_output, self.object_graph)
-        handle.configure({'authentication': 'authentication'})
-        with self.assertRaises(ClientError) as context:
-            handle.json_body(required=False)
-        self.assertEquals(
-            "Request body was not valid JSON",
-            str(context.exception)
-        )
-
-    def test_json_body_not_required_empty(self):
-        request = type('', (), {
-            'get_json_body': MagicMock(return_value=None),
-            'has_body': MagicMock(return_value=''),
-        })
-        handle = Handle(request, self.object_graph)
-        handle.configure({'authentication': 'authentication'})
-        body = handle.json_body(required=False)
-        self.assertEquals(None, body)

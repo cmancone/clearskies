@@ -9,7 +9,7 @@ class SimpleRoutingRouteTest(unittest.TestCase):
         self.handler_config = MagicMock()
         self.handler_class = type('', (), {
             'configure': self.handler_config,
-            '__call__': lambda self: '5',
+            '__call__': MagicMock(return_value='5'),
         })
 
     def test_configure(self):
@@ -62,4 +62,5 @@ class SimpleRoutingRouteTest(unittest.TestCase):
     def test_call(self):
         route = self.object_graph.provide(SimpleRoutingRoute)
         route.configure(self.handler_class, {})
-        self.assertEquals('5', route())
+        self.assertEquals('5', route('hi'))
+        self.handler_class.__call__.assert_called_with('hi')

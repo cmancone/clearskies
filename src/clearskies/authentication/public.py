@@ -5,5 +5,5 @@ class Public:
     def configure(self):
         pass
 
-    def authenticate(self):
+    def authenticate(self, input_output):
         return True

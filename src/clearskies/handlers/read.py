@@ -26,10 +26,10 @@ class Read(Base):
         'single_record': False,
     }
 
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
-    def handle(self):
+    def handle(self, input_output):
         # first configure our models object with the defaults
         models = self._models
         for where in self.configuration('where'):
@@ -42,11 +42,11 @@ class Read(Base):
         limit = self.configuration('default_limit')
         models = models.limit(start, limit)
 
-        request_data = self.request_data(False)
+        request_data = input_output.request_data(False)
         if request_data:
             error = self._check_request_data(request_data)
             if error:
-                return self.error(error, 400)
+                return self.error(input_output, error, 400)
             [models, start, limit] = self._configure_models_from_request_data(models, request_data)
         if not models.sorts:
             models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
@@ -54,11 +54,11 @@ class Read(Base):
         if self.configuration('single_record'):
             json_output = [self._model_as_json(model) for model in models]
             if not len(json_output):
-                return self.error('Record not found', 400)
-            result = self.success(json_output[0])
-            return result
+                return self.error(input_output, 'Record not found', 400)
+            return self.success(input_output, json_output[0])
 
         return self.success(
+            input_output,
             [self._model_as_json(model) for model in models],
             number_results=len(models),
             start=start,

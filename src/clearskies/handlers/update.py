@@ -4,17 +4,17 @@ from collections import OrderedDict
 
 
 class Update(Write):
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
-    def handle(self):
-        input_data = self.request_data()
+    def handle(self, input_output):
+        input_data = self.request_data(input_output)
         if 'id' not in input_data:
-            return self.error("Missing 'id' in request body", 404)
+            return self.error(input_output, "Missing 'id' in request body", 404)
         model_id = int(input_data['id'])
         model = self._models.find(f'id={model_id}')
         if not model.exists:
-            return self.error("Not Found", 404)
+            return self.error(input_output, "Not Found", 404)
         del input_data['id']
 
         input_errors = {
@@ -25,4 +25,4 @@ class Update(Write):
             raise InputError(input_errors)
         model.save(input_data)
 
-        return self.success(self._model_as_json(model))
+        return self.success(input_output, self._model_as_json(model))

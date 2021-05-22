@@ -14,12 +14,12 @@ class Handle(Base):
         'age': 5,
     }
 
-    def handle(self):
-        return self.success(self.configuration('age'))
+    def handle(self, input_output):
+        return self.success(input_output, self.configuration('age'))
 
 class Router(RequestMethodRouting):
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
     def method_handler_map(self):
         return {
@@ -40,14 +40,14 @@ class RequestMethodRoutingTest(unittest.TestCase):
     def test_route(self):
         handle = self._object_graph.provide(Router)
         handle.configure({'authentication': Public()})
-        result = handle()
+        result = handle(self._input_output)
         self.assertEquals(5, result[0]['data'])
 
     def test_route_non_method(self):
         self._input_output.set_request_method('OPTIONS')
         handle = self._object_graph.provide(Router)
         handle.configure({'authentication': Public()})
-        result = handle()
+        result = handle(self._input_output)
         self.assertEquals(400, result[1])
         self.assertEquals('clientError', result[0]['status'])
         self.assertEquals('Invalid request method', result[0]['error'])

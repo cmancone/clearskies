@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from ..handlers.exceptions import ClientError
 import json
 
 
@@ -46,7 +47,27 @@ class InputOutput(ABC):
     def has_body(self):
         pass
 
-    def get_json_body(self):
+    def request_data(self, required=True):
+        request_data = self.json_body(False)
+        if not request_data:
+            if self.has_body():
+                raise ClientError("Request body was not valid JSON")
+            request_data = {}
+        return request_data
+
+    def json_body(self, required=True):
+        json = self._get_json_body()
+        # if we get None then either the body was not JSON or was empty.
+        # If it is required then we have an exception either way.  If it is not required
+        # then we have an exception if a body was provided but it was not JSON.  We can check for this
+        # if json is None and there is an actual request body.  If json is none, the body is empty,
+        # and it was not required, then we can just return None
+        if json is None:
+            if required or self.has_body():
+                raise ClientError("Request body was not valid JSON")
+        return json
+
+    def _get_json_body(self):
         if not self._body_loaded_as_json:
             if self.get_body() is None:
                 self._body_as_json = None

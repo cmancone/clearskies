@@ -12,17 +12,17 @@ class SimpleRouting(Base):
         'routes': [],
     }
 
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
-    def handle(self):
-        request_method = self._input_output.get_request_method()
-        full_path = self._input_output.get_full_path().strip('/')
+    def handle(self, input_output):
+        request_method = input_output.get_request_method()
+        full_path = input_output.get_full_path().strip('/')
         for route in self._routes:
             if route.matches(full_path, request_method):
-                return route()
+                return route(input_output)
 
-        return self.error('Page not found', 404)
+        return self.error(input_output, 'Page not found', 404)
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
