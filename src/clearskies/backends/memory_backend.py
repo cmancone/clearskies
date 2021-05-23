@@ -136,6 +136,7 @@ class MemoryTable:
 
 class MemoryBackend(Backend):
     _tables = None
+    _silent_on_missing_tables = False
 
     _allowed_configs = [
         'table_name',
@@ -152,6 +153,10 @@ class MemoryBackend(Backend):
 
     def __init__(self):
         self._tables = {}
+        self._silent_on_missing_tables = False
+
+    def silent_on_missing_tables(silent=False):
+        self._silent_on_missing_tables = silent
 
     def configure(self):
         pass
@@ -179,6 +184,9 @@ class MemoryBackend(Backend):
 
     def count(self, configuration):
         if configuration['table_name'] not in self._tables:
+            if self._silent_on_missing_tables:
+                return 0
+
             raise ValueError(
                 f"Attempt to count records in non-existent table '{configuration['table_name']} via MemoryBackend"
             )
@@ -187,6 +195,9 @@ class MemoryBackend(Backend):
     def records(self, configuration):
         table_name = configuration['table_name']
         if table_name not in self._tables:
+            if self._silent_on_missing_tables:
+                return []
+
             raise ValueError(
                 f"Attempt to fetch records from non-existent table '{configuration['table_name']} via MemoryBackend"
             )
@@ -194,6 +205,9 @@ class MemoryBackend(Backend):
 
     def all_rows(self, table_name):
         if table_name not in self._tables:
+            if self._silent_on_missing_tables:
+                return []
+
             raise ValueError(f"Cannot return rows for unknown table '{table_name}'")
         return self._tables[table_name]._rows
 
@@ -203,7 +217,6 @@ class MemoryBackend(Backend):
                 raise KeyError(
                     f"MemoryBackend does not support config '{key}'. You may be using the wrong backend"
                 )
-
         for key in self._required_configs:
             if key not in configuration:
                 raise KeyError(f'Missing required configuration key {key}')

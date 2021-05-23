@@ -93,6 +93,13 @@ class BindingSpec(pinject.BindingSpec):
             self.__class__._class_bindings[binding_name] = instance
         return instance
 
+    def bind(self, key, value):
+        if not hasattr(self, f'provide_{key}'):
+            raise KeyError(
+                f"Binding spec class '{self.__class__.__name__}' does not have key '{key}' available for binding"
+            )
+        self._bind[key] = value
+
     def provide_requests(self):
         pre_configured = self._fetch_pre_configured('requests')
         if pre_configured is not None:
@@ -204,10 +211,15 @@ class BindingSpec(pinject.BindingSpec):
 
     @classmethod
     def get_object_graph(cls, *args, **kwargs):
+        [binding_spec, object_graph] = cls.get_binding_spec_and_object_graph(*args, **kwargs)
+        return object_graph
+
+    @classmethod
+    def get_binding_spec_and_object_graph(cls, *args, **kwargs):
         binding_spec = cls(*args, **kwargs)
         object_graph = ClearSkiesObjectGraph(pinject.new_object_graph(binding_specs=[binding_spec]))
         binding_spec.object_graph = object_graph
-        return object_graph
+        return [binding_spec, object_graph]
 
     @classmethod
     def bind(cls, configuration):
