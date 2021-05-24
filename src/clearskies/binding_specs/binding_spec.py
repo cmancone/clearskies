@@ -93,12 +93,17 @@ class BindingSpec(pinject.BindingSpec):
             self.__class__._class_bindings[binding_name] = instance
         return instance
 
-    def bind(self, key, value):
+    def bind_local(self, key, value):
         if not hasattr(self, f'provide_{key}'):
             raise KeyError(
                 f"Binding spec class '{self.__class__.__name__}' does not have key '{key}' available for binding"
             )
+
         self._bind[key] = value
+
+        # see not in cls.bind_item
+        if key == 'cursor_backend' and _is_injection_ready(value) and 'cursor' not in self._bind:
+            self._bind['cursor'] = 'dummy_filler'
 
     def provide_requests(self):
         pre_configured = self._fetch_pre_configured('requests')

@@ -155,7 +155,7 @@ class MemoryBackend(Backend):
         self._tables = {}
         self._silent_on_missing_tables = False
 
-    def silent_on_missing_tables(silent=False):
+    def silent_on_missing_tables(self, silent=False):
         self._silent_on_missing_tables = silent
 
     def configure(self):

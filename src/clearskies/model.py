@@ -76,7 +76,7 @@ class Model(ABC):
                     if column_name in self.columns() \
                     else self._data[column_name]
 
-        return self._transformed[column_name]
+        return self._transformed.get(column_name, None)
 
 
     @property
