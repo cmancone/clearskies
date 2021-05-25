@@ -31,7 +31,7 @@ class BelongsToTest(unittest.TestCase):
         with self.assertRaises(KeyError) as context:
             self.belongs_to.configure('user_id', {}, BelongsToTest)
         self.assertEquals(
-            "\"Missing required configuration 'parent_models_class' for column 'user_id' in 'BelongsToTest'\"",
+            "\"Missing required configuration 'parent_models_class' for column 'user_id' in model class 'BelongsToTest'\"",
             str(context.exception)
         )
 
@@ -42,7 +42,7 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals({'user_id': 'Invalid selection for user_id: record does not exist'}, error)
         self.assertEquals(1, len(Models.counted))
         self.assertEquals(
-            [{'column': 'user_id', 'operator': '=', 'values': ['5'], 'parsed': 'user_id=?'}],
+            [{'column': 'id', 'operator': '=', 'values': ['5'], 'parsed': 'id=?'}],
             Models.counted[0]['wheres']
         )
 
@@ -53,7 +53,7 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals({}, error)
         self.assertEquals(1, len(Models.counted))
         self.assertEquals(
-            [{'column': 'user_id', 'operator': '=', 'values': ['10'], 'parsed': 'user_id=?'}],
+            [{'column': 'id', 'operator': '=', 'values': ['10'], 'parsed': 'id=?'}],
             Models.counted[0]['wheres']
         )
 

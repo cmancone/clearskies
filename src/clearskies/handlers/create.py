@@ -4,12 +4,12 @@ from collections import OrderedDict
 
 
 class Create(Write):
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
-    def handle(self):
+    def handle(self, input_output):
         model = self._models.empty_model()
-        input_data = self.request_data()
+        input_data = self.request_data(input_output)
         input_errors = {
             **self._extra_column_errors(input_data),
             **self._find_input_errors(model, input_data),
@@ -18,4 +18,4 @@ class Create(Write):
             raise InputError(input_errors)
         model.save(input_data)
 
-        return self.success(self._model_as_json(model))
+        return self.success(input_output, self._model_as_json(model))

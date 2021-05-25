@@ -1,21 +1,23 @@
 from abc import ABC, abstractmethod
 from .exceptions import ClientError, InputError
 from collections import OrderedDict
+import inspect
 
 
 class Base(ABC):
     _configuration = None
     _configuration_defaults = {}
     _global_configuration_defaults = {
+        'base_url': '',
         'response_headers': None,
         'authentication': None,
+        'output_map': None,
+        'column_overrides': None,
     }
-    _input_output = None
     _object_graph = None
     _configuration = None
 
-    def __init__(self, input_output, object_graph):
-        self._input_output = input_output
+    def __init__(self, object_graph):
         self._object_graph = object_graph
         self._configuration = None
 
@@ -37,6 +39,20 @@ class Base(ABC):
             raise KeyError(
                 f"You must provide authentication in the configuration for handler '{self.__class__.__name__}'"
             )
+        if configuration.get('output_map') is not None:
+            if not callable(configuration['output_map']):
+                raise ValueError("'output_map' should be a callable")
+            signature = inspect.getfullargspec(configuration['output_map'])
+            if signature.defaults and len(signature.defaults):
+                raise ValueError(
+                    "'output_map' should be a callable that accepts one parameter: the model. " + \
+                    "However, the provided one accepts kwargs"
+                )
+            if len(signature.args) != 1:
+                raise ValueError(
+                    "'output_map' should be a callable that accepts one parameter: the model. " + \
+                    f"However, the provided one accepts {len(signature.args)}"
+                )
 
     def apply_default_configuation(self, configuration):
         return {
@@ -57,28 +73,29 @@ class Base(ABC):
         configuration['authentication'] = self._object_graph.build(configuration['authentication'])
         return configuration
 
-    def __call__(self):
+    def __call__(self, input_output):
         if self._configuration is None:
             raise ValueError("Must configure handler before calling")
-        if not self.configuration('authentication').authenticate():
-            return self.error('Not Authenticated', 401)
+        if self._configuration.get('authentication'):
+            if not self.configuration('authentication').authenticate(input_output):
+                return self.error(input_output, 'Not Authenticated', 401)
 
         try:
-            response = self.handle()
+            response = self.handle(input_output)
         except ClientError as client_error:
-            return self.error(str(client_error), 400)
+            return self.error(input_output, str(client_error), 400)
         except InputError as input_error:
-            return self.input_errors(input_error.errors)
+            return self.input_errors(input_output, input_error.errors)
 
         return response
 
-    def input_errors(self, errors, status_code=200):
-        return self.respond({'status': 'inputErrors', 'inputErrors': errors}, status_code)
+    def input_errors(self, input_output, errors, status_code=200):
+        return self.respond(input_output, {'status': 'inputErrors', 'inputErrors': errors}, status_code)
 
-    def error(self, message, status_code):
-        return self.respond({'status': 'clientError', 'error': message}, status_code)
+    def error(self, input_output, message, status_code):
+        return self.respond(input_output, {'status': 'clientError', 'error': message}, status_code)
 
-    def success(self, data, number_results=None, start=None, limit=None):
+    def success(self, input_output, data, number_results=None, start=None, limit=None):
         response_data = {'status': 'success', 'data': data, 'pagination': {}}
 
         if number_results is not None:
@@ -92,13 +109,13 @@ class Base(ABC):
                 'limit': limit
             }
 
-        return self.respond(response_data, 200)
+        return self.respond(input_output, response_data, 200)
 
-    def respond(self, response_data, status_code):
+    def respond(self, input_output, response_data, status_code):
         response_headers = self.configuration('response_headers')
         if response_headers:
-            self._input_output.set_headers(response_headers)
-        return self._input_output.respond(self._normalize_response(response_data), status_code)
+            input_output.set_headers(response_headers)
+        return input_output.respond(self._normalize_response(response_data), status_code)
 
     def _normalize_response(self, response_data):
         if not 'status' in response_data:
@@ -113,27 +130,10 @@ class Base(ABC):
             response_data['inputErrors'] = {}
         return response_data
 
-    def request_data(self, required=True):
-        request_data = self.json_body(False)
-        if not request_data:
-            if self._input_output.has_body():
-                raise ClientError("Request body was not valid JSON")
-            request_data = {}
-        return request_data
-
-    def json_body(self, required=True):
-        json = self._input_output.get_json_body()
-        # if we get None then either the body was not JSON or was empty.
-        # If it is required then we have an exception either way.  If it is not required
-        # then we have an exception if a body was provided but it was not JSON.  We can check for this
-        # if json is None and there is an actual request body.  If json is none, the body is empty,
-        # and it was not required, then we can just return None
-        if json is None:
-            if required or self._input_output.has_body():
-                raise ClientError("Request body was not valid JSON")
-        return json
-
     def _model_as_json(self, model):
+        if self.configuration('output_map'):
+            return self.configuration('output_map')(model)
+
         json = OrderedDict()
         json['id'] = int(model.id)
         for column in self._get_readable_columns().values():

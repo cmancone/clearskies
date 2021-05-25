@@ -20,11 +20,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def iterator(self, configuration):
-        pass
-
-    @abstractmethod
-    def next(self, configuration):
+    def records(self, configuration):
         pass
 
     def create_record_with_class(self, model_or_class, data):

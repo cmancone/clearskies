@@ -14,11 +14,10 @@ class MemoryBackendTest(unittest.TestCase):
     def test_create(self):
         self.memory_backend.create({'name': 'Conor', 'email': 'cmancone@example.com'}, self.user_model)
         self.memory_backend.create({'name': 'Ronoc', 'email': 'rmancone@example.com'}, self.user_model)
-        self.memory_backend.iterator({'table_name': 'users'})
         self.assertEquals([
             {'id': 1, 'name': 'Conor', 'email': 'cmancone@example.com'},
             {'id': 2, 'name': 'Ronoc', 'email': 'rmancone@example.com'},
-        ], self.memory_backend._iterator_rows)
+        ], self.memory_backend.records({'table_name': 'users'}))
 
     def test_create_check_columns(self):
         with self.assertRaises(ValueError) as context:
@@ -31,10 +30,9 @@ class MemoryBackendTest(unittest.TestCase):
     def test_update(self):
         self.memory_backend.create({'name': 'Conor', 'email': 'cmancone@example.com'}, self.user_model)
         self.memory_backend.update(1, {'name': 'Ronoc', 'email': 'rmancone@example.com'}, self.user_model)
-        self.memory_backend.iterator({'table_name': 'users'})
         self.assertEquals([
             {'id': 1, 'name': 'Ronoc', 'email': 'rmancone@example.com'},
-        ], self.memory_backend._iterator_rows)
+        ], self.memory_backend.records({'table_name': 'users'}))
 
     def test_update_check_columns(self):
         self.memory_backend.create({'name': 'Conor', 'email': 'cmancone@example.com'}, self.user_model)
@@ -56,30 +54,26 @@ class MemoryBackendTest(unittest.TestCase):
     def test_delete(self):
         self.memory_backend.create({'name': 'Conor', 'email': 'cmancone@example.com'}, self.user_model)
         self.memory_backend.delete(1, self.user_model)
-        self.memory_backend.iterator({'table_name': 'users'})
-        self.assertEquals([], self.memory_backend._iterator_rows)
-        self.assertEquals(0, len(self.memory_backend._iterator_rows))
+        self.assertEquals([], self.memory_backend.records({'table_name': 'users'}))
 
     def test_multiple_tables(self):
         self.memory_backend.create({'name': 'Conor', 'email': 'cmancone@example.com'}, self.user_model)
         self.memory_backend.create({'review': 'cool'}, self.reviews_model)
         self.memory_backend.create({'review': 'bad'}, self.reviews_model)
         self.memory_backend.update(2, {'review': 'okay'}, self.reviews_model)
-        self.memory_backend.iterator({'table_name': 'reviews'})
         self.assertEquals([
             {'id': 1, 'review': 'cool'},
             {'id': 2, 'review': 'okay'},
-        ], self.memory_backend._iterator_rows)
-        self.memory_backend.iterator({'table_name': 'users'})
+        ], self.memory_backend.records({'table_name': 'reviews'}))
         self.assertEquals([
             {'id': 1, 'name': 'Conor', 'email': 'cmancone@example.com'},
-        ], self.memory_backend._iterator_rows)
+        ], self.memory_backend.records({'table_name': 'users'}))
 
     def test_filter_and_sort(self):
         self.memory_backend.create({'name': 'Zeb', 'email': 'a@example.com'}, self.user_model)
         self.memory_backend.create({'name': 'Zeb', 'email': 'b@example.com'}, self.user_model)
         self.memory_backend.create({'name': 'A', 'email': 'c@example.com'}, self.user_model)
-        self.memory_backend.iterator({
+        records = self.memory_backend.records({
             'table_name': 'users',
             'wheres': [{'column': 'name', 'operator': '=', 'values': ['Zeb']}],
             'sorts': [
@@ -89,9 +83,9 @@ class MemoryBackendTest(unittest.TestCase):
         self.assertEquals([
             {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
             {'id': 1, 'name': 'Zeb', 'email': 'a@example.com'},
-        ], self.memory_backend._iterator_rows)
+        ], records)
 
-        self.memory_backend.iterator({
+        records = self.memory_backend.records({
             'table_name': 'users',
             'wheres': [{'column': 'id', 'operator': 'in', 'values': [2, 3]}],
             'sorts': [
@@ -101,9 +95,9 @@ class MemoryBackendTest(unittest.TestCase):
         self.assertEquals([
             {'id': 3, 'name': 'A', 'email': 'c@example.com'},
             {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
-        ], self.memory_backend._iterator_rows)
+        ], records)
 
-        self.memory_backend.iterator({
+        records = self.memory_backend.records({
             'table_name': 'users',
             'wheres': [
                 {'column': 'name', 'operator': '=', 'values': ['Zeb']},
@@ -112,9 +106,9 @@ class MemoryBackendTest(unittest.TestCase):
         })
         self.assertEquals([
             {'id': 1, 'name': 'Zeb', 'email': 'a@example.com'},
-        ], self.memory_backend._iterator_rows)
+        ], records)
 
-        self.memory_backend.iterator({
+        records = self.memory_backend.records({
             'table_name': 'users',
             'sorts': [
                 {'column': 'name', 'direction': 'ASC'},
@@ -125,9 +119,9 @@ class MemoryBackendTest(unittest.TestCase):
             {'id': 3, 'name': 'A', 'email': 'c@example.com'},
             {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
             {'id': 1, 'name': 'Zeb', 'email': 'a@example.com'},
-        ], self.memory_backend._iterator_rows)
+        ], records)
 
-        self.memory_backend.iterator({
+        records = self.memory_backend.records({
             'table_name': 'users',
             'sorts': [
                 {'column': 'name', 'direction': 'ASC'},
@@ -138,7 +132,7 @@ class MemoryBackendTest(unittest.TestCase):
         })
         self.assertEquals([
             {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
-        ], self.memory_backend._iterator_rows)
+        ], records)
 
     def test_count(self):
         self.memory_backend.create({'name': 'Zeb', 'email': 'a@example.com'}, self.user_model)

@@ -58,7 +58,7 @@ class WSGITest(unittest.TestCase):
         wsgi = WSGI({
             'wsgi.input': BytesIO('{"person":"sup"}'.encode('utf8')),
         }, start_response)
-        self.assertEquals({'person': 'sup'}, wsgi.get_json_body())
+        self.assertEquals({'person': 'sup'}, wsgi.json_body())
         self.assertEquals('{"person":"sup"}', wsgi.get_body())
         self.assertTrue(wsgi.has_body())
 
@@ -67,6 +67,5 @@ class WSGITest(unittest.TestCase):
         wsgi = WSGI({
             'wsgi.input': BytesIO('OKAY!'.encode('utf8')),
         }, start_response)
-        self.assertEquals(None, wsgi.get_json_body())
         self.assertEquals('OKAY!', wsgi.get_body())
         self.assertTrue(wsgi.has_body())

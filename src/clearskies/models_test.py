@@ -28,10 +28,8 @@ class TestModels(unittest.TestCase):
     def setUp(self):
         self.backend = type('', (), {
             'count': MagicMock(return_value=10),
-            'iterator': MagicMock(),
-            'next': MagicMock(return_value={'id': 5, 'my': 'data'}),
+            'records': MagicMock(return_value=[{'id': 5, 'my': 'data'}]),
         })()
-        self.backend.iterator = MagicMock(return_value=self.backend)
 
     def test_configure(self):
         users = Users('cursor', 'columns') \
@@ -84,8 +82,7 @@ class TestModels(unittest.TestCase):
             .limit(5, 10) \
             .select('*')
         iterator = users.__iter__()
-        self.assertEquals(users, iterator)
-        self.backend.iterator.assert_has_calls([
+        self.backend.records.assert_has_calls([
             call({
                 'wheres': [
                     {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
@@ -102,15 +99,14 @@ class TestModels(unittest.TestCase):
                 'table_name': 'users',
             })
         ])
-        user = users.__next__()
+        user = iterator.__next__()
         self.assertEquals(User, user.__class__)
         self.assertEquals({'id': 5, 'my': 'data'}, user._data)
-        self.backend.next.assert_has_calls([call()])
 
     def test_as_sql_empty(self):
         users = Users(self.backend, 'columns')
         users.__iter__()
-        self.backend.iterator.assert_has_calls([
+        self.backend.records.assert_has_calls([
             call({
                 'wheres': [],
                 'sorts': [],

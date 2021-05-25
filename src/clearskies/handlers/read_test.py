@@ -25,7 +25,7 @@ class ReadTest(unittest.TestCase):
         ])
 
     def test_simple_read(self):
-        read = Read(InputOutput(), self.object_graph)
+        read = Read(self.object_graph)
         read.configure({
             'models': self.models,
             'readable_columns': ['name', 'email', 'age'],
@@ -33,7 +33,7 @@ class ReadTest(unittest.TestCase):
             'default_sort_column': 'email',
             'authentication': Public(),
         })
-        response = read()
+        response = read(InputOutput())
         json_response = response[0]
         response_data = json_response['data']
         self.assertEquals(200, response[1])
@@ -54,7 +54,7 @@ class ReadTest(unittest.TestCase):
         }, Models.iterated[0])
 
     def test_configure(self):
-        read = Read(InputOutput(), self.object_graph)
+        read = Read(self.object_graph)
         read.configure({
             'models': self.models,
             'readable_columns': ['name'],
@@ -67,7 +67,7 @@ class ReadTest(unittest.TestCase):
             'group_by': 'id',
             'authentication': Public(),
         })
-        response = read()
+        response = read(InputOutput())
         json_response = response[0]
         response_data = json_response['data']
         self.assertEquals(200, response[1])
@@ -98,7 +98,7 @@ class ReadTest(unittest.TestCase):
             'start': 10,
             'limit': 5,
         }
-        read = Read(InputOutput(body=user_input), self.object_graph)
+        read = Read(self.object_graph)
         read.configure({
             'models': self.models,
             'readable_columns': ['name', 'email', 'age'],
@@ -107,7 +107,7 @@ class ReadTest(unittest.TestCase):
             'default_sort_column': 'email',
             'authentication': Public(),
         })
-        response = read()
+        response = read(InputOutput(body=user_input))
         json_response = response[0]
         response_data = json_response['data']
         self.assertEquals(200, response[1])
@@ -128,3 +128,22 @@ class ReadTest(unittest.TestCase):
             'selects': None,
             'table_name': 'models',
         }, Models.iterated[0])
+
+    def test_output_map(self):
+        read = Read(self.object_graph)
+        read.configure({
+            'models': self.models,
+            'readable_columns': ['name', 'email', 'age'],
+            'searchable_columns': ['name'],
+            'default_sort_column': 'email',
+            'authentication': Public(),
+            'output_map': lambda model: {'id': model.id, 'awesome': model.name},
+        })
+        response = read(InputOutput())
+        json_response = response[0]
+        response_data = json_response['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('success', json_response['status'])
+        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, json_response['pagination'])
+        self.assertEquals({'id': 5, 'awesome': 'conor'}, response_data[0])
+        self.assertEquals({'id': 8, 'awesome': 'ronoc'}, response_data[1])

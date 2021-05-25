@@ -12,25 +12,25 @@ class Delete(Base):
         'resource_id': None,
     }
 
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
-    def handle(self):
-        input_data = self.request_data()
+    def handle(self, input_output):
+        input_data = input_output.request_data()
         resource_id = None
         if self.configuration('resource_id'):
             resource_id = self.configuration('resource_id')
         elif 'id' in input_data:
             resource_id = input_data['id']
         if not resource_id:
-            return self.error("Missing 'id'", 404)
+            return self.error(input_output, "Missing 'id'", 404)
         resource_id = int(resource_id)
         model = self._models.find(f'id={resource_id}')
         if not model.exists:
-            return self.error("Not Found", 404)
+            return self.error(input_output, "Not Found", 404)
 
         model.delete()
-        return self.success({})
+        return self.success(input_output, {})
 
     def _check_configuration(self, configuration):
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)

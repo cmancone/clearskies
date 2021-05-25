@@ -20,7 +20,11 @@ class Model(ABC):
     def table_name(self):
         """ Return the name of the table that the model uses for data storage """
         singular = self.__class__.__name__.lower()
-        return singular[:-1] + 'ies' if singular[-1] == 'y' else f'{singular}s'
+        if singular[-1] == 'y':
+            return singular[:-1] + 'ies'
+        if singular[-1] == 's':
+            return singular + 'es'
+        return f'{singular}s'
 
     @abstractmethod
     def columns_configuration(self):
@@ -32,7 +36,11 @@ class Model(ABC):
         default.update(self.columns_configuration())
         return default
 
-    def columns(self):
+    def columns(self, overrides=None):
+        # no caching if we have overrides
+        if overrides is not None:
+            return self._columns.configure(self.all_columns(), self.__class__, overrides=overrides)
+
         if self._configured_columns is None:
             self._configured_columns = self._columns.configure(self.all_columns(), self.__class__)
         return self._configured_columns
@@ -54,12 +62,12 @@ class Model(ABC):
         # as a simple local cache (self._transformed is cleared during a save operation)
         if column_name not in self._transformed:
             columns = self.columns()
-            if column_name not in self._data:
+            if column_name not in self._data or self._data[column_name] is None:
                 for column in columns.values():
                     if column.can_provide(column_name):
                         self._transformed[column_name] = column.provide(self._data, column_name)
                         break
-                if not column_name in self._transformed:
+                if column_name not in self._transformed and column_name not in self._data:
                     raise KeyError(f"Unknown column '{column_name}' requested from model '{self.__class__.__name__}'")
 
             else:
@@ -68,7 +76,7 @@ class Model(ABC):
                     if column_name in self.columns() \
                     else self._data[column_name]
 
-        return self._transformed[column_name]
+        return self._transformed.get(column_name, None)
 
 
     @property

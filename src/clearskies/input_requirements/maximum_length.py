@@ -4,12 +4,7 @@ from .requirement import Requirement
 class MaximumLength(Requirement):
     maximum_length = None
 
-    def configure(self, *arguments):
-        if len(arguments) < 1:
-            raise ValueError(
-                f"Must provide the maximum length to use the MaximumLength class for column '{self.column_name}'"
-            )
-        maximum_length = arguments[0]
+    def configure(self, maximum_length):
         if type(maximum_length) != int:
             raise ValueError(
                 f"Maximum length must be an int to use the MaximumLength class for column '{self.column_name}'"

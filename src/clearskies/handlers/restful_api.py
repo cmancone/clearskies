@@ -15,6 +15,7 @@ class RestfulAPI(Routing):
         'allow_update': True,
         'allow_delete': True,
         'allow_search': True,
+        'read_only': False,
         'create_handler': Create,
         'read_handler': Read,
         'update_handler': Update,
@@ -27,8 +28,8 @@ class RestfulAPI(Routing):
     _resource_id = None
     _is_search = False
 
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
     def handler_classes(self, configuration):
         classes = []
@@ -40,9 +41,21 @@ class RestfulAPI(Routing):
             classes.append(configuration[handler_key] if handler_key in configuration else self._configuration_defaults[handler_key])
         return classes
 
-    def _parse_url(self):
+    def _check_configuration(self, configuration):
+        super()._check_configuration(configuration)
+
+        # if we have read only set then we can't allow any write methods
+        if configuration.get('read_only'):
+            for action in ['update', 'delete', 'create']:
+                if configuration.get(f'allow_{action}'):
+                    raise ValueError(
+                        f"Contradictory configuration for handler '{self.__class__.__name__}': " + \
+                        f"'read_only' and 'allow_{action} are both set to True"
+                    )
+
+    def _parse_url(self, input_output):
         self._resource_id = None
-        full_path = self._input_output.get_full_path().strip('/')
+        full_path = input_output.get_full_path().strip('/')
         base_url = self.configuration('base_url').strip('/')
         if base_url and full_path[:len(base_url)] != base_url:
             raise InvalidUrl()
@@ -56,21 +69,21 @@ class RestfulAPI(Routing):
             else:
                 self._resource_id = int(url)
 
-    def handle(self):
-        handler_class = self._get_handler_class_for_route()
+    def handle(self, input_output):
+        handler_class = self._get_handler_class_for_route(input_output)
         if handler_class is None:
-            return self.error('Not Found', 404)
+            return self.error(input_output, 'Not Found', 404)
         handler = self.build_handler(handler_class)
-        return handler()
+        return handler(input_output)
 
-    def _get_handler_class_for_route(self):
+    def _get_handler_class_for_route(self, input_output):
         try:
-            self._parse_url()
+            self._parse_url(input_output)
         except InvalidUrl:
             return None
         if self._is_search:
             return self.configuration('read_handler') if self.configuration('allow_search') else None
-        request_method = self._input_output.get_request_method()
+        request_method = input_output.get_request_method()
         if self._resource_id:
             if request_method == self.configuration('update_request_method'):
                 return self.configuration('update_handler') if self.configuration('allow_update') else None

@@ -6,11 +6,24 @@ from ..columns import Columns
 import os
 from ..environment import Environment
 from ..secrets import Secrets
-from ..backends import CursorBackend
+from ..backends import CursorBackend, MemoryBackend
 import datetime
 import inspect
-from .binding_config import BindingConfig
+from ..binding_config import BindingConfig
 
+def _is_injection_ready(value):
+    """
+    Returns True or False to denote if the given value is something that is ready for injection or needs to be built
+
+    Basically, anything that is an "object" is assumed to be injection-ready, which means no further effort
+    is required.  If something is a class then it means we need to build it before injecting it, and if something
+    is an instance of BindingConfig then of course it must be built.
+    """
+    if isinstance(value, BindingConfig):
+        return False
+    if inspect.isclass(value):
+        return False
+    return True
 
 class ClearSkiesObjectGraph:
     """
@@ -79,6 +92,18 @@ class BindingSpec(pinject.BindingSpec):
         else:
             self.__class__._class_bindings[binding_name] = instance
         return instance
+
+    def bind_local(self, key, value):
+        if not hasattr(self, f'provide_{key}'):
+            raise KeyError(
+                f"Binding spec class '{self.__class__.__name__}' does not have key '{key}' available for binding"
+            )
+
+        self._bind[key] = value
+
+        # see not in cls.bind_item
+        if key == 'cursor_backend' and _is_injection_ready(value) and 'cursor' not in self._bind:
+            self._bind['cursor'] = 'dummy_filler'
 
     def provide_requests(self):
         pre_configured = self._fetch_pre_configured('requests')
@@ -154,6 +179,13 @@ class BindingSpec(pinject.BindingSpec):
 
         return CursorBackend(cursor)
 
+    def provide_memory_backend(self):
+        pre_configured = self._fetch_pre_configured('memory_backend')
+        if pre_configured is not None:
+            return pre_configured
+
+        return MemoryBackend()
+
     def provide_now(self):
         pre_configured = self._fetch_pre_configured('now')
         if pre_configured is not None:
@@ -175,20 +207,6 @@ class BindingSpec(pinject.BindingSpec):
 
         raise AttributeError('The dependency injector requested an Authenticaiton method but none has been configured')
 
-    def _is_injection_ready(self, value):
-        """
-        Returns True or False to denote if the given value is something that is ready for injection or needs to be built
-
-        Basically, anything that is an "object" is assumed to be injection-ready, which means no further effort
-        is required.  If something is a class then it means we need to build it before injecting it, and if something
-        is an instance of BindingConfig then of course it must be built.
-        """
-        if isinstance(value, BindingConfig):
-            return False
-        if inspect.isclass(value):
-            return False
-        return True
-
     @classmethod
     def init_application(cls, handler, handler_config, *args, **kwargs):
         object_graph = cls.get_object_graph(*args, **kwargs)
@@ -198,10 +216,15 @@ class BindingSpec(pinject.BindingSpec):
 
     @classmethod
     def get_object_graph(cls, *args, **kwargs):
+        [binding_spec, object_graph] = cls.get_binding_spec_and_object_graph(*args, **kwargs)
+        return object_graph
+
+    @classmethod
+    def get_binding_spec_and_object_graph(cls, *args, **kwargs):
         binding_spec = cls(*args, **kwargs)
         object_graph = ClearSkiesObjectGraph(pinject.new_object_graph(binding_specs=[binding_spec]))
         binding_spec.object_graph = object_graph
-        return object_graph
+        return [binding_spec, object_graph]
 
     @classmethod
     def bind(cls, configuration):
@@ -223,5 +246,5 @@ class BindingSpec(pinject.BindingSpec):
         # probably doesn't exist.  Therefore, we override the cursor with junk as well.  This should fix 99.99%
         # of cases but will cause problems if a developer overrides the cursor backend but then still needs the cursor
         # for something else.  This seems unlikely, but will probably come up eventually.
-        if key == 'cursor_backend' and self._is_injection_ready(value) and 'cursor' not in cls._class_bindings:
+        if key == 'cursor_backend' and _is_injection_ready(value) and 'cursor' not in cls._class_bindings:
             cls._class_bindings['cursor'] = 'dummy_filler'

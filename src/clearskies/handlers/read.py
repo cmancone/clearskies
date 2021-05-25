@@ -26,10 +26,10 @@ class Read(Base):
         'single_record': False,
     }
 
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
-    def handle(self):
+    def handle(self, input_output):
         # first configure our models object with the defaults
         models = self._models
         for where in self.configuration('where'):
@@ -42,11 +42,11 @@ class Read(Base):
         limit = self.configuration('default_limit')
         models = models.limit(start, limit)
 
-        request_data = self.request_data(False)
+        request_data = input_output.request_data(False)
         if request_data:
             error = self._check_request_data(request_data)
             if error:
-                return self.error(error, 400)
+                return self.error(input_output, error, 400)
             [models, start, limit] = self._configure_models_from_request_data(models, request_data)
         if not models.sorts:
             models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
@@ -54,11 +54,11 @@ class Read(Base):
         if self.configuration('single_record'):
             json_output = [self._model_as_json(model) for model in models]
             if not len(json_output):
-                return self.error('Record not found', 400)
-            result = self.success(json_output[0])
-            return result
+                return self.error(input_output, 'Record not found', 400)
+            return self.success(input_output, json_output[0])
 
         return self.success(
+            input_output,
             [self._model_as_json(model) for model in models],
             number_results=len(models),
             start=start,
@@ -161,7 +161,7 @@ class Read(Base):
         if has_models and has_models_class:
             raise KeyError(f"{error_prefix} you specified both 'models' and 'models_class', but can only provide one")
         self._models = self._object_graph.provide(configuration['models_class']) if has_models_class else configuration['models']
-        self._columns = self._models.columns()
+        self._columns = self._models.columns(overrides=configuration.get('overrides'))
         model_class_name = self._models.__class__.__name__
         # checks for searchable_columns and readable_columns
         for config_name in ['searchable_columns', 'readable_columns']:
@@ -174,6 +174,11 @@ class Read(Base):
                 )
             for column_name in configuration[config_name]:
                 if column_name not in self._columns:
+                    raise ValueError(
+                        f"{error_prefix} '{config_name}' references column named {column_name} " +
+                        f"but this column does not exist for model '{model_class_name}'"
+                    )
+                if config_name == 'readable_columns' and not self._columns[column_name].is_readable:
                     raise ValueError(
                         f"{error_prefix} '{config_name}' references column named {column_name} " +
                         f"but this column does not exist for model '{model_class_name}'"

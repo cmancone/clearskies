@@ -3,15 +3,15 @@ from abc import abstractmethod
 
 
 class Routing(Base):
-    def __init__(self, input_output, object_graph):
-        super().__init__(input_output, object_graph)
+    def __init__(self, object_graph):
+        super().__init__(object_graph)
 
     @abstractmethod
     def handler_classes(self, configuration):
         pass
 
     @abstractmethod
-    def handle(self):
+    def handle(self, input_output):
         pass
 
     def build_handler(self, handler_class, configuration=None):

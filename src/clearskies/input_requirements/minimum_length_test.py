@@ -22,14 +22,6 @@ class MinimumLengthTest(unittest.TestCase):
         error = self.minimum_length.check('model', {'name': '123456789'})
         self.assertEquals("'name' must be at least 10 characters long.", error)
 
-    def test_check_configuration_missing_length(self):
-        with self.assertRaises(ValueError) as context:
-            self.minimum_length.configure()
-        self.assertEquals(
-            "Must provide the minimum length to use the MinimumLength class for column 'name'",
-            str(context.exception)
-        )
-
     def test_check_configuration_length_not_int(self):
         with self.assertRaises(ValueError) as context:
             self.minimum_length.configure('asdf')

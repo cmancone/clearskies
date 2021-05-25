@@ -177,11 +177,7 @@ class Models(ABC, ConditionParser):
         return self.count
 
     def __iter__(self):
-        self._backend.iterator(self.configuration)
-        return self
-
-    def __next__(self):
-        return self.model(self._backend.next())
+        return iter([self.model(row) for row in self._backend.records(self.configuration)])
 
     def model(self, data):
         model = self._build_model()
@@ -196,12 +192,12 @@ class Models(ABC, ConditionParser):
         return self.model({})
 
     def first(self):
-        self.__iter__()
+        iter = self.__iter__()
         try:
-            return self.__next__()
+            return iter.__next__()
         except StopIteration:
             return self.empty_model()
 
-    def columns(self):
+    def columns(self, overrides=None):
         model = self.model({})
-        return model.columns()
+        return model.columns(overrides=None)
