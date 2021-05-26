@@ -74,6 +74,17 @@ class BindingSpec(pinject.BindingSpec):
     def __init__(self, **kwargs):
         self._bind = kwargs
 
+    def configure(self, bind):
+        # There are two ways to configure bindings in a BindingSpec: via the "provide_{key}" methods and via
+        # this configure method, which needs to explicitly bind things.  However, we can't specify both, because
+        # if we do, pinject will complain about the ambiguity.  Therefore, if the binding spec has a method named
+        # provide_{key} then don't do anything, since our binding will be picked up by the provide method anyway.
+        # This definitely carries some risk of confusion, and we can't alert people about typos in binding keys,
+        # but it's pretty much a necessity, so :shrug:
+        for (key, value) in self._bind.items():
+            if not hasattr(self, f'provide_{key}'):
+                bind(key, to_instance=value)
+
     def _fetch_pre_configured(self, binding_name):
         class_bindings = self.__class__._class_bindings if self.__class__._class_bindings is not None else {}
         if binding_name not in self._bind and binding_name not in class_bindings:
@@ -94,11 +105,6 @@ class BindingSpec(pinject.BindingSpec):
         return instance
 
     def bind_local(self, key, value):
-        if not hasattr(self, f'provide_{key}'):
-            raise KeyError(
-                f"Binding spec class '{self.__class__.__name__}' does not have key '{key}' available for binding"
-            )
-
         self._bind[key] = value
 
         # see not in cls.bind_item
@@ -221,8 +227,29 @@ class BindingSpec(pinject.BindingSpec):
 
     @classmethod
     def get_binding_spec_and_object_graph(cls, *args, **kwargs):
+        # we have two keyword arguments of our own: bindings and binding_classes.
+        # remove those if found
+        bindings = {}
+        binding_classes = []
+        if 'bindings' in kwargs:
+            bindings = kwargs['bindings']
+            del kwargs['binding']
+        if 'binding_classes' in kwargs:
+            binding_classes = kwargs['binding_classes']
+            del kwargs['binding_classes']
+
+        # build our binding spec
         binding_spec = cls(*args, **kwargs)
-        object_graph = ClearSkiesObjectGraph(pinject.new_object_graph(binding_specs=[binding_spec]))
+        # and specify our bindings (which has to happen before creating the object graph)
+        for (key, value) in bindings.items():
+            binding_spec.bind_local(key, value)
+
+        # now build the object graph, passing along our binding spec and the binding classes
+        object_graph = ClearSkiesObjectGraph(pinject.new_object_graph(
+            binding_specs=[binding_spec],
+            classes=binding_classes)
+        )
+
         binding_spec.object_graph = object_graph
         return [binding_spec, object_graph]
 
