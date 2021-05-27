@@ -35,6 +35,14 @@ class AKeyless:
         )
         return res[path]
 
+    def get_dynamic_secret(self, path):
+        self._configure_guard()
+
+        res = self._api.get_dynamic_secret_value(
+            self._akeyless.GetDynamicSecretValue(name=path, token=self._get_token())
+        )
+        return res
+
     def _configure_guard(self):
         if not self._access_id:
             raise ValueError("Must call configure method before using secrets.AKeyless")
