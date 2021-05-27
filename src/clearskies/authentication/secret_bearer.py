@@ -1,4 +1,5 @@
 class SecretBearer:
+    has_dynamic_credentials = False
     _environment = None
     _secret = None
 
@@ -14,7 +15,7 @@ class SecretBearer:
         else:
             raise ValueError("Must set either 'secret' or 'environment_key' when configuring the SecretBearer")
 
-    def headers(self):
+    def headers(self, retry_auth=False):
         self._configured_guard()
         return {
             'Authorization': f'Bearer {self._secret}'

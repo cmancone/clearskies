@@ -13,6 +13,12 @@ class InputOutput(ABC):
     def respond(self, body, status_code=200):
         pass
 
+    def error(self, body):
+        return self.respond(body, 400)
+
+    def success(self, body):
+        return self.respond(body)
+
     def configure(self):
         pass
 

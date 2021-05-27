@@ -6,21 +6,20 @@ from .api_backend import ApiBackend
 class ApiBackendTest(unittest.TestCase):
     def setUp(self):
         self.api_response = {"status": "success", "data": {"id": 5}}
-        response = type('', (), {'json': lambda: self.api_response})
+        response = type('', (), {'ok': True, 'json': lambda: self.api_response})
         self.requests = type('', (), {
-            'get': MagicMock(return_value=response),
-            'post': MagicMock(return_value=response),
-            'patch': MagicMock(return_value=response),
-            'delete': MagicMock(return_value=response),
+            'request': MagicMock(return_value=response),
         })()
         self.auth = type('', (), {
             'headers': MagicMock(return_value={'Authorization': 'Bearer: asdfer'}),
         })()
-        self.backend = ApiBackend('https://example.com', self.requests, self.auth)
+        self.backend = ApiBackend(self.requests)
+        self.backend.configure(url='https://example.com', auth=self.auth)
 
     def test_update(self):
         response = self.backend.update('5', {'hey': 'sup'}, 'model')
-        self.requests.patch.assert_called_with(
+        self.requests.request.assert_called_with(
+            'PATCH',
             'https://example.com',
             headers={'Authorization': 'Bearer: asdfer'},
             json={'hey': 'sup'},
@@ -29,7 +28,8 @@ class ApiBackendTest(unittest.TestCase):
 
     def test_create(self):
         response = self.backend.create({'hey': 'sup'}, 'model')
-        self.requests.post.assert_called_with(
+        self.requests.request.assert_called_with(
+            'POST',
             'https://example.com',
             headers={'Authorization': 'Bearer: asdfer'},
             json={'hey': 'sup'},
@@ -38,7 +38,8 @@ class ApiBackendTest(unittest.TestCase):
 
     def test_delete(self):
         response = self.backend.delete(5, 'model')
-        self.requests.delete.assert_called_with(
+        self.requests.request.assert_called_with(
+            'DELETE',
             'https://example.com',
             headers={'Authorization': 'Bearer: asdfer'},
             json={'id': 5},
@@ -47,8 +48,8 @@ class ApiBackendTest(unittest.TestCase):
         self.assertEquals(True, response)
 
     def test_count(self):
-        response = type('', (), {'json': lambda: {"total_matches":10}})
-        self.requests.get = MagicMock(return_value=response)
+        response = type('', (), {'ok': True, 'json': lambda: {"total_matches":10}})
+        self.requests.request = MagicMock(return_value=response)
         count = self.backend.count({
             'wheres': [
                 {'column': 'age', 'operator': '<=', 'values': [10], 'parsed': ''},
@@ -59,7 +60,8 @@ class ApiBackendTest(unittest.TestCase):
             'limit_length': 100,
         })
         self.assertEquals(10, count)
-        self.requests.get.assert_called_with(
+        self.requests.request.assert_called_with(
+            'GET',
             'https://example.com',
             headers={'Authorization': 'Bearer: asdfer'},
             json={
@@ -75,8 +77,8 @@ class ApiBackendTest(unittest.TestCase):
         )
 
     def test_query(self):
-        response = type('', (), {'json': lambda: {"data":[{"id": 5}, {"id": 10}]}})
-        self.requests.get = MagicMock(return_value=response)
+        response = type('', (), {'ok': True, 'json': lambda: {"data":[{"id": 5}, {"id": 10}]}})
+        self.requests.request = MagicMock(return_value=response)
         records = self.backend.records({
             'wheres': [
                 {'column': 'age', 'operator': '<=', 'values': [10], 'parsed': ''},
@@ -86,7 +88,8 @@ class ApiBackendTest(unittest.TestCase):
             'limit_start': 200,
             'limit_length': 100,
         })
-        self.requests.get.assert_called_with(
+        self.requests.request.assert_called_with(
+            'GET',
             'https://example.com',
             headers={'Authorization': 'Bearer: asdfer'},
             json={

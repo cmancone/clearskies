@@ -1,10 +1,14 @@
 class Application:
     handler_class = None
     handler_config = None
+    bindings = None
+    binding_classes = None
 
-    def __init__(self, handler_class, handler_config):
+    def __init__(self, handler_class, handler_config, bindings=None, binding_classes=None):
         """
         This will probably need to do more eventually, but right now this will do it
         """
         self.handler_class = handler_class
         self.handler_config = handler_config
+        self.bindings = {} if bindings is None else bindings
+        self.binding_classes = [] if binding_classes is None else binding_classes

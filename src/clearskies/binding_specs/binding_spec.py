@@ -1,11 +1,9 @@
 import pinject
-import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from ..columns import Columns
 import os
 from ..environment import Environment
-from ..secrets import Secrets
 from ..backends import CursorBackend, MemoryBackend
 import datetime
 import inspect
@@ -69,6 +67,7 @@ class ClearSkiesObjectGraph:
 class BindingSpec(pinject.BindingSpec):
     object_graph = None
     _bind = None
+    _bind_to_pinject = None
     _class_bindings = None
 
     def __init__(self, **kwargs):
@@ -94,11 +93,6 @@ class BindingSpec(pinject.BindingSpec):
         return instance
 
     def bind_local(self, key, value):
-        if not hasattr(self, f'provide_{key}'):
-            raise KeyError(
-                f"Binding spec class '{self.__class__.__name__}' does not have key '{key}' available for binding"
-            )
-
         self._bind[key] = value
 
         # see not in cls.bind_item
@@ -106,6 +100,7 @@ class BindingSpec(pinject.BindingSpec):
             self._bind['cursor'] = 'dummy_filler'
 
     def provide_requests(self):
+        import requests
         pre_configured = self._fetch_pre_configured('requests')
         if pre_configured is not None:
             return pre_configured
@@ -120,6 +115,10 @@ class BindingSpec(pinject.BindingSpec):
         http = requests.Session()
         http.mount("https://", adapter)
         return http
+
+    def provide_sys(self):
+        import sys
+        return sys
 
     def provide_object_graph(self):
         """
@@ -136,6 +135,9 @@ class BindingSpec(pinject.BindingSpec):
 
         return self.object_graph
 
+    def provide_binding_spec(self):
+        return self
+
     def provide_columns(self):
         pre_configured = self._fetch_pre_configured('columns')
         if pre_configured is not None:
@@ -150,11 +152,11 @@ class BindingSpec(pinject.BindingSpec):
 
         return {}
 
-    def provide_environment(self, secrets):
+    def provide_environment(self):
         pre_configured = self._fetch_pre_configured('environment')
         if pre_configured is not None:
             return pre_configured
-        return Environment(os.getcwd() + '/.env', os.environ, secrets)
+        return Environment(os.getcwd() + '/.env', os.environ, {})
 
     def provide_cursor(self, environment):
         pre_configured = self._fetch_pre_configured('cursor')
@@ -221,8 +223,29 @@ class BindingSpec(pinject.BindingSpec):
 
     @classmethod
     def get_binding_spec_and_object_graph(cls, *args, **kwargs):
+        # we have two keyword arguments of our own: bindings and binding_classes.
+        # remove those if found
+        bindings = {}
+        binding_classes = []
+        if 'bindings' in kwargs:
+            bindings = kwargs['bindings']
+            del kwargs['bindings']
+        if 'binding_classes' in kwargs:
+            binding_classes = kwargs['binding_classes']
+            del kwargs['binding_classes']
+
+        # build our binding spec
         binding_spec = cls(*args, **kwargs)
-        object_graph = ClearSkiesObjectGraph(pinject.new_object_graph(binding_specs=[binding_spec]))
+        # and specify our bindings (which has to happen before creating the object graph)
+        for (key, value) in bindings.items():
+            binding_spec.bind_local(key, value)
+
+        # now build the object graph, passing along our binding spec and the binding classes
+        object_graph = ClearSkiesObjectGraph(pinject.new_object_graph(
+            binding_specs=[binding_spec],
+            classes=binding_classes)
+        )
+
         binding_spec.object_graph = object_graph
         return [binding_spec, object_graph]
 
