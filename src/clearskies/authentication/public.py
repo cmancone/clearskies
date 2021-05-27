@@ -1,5 +1,7 @@
 class Public:
-    def headers(self):
+    has_dynamic_credentials = False
+
+    def headers(self, retry_auth=False):
         return {}
 
     def configure(self):

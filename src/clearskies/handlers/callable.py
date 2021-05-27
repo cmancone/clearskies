@@ -1,9 +1,14 @@
 from .base import Base
 import inspect
+import json
 
 
 class Callable(Base):
     _object_graph = None
+    _global_configuration_defaults = {
+        'authentication': None,
+        'callable': None,
+    }
 
     def __init__(self, object_graph):
         super().__init__(object_graph)
@@ -21,12 +26,16 @@ class Callable(Base):
             [],
             {}
         )
+        kwargs['input_output'] = input_output
 
         ordered_args = []
         for name in inspect.getfullargspec(my_callable)[0]:
             ordered_args.append(kwargs[name])
         response = my_callable(*ordered_args)
-        return self.success(self, input_output, response)
+        if response is not None:
+            if type(response) == dict or type(response) == list:
+                return input_output.success(json.dumps(response))
+            return input_output.success(response)
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)

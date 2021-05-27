@@ -1,3 +1,4 @@
+from .callable import Callable
 from .create import Create
 from .crud_by_method import CRUDByMethod
 from .delete import Delete

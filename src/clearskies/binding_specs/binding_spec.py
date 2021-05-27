@@ -1,11 +1,9 @@
 import pinject
-import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from ..columns import Columns
 import os
 from ..environment import Environment
-from ..secrets import Secrets
 from ..backends import CursorBackend, MemoryBackend
 import datetime
 import inspect
@@ -69,21 +67,11 @@ class ClearSkiesObjectGraph:
 class BindingSpec(pinject.BindingSpec):
     object_graph = None
     _bind = None
+    _bind_to_pinject = None
     _class_bindings = None
 
     def __init__(self, **kwargs):
         self._bind = kwargs
-
-    def configure(self, bind):
-        # There are two ways to configure bindings in a BindingSpec: via the "provide_{key}" methods and via
-        # this configure method, which needs to explicitly bind things.  However, we can't specify both, because
-        # if we do, pinject will complain about the ambiguity.  Therefore, if the binding spec has a method named
-        # provide_{key} then don't do anything, since our binding will be picked up by the provide method anyway.
-        # This definitely carries some risk of confusion, and we can't alert people about typos in binding keys,
-        # but it's pretty much a necessity, so :shrug:
-        for (key, value) in self._bind.items():
-            if not hasattr(self, f'provide_{key}'):
-                bind(key, to_instance=value)
 
     def _fetch_pre_configured(self, binding_name):
         class_bindings = self.__class__._class_bindings if self.__class__._class_bindings is not None else {}
@@ -112,6 +100,7 @@ class BindingSpec(pinject.BindingSpec):
             self._bind['cursor'] = 'dummy_filler'
 
     def provide_requests(self):
+        import requests
         pre_configured = self._fetch_pre_configured('requests')
         if pre_configured is not None:
             return pre_configured
@@ -126,6 +115,10 @@ class BindingSpec(pinject.BindingSpec):
         http = requests.Session()
         http.mount("https://", adapter)
         return http
+
+    def provide_sys(self):
+        import sys
+        return sys
 
     def provide_object_graph(self):
         """
@@ -142,6 +135,9 @@ class BindingSpec(pinject.BindingSpec):
 
         return self.object_graph
 
+    def provide_binding_spec(self):
+        return self
+
     def provide_columns(self):
         pre_configured = self._fetch_pre_configured('columns')
         if pre_configured is not None:
@@ -156,11 +152,11 @@ class BindingSpec(pinject.BindingSpec):
 
         return {}
 
-    def provide_environment(self, secrets):
+    def provide_environment(self):
         pre_configured = self._fetch_pre_configured('environment')
         if pre_configured is not None:
             return pre_configured
-        return Environment(os.getcwd() + '/.env', os.environ, secrets)
+        return Environment(os.getcwd() + '/.env', os.environ, {})
 
     def provide_cursor(self, environment):
         pre_configured = self._fetch_pre_configured('cursor')
@@ -233,7 +229,7 @@ class BindingSpec(pinject.BindingSpec):
         binding_classes = []
         if 'bindings' in kwargs:
             bindings = kwargs['bindings']
-            del kwargs['binding']
+            del kwargs['bindings']
         if 'binding_classes' in kwargs:
             binding_classes = kwargs['binding_classes']
             del kwargs['binding_classes']

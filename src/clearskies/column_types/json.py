@@ -4,7 +4,9 @@ from .column import Column
 
 class JSON(Column):
     def from_database(self, value):
-       return json.loads(value) if value else {}
+        if type(value) == list or type(value) == dict:
+            return value
+        return json.loads(value) if value else {}
 
     def to_database(self, data):
         if self.name in data:
