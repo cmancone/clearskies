@@ -6,3 +6,4 @@ from .models import Models
 from .model import Model
 from .binding_config import BindingConfig
 from .application import Application
+from .di import DI
