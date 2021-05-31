@@ -4,7 +4,7 @@ from ..mocks import Models, InputOutput
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
-from clearskies.mocks import BindingSpec
+from ..di import StandardDependencies
 
 
 class CreateTest(unittest.TestCase):
@@ -15,7 +15,7 @@ class CreateTest(unittest.TestCase):
             'email': {'class': String, 'input_requirements': [Required, (MaximumLength, 15)]},
             'age': {'class': Integer},
         })
-        self.object_graph = BindingSpec.get_object_graph()
+        self.di = StandardDependencies()
 
     def test_save_flow(self):
         self.models.add_create_response({
@@ -27,7 +27,7 @@ class CreateTest(unittest.TestCase):
 
         input_output = InputOutput(body={'name': 'Conor', 'email': 'c@example.com', 'age': 10})
         create = Create(
-            self.object_graph,
+            self.di,
         )
         create.configure({
             'models': self.models,
@@ -43,7 +43,7 @@ class CreateTest(unittest.TestCase):
         self.assertEquals('c@example.com', response_data['email'])
 
     def test_input_checks(self):
-        create = Create(self.object_graph)
+        create = Create(self.di)
         create.configure({
             'models': self.models,
             'columns': ['name', 'email', 'age'],
@@ -67,7 +67,7 @@ class CreateTest(unittest.TestCase):
             'age': 10,
         })
 
-        create = Create(self.object_graph)
+        create = Create(self.di)
         create.configure({
             'models': self.models,
             'columns': ['name', 'age'],
@@ -82,7 +82,7 @@ class CreateTest(unittest.TestCase):
         self.assertEquals({'name': 'Conor', 'age': 10}, Models.created[0]['data'])
 
     def test_extra_columns(self):
-        create = Create(self.object_graph)
+        create = Create(self.di)
         create.configure({
             'models': self.models,
             'columns': ['name', 'age'],
@@ -105,7 +105,7 @@ class CreateTest(unittest.TestCase):
             'age': 10,
         })
 
-        create = Create(self.object_graph)
+        create = Create(self.di)
         create.configure({
             'models': self.models,
             'writeable_columns': ['name', 'age'],
@@ -127,7 +127,7 @@ class CreateTest(unittest.TestCase):
         )
         secret_bearer = SecretBearer('environment')
         secret_bearer.configure(secret='asdfer')
-        create = Create(self.object_graph)
+        create = Create(self.di)
         create.configure({
             'models': self.models,
             'columns': ['name', 'email', 'age'],
@@ -151,7 +151,7 @@ class CreateTest(unittest.TestCase):
         )
         secret_bearer = SecretBearer('environment')
         secret_bearer.configure(secret='asdfer')
-        create = Create(self.object_graph)
+        create = Create(self.di)
         create.configure({
             'models': self.models,
             'columns': ['name', 'email', 'age'],

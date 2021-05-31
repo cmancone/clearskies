@@ -1,11 +1,11 @@
 class SimpleRoutingRoute:
-    _object_graph = None
+    _di = None
     _handler = None
     _methods = None
     _path = None
 
-    def __init__(self, object_graph):
-        self._object_graph = object_graph
+    def __init__(self, di):
+        self._di = di
 
     def configure(self, handler_class, handler_config, path=None, methods=None, authentication=None):
         if authentication is not None and not handler_config.get('authentication'):
@@ -13,7 +13,7 @@ class SimpleRoutingRoute:
         self._path = path
         if methods is not None:
             self._methods = [methods.upper()] if isinstance(methods, str) else [met.upper() for met in methods]
-        self._handler = self._object_graph.provide(handler_class)
+        self._handler = self._di.build(handler_class, cache=False)
         self._handler.configure({
             **handler_config,
             **{

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from .column_types import Integer
+import re
 
 
 class Model(ABC):
@@ -15,6 +16,12 @@ class Model(ABC):
         self._columns = columns
         self._transformed = {}
         self._data = {}
+
+    def _camel_case_to_snake_case(self, string):
+        return re.sub(
+            '([a-z0-9])([A-Z])', r'\1_\2',
+            re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
+        ).lower()
 
     @property
     def table_name(self):

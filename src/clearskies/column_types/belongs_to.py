@@ -27,8 +27,8 @@ class BelongsTo(Integer):
         'parent_models',
     ]
 
-    def __init__(self, object_graph):
-        self.object_graph = object_graph
+    def __init__(self, di):
+        self.di = di
 
     def configure(self, name, configuration, model_class):
         if 'parent_models_class' not in configuration:
@@ -39,7 +39,7 @@ class BelongsTo(Integer):
 
         # load up the parent models class now, because we'll need it in both the _check_configuration step
         # and can't load it there directly because we can't load it
-        configuration['parent_models'] = self.object_graph.provide(configuration['parent_models_class'])
+        configuration['parent_models'] = self.di.build(configuration['parent_models_class'], cache=False)
 
         # continue normally now...
         super().configure(name, configuration, model_class)

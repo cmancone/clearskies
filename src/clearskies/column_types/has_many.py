@@ -25,8 +25,8 @@ class HasMany(Column):
         'readable_child_columns',
     ]
 
-    def __init__(self, object_graph):
-        self.object_graph = object_graph
+    def __init__(self, di):
+        self.di = di
 
     @property
     def is_readable(self):
@@ -50,7 +50,7 @@ class HasMany(Column):
                 model_class.__name__.replace('_', '')
             ).lower() + '_id'
         if configuration.get('readable_child_columns'):
-            configuration['child_models'] = self.object_graph.provide(configuration['child_models_class'])
+            configuration['child_models'] = self.di.build(configuration['child_models_class'], cache=False)
             configuration['child_columns'] = configuration['child_models'].columns()
 
         # continue normally now...
@@ -87,7 +87,7 @@ class HasMany(Column):
 
     def get_child_models(self):
         if 'child_models' not in self.configuration:
-            self.configuration['child_models'] = self.object_graph.provide(self.config('child_models_class'))
+            self.configuration['child_models'] = self.di.build(self.config('child_models_class'), cache=False)
         return self.configuration['child_models']
 
     def get_child_columns(self):

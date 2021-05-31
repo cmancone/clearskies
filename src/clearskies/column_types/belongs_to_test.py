@@ -12,12 +12,12 @@ class BelongsToTest(unittest.TestCase):
             'name': {'class': String},
         })
 
-        self.object_graph = type('', (), {'provide': MagicMock(return_value=self.models)})()
-        self.belongs_to = BelongsTo(self.object_graph)
+        self.di = type('', (), {'build': MagicMock(return_value=self.models)})()
+        self.belongs_to = BelongsTo(self.di)
 
     def test_configure(self):
         self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
-        self.object_graph.provide.assert_called_with(Models)
+        self.di.build.assert_called_with(Models, cache=False)
 
     def test_require_proper_name(self):
         with self.assertRaises(ValueError) as context:

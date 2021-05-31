@@ -4,8 +4,8 @@ from collections import OrderedDict
 
 
 class Update(Write):
-    def __init__(self, object_graph):
-        super().__init__(object_graph)
+    def __init__(self, di):
+        super().__init__(di)
 
     def handle(self, input_output):
         input_data = self.request_data(input_output)

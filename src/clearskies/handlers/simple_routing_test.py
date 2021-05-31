@@ -2,7 +2,6 @@ import unittest
 from collections import OrderedDict
 from unittest.mock import MagicMock, call
 from ..mocks import InputOutput
-from ..binding_specs import BindingSpec
 from ..backends import MemoryBackend
 from ..model import Model
 from ..models import Models
@@ -10,6 +9,7 @@ from ..column_types import string, integer
 from .read import Read
 from .simple_routing import SimpleRouting
 from ..authentication import public
+from ..di import StandardDependencies
 
 
 class User(Model):
@@ -70,13 +70,11 @@ class SimpleRoutingTest(unittest.TestCase):
             'order': 2,
         })
 
-        BindingSpec.bind({
-            'input_output': self.input_output,
-            'cursor_backend': self.memory_backend,
-        })
-        self.object_graph = BindingSpec.get_object_graph()
+        self.di = StandardDependencies()
+        self.di.bind('input_output', self.input_output)
+        self.di.bind('cursor_backend', self.memory_backend)
 
-        self.handler = SimpleRouting(self.object_graph)
+        self.handler = SimpleRouting(self.di)
         self.handler.configure({
             'authentication': public(),
             'routes': [

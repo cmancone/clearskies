@@ -4,7 +4,7 @@ from ..mocks import Models, InputOutput
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
-from clearskies.mocks import BindingSpec
+from ..di import StandardDependencies
 
 
 class UpdateTest(unittest.TestCase):
@@ -16,7 +16,7 @@ class UpdateTest(unittest.TestCase):
             'age': {'class': Integer},
         })
         self.models.add_search_response([{'id': 5, 'name': '', 'email': '', 'age': 0}])
-        self.object_graph = BindingSpec.get_object_graph()
+        self.di = StandardDependencies()
 
     def test_save_flow(self):
         self.models.add_update_response({
@@ -26,7 +26,7 @@ class UpdateTest(unittest.TestCase):
             'age': 10,
         })
 
-        update = Update(self.object_graph)
+        update = Update(self.di)
         update.configure({
             'models': self.models,
             'columns': ['name', 'email', 'age'],
@@ -50,7 +50,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals('=', condition['operator'])
 
     def test_input_checks(self):
-        update = Update(self.object_graph)
+        update = Update(self.di)
         update.configure({
             'models': self.models,
             'columns': ['name', 'email', 'age'],
@@ -74,7 +74,7 @@ class UpdateTest(unittest.TestCase):
             'age': 10,
         })
 
-        update = Update(self.object_graph)
+        update = Update(self.di)
         update.configure({
             'models': self.models,
             'columns': ['name', 'age'],
@@ -89,7 +89,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals({'name': 'Conor', 'age': 10}, self.models.updated[0]['data'])
 
     def test_extra_columns(self):
-        update = Update(self.object_graph)
+        update = Update(self.di)
         update.configure({
             'models': self.models,
             'columns': ['name', 'age'],
@@ -112,7 +112,7 @@ class UpdateTest(unittest.TestCase):
             'age': 10,
         })
 
-        update = Update(self.object_graph)
+        update = Update(self.di)
         update.configure({
             'models': self.models,
             'writeable_columns': ['name', 'age'],
@@ -134,7 +134,7 @@ class UpdateTest(unittest.TestCase):
         )
         secret_bearer = SecretBearer('environment')
         secret_bearer.configure(secret='asdfer')
-        update = Update(self.object_graph)
+        update = Update(self.di)
         update.configure({
             'models': self.models,
             'columns': ['name', 'email', 'age'],
@@ -158,7 +158,7 @@ class UpdateTest(unittest.TestCase):
         )
         secret_bearer = SecretBearer('environment')
         secret_bearer.configure(secret='asdfer')
-        update = Update(self.object_graph)
+        update = Update(self.di)
         update.configure({
             'models': self.models,
             'columns': ['name', 'email', 'age'],
@@ -168,7 +168,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals(200, response[1])
 
     def test_require_id_column(self):
-        update = Update(self.object_graph)
+        update = Update(self.di)
         update.configure({
             'models': self.models,
             'columns': ['name', 'email', 'age'],
@@ -181,7 +181,7 @@ class UpdateTest(unittest.TestCase):
     def test_require_matching_id(self):
         self.models.clear_search_responses()
         self.models.add_search_response([])
-        update = Update(self.object_graph)
+        update = Update(self.di)
         update.configure({
             'models': self.models,
             'columns': ['name', 'email', 'age'],

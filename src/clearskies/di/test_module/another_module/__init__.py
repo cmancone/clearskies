@@ -1,0 +1,2 @@
+class AnotherModuleClass:
+    pass

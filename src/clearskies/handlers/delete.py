@@ -4,7 +4,6 @@ from .base import Base
 
 class Delete(Base):
     _models = None
-    _object_graph = None
 
     _configuration_defaults = {
         'models': None,
@@ -12,8 +11,8 @@ class Delete(Base):
         'resource_id': None,
     }
 
-    def __init__(self, object_graph):
-        super().__init__(object_graph)
+    def __init__(self, di):
+        super().__init__(di)
 
     def handle(self, input_output):
         input_data = input_output.request_data()
@@ -40,4 +39,4 @@ class Delete(Base):
             raise KeyError(f"{error_prefix} you must specify 'models' or 'models_class'")
         if has_models and has_models_class:
             raise KeyError(f"{error_prefix} you specified both 'models' and 'models_class', but can only provide one")
-        self._models = self._object_graph.provide(configuration['models_class']) if has_models_class else configuration['models']
+        self._models = self._di.build(configuration['models_class']) if has_models_class else configuration['models']

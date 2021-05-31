@@ -1,14 +1,14 @@
 import unittest
 from .read import Read
-from ..mocks import Models, InputOutput, BindingSpec
+from ..mocks import Models, InputOutput
 from ..column_types import String, Integer
 from ..authentication import Public, SecretBearer
-from clearskies.mocks import BindingSpec
+from ..di import StandardDependencies
 
 
 class ReadTest(unittest.TestCase):
     def setUp(self):
-        self.object_graph = BindingSpec.get_object_graph()
+        self.di = StandardDependencies()
         Models.reset()
         self.models = Models({
             'name': {'class': String},
@@ -25,7 +25,7 @@ class ReadTest(unittest.TestCase):
         ])
 
     def test_simple_read(self):
-        read = Read(self.object_graph)
+        read = Read(self.di)
         read.configure({
             'models': self.models,
             'readable_columns': ['name', 'email', 'age'],
@@ -54,7 +54,7 @@ class ReadTest(unittest.TestCase):
         }, Models.iterated[0])
 
     def test_configure(self):
-        read = Read(self.object_graph)
+        read = Read(self.di)
         read.configure({
             'models': self.models,
             'readable_columns': ['name'],
@@ -98,7 +98,7 @@ class ReadTest(unittest.TestCase):
             'start': 10,
             'limit': 5,
         }
-        read = Read(self.object_graph)
+        read = Read(self.di)
         read.configure({
             'models': self.models,
             'readable_columns': ['name', 'email', 'age'],
@@ -130,7 +130,7 @@ class ReadTest(unittest.TestCase):
         }, Models.iterated[0])
 
     def test_output_map(self):
-        read = Read(self.object_graph)
+        read = Read(self.di)
         read.configure({
             'models': self.models,
             'readable_columns': ['name', 'email', 'age'],

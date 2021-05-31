@@ -5,6 +5,7 @@ from .columns import Columns
 from .column_types import Column, String, DateTime, Integer
 from collections import namedtuple, OrderedDict
 from datetime import datetime, timezone
+from .di import StandardDependencies
 
 
 class ProvideTest(Column):
@@ -36,12 +37,8 @@ class User(Model):
 
 class ModelTest(unittest.TestCase):
     def setUp(self):
-        # the object graph will be used by the Columns to build the ColumnType objects, which have no dependencies
-        # (at least, the ones used in this test don't)
-        self.object_graph = type('', (), {
-            'provide': lambda class_to_build: class_to_build()
-        })
-        self.columns = Columns(self.object_graph)
+        self.di = StandardDependencies()
+        self.columns = Columns(self.di)
 
     def test_create(self):
         new_user = {'id': '5', 'name': 'Conor', 'birth_date': '2020-11-28 12:30:45', 'age': '1'}
