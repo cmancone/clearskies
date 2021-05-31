@@ -1,32 +1,28 @@
-from ..binding_specs import BindingSpec
 from ..mocks import InputOutput
+from ..di import StandardDependencies
 from ..backends import MemoryBackend
 from datetime import datetime, timezone
 
 
 class Test:
     _application = None
-    _object_graph = None
     _handler = None
-    _binding_spec = None
     input_output = None
     memory_backend = None
     now = None
 
-    def __init__(self, object_graph):
-        self._object_graph = object_graph
-        # a standard "now" will make life easier in case the second changes mid-testing
+    def __init__(self, di):
+        self.di = di
 
-    def configure(self, application, binding_spec):
-        self._binding_spec = binding_spec
+    def configure(self, application):
         self.now = datetime.now().replace(tzinfo=timezone.utc, microsecond=0)
         self._application = application
-        self.input_output = self._object_graph.provide(InputOutput)
-        self.memory_backend = self._object_graph.provide(MemoryBackend)
+        self.input_output = self.di.provide(InputOutput, cache=False)
+        self.memory_backend = self.di.provide(MemoryBackend, cache=False)
         self.memory_backend.silent_on_missing_tables(silent=True)
 
-        self.bind('now', self.now)
-        self.bind('cursor_backend', self.memory_backend)
+        self.di.bind('now', self.now)
+        self.di.bind('cursor_backend', self.memory_backend)
 
     def __call__(self, method=None, body=None, headers=None, url=None):
         if body is not None:
@@ -38,15 +34,35 @@ class Test:
         if url is not None:
             self.input_output.set_request_url(url)
 
-        self._handler = self._object_graph.provide(self._application.handler_class)
+        self._handler = self.di.build(self._application.handler_class, cache=False)
         self._handler.configure(self._application.handler_config)
         return self._handler(self.input_output)
 
     def bind(self, key, value):
-        self._binding_spec.bind_local(key, value)
+        self.di.bind(key, value)
 
-def test(application, binding_spec_class=BindingSpec):
-    [binding_spec, object_graph] = binding_spec_class.get_binding_spec_and_object_graph()
-    context = object_graph.provide(Test)
-    context.configure(application, binding_spec)
+def test(application, di_class=StandardDependencies, bindings=None, binding_classes=None, binding_modules=None):
+    if bindings is None:
+        bindings = {}
+    if binding_classes is None:
+        binding_classes = []
+    if binding_modules is None:
+        binding_modules = []
+
+    bindings = {
+        **application.bindings,
+        **bindings,
+    }
+    binding_classes = [
+        *application.binding_classes,
+        *binding_classes,
+    ]
+    binding_modules = [
+        *application.binding_modules,
+        *binding_modules
+    ]
+
+    di = di_class.init(*binding_classes, **bindings, modules=binding_modules)
+    context = di.build(Test, cache=False)
+    context.configure(application)
     return context

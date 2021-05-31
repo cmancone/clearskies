@@ -14,11 +14,11 @@ class Base(ABC):
         'output_map': None,
         'column_overrides': None,
     }
-    _object_graph = None
+    _di = None
     _configuration = None
 
-    def __init__(self, object_graph):
-        self._object_graph = object_graph
+    def __init__(self, di):
+        self._di = di
         self._configuration = None
 
     @abstractmethod
@@ -70,7 +70,7 @@ class Base(ABC):
         return self._configuration[key]
 
     def _finalize_configuration(self, configuration):
-        configuration['authentication'] = self._object_graph.build(configuration['authentication'])
+        configuration['authentication'] = self._di.build(configuration['authentication'])
         return configuration
 
     def __call__(self, input_output):

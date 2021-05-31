@@ -3,8 +3,8 @@ from abc import abstractmethod
 
 
 class Routing(Base):
-    def __init__(self, object_graph):
-        super().__init__(object_graph)
+    def __init__(self, di):
+        super().__init__(di)
 
     @abstractmethod
     def handler_classes(self, configuration):
@@ -17,7 +17,7 @@ class Routing(Base):
     def build_handler(self, handler_class, configuration=None):
         if configuration is None:
             configuration = self._configuration
-        handler = self._object_graph.provide(handler_class)
+        handler = self._di.build(handler_class, cache=False)
         handler_configuration = {}
         for key in handler._configuration_defaults.keys():
             if key in configuration:

@@ -1,7 +1,7 @@
 from ..models import Models as ModelsBase
 from ..model import Model as ModelBase
 from ..columns import Columns
-import pinject
+from ..di import StandardDependencies
 
 
 class Model(ModelBase):
@@ -38,7 +38,7 @@ class Models(ModelsBase):
         self._model_configuration = model_configuration
         super().__init__(
             self,
-            Columns(pinject.new_object_graph())
+            Columns(StandardDependencies())
         )
 
     def model(self, data):

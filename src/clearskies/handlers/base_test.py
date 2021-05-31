@@ -2,7 +2,8 @@ import unittest
 from unittest.mock import MagicMock, call
 from .base import Base
 from .exceptions import ClientError, InputError
-from clearskies.mocks import BindingSpec
+from ..di import StandardDependencies
+from ..authentication import public
 
 
 def raise_exception(exception):
@@ -37,14 +38,14 @@ class Handle(Base):
 
 class BaseTest(unittest.TestCase):
     def setUp(self):
-        self.object_graph = BindingSpec.get_object_graph()
+        self.di = StandardDependencies()
         self.reflect_output = type('', (), {
             'respond': lambda message, status_code: (message, status_code),
         })
 
     def test_configure(self):
-        handle = Handle(self.object_graph)
-        handle.configure({'test': 'okay', 'authentication': 'authentication'})
+        handle = Handle(self.di)
+        handle.configure({'test': 'okay', 'authentication': public()})
         self.assertEquals('okay', handle.configuration('test'))
         self.assertEquals(5, handle.configuration('age'))
         self.assertEquals('yes', handle.configuration('global'))
@@ -52,22 +53,22 @@ class BaseTest(unittest.TestCase):
         self.assertRaises(KeyError, lambda: handle.configuration('sup'))
 
     def test_require_config(self):
-        handle = Handle(self.object_graph)
+        handle = Handle(self.di)
         self.assertRaises(ValueError, lambda: handle.configuration('age'))
 
     def test_invalid_configuration(self):
-        handle = Handle(self.object_graph)
-        handle.configure({'authentication': 'authentication'})
+        handle = Handle(self.di)
+        handle.configure({'authentication': public()})
         with self.assertRaises(KeyError) as context:
-            handle.configure({'whatev': 'hey', 'authentication': 'authentication'})
+            handle.configure({'whatev': 'hey', 'authentication': public()})
         self.assertEquals(
             "\"Attempt to set unkown configuration setting 'whatev' for handler 'Handle'\"",
             str(context.exception)
         )
 
     def test_success(self):
-        handle = Handle(self.object_graph)
-        handle.configure({'authentication': 'authentication'})
+        handle = Handle(self.di)
+        handle.configure({'authentication': public()})
         (data, code) = handle.success(self.reflect_output, [1, 2, 3])
         self.assertEquals({
             'status': 'success',
@@ -79,8 +80,8 @@ class BaseTest(unittest.TestCase):
         self.assertEquals(200, code)
 
     def test_pagination(self):
-        handle = Handle(self.object_graph)
-        handle.configure({'authentication': 'authentication'})
+        handle = Handle(self.di)
+        handle.configure({'authentication': public()})
         (data, code) = handle.success(self.reflect_output, [1, 2, 3], number_results=3, limit=10, start=1)
         self.assertEquals({
             'status': 'success',
@@ -92,8 +93,8 @@ class BaseTest(unittest.TestCase):
         self.assertEquals(200, code)
 
     def test_error(self):
-        handle = Handle(self.object_graph)
-        handle.configure({'authentication': 'authentication'})
+        handle = Handle(self.di)
+        handle.configure({'authentication': public()})
         (data, code) = handle.error(self.reflect_output, 'bah', 400)
         self.assertEquals({
             'status': 'clientError',
@@ -105,8 +106,8 @@ class BaseTest(unittest.TestCase):
         self.assertEquals(400, code)
 
     def test_input_errors(self):
-        handle = Handle(self.object_graph)
-        handle.configure({'authentication': 'authentication'})
+        handle = Handle(self.di)
+        handle.configure({'authentication': public()})
         (data, code) = handle.input_errors(self.reflect_output, {'age': 'required', 'date': 'tomorrow'})
         self.assertEquals({
             'status': 'inputErrors',
@@ -122,7 +123,7 @@ class BaseTest(unittest.TestCase):
 
     def test_handle(self):
         authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
-        handle = Handle(self.object_graph)
+        handle = Handle(self.di)
         handle.configure({
             'authentication': authentication,
         })
@@ -139,7 +140,7 @@ class BaseTest(unittest.TestCase):
 
     def test_error(self):
         authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
-        handle = Handle(self.object_graph)
+        handle = Handle(self.di)
         handle.configure({
             'authentication': authentication,
         })
@@ -156,7 +157,7 @@ class BaseTest(unittest.TestCase):
 
     def test_input_error(self):
         authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
-        handle = Handle(self.object_graph)
+        handle = Handle(self.di)
         handle.configure({
             'authentication': authentication,
         })

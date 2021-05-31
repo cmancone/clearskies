@@ -12,8 +12,8 @@ class SimpleRouting(Base):
         'routes': [],
     }
 
-    def __init__(self, object_graph):
-        super().__init__(object_graph)
+    def __init__(self, di):
+        super().__init__(di)
 
     def handle(self, input_output):
         request_method = input_output.get_request_method()
@@ -61,7 +61,7 @@ class SimpleRouting(Base):
                     "Each route must specify the handler configuration via 'handler_config', " + \
                     f"but 'handler_config' was missing for route #{i+1}"
                 )
-            route = SimpleRoutingRoute(self._object_graph)
+            route = SimpleRoutingRoute(self._di)
             route.configure(
                 route_config['handler_class'],
                 route_config['handler_config'],

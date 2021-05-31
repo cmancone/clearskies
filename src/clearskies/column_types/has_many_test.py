@@ -4,9 +4,9 @@ from ..models import Models
 from ..model import Model
 from .string import String
 from .belongs_to import BelongsTo
-from ..binding_specs import BindingSpec
 from ..backends import MemoryBackend
 from collections import OrderedDict
+from ..di import StandardDependencies
 
 
 class User(Model):
@@ -51,10 +51,10 @@ class Statuses(Models):
 
 class HasManyTest(unittest.TestCase):
     def setUp(self):
-        self.object_graph = BindingSpec.get_object_graph()
-        self.memory_backend = self.object_graph.provide(MemoryBackend)
-        self.users = self.object_graph.provide(Users)
-        self.statuses = self.object_graph.provide(Statuses)
+        self.di = StandardDependencies()
+        self.memory_backend = self.di.build(MemoryBackend)
+        self.users = self.di.build(Users)
+        self.statuses = self.di.build(Statuses)
         self.has_many_users = self.statuses.columns()['users']
         self.memory_backend.create_table(self.users.empty_model())
         self.memory_backend.create_table(self.statuses.empty_model())
@@ -99,18 +99,18 @@ class HasManyTest(unittest.TestCase):
         ], self.has_many_users.to_json(self.pending))
 
     def test_auto_foreign_column(self):
-        has_many = HasMany(self.object_graph)
+        has_many = HasMany(self.di)
         has_many.configure('users', {'child_models_class': Users}, Status)
         self.assertEquals('status_id', has_many.config('foreign_column_name'))
 
     def test_require_child_model_class(self):
-        has_many = HasMany(self.object_graph)
+        has_many = HasMany(self.di)
         with self.assertRaises(KeyError) as context:
             has_many.configure('users', {}, str)
         self.assertIn("Missing required configuration 'child_models_class'", str(context.exception))
 
     def test_required_readable_columns_for_is_readable(self):
-        has_many = HasMany(self.object_graph)
+        has_many = HasMany(self.di)
         with self.assertRaises(ValueError) as context:
             has_many.configure(
                 'users',
@@ -123,7 +123,7 @@ class HasManyTest(unittest.TestCase):
         self.assertIn("must provide 'readable_child_columns' if is_readable is set", str(context.exception))
 
     def test_readable_columns_iterable(self):
-        has_many = HasMany(self.object_graph)
+        has_many = HasMany(self.di)
         with self.assertRaises(ValueError) as context:
             has_many.configure(
                 'users',
@@ -137,7 +137,7 @@ class HasManyTest(unittest.TestCase):
         self.assertIn("'readable_child_columns' should be an iterable", str(context.exception))
 
     def test_readable_columns_invalid_column(self):
-        has_many = HasMany(self.object_graph)
+        has_many = HasMany(self.di)
         with self.assertRaises(ValueError) as context:
             has_many.configure(
                 'users',

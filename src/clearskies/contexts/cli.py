@@ -1,39 +1,39 @@
 from ..authentication import public
-from ..binding_specs import BindingSpec
+from ..di import StandardDependencies
 from ..input_outputs import CLI as CLIInputOutput
 
 
 class CLI:
-    _object_graph = None
-    _binding_spec = None
+    _di = None
     _handler = None
 
-    def __init__(self, object_graph, binding_spec):
-        self._object_graph = object_graph
-        self._binding_spec = binding_spec
+    def __init__(self, di):
+        self._di = di
 
     def configure(self, application):
-        self._handler = self._object_graph.provide(application.handler_class)
-        config = {
+        self._handler = self._di.build(application.handler_class)
+        self._handler.configure({
             **{'authentication': public()},
             **application.handler_config
-        }
-        self._handler.configure(config)
+        })
 
     def __call__(self):
         if self._handler is None:
-            raise ValueError("Cannot execute WSGI context without first configuring it")
+            raise ValueError("Cannot execute CLI context without first configuring it")
 
-        return self._handler(self._object_graph.provide(CLIInputOutput))
+        return self._handler(self._di.build(CLIInputOutput))
 
     def bind(self, key, value):
-        self._binding_spec.bind_local(key, value)
+        self._di.bind(key, value)
 
-def cli(application, binding_spec_class=BindingSpec, bindings=None, binding_classes=None):
+def cli(application, di_class=StandardDependencies, bindings=None, binding_classes=None, binding_modules=None):
     if bindings is None:
         bindings = {}
     if binding_classes is None:
         binding_classes = []
+    if binding_modules is None:
+        binding_modules = []
+
     bindings = {
         **application.bindings,
         **bindings,
@@ -42,8 +42,12 @@ def cli(application, binding_spec_class=BindingSpec, bindings=None, binding_clas
         *application.binding_classes,
         *binding_classes,
     ]
+    binding_modules = [
+        *application.binding_modules,
+        *binding_modules
+    ]
 
-    object_graph = binding_spec_class.get_object_graph(bindings=bindings, binding_classes=binding_classes)
-    context = object_graph.provide(CLI)
+    di = di_class.init(*binding_classes, **bindings, modules=binding_modules)
+    context = di.build(CLI, cache=False)
     context.configure(application)
     return context

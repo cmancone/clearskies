@@ -6,8 +6,8 @@ from .read import Read
 
 
 class CRUDByMethod(RequestMethodRouting):
-    def __init__(self, object_graph):
-        super().__init__(object_graph)
+    def __init__(self, di):
+        super().__init__(di)
 
     def method_handler_map(self):
         return {

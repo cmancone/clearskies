@@ -5,7 +5,7 @@ from abc import abstractmethod
 
 
 class Write(Base):
-    _object_graph = None
+    _di = None
     _models = None
     _columns = None
     _authentication = None
@@ -21,8 +21,8 @@ class Write(Base):
         'resource_id': None,
     }
 
-    def __init__(self, object_graph):
-        super().__init__(object_graph)
+    def __init__(self, di):
+        super().__init__(di)
 
     @abstractmethod
     def handle(self, input_output):
@@ -37,7 +37,7 @@ class Write(Base):
             raise KeyError(f"{error_prefix} you must specify 'models' or 'models_class'")
         if has_models and has_models_class:
             raise KeyError(f"{error_prefix} you specified both 'models' and 'models_class', but can only provide one")
-        self._models = self._object_graph.provide(configuration['models_class']) if has_models_class else configuration['models']
+        self._models = self._di.build(configuration['models_class']) if has_models_class else configuration['models']
         self._columns = self._models.columns(overrides=configuration.get('overrides'))
         has_columns = 'columns' in configuration and configuration['columns'] is not None
         has_writeable = 'writeable_columns' in configuration and configuration['writeable_columns'] is not None

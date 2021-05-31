@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 
 class Read(Base):
-    _object_graph = None
     _models = None
     _columns = None
     _authentication = None
@@ -26,8 +25,8 @@ class Read(Base):
         'single_record': False,
     }
 
-    def __init__(self, object_graph):
-        super().__init__(object_graph)
+    def __init__(self, di):
+        super().__init__(di)
 
     def handle(self, input_output):
         # first configure our models object with the defaults
@@ -160,7 +159,7 @@ class Read(Base):
             raise KeyError(f"{error_prefix} you must specify 'models' or 'models_class'")
         if has_models and has_models_class:
             raise KeyError(f"{error_prefix} you specified both 'models' and 'models_class', but can only provide one")
-        self._models = self._object_graph.provide(configuration['models_class']) if has_models_class else configuration['models']
+        self._models = self._di.build(configuration['models_class']) if has_models_class else configuration['models']
         self._columns = self._models.columns(overrides=configuration.get('overrides'))
         model_class_name = self._models.__class__.__name__
         # checks for searchable_columns and readable_columns

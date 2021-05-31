@@ -4,8 +4,8 @@ from .binding_config import BindingConfig
 
 
 class Columns:
-    def __init__(self, object_graph):
-        self.object_graph = object_graph
+    def __init__(self, di):
+        self.di = di
 
     def configure(self, definitions, model_class, overrides=None):
         columns = OrderedDict()
@@ -46,7 +46,7 @@ class Columns:
     def build_column(self, name, configuration, model_class):
         if not 'class' in configuration:
             raise ValueError(f"Missing column class for column {name} in {model_class.__name__}")
-        column = self.object_graph.provide(configuration['class'])
+        column = self.di.build(configuration['class'], cache=False)
         column.configure(name, configuration, model_class)
         return column
 
@@ -109,7 +109,7 @@ class Columns:
         resolved_requirements = []
         for requirement in input_requirements:
             [requirement_class, args, kwargs] = self._input_requirement_args_and_class(requirement)
-            requirement_instance = self.object_graph.provide(requirement_class)
+            requirement_instance = self.di.build(requirement_class, cache=False)
             requirement_instance.column_name = column_name
             requirement_instance.configure(*args, **kwargs)
             resolved_requirements.append(requirement_instance)

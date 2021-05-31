@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import MagicMock, call
 from .restful_api import RestfulAPI
-from ..mocks import InputOutput, BindingSpec, Models
+from ..mocks import InputOutput, Models
 from ..authentication import Public
 from ..column_types import String
 from collections import OrderedDict
-from clearskies.mocks import BindingSpec
+from ..di import StandardDependencies
 
 
 class RestfulAPITest(unittest.TestCase):
@@ -16,15 +16,15 @@ class RestfulAPITest(unittest.TestCase):
         self.models = Models({
             'name': {'class': String},
         })
-        self.object_graph = BindingSpec.get_object_graph()
+        self.di = StandardDependencies()
 
     def build_api(self, *args, **kwargs):
         input_output = InputOutput(*args, **kwargs)
-        object_graph = BindingSpec.get_object_graph(
-            input_output=input_output,
-            models=self.models
-        )
-        return [object_graph.provide(RestfulAPI), input_output]
+        di = StandardDependencies(bindings={
+            'input_output': input_output,
+            'models': self.models,
+        })
+        return [di.build(RestfulAPI), input_output]
 
     def test_get_record(self):
         self.models.add_search_response([{'id': '134', 'name': 'sup'}])
