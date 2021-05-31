@@ -40,6 +40,7 @@ def wsgi(application, di_class=StandardDependencies, bindings=None, binding_clas
         *binding_modules
     ]
 
+    di = di_class.init(*binding_classes, **bindings, modules=binding_modules)
     context = di.build(WSGI, cache=False)
     context.configure(application)
     return context
