@@ -6,7 +6,7 @@ from .api_backend import ApiBackend
 class ApiBackendTest(unittest.TestCase):
     def setUp(self):
         self.api_response = {"status": "success", "data": {"id": 5}}
-        response = type('', (), {'ok': True, 'json': lambda: self.api_response})
+        response = type('', (), {'ok': True, 'json': lambda: self.api_response, 'content': 'sup'})
         self.requests = type('', (), {
             'request': MagicMock(return_value=response),
         })()

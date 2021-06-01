@@ -1,6 +1,8 @@
 from ..binding_config import BindingConfig
 import inspect
 import re
+import sys
+import os
 
 
 class DI:
@@ -29,22 +31,25 @@ class DI:
             classes = [classes]
         for add_class in classes:
             name = self._camel_case_to_snake_case(add_class.__name__)
-            if name in self._classes:
-                # if we're re-adding the same class twice then just ignore it.
-                if id(add_class) == self._classes[name]['id']:
-                    continue
+            #if name in self._classes:
+                ## if we're re-adding the same class twice then just ignore it.
+                #if id(add_class) == self._classes[name]['id']:
+                    #continue
 
-                # otherwise throw an exception
-                raise ValueError(f"More than one class with a name of '{name}' was added")
+                ## otherwise throw an exception
+                #raise ValueError(f"More than one class with a name of '{name}' was added")
 
             self._classes[name] = {'id': id(add_class), 'class': add_class}
 
-    def add_modules(self, modules):
+    def add_modules(self, modules, root=None, is_root=True):
         if inspect.ismodule(modules):
             modules = [modules]
 
         for module in modules:
             module_id = id(module)
+            if is_root:
+                root = os.path.dirname(module.__file__)
+            root_len = len(root)
             if module_id in self._added_modules:
                 continue
             self._added_modules[module_id] = True
@@ -53,7 +58,14 @@ class DI:
                 if inspect.isclass(item):
                     self.add_classes([item])
                 if inspect.ismodule(item):
-                    self.add_modules([item])
+                    if not hasattr(item, '__file__'):
+                        continue
+                    child_root = os.path.dirname(module.__file__)
+                    if child_root[:root_len] != root:
+                        continue
+                    if module.__name__ == 'clearskies':
+                        break
+                    self.add_modules([item], root=root, is_root=False)
 
     def bind(self, key, value):
         if key in self._building:
@@ -145,7 +157,7 @@ class DI:
 
         init_args = inspect.getfullargspec(class_to_build)
         if init_args.defaults is not None:
-            self._disallow_kwargs(self, f"build class '{class_to_build.__name__}'")
+            self._disallow_kwargs(f"build class '{class_to_build.__name__}'")
 
         # ignore the first argument because that is just `self`
         build_arguments = init_args.args[1:]
@@ -162,7 +174,7 @@ class DI:
         # building a class, see if its id is in self._building, raise an error if so, or continue if not.
         class_id = id(class_to_build)
         if class_id in self._building:
-            original_context_label = f"'{self._building[class_id].__name__}'" \
+            original_context_label = f"'{self._building[class_id]}'" \
                 if self._building[class_id] \
                 is not None \
                 else 'itself'

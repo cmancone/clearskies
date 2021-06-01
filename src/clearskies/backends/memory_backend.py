@@ -71,8 +71,9 @@ class MemoryTable:
                 raise ValueError(
                     f"Cannot create record: column '{column_name}' does not exist in table '{self._table_name}'"
                 )
-        new_id = len(self._rows) + 1
-        data['id'] = new_id
+        if 'id' not in data:
+            new_id = len(self._rows) + 1
+            data['id'] = new_id
         for column_name in self._column_names:
             if column_name not in data:
                 data[column_name] = None
@@ -94,7 +95,6 @@ class MemoryTable:
         return len(self.rows(configuration, filter_only=True))
 
     def rows(self, configuration, filter_only=False):
-        # this will remove any Nones in self._rows caused by deleted records
         rows = list(filter(None, self._rows))
         if 'wheres' in configuration and configuration['wheres']:
             for where in configuration['wheres']:

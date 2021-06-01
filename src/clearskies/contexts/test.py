@@ -1,3 +1,4 @@
+from ..authentication import public
 from ..mocks import InputOutput
 from ..di import StandardDependencies
 from ..backends import MemoryBackend
@@ -17,8 +18,8 @@ class Test:
     def configure(self, application):
         self.now = datetime.now().replace(tzinfo=timezone.utc, microsecond=0)
         self._application = application
-        self.input_output = self.di.provide(InputOutput, cache=False)
-        self.memory_backend = self.di.provide(MemoryBackend, cache=False)
+        self.input_output = InputOutput()
+        self.memory_backend = self.di.build(MemoryBackend, cache=False)
         self.memory_backend.silent_on_missing_tables(silent=True)
 
         self.di.bind('now', self.now)
@@ -35,7 +36,10 @@ class Test:
             self.input_output.set_request_url(url)
 
         self._handler = self.di.build(self._application.handler_class, cache=False)
-        self._handler.configure(self._application.handler_config)
+        self._handler.configure({
+            **{'authentication': public()},
+            **self._application.handler_config,
+        })
         return self._handler(self.input_output)
 
     def bind(self, key, value):

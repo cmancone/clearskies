@@ -31,6 +31,8 @@ class ApiBackend(Backend):
     def update(self, id, data, model):
         [url, method, json_data, headers] = self._build_update_request(id, data, model)
         response = self._execute_request(url, method, json=json_data, headers=headers)
+        if not response.content:
+            return {**model.data, **data}
         return self._map_update_response(response.json())
 
     def _build_update_request(self, id, data, model):

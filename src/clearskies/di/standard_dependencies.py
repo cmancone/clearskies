@@ -36,8 +36,8 @@ class StandardDependencies(DI):
         # to force the developer to define a secrets manager
         return {}
 
-    def provide_environment(self, secrets):
-        return Environment(os.getcwd() + '/.env', os.environ, secrets)
+    def provide_environment(self):
+        return Environment(os.getcwd() + '/.env', os.environ, {})
 
     def provide_cursor(self, environment):
         import mariadb

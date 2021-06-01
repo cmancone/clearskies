@@ -26,7 +26,7 @@ class Model(ABC):
     @property
     def table_name(self):
         """ Return the name of the table that the model uses for data storage """
-        singular = self.__class__.__name__.lower()
+        singular = self._camel_case_to_snake_case(self.__class__.__name__)
         if singular[-1] == 'y':
             return singular[:-1] + 'ies'
         if singular[-1] == 's':
