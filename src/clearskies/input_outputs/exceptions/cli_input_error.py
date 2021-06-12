@@ -1,0 +1,2 @@
+class CLIInputError(Exception):
+    pass

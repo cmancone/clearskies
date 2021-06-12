@@ -1,6 +1,7 @@
 from ..authentication import public
 from ..di import StandardDependencies
 from ..input_outputs import CLI as CLIInputOutput
+from ..input_outputs import exceptions
 
 
 class CLI:
@@ -21,7 +22,10 @@ class CLI:
         if self._handler is None:
             raise ValueError("Cannot execute CLI context without first configuring it")
 
-        return self._handler(self._di.build(CLIInputOutput))
+        try:
+            return self._handler(self._di.build(CLIInputOutput))
+        except input_outputs.exceptions.CLINotFound:
+            print('help (aka 404 not found)!')
 
     def bind(self, key, value):
         self._di.bind(key, value)
