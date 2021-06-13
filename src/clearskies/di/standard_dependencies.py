@@ -66,3 +66,7 @@ class StandardDependencies(DI):
 
     def provide_authentication(self):
         raise AttributeError('The dependency injector requested an Authenticaiton method but none has been configured')
+
+    def provide_jose_jwt(self):
+        from jose import jwt
+        return jwt

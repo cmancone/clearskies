@@ -107,7 +107,7 @@ class DI:
         Builds a dependency based on its name
 
         Order of priority:
-          1. di (aka self)
+          1. 'di' (aka self)
           2. Already prepared things
           3. Things set via `bind(name, value)`
           4. Method on DI class called `provide_[name]`

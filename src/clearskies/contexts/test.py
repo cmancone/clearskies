@@ -45,6 +45,9 @@ class Test:
     def bind(self, key, value):
         self.di.bind(key, value)
 
+    def build(self, key):
+        return self.di.build(key)
+
 def test(application, di_class=StandardDependencies, bindings=None, binding_classes=None, binding_modules=None):
     if bindings is None:
         bindings = {}
