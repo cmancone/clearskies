@@ -9,3 +9,6 @@ class Public:
 
     def authenticate(self, input_output):
         return True
+
+    def authorize(self, authorization):
+        raise ValueError("Public endpoints do not support authorization")

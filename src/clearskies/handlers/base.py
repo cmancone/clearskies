@@ -11,6 +11,7 @@ class Base(ABC):
         'base_url': '',
         'response_headers': None,
         'authentication': None,
+        'authorization': None,
         'output_map': None,
         'column_overrides': None,
     }
@@ -39,6 +40,9 @@ class Base(ABC):
             raise KeyError(
                 f"You must provide authentication in the configuration for handler '{self.__class__.__name__}'"
             )
+        if configuration.get('authorization', None):
+            if not callable(configuration['authorization']) and not isinstance(configuration['authorization'], dict):
+                raise ValueError("'authorization' should be a callable or a dictionary with subclaims to enforce")
         if configuration.get('output_map') is not None:
             if not callable(configuration['output_map']):
                 raise ValueError("'output_map' should be a callable")
@@ -76,12 +80,20 @@ class Base(ABC):
     def __call__(self, input_output):
         if self._configuration is None:
             raise ValueError("Must configure handler before calling")
-        if self._configuration.get('authentication'):
+        authentication = self._configuration.get('authentication')
+        if authentication:
             try:
-                if not self.configuration('authentication').authenticate(input_output):
+                if not authentication.authenticate(input_output):
                     return self.error(input_output, 'Not Authenticated', 401)
             except ClientError as client_error:
                 return self.error(input_output, str(client_error), 400)
+            authorization = self._configuration.get('authorization')
+            if authorization:
+                try:
+                    if not authentication.authorize(authorization):
+                        return self.error(input_output, 'Not Authorized', 401)
+                except ClientError as client_error:
+                    return self.error(input_output, str(client_error), 400)
 
         try:
             response = self.handle(input_output)

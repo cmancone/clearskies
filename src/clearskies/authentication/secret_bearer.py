@@ -28,6 +28,9 @@ class SecretBearer:
             return False
         return self._secret == auth_header[7:]
 
+    def authorize(self, authorization):
+        raise ValueError("SecretBearer does not support authorization")
+
     def _configured_guard(self):
         if not self._secret:
             raise ValueError("Attempted to use SecretBearer authentication class without providing the configuration")

@@ -11,6 +11,7 @@ class Auth0JWKS:
     _jwks_fetched = None
     _algorithms = None
     _audience = None
+    _jwt_claims = None
 
     def __init__(self, environment, requests, jose_jwt):
         self._environment = environment
@@ -49,7 +50,7 @@ class Auth0JWKS:
             raise ClientError('No matching keys found')
 
         try:
-            payload = self._jose_jwt.decode(
+            self.jwt_claims = self._jose_jwt.decode(
                 raw_jwt,
                 rsa_key,
                 algorithms=self._algorithms,
@@ -71,3 +72,16 @@ class Auth0JWKS:
             self._jwks_fetched = now
 
         return self._jwks
+
+    def authorize(self, authorization):
+        # we're either passed in a callable, which we pass our claims to, or a dictionary with key/value pairs
+        # that we check against our claims
+        if callable(authorization):
+            return authorization(self.jwt_claims)
+
+        for (key, value) in authorization.items():
+            if key not in self.jwt_claims:
+                return False
+            if value != self.jwt_claims[key]:
+                return False
+        return True
