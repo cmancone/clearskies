@@ -24,7 +24,7 @@ class CLI:
 
         try:
             return self._handler(self._di.build(CLIInputOutput))
-        except input_outputs.exceptions.CLINotFound:
+        except exceptions.CLINotFound:
             print('help (aka 404 not found)!')
 
     def bind(self, key, value):
