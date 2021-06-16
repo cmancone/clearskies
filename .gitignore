@@ -1,6 +1,7 @@
 ./build.sh
 *.kate-swp
 .env
+Pipfile.lock
 
 
 # Byte-compiled / optimized / DLL files

@@ -107,7 +107,7 @@ class RestfulAPITest(unittest.TestCase):
         self.assertEquals(125, Models.updated[0]['id'])
         self.assertEquals({'name': 'Conor'}, Models.updated[0]['data'])
         self.assertEquals([
-            {'column': 'id', 'operator': '=', 'values': ['125'], 'parsed': 'id=?'},
+            {'column': 'id', 'operator': '=', 'values': ['125'], 'parsed': 'id=%s'},
         ], Models.iterated[0]['wheres'])
 
     def test_delete_record(self):
@@ -131,7 +131,7 @@ class RestfulAPITest(unittest.TestCase):
         self.assertEquals({}, result[0]['pagination'])
         self.assertEquals(125, Models.deleted[0]['id'])
         self.assertEquals([
-            {'column': 'id', 'operator': '=', 'values': ['125'], 'parsed': 'id=?'},
+            {'column': 'id', 'operator': '=', 'values': ['125'], 'parsed': 'id=%s'},
         ], Models.iterated[0]['wheres'])
 
     def test_search(self):
@@ -156,6 +156,6 @@ class RestfulAPITest(unittest.TestCase):
         self.assertEquals(OrderedDict([('id', 234), ('name', 'hey')]), result[0]['data'][1])
         self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, result[0]['pagination'])
         self.assertEquals(
-            [{'column': 'name', 'operator': 'LIKE', 'values': ['%hey%'], 'parsed': 'name LIKE ?'}],
+            [{'column': 'name', 'operator': 'LIKE', 'values': ['%hey%'], 'parsed': 'name LIKE %s'}],
             Models.iterated[0]['wheres']
         )

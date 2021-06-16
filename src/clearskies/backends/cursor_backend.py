@@ -29,44 +29,44 @@ class CursorBackend(Backend):
         query_parts = []
         parameters = []
         for (key, val) in data.items():
-            query_parts.append(f'`{key}`=?')
+            query_parts.append(f'`{key}`=%s')
             parameters.append(val)
         updates = ', '.join(query_parts)
 
-        self._cursor.execute(f'UPDATE `{model.table_name}` SET {updates} WHERE id=?', [*parameters, id])
+        self._cursor.execute(f'UPDATE `{model.table_name}` SET {updates} WHERE id=%s', tuple([*parameters, id]))
 
         results = self.records({
             'table_name': model.table_name,
-            'wheres': [{'parsed': 'id=?', 'values': [id]}]
+            'wheres': [{'parsed': 'id=%s', 'values': [id]}]
         })
         return results[0]
 
     def create(self, data, model):
         columns = '`' + '`, `'.join(data.keys()) + '`'
-        placeholders = ', '.join(['?' for i in range(len(data))])
+        placeholders = ', '.join(['%s' for i in range(len(data))])
 
         self._cursor.execute(
             f'INSERT INTO `{model.table_name}` ({columns}) VALUES ({placeholders})',
-            list(data.values())
+            tuple(data.values())
         )
 
         results = self.records({
             'table_name': model.table_name,
-            'wheres': [{'parsed': 'id=?', 'values': [self._cursor.lastrowid]}]
+            'wheres': [{'parsed': 'id=%s', 'values': [self._cursor.lastrowid]}]
         })
         return results[0]
 
     def delete(self, id, model):
         self._cursor.execute(
-            f'DELETE FROM `{model.table_name}` WHERE id=?',
-            [id]
+            f'DELETE FROM `{model.table_name}` WHERE id=%s',
+            (id,)
         )
         return True
 
     def count(self, configuration):
         configuration = self._check_query_configuration(configuration)
         [query, parameters] = self.as_count_sql(configuration)
-        self._cursor.execute(query, parameters)
+        self._cursor.execute(query, tuple(parameters))
         for row in self._cursor:
             return row[0] if type(row) == tuple else row['count']
         return 0
@@ -76,7 +76,7 @@ class CursorBackend(Backend):
         # everything into a list anyway, I may as well just return the list, right?
         configuration = self._check_query_configuration(configuration)
         [query, parameters] = self.as_sql(configuration)
-        self._cursor.execute(query, parameters)
+        self._cursor.execute(query, tuple(parameters))
         return [row for row in self._cursor]
 
     def as_sql(self, configuration):

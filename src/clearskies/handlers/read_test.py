@@ -79,8 +79,8 @@ class ReadTest(unittest.TestCase):
 
         self.assertEquals({
             'wheres': [
-                {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
-                {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'},
+                {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>%s'},
+                {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<%s'},
             ],
             'sorts': [{'column': 'name', 'direction': 'desc'}],
             'group_by_column': 'id',
@@ -116,9 +116,9 @@ class ReadTest(unittest.TestCase):
         self.assertEquals({'numberResults': 2, 'start': 10, 'limit': 5}, json_response['pagination'])
         self.assertEquals({
             'wheres': [
-                {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
-                {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'},
-                {'column': 'email', 'operator': 'LIKE', 'values': ['%bob@example.com%'], 'parsed': 'email LIKE ?'},
+                {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>%s'},
+                {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<%s'},
+                {'column': 'email', 'operator': 'LIKE', 'values': ['%bob@example.com%'], 'parsed': 'email LIKE %s'},
             ],
             'sorts': [{'column': 'age', 'direction': 'DESC'}],
             'group_by_column': None,

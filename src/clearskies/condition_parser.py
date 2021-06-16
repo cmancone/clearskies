@@ -86,11 +86,11 @@ class ConditionParser:
     def _with_placeholders(self, column, operator, values):
         upper_case_operator = operator.upper()
         if operator in self.operators_with_simple_placeholders:
-            return f'{column}{upper_case_operator}?'
+            return f'{column}{upper_case_operator}%s'
         if operator in self.operators_without_placeholders:
             return f'{column} {upper_case_operator}'
         if operator == 'is' or operator == 'is not' or operator == 'like':
-            return f'{column} {upper_case_operator} ?'
+            return f'{column} {upper_case_operator} %s'
 
         # the only thing left is "in" which has a variable number of placeholders
-        return f'{column} IN (' + ', '.join(['?' for i in range(len(values))]) + ')'
+        return f'{column} IN (' + ', '.join(['%s' for i in range(len(values))]) + ')'

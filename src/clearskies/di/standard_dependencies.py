@@ -40,16 +40,17 @@ class StandardDependencies(DI):
         return Environment(os.getcwd() + '/.env', os.environ, {})
 
     def provide_cursor(self, environment):
-        import mariadb
-        connection = mariadb.connect(
+        import pymysql
+        connection = pymysql.connect(
             user=environment.get('db_username'),
             password=environment.get('db_password'),
             host=environment.get('db_host'),
             database=environment.get('db_database'),
             autocommit=True,
             connect_timeout=2,
+            cursorclass=pymysql.cursors.DictCursor
         )
-        return connection.cursor(dictionary=True)
+        return connection.cursor()
 
     def provide_cursor_backend(self, cursor):
         return CursorBackend(cursor)

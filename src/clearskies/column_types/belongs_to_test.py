@@ -42,7 +42,7 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals({'user_id': 'Invalid selection for user_id: record does not exist'}, error)
         self.assertEquals(1, len(Models.counted))
         self.assertEquals(
-            [{'column': 'id', 'operator': '=', 'values': ['5'], 'parsed': 'id=?'}],
+            [{'column': 'id', 'operator': '=', 'values': ['5'], 'parsed': 'id=%s'}],
             Models.counted[0]['wheres']
         )
 
@@ -53,7 +53,7 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals({}, error)
         self.assertEquals(1, len(Models.counted))
         self.assertEquals(
-            [{'column': 'id', 'operator': '=', 'values': ['10'], 'parsed': 'id=?'}],
+            [{'column': 'id', 'operator': '=', 'values': ['10'], 'parsed': 'id=%s'}],
             Models.counted[0]['wheres']
         )
 
@@ -75,6 +75,6 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals('hey', user.name)
         self.assertEquals(1, len(Models.iterated))
         self.assertEquals(
-            [{'column': 'user_id', 'operator': '=', 'values': ['2'], 'parsed': 'user_id=?'}],
+            [{'column': 'user_id', 'operator': '=', 'values': ['2'], 'parsed': 'user_id=%s'}],
             Models.iterated[0]['wheres']
         )

@@ -45,7 +45,7 @@ class TestModels(unittest.TestCase):
                 'column': 'age',
                 'operator': '>',
                 'values': ['5'],
-                'parsed': 'age>?',
+                'parsed': 'age>%s',
             },
             users.configuration['wheres'][0]
         )
@@ -54,7 +54,7 @@ class TestModels(unittest.TestCase):
                 'column': 'age',
                 'operator': '<',
                 'values': ['10'],
-                'parsed': 'age<?',
+                'parsed': 'age<%s',
             },
             users.configuration['wheres'][1]
         )
@@ -85,8 +85,8 @@ class TestModels(unittest.TestCase):
         self.backend.records.assert_has_calls([
             call({
                 'wheres': [
-                    {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
-                    {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'}
+                    {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>%s'},
+                    {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<%s'}
                 ],
                 'sorts': [
                     {'column': 'created', 'direction': 'desc'}
@@ -133,8 +133,8 @@ class TestModels(unittest.TestCase):
         self.backend.count.assert_has_calls([
             call({
                 'wheres': [
-                    {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>?'},
-                    {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<?'}
+                    {'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>%s'},
+                    {'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<%s'}
                 ],
                 'sorts': [
                     {'column': 'created', 'direction': 'desc'}
