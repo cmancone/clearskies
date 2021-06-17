@@ -71,8 +71,14 @@ class DI:
         if key in self._building:
             raise KeyError(f"Attempt to set binding for '{key}' while '{key}' was already being built")
         self._bindings[key] = value
-        if key in self._prepared:
+
+        # if we have a string or number then it is configuration information and doesn't have to be built.
+        # Therefore, dump it straight into self._prepared
+        if type(value) == str or type(value) == int or type(value) == float:
+            self._prepared[key] = value
+        elif key in self._prepared:
             del self._prepared[key]
+
 
     def build(self, thing, context=None, cache=True):
         if inspect.isclass(thing):
