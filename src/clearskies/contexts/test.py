@@ -3,6 +3,7 @@ from ..mocks import InputOutput
 from ..di import StandardDependencies
 from ..backends import MemoryBackend
 from datetime import datetime, timezone
+from .build_context import build_context
 
 
 class Test:
@@ -48,28 +49,18 @@ class Test:
     def build(self, key):
         return self.di.build(key)
 
-def test(application, di_class=StandardDependencies, bindings=None, binding_classes=None, binding_modules=None):
-    if bindings is None:
-        bindings = {}
-    if binding_classes is None:
-        binding_classes = []
-    if binding_modules is None:
-        binding_modules = []
-
-    bindings = {
-        **application.bindings,
-        **bindings,
-    }
-    binding_classes = [
-        *application.binding_classes,
-        *binding_classes,
-    ]
-    binding_modules = [
-        *application.binding_modules,
-        *binding_modules
-    ]
-
-    di = di_class.init(*binding_classes, **bindings, modules=binding_modules)
-    context = di.build(Test, cache=False)
-    context.configure(application)
-    return context
+def test(
+    application,
+    di_class=StandardDependencies,
+    bindings=None,
+    binding_classes=None,
+    binding_modules=None
+):
+    return build_context(
+        Test,
+        application,
+        di_class,
+        bindings=bindings,
+        binding_classes=binding_classes,
+        binding_modules=binding_modules
+    )

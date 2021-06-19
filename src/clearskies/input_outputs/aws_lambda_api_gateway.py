@@ -1,6 +1,7 @@
 from .input_output import InputOutput
 import json
 import base64
+import urllib
 
 
 class AWSLambdaAPIGateway(InputOutput):
@@ -62,7 +63,7 @@ class AWSLambdaAPIGateway(InputOutput):
         return ''
 
     def get_path_info(self):
-        return self._path_parameters
+        return self._path
 
     def get_query_string(self):
         return urllib.parse.urlencode(self._query_parameters)

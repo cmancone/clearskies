@@ -1,9 +1,9 @@
-from ..input_outputs import WSGI as WSGIInputOutput
+from ..input_outputs import AWSLambdaELB as AWSInputOutput
 from ..di import StandardDependencies
 from .build_context import build_context
 
 
-class WSGI:
+class AWSLambdaELB:
     _di = None
     _handler = None
 
@@ -14,13 +14,13 @@ class WSGI:
         self._handler = self._di.build(application.handler_class, cache=False)
         self._handler.configure(application.handler_config)
 
-    def __call__(self, env, start_response):
+    def __call__(self, event, context):
         if self._handler is None:
-            raise ValueError("Cannot execute WSGI context without first configuring it")
+            raise ValueError("Cannot execute AWSLambda context without first configuring it")
 
-        return self._handler(WSGIInputOutput(env, start_response))
+        return self._handler(AWSInputOutput(event, context))
 
-def wsgi(
+def aws_lambda_elb(
     application,
     di_class=StandardDependencies,
     bindings=None,
@@ -28,7 +28,7 @@ def wsgi(
     binding_modules=None
 ):
     return build_context(
-        WSGI,
+        AWSLambdaELB,
         application,
         di_class,
         bindings=bindings,

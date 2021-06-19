@@ -43,6 +43,23 @@ class AKeyless:
         )
         return res
 
+    def get_ssh_certificate(self, cert_issuer, cert_username, path_to_public_file):
+        self._configure_guard()
+
+        with open(path_to_public_file, 'r') as fp:
+            public_key = fp.read()
+
+        res = self._api.get_ssh_certificate(
+            self._akeyless.GetSSHCertificate(
+                cert_username=cert_username,
+                cert_issuer_name=cert_issuer,
+                public_key_data=public_key,
+                token=self._get_token(),
+            )
+        )
+
+        return res.data
+
     def _configure_guard(self):
         if not self._access_id:
             raise ValueError("Must call configure method before using secrets.AKeyless")

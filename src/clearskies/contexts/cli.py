@@ -2,6 +2,7 @@ from ..authentication import public
 from ..di import StandardDependencies
 from ..input_outputs import CLI as CLIInputOutput
 from ..input_outputs import exceptions
+from .build_context import build_context
 
 
 class CLI:
@@ -30,28 +31,18 @@ class CLI:
     def bind(self, key, value):
         self._di.bind(key, value)
 
-def cli(application, di_class=StandardDependencies, bindings=None, binding_classes=None, binding_modules=None):
-    if bindings is None:
-        bindings = {}
-    if binding_classes is None:
-        binding_classes = []
-    if binding_modules is None:
-        binding_modules = []
-
-    bindings = {
-        **application.bindings,
-        **bindings,
-    }
-    binding_classes = [
-        *application.binding_classes,
-        *binding_classes,
-    ]
-    binding_modules = [
-        *application.binding_modules,
-        *binding_modules
-    ]
-
-    di = di_class.init(*binding_classes, **bindings, modules=binding_modules)
-    context = di.build(CLI, cache=False)
-    context.configure(application)
-    return context
+def cli(
+    application,
+    di_class=StandardDependencies,
+    bindings=None,
+    binding_classes=None,
+    binding_modules=None
+):
+    return build_context(
+        CLI,
+        application,
+        di_class,
+        bindings=bindings,
+        binding_classes=binding_classes,
+        binding_modules=binding_modules
+    )
