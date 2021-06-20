@@ -7,6 +7,7 @@ from .float import Float
 from .has_many import HasMany
 from .integer import Integer
 from .json import JSON
+from .many_to_many import ManyToMany
 from .string import String
 from .updated import Updated
 
@@ -42,6 +43,9 @@ def integer(name, **kwargs):
 
 def json(name, **kwargs):
     return build_column_config(name, JSON, **kwargs)
+
+def many_to_many(name, **kwargs):
+    return build_column_config(name, ManyToMany, **kwargs)
 
 def string(name, **kwargs):
     return build_column_config(name, String, **kwargs)

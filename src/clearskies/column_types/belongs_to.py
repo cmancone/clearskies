@@ -73,5 +73,5 @@ class BelongsTo(Integer):
         model_column_name = self.config('model_column_name')
         models = self.config('parent_models')
         if model_column_name not in data or not data[model_column_name]:
-            return models.where(f"{self.name}={data[self.name]}").first()
+            return models.where(f"id={data[self.name]}").first()
         return models.empty_model()

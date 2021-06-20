@@ -75,6 +75,6 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals('hey', user.name)
         self.assertEquals(1, len(Models.iterated))
         self.assertEquals(
-            [{'column': 'user_id', 'operator': '=', 'values': ['2'], 'parsed': 'user_id=%s'}],
+            [{'column': 'id', 'operator': '=', 'values': ['2'], 'parsed': 'id=%s'}],
             Models.iterated[0]['wheres']
         )
