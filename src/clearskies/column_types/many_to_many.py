@@ -148,6 +148,7 @@ class ManyToMany(Integer):
         else:
             old_ids = set(getattr(model, f"{self.name}_ids"))
 
+        new_ids = set(data[self.name])
         to_delete = old_ids-new_ids
         to_create = new_ids-old_ids
         if to_delete:
@@ -165,3 +166,8 @@ class ManyToMany(Integer):
                 })
 
         return data
+
+
+
+
+

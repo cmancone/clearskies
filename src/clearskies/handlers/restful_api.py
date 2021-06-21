@@ -41,9 +41,7 @@ class RestfulAPI(Routing):
             classes.append(configuration[handler_key] if handler_key in configuration else self._configuration_defaults[handler_key])
         return classes
 
-    def _check_configuration(self, configuration):
-        super()._check_configuration(configuration)
-
+    def configure(self, configuration):
         # if we have read only set then we can't allow any write methods
         if configuration.get('read_only'):
             for action in ['update', 'delete', 'create']:
@@ -52,6 +50,9 @@ class RestfulAPI(Routing):
                         f"Contradictory configuration for handler '{self.__class__.__name__}': " + \
                         f"'read_only' and 'allow_{action} are both set to True"
                     )
+                configuration[f'allow_{action}'] = False
+
+        super().configure(configuration)
 
     def _parse_url(self, input_output):
         self._resource_id = None

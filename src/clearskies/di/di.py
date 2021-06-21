@@ -70,15 +70,15 @@ class DI:
     def bind(self, key, value):
         if key in self._building:
             raise KeyError(f"Attempt to set binding for '{key}' while '{key}' was already being built")
-        self._bindings[key] = value
 
-        # if we have a string or number then it is configuration information and doesn't have to be built.
-        # Therefore, dump it straight into self._prepared
-        if type(value) == str or type(value) == int or type(value) == float:
+        # classes and binding configs are placed in self._bindings, but any other prepared value goes straight
+        # into self._prepared
+        if inspect.isclass(value) or isinstance(value, BindingConfig):
+            self._bindings[key] = value
+            if key in self._prepared:
+                del self._prepared[key]
+        else:
             self._prepared[key] = value
-        elif key in self._prepared:
-            del self._prepared[key]
-
 
     def build(self, thing, context=None, cache=True):
         if inspect.isclass(thing):

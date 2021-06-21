@@ -44,7 +44,8 @@ class Routing(Base):
         # First, let's check the configuration for the handlers, which is just a matter of building
         # the handlers (they willl automatically throw exceptions for invalid configurations as part
         # of this process)
-        used_configs = []
+        used_configs = list(self._global_configuration_defaults.keys())
+        used_configs.extend(self._configuration_defaults.keys())
         for handler_class in self.handler_classes(configuration):
             handler = self.build_handler(handler_class, configuration=configuration)
             used_configs.extend(handler._configuration_defaults.keys())
