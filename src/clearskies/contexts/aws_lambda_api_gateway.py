@@ -20,6 +20,9 @@ class AWSLambdaAPIGateway:
 
         return self._handler(AWSInputOutput(event, context))
 
+    def bind(self, key, value):
+        self._di.bind(key, value)
+
 def aws_lambda_api_gateway(
     application,
     di_class=StandardDependencies,
