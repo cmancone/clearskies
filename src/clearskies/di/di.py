@@ -220,7 +220,7 @@ class DI:
             call_arguments = call_arguments[1:]
 
         args = [
-            self.build_from_name(call_argument, context=callable_to_execute.__name__)
+            self.build_from_name(call_argument, context=callable_to_execute.__name__, cache=True)
             for call_argument
             in call_arguments
         ]
