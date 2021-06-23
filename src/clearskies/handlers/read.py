@@ -88,7 +88,10 @@ class Read(Base):
             )
         if 'where' in request_data:
             for where in request_data['where']:
-                column = self._columns[where['column']]
+                column_name = where['column']
+                if column_name == 'id':
+                    column_name = self.configuration('id_column')
+                column = self._columns[column_name]
                 models = models.where(
                     column.build_condition(
                         where['value'],
@@ -140,13 +143,16 @@ class Read(Base):
                     return f"Invalid request: 'where' must be a list of objects, entry #{index+1} was not an object"
                 if 'column' not in where or not where['column']:
                     return f"Invalid request: 'column' missing in 'where' entry #{index+1}"
-                if where['column'] not in self.configuration('searchable_columns'):
+                column_name = where['column']
+                if column_name == 'id':
+                    column_name = self.configuration('id_column')
+                if column_name not in self.configuration('searchable_columns'):
                     return f"Invalid request: invalid search column specified in where entry #{index+1}"
                 if 'value' not in where:
                     return f"Invalid request: 'value' missing in 'where' entry #{index+1}"
-                if 'operator' in where and not self._columns[where['column']].is_allowed_operator(where['operator']):
+                if 'operator' in where and not self._columns[column_name].is_allowed_operator(where['operator']):
                     return f"Invalid request: given operator is not allowed for column in 'where' entry #{index+1}"
-                value_error = self._columns[where['column']].check_search_value(where['value'])
+                value_error = self._columns[column_name].check_search_value(where['value'])
                 if value_error:
                     return f"Invalid request: {value_error} for 'where' entry #{index+1}"
 

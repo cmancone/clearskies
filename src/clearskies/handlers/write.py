@@ -128,5 +128,5 @@ class Write(Base):
     def request_data(self, input_output, required=True):
         request_data = input_output.request_data(required=required)
         if self.configuration('resource_id'):
-            request_data['id'] = self.configuration('resource_id')
+            request_data[self.configuration('id_column')] = self.configuration('resource_id')
         return request_data

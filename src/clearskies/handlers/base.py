@@ -14,6 +14,7 @@ class Base(ABC):
         'authorization': None,
         'output_map': None,
         'column_overrides': None,
+        'id_column': 'id',
     }
     _di = None
     _configuration = None
@@ -149,8 +150,13 @@ class Base(ABC):
         if self.configuration('output_map'):
             return self.configuration('output_map')(model)
 
+        raw_model_id = getattr(model, self.configuration('id_column'))
+        try:
+            model_id = int(raw_model_id)
+        except:
+            model_id = raw_model_id
         json = OrderedDict()
-        json['id'] = int(model.id)
+        json['id'] = model_id
         for column in self._get_readable_columns().values():
             json[column.name] = column.to_json(model)
         return json

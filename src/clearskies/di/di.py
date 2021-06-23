@@ -80,7 +80,7 @@ class DI:
         else:
             self._prepared[key] = value
 
-    def build(self, thing, context=None, cache=True):
+    def build(self, thing, context=None, cache=False):
         if inspect.isclass(thing):
             return self.build_class(thing, context=context, cache=cache)
         elif isinstance(thing, BindingConfig):
@@ -108,7 +108,7 @@ class DI:
             re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
         ).lower()
 
-    def build_from_name(self, name, context=None, cache=True):
+    def build_from_name(self, name, context=None, cache=False):
         """
         Builds a dependency based on its name
 
@@ -150,7 +150,7 @@ class DI:
         )
 
 
-    def build_class(self, class_to_build, context=None, name=None, cache=True):
+    def build_class(self, class_to_build, context=None, name=None, cache=False):
         """
         Builds a class
 
@@ -190,8 +190,9 @@ class DI:
             )
 
         self._building[class_id] = context
+        # Turn on caching when building the automatic dependencies that get injected into a class constructor
         args = [
-            self.build_from_name(build_argument, context=class_to_build.__name__)
+            self.build_from_name(build_argument, context=class_to_build.__name__, cache=True)
             for build_argument
             in build_arguments
         ]

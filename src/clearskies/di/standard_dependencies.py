@@ -40,6 +40,7 @@ class StandardDependencies(DI):
         return Environment(os.getcwd() + '/.env', os.environ, {})
 
     def provide_cursor(self, environment):
+        print('building cursor')
         import pymysql
         connection = pymysql.connect(
             user=environment.get('db_username'),

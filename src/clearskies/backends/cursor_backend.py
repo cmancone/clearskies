@@ -88,7 +88,7 @@ class CursorBackend(Backend):
         else:
             order_by = ''
         group_by = ' GROUP BY `' + configuration['group_by_column'] + '`' if configuration['group_by_column'] else ''
-        limit = f' LIMIT {configuration["limit_start"]}, {configuration["limit_length"]}' if configuration['limit_start'] else ''
+        limit = f' LIMIT {configuration["limit_start"]}, {configuration["limit_length"]}' if configuration['limit_length'] else ''
         return [
             f'SELECT {select} FROM `{configuration["table_name"]}`{joins}{wheres}{group_by}{order_by}{limit}'.strip(),
             parameters

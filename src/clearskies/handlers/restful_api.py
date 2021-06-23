@@ -105,7 +105,8 @@ class RestfulAPI(Routing):
                 configuration['single_record'] = True
                 if not 'where' in configuration:
                     configuration['where'] = []
-                configuration['where'].append(f'id={self._resource_id}')
+                id_column = self.configuration('id_column')
+                configuration['where'].append(f'{id_column}={self._resource_id}')
             else:
                 configuration['resource_id'] = self._resource_id
         return configuration
