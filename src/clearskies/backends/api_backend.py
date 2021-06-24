@@ -109,13 +109,21 @@ class ApiBackend(Backend):
             headers = {}
 
         headers = {**headers, **self._auth.headers(retry_auth=retry_auth)}
-
-        response = self._requests.request(
-            method,
-            url,
-            headers=headers,
-            json=json,
-        )
+        # the requests library seems to build a slightly different request if you specify the json parameter,
+        # even if it is null, and this causes trouble for some picky servers
+        if not json:
+            response = self._requests.request(
+                method,
+                url,
+                headers=headers,
+            )
+        else:
+            response = self._requests.request(
+                method,
+                url,
+                headers=headers,
+                json=json,
+            )
 
         if not response.ok:
             if self._auth.has_dynamic_credentials and retry_auth:

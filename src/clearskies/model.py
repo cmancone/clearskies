@@ -118,7 +118,7 @@ class Model(ABC):
             new_data = self._backend.update(self.id, to_save, self)
         else:
             new_data = self._backend.create(to_save, self)
-        id = int(new_data['id'])
+        id = columns['id'].from_database(new_data['id'])
 
         data = self.columns_post_save(data, id, columns)
         data = self.post_save(data, id)
