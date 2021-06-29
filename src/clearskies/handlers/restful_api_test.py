@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, call
 from .restful_api import RestfulAPI
 from ..mocks import InputOutput, Models
 from ..authentication import Public
-from ..column_types import String
+from ..column_types import String, Integer
 from collections import OrderedDict
 from ..di import StandardDependencies
 
@@ -15,6 +15,7 @@ class RestfulAPITest(unittest.TestCase):
         Models.reset()
         self.models = Models({
             'name': {'class': String},
+            'age': {'class': Integer},
         })
         self.di = StandardDependencies()
 

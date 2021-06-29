@@ -114,6 +114,7 @@ class Models(ModelsBase):
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
         if Models.counted == None:
             Models.counted = []
+        del configuration['model_columns']
         Models.counted.append(configuration)
         counted = self.search_responses.pop(0)
         return len(counted)
@@ -123,6 +124,7 @@ class Models(ModelsBase):
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
         if Models.iterated == None:
             Models.iterated = []
+        del configuration['model_columns']
         Models.iterated.append(configuration)
         records = self.search_responses.pop(0)
         return records

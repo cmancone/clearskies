@@ -2,6 +2,9 @@ import unittest
 from unittest.mock import MagicMock, call
 from .models import Models
 from .model import Model
+from .di import StandardDependencies
+from . import column_types
+from collections import OrderedDict
 
 
 class User(Model):
@@ -13,7 +16,11 @@ class User(Model):
         return 'users'
 
     def columns_configuration(self):
-        return []
+        return OrderedDict([
+            column_types.string('last_name'),
+            column_types.integer('age'),
+            column_types.created('created'),
+        ])
 
 
 class Users(Models):
@@ -30,9 +37,11 @@ class TestModels(unittest.TestCase):
             'count': MagicMock(return_value=10),
             'records': MagicMock(return_value=[{'id': 5, 'my': 'data'}]),
         })()
+        self.di = StandardDependencies()
+        self.columns = self.di.build('columns')
 
     def test_configure(self):
-        users = Users('cursor', 'columns') \
+        users = Users('cursor', self.columns) \
             .where("age>5") \
             .where("age<10") \
             .group_by('last_name') \
@@ -66,14 +75,14 @@ class TestModels(unittest.TestCase):
         self.assertEquals('*', users.configuration['selects'])
 
     def test_table_name(self):
-        self.assertEquals('users', Users('cursor', 'columns').table_name)
+        self.assertEquals('users', Users('cursor', self.columns).table_name)
 
     def test_build_model(self):
-        user = Users('cursor', 'columns').model({'id': 2, 'age': 5})
+        user = Users('cursor', self.columns).model({'id': 2, 'age': 5})
         self.assertEquals(User, type(user))
 
     def test_as_sql(self):
-        users = Users(self.backend, 'columns') \
+        users = Users(self.backend, self.columns) \
             .where("age>5") \
             .where("age<10") \
             .group_by('last_name') \
@@ -97,6 +106,7 @@ class TestModels(unittest.TestCase):
                 'limit_length': 10,
                 'selects': '*',
                 'table_name': 'users',
+                'model_columns': users.model_columns,
             })
         ])
         user = iterator.__next__()
@@ -104,7 +114,7 @@ class TestModels(unittest.TestCase):
         self.assertEquals({'id': 5, 'my': 'data'}, user._data)
 
     def test_as_sql_empty(self):
-        users = Users(self.backend, 'columns')
+        users = Users(self.backend, self.columns)
         users.__iter__()
         self.backend.records.assert_has_calls([
             call({
@@ -116,11 +126,12 @@ class TestModels(unittest.TestCase):
                 'limit_length': None,
                 'selects': None,
                 'table_name': 'users',
+                'model_columns': None,
             })
         ])
 
     def test_length(self):
-        users = Users(self.backend, 'columns') \
+        users = Users(self.backend, self.columns) \
             .where("age>5") \
             .where("age<10") \
             .sort_by('created', 'desc') \
@@ -145,5 +156,6 @@ class TestModels(unittest.TestCase):
                 'limit_length': 10,
                 'selects': '*',
                 'table_name': 'users',
+                'model_columns': users.model_columns,
             })
         ])

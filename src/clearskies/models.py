@@ -6,6 +6,7 @@ class Models(ABC, ConditionParser):
     # The database connection
     _backend = None
     _columns = None
+    _model_columns = None
     wheres = None
     sorts = None
     group_by_column = None
@@ -20,6 +21,7 @@ class Models(ABC, ConditionParser):
     def __init__(self, backend, columns):
         self._backend = backend
         self._columns = columns
+        self._model_columns = None
         self.wheres = []
         self.sorts = []
         self.group_by_column = None
@@ -58,7 +60,8 @@ class Models(ABC, ConditionParser):
             'limit_start': self.limit_start,
             'limit_length': self.limit_length,
             'selects': self.selects,
-            'table_name': self.get_table_name()
+            'table_name': self.get_table_name(),
+            'model_columns': self._model_columns,
         }
 
     @configuration.setter
@@ -70,11 +73,18 @@ class Models(ABC, ConditionParser):
         self.limit_start = configuration['limit_start']
         self.limit_length = configuration['limit_length']
         self.selects = configuration['selects']
+        self._model_columns = configuration['model_columns']
 
     @property
     def table_name(self):
         """ Returns the name of the table for the model class """
         return self.model(None).table_name
+
+    @property
+    def model_columns(self):
+        if self._model_columns is None:
+            self._model_columns = self.empty_model().columns()
+        return self._model_columns
 
     def select(self, selects):
         return self.clone().select_in_place(selects)
@@ -90,6 +100,8 @@ class Models(ABC, ConditionParser):
 
     def where_in_place(self, where):
         """ Adds the given condition to the query for the current Models object """
+        condition = self.parse_condition(where)
+        self._validate_column(condition['column'], 'filter')
         self.wheres.append(self.parse_condition(where))
         self.must_rexecute = True
         self.must_recount = True
@@ -110,7 +122,7 @@ class Models(ABC, ConditionParser):
         return self.clone().group_by_in_place(group_column)
 
     def group_by_in_place(self, group_column):
-        self._validate_column(group_column)
+        self._validate_column(group_column, 'group')
         self.group_by_column = group_column
         self.must_rexecute = True
         self.must_recount = True
@@ -144,16 +156,23 @@ class Models(ABC, ConditionParser):
         direction = sort['direction'].upper().strip()
         if direction != 'ASC' and direction != 'DESC':
             raise ValueError(f"Invalid sort direction: should be ASC or DESC, not '{direction}'")
-        self._validate_column(sort['column'])
+        self._validate_column(sort['column'], 'sort')
 
         # down the line we may ask the model class what columns we can sort on, but we're good for now
         return { 'column': sort['column'], 'direction': sort['direction'] }
 
-    def _validate_column(self, column_name):
+    def _validate_column(self, column_name, action):
         """
         Down the line we may use the model configuration to check what columns are valid sort/group/search targets
         """
-        pass
+        model_columns = self.model_columns
+        if column_name not in model_columns:
+            model_class = self.model_class()
+            raise KeyError(
+                f"Cannot {action} by column '{column_name}' for model class {model_class.__name__} because this " + \
+                'column does not exist for the model.  You can suppress this error by adding a matching column ' + \
+                'to your model definition'
+            )
         # if not self.model_class().has_column(column_name):
         #     raise ValueError(f'Invalid column {column_name}')
 
@@ -190,6 +209,11 @@ class Models(ABC, ConditionParser):
 
     def empty_model(self):
         return self.model({})
+
+    def create(self, data):
+        empty = self.empty_model()
+        empty.save(data)
+        return empty
 
     def first(self):
         iter = self.__iter__()

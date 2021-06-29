@@ -22,14 +22,16 @@ class Environment:
         self.secrets = secrets
         self._resolved_values = {}
 
-    def get(self, name):
+    def get(self, name, silent=False):
         self._load_env_file()
         if name in self.os_environ:
             return self.resolve_value(self.os_environ[name])
         if name in self._env_file_config:
             return self.resolve_value(self._env_file_config[name])
 
-        raise ValueError(f"Could not find environment config '{name}' in environment or .env file")
+        if not silent:
+            raise KeyError(f"Could not find environment config '{name}' in environment or .env file")
+        return None
 
     def _load_env_file(self):
         if self._env_file_config is not None:
