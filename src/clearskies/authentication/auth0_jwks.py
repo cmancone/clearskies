@@ -42,7 +42,10 @@ class Auth0JWKS:
         return self.validate_jwt(auth_header[7:])
 
     def validate_jwt(self, raw_jwt):
-        unverified_header = self._jose_jwt.get_unverified_header(raw_jwt)
+        try:
+            unverified_header = self._jose_jwt.get_unverified_header(raw_jwt)
+        except self._jose_jwt.JWTError as e:
+            raise ClientError(str(e))
         jwks = self._get_jwks()
         # find a matching key in the JWKS for the key in the JWT
         rsa_key = next((key for key in jwks['keys'] if key['kid'] == unverified_header['kid']), False)

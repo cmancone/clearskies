@@ -107,11 +107,12 @@ class ManyToMany(Integer):
     def input_error_for_value(self, value):
         if type(value) != list:
             return f'{self.name} should be a list of ids'
+        related_models = self.di.build(self.config('related_models_class'), cache=False)
         for id_to_check in value:
             integer_check = super().input_error_for_value(id_to_check)
             if integer_check:
                 return integer_check
-            if not len(self.config('related_models').where(f"id={id_to_check}")):
+            if not len(related_models.where(f"id={id_to_check}")):
                 return f"Invalid selection for {self.name}: record {id_to_check} does not exist"
         return ''
 
@@ -122,7 +123,7 @@ class ManyToMany(Integer):
         foreign_column_name_in_pivot = self.config('foreign_column_name_in_pivot')
         own_column_name_in_pivot = self.config('own_column_name_in_pivot')
         pivot_table = self.config('pivot_table')
-        models = self.config('related_models')
+        models = self.di.build(self.config('related_models_class'), cache=False)
         join = f"JOIN {pivot_table} ON {pivot_table}.{foreign_column_name_in_pivot}={models.get_table_name()}.id"
         related_models = models.join(join).where(f"{pivot_table}.{own_column_name_in_pivot}={data['id']}")
         if column_name == self.name:
@@ -166,8 +167,3 @@ class ManyToMany(Integer):
                 })
 
         return data
-
-
-
-
-

@@ -105,3 +105,21 @@ class ApiBackendTest(unittest.TestCase):
 
         self.assertEquals({"id": 5}, records[0])
         self.assertEquals({"id": 10}, records[1])
+
+    def test_query_empty(self):
+        response = type('', (), {'ok': True, 'json': lambda: {"data":[{"id": 5}, {"id": 10}]}})
+        self.requests.request = MagicMock(return_value=response)
+        records = self.backend.records({
+            'wheres': [],
+            'sorts': [],
+            'limit_start': 0,
+            'limit_length': 0,
+        })
+        self.requests.request.assert_called_with(
+            'GET',
+            'https://example.com',
+            headers={'Authorization': 'Bearer: asdfer'},
+        )
+
+        self.assertEquals({"id": 5}, records[0])
+        self.assertEquals({"id": 10}, records[1])

@@ -1,4 +1,4 @@
-from ..input_outputs import AWSLambdaELB as AWSInputOutput
+from ..input_outputs import AWSLambdaELB as AWSLambdaELBInputOutput
 from ..di import StandardDependencies
 from .build_context import build_context
 
@@ -18,7 +18,7 @@ class AWSLambdaELB:
         if self._handler is None:
             raise ValueError("Cannot execute AWSLambda context without first configuring it")
 
-        return self._handler(AWSInputOutput(event, context))
+        return self._handler(AWSLambdaELBInputOutput(event, context))
 
     def bind(self, key, value):
         self._di.bind(key, value)

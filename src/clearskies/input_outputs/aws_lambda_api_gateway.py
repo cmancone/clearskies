@@ -28,7 +28,7 @@ class AWSLambdaAPIGateway(InputOutput):
         for (key, value) in event['headers'].items():
             self._request_headers[key.lower()] = value
 
-    def respond(self, body, status_code):
+    def respond(self, body, status_code=200):
         if not self.has_header('content-type'):
             self.set_header('content-type', 'application/json; charset=UTF-8')
 

@@ -145,12 +145,13 @@ class ApiBackend(Backend):
         return configuration
 
     def _as_post_data(self, configuration):
-        return {
+        data = {
             'where': list(map(lambda where: self._where_for_post(where), configuration['wheres'])),
             'sort': configuration['sorts'],
             'start': configuration['limit_start'],
             'limit': configuration['limit_length'],
         }
+        return {key: value for (key, value) in data.items() if value}
 
     def _where_for_post(self, where):
         return {
