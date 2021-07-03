@@ -89,3 +89,40 @@ class TestConditionParser(unittest.TestCase):
         self.assertEquals('IN', results['operator'])
         self.assertEquals('name IN (%s, %s)', results['parsed'])
         self.assertEquals(['conor', 'MaNcone'], results['values'])
+
+    def test_parse_valid_joins(self):
+        results = self.parser.parse_join("JOIN another ON another.id=original.another_id")
+        self.assertEquals({
+            'left_table': 'original',
+            'left_column': 'another_id',
+            'right_table': 'another',
+            'right_column': 'id',
+            'type': 'LEFT',
+            'table': 'another',
+            'alias': '',
+            'raw': 'JOIN another ON another.id=original.another_id'
+        }, results)
+
+        results = self.parser.parse_join("JOIN `another` ON `another`.`id`=`original`.`another_id`")
+        self.assertEquals({
+            'left_table': 'original',
+            'left_column': 'another_id',
+            'right_table': 'another',
+            'right_column': 'id',
+            'type': 'LEFT',
+            'table': 'another',
+            'alias': '',
+            'raw': 'JOIN `another` ON `another`.`id`=`original`.`another_id`'
+        }, results)
+
+        results = self.parser.parse_join("INNER JOIN `another` an ON `original`.`another_id` = an.`id`")
+        self.assertEquals({
+            'left_table': 'original',
+            'left_column': 'another_id',
+            'right_table': 'an',
+            'right_column': 'id',
+            'type': 'INNER',
+            'table': 'another',
+            'alias': 'an',
+            'raw': 'INNER JOIN `another` an ON `original`.`another_id` = an.`id`'
+        }, results)

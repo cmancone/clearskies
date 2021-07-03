@@ -1,3 +1,6 @@
+import re
+
+
 class ConditionParser:
     operators = [
         '<=>',
@@ -94,3 +97,69 @@ class ConditionParser:
 
         # the only thing left is "in" which has a variable number of placeholders
         return f'{column} IN (' + ', '.join(['%s' for i in range(len(values))]) + ')'
+
+    def parse_join(self, join):
+        # doing this the simple and stupid way, until that doesn't work.  Yes, it is ugly.
+        # Splitting this into two regexps for simplicity: this one does not check for an alias
+        matches = re.match(
+            '(\w+\s+)?join\s+`?([^\s`]+)`?\s+on\s+`?([^`]+)`?\.`?([^`]+)`?\s*=\s*`?([^`]+)`?\.`?([^`]+)`?',
+            join,
+            re.IGNORECASE
+        )
+        if matches:
+            groups = matches.groups()
+            alias = ''
+            join_type = groups[0]
+            right_table = groups[1]
+            first_table = groups[2]
+            first_column = groups[3]
+            second_table = groups[4]
+            second_column = groups[5]
+        else:
+            matches = re.match(
+                '(\w+\s+)?join\s+`?([^\s`]+)`?\s+(as\s+)?(\S+)\s+on\s+`?([^`]+)`?\.`?([^`]+)`?\s*=\s*`?([^`]+)`?\.`?([^`]+)`?',
+                join,
+                re.IGNORECASE
+            )
+            if not matches:
+                raise ValueError(f"Specified join condition, '{join}' does not appear to be a valid join statement")
+            groups = matches.groups()
+            join_type = groups[0]
+            right_table = groups[1]
+            alias = groups[3]
+            first_table = groups[4]
+            first_column = groups[5]
+            second_table = groups[6]
+            second_column = groups[7]
+
+        # which is the left table and which is the right table?
+        match_by = alias if alias else right_table
+        if first_table == match_by:
+            join_data = {
+                'left_table': second_table,
+                'left_column': second_column,
+                'right_table': first_table,
+                'right_column': first_column,
+            }
+        elif second_table == match_by:
+            join_data = {
+                'left_table': first_table,
+                'left_column': first_column,
+                'right_table': second_table,
+                'right_column': second_column,
+            }
+        else:
+            raise ValueError(
+                f"Specified join condition, '{join}' was not understandable because the joined table " + \
+                "is not referenced in the 'on' clause"
+            )
+
+        return {
+            **join_data,
+            **{
+                'type': groups[0].strip().upper() if groups[0] else 'LEFT',
+                'table': right_table,
+                'alias': alias,
+                'raw': join,
+            }
+        }
