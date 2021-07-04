@@ -157,7 +157,7 @@ class ConditionParser:
         return {
             **join_data,
             **{
-                'type': groups[0].strip().upper() if groups[0] else 'LEFT',
+                'type': groups[0].strip().upper() if groups[0] else 'INNER',
                 'table': right_table,
                 'alias': alias,
                 'raw': join,

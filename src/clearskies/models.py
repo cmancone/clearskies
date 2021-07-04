@@ -111,9 +111,7 @@ class Models(ABC, ConditionParser):
         return self.clone().join_in_place(join)
 
     def join_in_place(self, join):
-        if not 'join' in join.lower():
-            raise ValueError("Invalid join string.  Should be '(LEFT|INNER|WHATEVER)? JOIN table ON condition'")
-        self.joins.append(join)
+        self.joins.append(self.parse_join(join))
         self.must_rexecute = True
         self.must_recount = True
         return self
@@ -165,6 +163,14 @@ class Models(ABC, ConditionParser):
         """
         Down the line we may use the model configuration to check what columns are valid sort/group/search targets
         """
+        # for now, only validate columns that belong to *our* table.
+        column_name = column_name.replace('`', '')
+        if '.' in column_name:
+            parts = column_name.split('.')
+            if parts[0] != self.get_table_name():
+                return
+
+            column_name = column_name.split('.')[1]
         model_columns = self.model_columns
         if column_name not in model_columns:
             model_class = self.model_class()

@@ -97,7 +97,7 @@ class TestConditionParser(unittest.TestCase):
             'left_column': 'another_id',
             'right_table': 'another',
             'right_column': 'id',
-            'type': 'LEFT',
+            'type': 'INNER',
             'table': 'another',
             'alias': '',
             'raw': 'JOIN another ON another.id=original.another_id'
@@ -109,20 +109,20 @@ class TestConditionParser(unittest.TestCase):
             'left_column': 'another_id',
             'right_table': 'another',
             'right_column': 'id',
-            'type': 'LEFT',
+            'type': 'INNER',
             'table': 'another',
             'alias': '',
             'raw': 'JOIN `another` ON `another`.`id`=`original`.`another_id`'
         }, results)
 
-        results = self.parser.parse_join("INNER JOIN `another` an ON `original`.`another_id` = an.`id`")
+        results = self.parser.parse_join("LEFT JOIN `another` an ON `original`.`another_id` = an.`id`")
         self.assertEquals({
             'left_table': 'original',
             'left_column': 'another_id',
             'right_table': 'an',
             'right_column': 'id',
-            'type': 'INNER',
+            'type': 'LEFT',
             'table': 'another',
             'alias': 'an',
-            'raw': 'INNER JOIN `another` an ON `original`.`another_id` = an.`id`'
+            'raw': 'LEFT JOIN `another` an ON `original`.`another_id` = an.`id`'
         }, results)

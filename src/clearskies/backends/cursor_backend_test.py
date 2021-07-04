@@ -52,7 +52,16 @@ class CursorBackendTest(unittest.TestCase):
             'limit_start': 5,
             'limit_length': 10,
             'sorts': [{'column': 'name', 'direction': 'asc'}],
-            'joins': ['LEFT JOIN dogs ON dogs.id=ages.id', 'JOIN peeps AS peeps ON peeps.id=dogs.id'],
+            'joins': [
+                {
+                    'type': 'LEFT',
+                    'raw': 'LEFT JOIN dogs ON dogs.id=ages.id',
+                },
+                {
+                    'type': 'INNER',
+                    'raw': 'JOIN peeps AS peeps ON peeps.id=dogs.id',
+                },
+            ],
             'selects': 'sup',
             'wheres': [
                 {'values': [5], 'parsed': 'id=%s'},
@@ -82,7 +91,16 @@ class CursorBackendTest(unittest.TestCase):
             'limit_start': 5,
             'limit_length': 10,
             'sorts': [{'column': 'name', 'direction': 'asc'}],
-            'joins': ['LEFT JOIN dogs ON dogs.id=ages.id', 'JOIN peeps AS peeps ON peeps.id=dogs.id'],
+            'joins': [
+                {
+                    'type': 'LEFT',
+                    'raw': 'LEFT JOIN dogs ON dogs.id=ages.id',
+                },
+                {
+                    'type': 'INNER',
+                    'raw': 'JOIN peeps AS peeps ON peeps.id=dogs.id'
+                },
+            ],
             'selects': 'sup',
             'wheres': [
                 {'values': [5], 'parsed': 'id=%s'},
@@ -103,7 +121,7 @@ class CursorBackendTest(unittest.TestCase):
             'limit_length': 10,
             'group_by_column': 'age',
             'sorts': [{'column': 'name', 'direction': 'ASC'}, {'column': 'first', 'direction': 'DESC'}],
-            'joins': ['LEFT JOIN dogs ON dogs.id=ages.id', 'JOIN peeps AS peeps ON peeps.id=dogs.id'],
+            'joins': [{'raw': 'LEFT JOIN dogs ON dogs.id=ages.id'}, {'raw': 'JOIN peeps AS peeps ON peeps.id=dogs.id'}],
             'selects': 'sup',
             'wheres': [
                 {'values': [5], 'parsed': 'id=%s'},

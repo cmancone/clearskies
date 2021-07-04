@@ -82,7 +82,10 @@ class CursorBackend(Backend):
     def as_sql(self, configuration):
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration['wheres'])
         select = configuration['selects'] if configuration['selects'] else '*'
-        joins = (' ' + ' '.join(configuration['joins'])) if configuration['joins'] else ''
+        if configuration['joins']:
+            joins = ' ' + ' '.join([join['raw'] for join in configuration['joins']])
+        else:
+            joins = ''
         if configuration['sorts']:
             order_by = ' ORDER BY ' + ', '.join(map(lambda sort: '`%s` %s' % (sort['column'], sort['direction']), configuration['sorts']))
         else:
@@ -98,7 +101,12 @@ class CursorBackend(Backend):
         # note that this won't work if we start including a HAVING clause
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration['wheres'])
         # we also don't currently support parameters in the join clause - I'll probably need that though
-        joins = (' ' + ' '.join(filter(lambda join: 'LEFT JOIN' not in join, configuration['joins']))) if configuration['joins'] else ''
+        if configuration['joins']:
+            # We can ignore left joins because they don't change the count
+            join_sections = filter(lambda join: join['type'] != 'LEFT', configuration['joins'])
+            joins = (' ' + ' '.join([join['raw'] for join in join_sections])) if join_sections else ''
+        else:
+            joins = ''
         if not configuration['group_by_column']:
             query = f'SELECT COUNT(*) AS count FROM `{configuration["table_name"]}`{joins}{wheres}'
         else:

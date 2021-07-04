@@ -69,7 +69,7 @@ class TestModels(unittest.TestCase):
         )
         self.assertEquals({'column': 'created', 'direction': 'desc'}, users.configuration['sorts'][0])
         self.assertEquals('last_name', users.configuration['group_by_column'])
-        self.assertEquals('LEFT JOIN posts ON posts.user_id=users.id', users.configuration['joins'][0])
+        self.assertEquals('LEFT JOIN posts ON posts.user_id=users.id', users.configuration['joins'][0]['raw'])
         self.assertEquals(5, users.configuration['limit_start'])
         self.assertEquals(10, users.configuration['limit_length'])
         self.assertEquals('*', users.configuration['selects'])
@@ -101,7 +101,18 @@ class TestModels(unittest.TestCase):
                     {'column': 'created', 'direction': 'desc'}
                 ],
                 'group_by_column': 'last_name',
-                'joins': ['LEFT JOIN posts ON posts.user_id=users.id'],
+                'joins': [
+                    {
+                        'alias': '',
+                        'type': 'LEFT',
+                        'table': 'posts',
+                        'left_table': 'users',
+                        'left_column': 'id',
+                        'right_table': 'posts',
+                        'right_column': 'user_id',
+                        'raw': 'LEFT JOIN posts ON posts.user_id=users.id',
+                    }
+                ],
                 'limit_start': 5,
                 'limit_length': 10,
                 'selects': '*',
@@ -136,7 +147,7 @@ class TestModels(unittest.TestCase):
             .where("age<10") \
             .sort_by('created', 'desc') \
             .join('JOIN posts ON posts.user_id=users.id') \
-            .join('LEFT JOIN more_posts ON posts.user_id=users.id') \
+            .join('LEFT JOIN more_posts ON more_posts.user_id=users.id') \
             .limit(5, 10) \
             .select('*')
         count = len(users)
@@ -151,7 +162,28 @@ class TestModels(unittest.TestCase):
                     {'column': 'created', 'direction': 'desc'}
                 ],
                 'group_by_column': None,
-                'joins': ['JOIN posts ON posts.user_id=users.id', 'LEFT JOIN more_posts ON posts.user_id=users.id'],
+                'joins': [
+                    {
+                        'alias': '',
+                        'type': 'INNER',
+                        'table': 'posts',
+                        'left_table': 'users',
+                        'left_column': 'id',
+                        'right_table': 'posts',
+                        'right_column': 'user_id',
+                        'raw': 'JOIN posts ON posts.user_id=users.id',
+                    },
+                    {
+                        'alias': '',
+                        'type': 'LEFT',
+                        'table': 'more_posts',
+                        'left_table': 'users',
+                        'left_column': 'id',
+                        'right_table': 'more_posts',
+                        'right_column': 'user_id',
+                        'raw': 'LEFT JOIN more_posts ON more_posts.user_id=users.id',
+                    },
+                ],
                 'limit_start': 5,
                 'limit_length': 10,
                 'selects': '*',
