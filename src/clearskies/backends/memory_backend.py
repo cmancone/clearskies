@@ -91,15 +91,14 @@ class MemoryTable:
         self._rows[index] = None
         return True
 
-    def count(self, configuration):
-        return len(self.rows(configuration, filter_only=True))
+    def count(self, configuration, wheres):
+        return len(self.rows(configuration, wheres, filter_only=True))
 
-    def rows(self, configuration, filter_only=False):
+    def rows(self, configuration, wheres, filter_only=False):
         rows = list(filter(None, self._rows))
-        if 'wheres' in configuration and configuration['wheres']:
-            for where in configuration['wheres']:
-                rows = filter(self._where_as_filter(where), rows)
-            rows = list(rows)
+        for where in wheres:
+            rows = filter(self._where_as_filter(where), rows)
+        rows = list(rows)
         if filter_only:
             return rows
         if 'sorts' in configuration and configuration['sorts']:
@@ -141,6 +140,7 @@ class MemoryBackend(Backend):
     _allowed_configs = [
         'table_name',
         'wheres',
+        'joins',
         'sorts',
         'limit_start',
         'limit_length',
@@ -190,7 +190,16 @@ class MemoryBackend(Backend):
             raise ValueError(
                 f"Attempt to count records in non-existent table '{configuration['table_name']} via MemoryBackend"
             )
-        return self._tables[configuration['table_name']].count(configuration)
+
+        # this is easy if we have no joins, so just return early so I don't have to think about it
+        if 'joins' not in configuration or not configuration['joins']:
+            wheres = configuration['wheres'] if 'wheres' in configuration else []
+            return self._tables[configuration['table_name']].count(configuration, wheres)
+
+        # we can ignore left joins when counting
+        configuration = {**configuration}
+        configuration['joins'] = [join for join in configuration['joins'] if join['type'] != 'LEFT']
+        return len(self.rows_with_joins(configuration))
 
     def records(self, configuration):
         table_name = configuration['table_name']
@@ -201,7 +210,80 @@ class MemoryBackend(Backend):
             raise ValueError(
                 f"Attempt to fetch records from non-existent table '{configuration['table_name']} via MemoryBackend"
             )
-        return self._tables[table_name].rows(configuration)
+
+        # this is easy if we have no joins, so just return early so I don't have to think about it
+        if 'joins' not in configuration or not configuration['joins']:
+            wheres = configuration['wheres'] if 'wheres' in configuration else []
+            return self._tables[table_name].rows(configuration, wheres)
+
+        rows = len(self.rows_with_joins(configuration))
+
+        # currently we don't do much with selects, so just limit results down to the data from the original
+        # table.
+        return [row[table_name] for row in rows]
+
+    def rows_with_joins(self, configuration):
+        joins = configuration['joins']
+        wheres = configuration['wheres'] if 'wheres' in configuration else []
+        # quick sanity check
+        for join in configuration['joins']:
+            if join['table'] not in self._tables:
+                raise ValueError(
+                    f"Join '{join['raw']}' refrences table '{join['table']}' which does not exist in MemoryBackend"
+                )
+
+        # start with the matches in the main table
+        left_table = configuration['table_name']
+        main_rows = self._tables[left_table].rows(
+            configuration,
+            self._wheres_for_table(left_table, wheres, is_left=True),
+            filter_only=True
+        )
+        # and now adjust the way data is stored in our rows list to support the joining process.
+        # we're going to go from something like: `[{row_1}, {row_2}]` to something like:
+        # [{table_1: table_1_row_1, table_2: table_2_row_1}, {table_1: table_1_row_2, table_2: table_2_row_2}]
+        # etc...
+        rows = [{left_table: row} for row in main_rows]
+        joined_tables = [left_table]
+
+        # and now work through our joins.  The tricky part is order - we need to manage the joins in the
+        # proper order, but they may not be in the correcet order in our join list.  I still don't feel like building
+        # a full graph, so cheat and be dumb: loop through them all and join in the ones we can, skipping the ones
+        # we can't.  If we get to the end and there are still joins left in the queue, then repeat, and eventually
+        # complain (since the joins may not be a valid object graph)
+        for i in range(10):
+            for (index, join) in enumerate(joins):
+                left_table = join['left_table']
+                alias = join['alias']
+                right_table = join['right_table']
+                table_name_for_join = alias if alias else right_table
+                if left_table not in joined_tables:
+                    continue
+
+                join_rows = self._tables[right_table].rows(
+                    configuration,
+                    self._wheres_for_table(table_name_for_join, wheres, joined_tables),
+                    filter_only=True
+                )
+
+                rows = self.join_rows(rows, join_rows, join)
+
+                # done with this one!
+                del joins[index]
+                joined_tables.append(table_name_for_join)
+
+            # are we done yet?
+            if not joins:
+                break
+
+        if joins:
+            raise ValueError(
+                "Unable to fulfill joins for query - perhaps a necessary join is missing? " + \
+                "One way to get this error is if you tried to join on another table which hasn't been " + \
+                "joined itself.  e.g.: SELECT * FROM users JOIN type ON type.id=categories.type_id"
+            )
+
+        return rows
 
     def all_rows(self, table_name):
         if table_name not in self._tables:
@@ -225,3 +307,79 @@ class MemoryBackend(Backend):
             if not key in configuration:
                 configuration[key] = [] if key[-1] == 's' else ''
         return configuration
+
+    def _wheres_for_table(self, table_name, wheres, is_left=False):
+        """
+        Returns only the where conditions for the current table
+
+        If you set is_left=True then it assumes this is the "default" table and so will also return conditions
+        without a table name.
+        """
+        return [where for where in wheres if where['table'] == table_name or (is_left and not where['table'])]
+
+    def join_rows(self, rows, join_rows, join_config, joined_tables):
+        """
+        Adds the rows in `join_rows` in to the `rows` holder.
+
+        `rows` should be something like:
+
+        ```
+        [
+            {
+                'table_1': {'table_1_row_1'},
+                'table_2': {'table_2_row_1'},
+            },
+            {
+                'table_1': {'table_1_row_2'},
+                'table_2': {'table_2_row_2'},
+            }
+        ]
+        ```
+
+        and join_rows should be the rows for the new table, something like:
+
+        `[{table_3_row_1}, {table_3_row_2}]`
+
+        which will then get merged into the rows variable properly (which it will return as a new list)
+        """
+        join_table_name = join_config['alias'] if join_config['alias'] else join_config['right_table']
+        join_type = join_config['type']
+
+        # loop through each entry in rows, find a matching table in join_rows, and take action depending on join type
+        rows = [*rows]
+        matched_right_row_indexes = []
+        for (row_index, row) in enumerate(rows):
+            matching_row = None
+            left_value = row[join_config['left_column']] if join_config['left_column'] in row else None
+            for (join_index, join) in enumerate(join_rows):
+                right_value = join[join_config['right_column']] if join_config['right_column'] in join else None
+                # for now we are assuming the operator for the matching is `=`.  This is mainly because
+                # our join parsing doesn't bother checking for the matching operator, because it is `=` in
+                # 99% of cases.  We can always adjust down the line.
+                if (right_value is None and left_value is None) or (right_value == left_value):
+                    matching_row = join
+                    matched_right_row_indexes.append(right_value)
+                    break
+
+            # next action depends on the join type and match success
+            # for left and outer joins we always preserve records in the main table, so just plop in our match
+            # (even if it is None)
+            if join_type == 'LEFT' or join_type == 'OUTER':
+                rows[row_index][join_table_name] = matching_row
+
+            # for inner and right joins we delete the row if we don't have a match
+            elif join_type == 'INNER' or join_type == 'RIGHT':
+                if matching_row is not None:
+                    rows[row_index][join_table_name] = matching_row
+                else:
+                    del rows[row_index]
+
+        # now for outer/right rows we add on any unmatched rows
+        if (join_type == 'OUTER' or join_type == 'RIGHT') and len(matched_right_row_indexes) < len(join_rows):
+            for join_index in set(enumerate(join_rows))-set(matched_right_row_indexes):
+                rows.append({
+                    join_table_name: join_rows[join_index],
+                    **{table_name: None for table_name in joined_tables},
+                })
+
+        return rows

@@ -67,12 +67,16 @@ class ConditionParser:
         if matching_operator is None:
             raise ValueError(f'No supported operators found in condition {condition}')
 
-        column = condition[:matching_index].strip()
+        column = condition[:matching_index].strip().replace('`', '')
         value = condition[matching_index+self.operator_lengths[matching_operator]:].strip()
         if value and (value[0] == "'" and value[-1] == "'"):
             value = value.strip("'")
         values = self._parse_condition_list(value) if matching_operator == 'in' else [value]
+        table = ''
+        if '.' in column:
+            [table, column] = column.split('.')
         return {
+            'table': table,
             'column': column,
             'operator': matching_operator.upper(),
             'values': [] if matching_operator in self.operators_without_placeholders else values,
