@@ -14,6 +14,20 @@ class Null:
     def __eq__(self, other):
         return isinstance(other, Null) or other is None
 
+def _sort(row_a, row_b, sorts):
+    for sort in sorts:
+        reverse = 1 if sort['direction'].lower() == 'asc' else -1
+        value_a = row_a[sort['column']] if sort['column'] in row_a else None
+        value_b = row_b[sort['column']] if sort['column'] in row_b else None
+        if value_a == value_b:
+            continue
+        if value_a is None:
+            return -1*reverse
+        if value_b is None:
+            return 1*reverse
+        return reverse*(1 if value_a > value_b else -1)
+    return 0
+
 class MemoryTable:
     _table_name = None
     _column_names = None
@@ -102,7 +116,7 @@ class MemoryTable:
         if filter_only:
             return rows
         if 'sorts' in configuration and configuration['sorts']:
-            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: self._sort(row_a, row_b, configuration['sorts'])))
+            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration['sorts'])))
         if 'limit_start' in configuration or 'limit_length' in configuration:
             number_rows = len(rows)
             start = configuration['limit_start'] if 'limit_start' in configuration and configuration['limit_start'] else 0
@@ -118,20 +132,6 @@ class MemoryTable:
         column = where['column']
         values = where['values']
         return self._operator_lambda_builders[where['operator']](column, values, self.null)
-
-    def _sort(self, row_a, row_b, sorts):
-        for sort in sorts:
-            reverse = 1 if sort['direction'].lower() == 'asc' else -1
-            value_a = row_a[sort['column']] if sort['column'] in row_a else None
-            value_b = row_b[sort['column']] if sort['column'] in row_b else None
-            if value_a == value_b:
-                continue
-            if value_a is None:
-                return -1*reverse
-            if value_b is None:
-                return 1*reverse
-            return reverse*(1 if value_a > value_b else -1)
-        return 0
 
 class MemoryBackend(Backend):
     _tables = None
@@ -216,11 +216,24 @@ class MemoryBackend(Backend):
             wheres = configuration['wheres'] if 'wheres' in configuration else []
             return self._tables[table_name].rows(configuration, wheres)
 
-        rows = len(self.rows_with_joins(configuration))
+        rows = self.rows_with_joins(configuration)
 
         # currently we don't do much with selects, so just limit results down to the data from the original
         # table.
-        return [row[table_name] for row in rows]
+        rows = [row[table_name] for row in rows]
+
+        if 'sorts' in configuration and configuration['sorts']:
+            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration['sorts'])))
+        if 'limit_start' in configuration or 'limit_length' in configuration:
+            number_rows = len(rows)
+            start = configuration['limit_start'] if 'limit_start' in configuration and configuration['limit_start'] else 0
+            if start >= number_rows:
+                start = number_rows-1
+            end = len(rows)
+            if 'limit_length' in configuration and configuration['limit_length'] and start + configuration['limit_length'] <= number_rows:
+                end = start + configuration['limit_length']
+            rows = rows[start:end]
+        return rows
 
     def rows_with_joins(self, configuration):
         joins = configuration['joins']
@@ -266,7 +279,7 @@ class MemoryBackend(Backend):
                     filter_only=True
                 )
 
-                rows = self.join_rows(rows, join_rows, join)
+                rows = self.join_rows(rows, join_rows, join, joined_tables)
 
                 # done with this one!
                 del joins[index]
@@ -348,9 +361,13 @@ class MemoryBackend(Backend):
         # loop through each entry in rows, find a matching table in join_rows, and take action depending on join type
         rows = [*rows]
         matched_right_row_indexes = []
+        left_table = join_config['left_table']
+        left_column = join_config['left_column']
         for (row_index, row) in enumerate(rows):
             matching_row = None
-            left_value = row[join_config['left_column']] if join_config['left_column'] in row else None
+            if left_table not in row:
+                raise ValueError("Attempted to check join data from unjoined table, which should not happen...")
+            left_value = row[left_table][left_column] if (row[left_table] is not None and left_column in row[left_table]) else None
             for (join_index, join) in enumerate(join_rows):
                 right_value = join[join_config['right_column']] if join_config['right_column'] in join else None
                 # for now we are assuming the operator for the matching is `=`.  This is mainly because
@@ -372,7 +389,11 @@ class MemoryBackend(Backend):
                 if matching_row is not None:
                     rows[row_index][join_table_name] = matching_row
                 else:
-                    del rows[row_index]
+                    # we can't immediately delete the row because we're looping over the array it is in,
+                    # so just mark it as None and remove it later
+                    rows[row_index] = None
+
+        rows = [row for row in rows if row is not None]
 
         # now for outer/right rows we add on any unmatched rows
         if (join_type == 'OUTER' or join_type == 'RIGHT') and len(matched_right_row_indexes) < len(join_rows):

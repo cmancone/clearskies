@@ -27,6 +27,9 @@ class Test:
         self.di.bind('cursor_backend', self.memory_backend)
 
     def __call__(self, method=None, body=None, headers=None, url=None):
+        if self._application is None:
+            raise ValueError("Cannot call the test context without an application")
+
         if body is not None:
             self.input_output.set_body(body)
         if headers is not None:
