@@ -151,68 +151,68 @@ class MemoryBackendTest(unittest.TestCase):
         )
 
     def test_inner_join_records(self):
-        #self.memory_backend.create({'name': 'Zeb', 'email': 'a@example.com'}, self.user_model)
-        #self.memory_backend.create({'name': 'Zeb', 'email': 'b@example.com'}, self.user_model)
-        #self.memory_backend.create({'name': 'A', 'email': 'c@example.com'}, self.user_model)
-        #self.memory_backend.create({'review': 'hey', 'email': 'b@example.com'}, self.reviews_model)
-        #self.memory_backend.create({'review': 'sup', 'email': 'b@example.com'}, self.reviews_model)
-        #self.memory_backend.create({'review': 'okay', 'email': 'c@example.com'}, self.reviews_model)
+        self.memory_backend.create({'name': 'Zeb', 'email': 'a@example.com'}, self.user_model)
+        self.memory_backend.create({'name': 'Zeb', 'email': 'b@example.com'}, self.user_model)
+        self.memory_backend.create({'name': 'A', 'email': 'c@example.com'}, self.user_model)
+        self.memory_backend.create({'review': 'hey', 'email': 'b@example.com'}, self.reviews_model)
+        self.memory_backend.create({'review': 'sup', 'email': 'b@example.com'}, self.reviews_model)
+        self.memory_backend.create({'review': 'okay', 'email': 'c@example.com'}, self.reviews_model)
 
-        #results = self.memory_backend.records({
-            #'table_name': 'users',
-            #'wheres': [],
-            #'joins': [
-                #{
-                    #'alias': '',
-                    #'type': 'INNER',
-                    #'table': 'reviews',
-                    #'left_table': 'users',
-                    #'left_column': 'email',
-                    #'right_table': 'reviews',
-                    #'right_column': 'email',
-                    #'raw': 'JOIN reviews ON reviews.email=users.email',
-                #},
-            #],
-            #'sorts': [
-                #{'column': 'email', 'direction': 'DESC'},
-            #],
-        #})
+        results = self.memory_backend.records({
+            'table_name': 'users',
+            'wheres': [],
+            'joins': [
+                {
+                    'alias': '',
+                    'type': 'INNER',
+                    'table': 'reviews',
+                    'left_table': 'users',
+                    'left_column': 'email',
+                    'right_table': 'reviews',
+                    'right_column': 'email',
+                    'raw': 'JOIN reviews ON reviews.email=users.email',
+                },
+            ],
+            'sorts': [
+                {'column': 'email', 'direction': 'DESC'},
+            ],
+        })
 
-        #self.assertEquals([
-            #{'name': 'A', 'email': 'c@example.com', 'id': 3},
-            #{'name': 'Zeb', 'email': 'b@example.com', 'id': 2},
-        #], results)
+        self.assertEquals([
+            {'name': 'A', 'email': 'c@example.com', 'id': 3},
+            {'name': 'Zeb', 'email': 'b@example.com', 'id': 2},
+        ], results)
 
-        #results = self.memory_backend.records({
-            #'table_name': 'users',
-            #'wheres': [],
-            #'joins': [
-                #{
-                    #'alias': '',
-                    #'type': 'LEFT',
-                    #'table': 'reviews',
-                    #'left_table': 'users',
-                    #'left_column': 'email',
-                    #'right_table': 'reviews',
-                    #'right_column': 'email',
-                    #'raw': 'LEFT JOIN reviews ON reviews.email=users.email',
-                #},
-            #],
-            #'sorts': [
-                #{'column': 'email', 'direction': 'DESC'},
-            #],
-        #})
+        results = self.memory_backend.records({
+            'table_name': 'users',
+            'wheres': [],
+            'joins': [
+                {
+                    'alias': '',
+                    'type': 'LEFT',
+                    'table': 'reviews',
+                    'left_table': 'users',
+                    'left_column': 'email',
+                    'right_table': 'reviews',
+                    'right_column': 'email',
+                    'raw': 'LEFT JOIN reviews ON reviews.email=users.email',
+                },
+            ],
+            'sorts': [
+                {'column': 'email', 'direction': 'DESC'},
+            ],
+        })
 
-        #self.assertEquals([
-            #{'name': 'A', 'email': 'c@example.com', 'id': 3},
-            #{'name': 'Zeb', 'email': 'b@example.com', 'id': 2},
-            #{'name': 'Zeb', 'email': 'a@example.com', 'id': 1},
-        #], results)
+        self.assertEquals([
+            {'name': 'A', 'email': 'c@example.com', 'id': 3},
+            {'name': 'Zeb', 'email': 'b@example.com', 'id': 2},
+            {'name': 'Zeb', 'email': 'a@example.com', 'id': 1},
+        ], results)
 
         results = self.memory_backend.records({
             'table_name': 'users',
             'wheres': [
-                {'table': 'reviews', 'column': 'name', 'values': ['sup'], 'parsed': 'reviews.column=?', 'operator': '='}
+                {'table': 'reviews', 'column': 'review', 'values': ['sup'], 'parsed': 'reviews.column=?', 'operator': '='}
             ],
             'joins': [
                 {
@@ -230,7 +230,6 @@ class MemoryBackendTest(unittest.TestCase):
                 {'column': 'email', 'direction': 'DESC'},
             ],
         })
-        print(results)
 
         self.assertEquals([
             {'name': 'Zeb', 'email': 'b@example.com', 'id': 2},
