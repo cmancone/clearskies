@@ -19,32 +19,33 @@ class Test:
     def configure(self, application):
         self.now = datetime.now().replace(tzinfo=timezone.utc, microsecond=0)
         self._application = application
-        self.input_output = InputOutput()
         self.memory_backend = self.di.build(MemoryBackend, cache=False)
         self.memory_backend.silent_on_missing_tables(silent=True)
 
         self.di.bind('now', self.now)
         self.di.bind('cursor_backend', self.memory_backend)
 
-    def __call__(self, method=None, body=None, headers=None, url=None):
+    def __call__(self, method=None, body=None, headers=None, url=None, input_output=None):
         if self._application is None:
             raise ValueError("Cannot call the test context without an application")
 
+        if input_output is None:
+            input_output = InputOutput()
         if body is not None:
-            self.input_output.set_body(body)
+            input_output.set_body(body)
         if headers is not None:
-            self.input_output.set_request_headers(headers)
+            input_output.set_request_headers(headers)
         if method is not None:
-            self.input_output.set_request_method(method)
+            input_output.set_request_method(method)
         if url is not None:
-            self.input_output.set_request_url(url)
+            input_output.set_request_url(url)
 
         self._handler = self.di.build(self._application.handler_class, cache=False)
         self._handler.configure({
             **{'authentication': public()},
             **self._application.handler_config,
         })
-        return self._handler(self.input_output)
+        return self._handler(input_output)
 
     def bind(self, key, value):
         self.di.bind(key, value)
