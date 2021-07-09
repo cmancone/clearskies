@@ -75,7 +75,11 @@ class WSGI(InputOutput):
 
     def _parse_query_parameters(self):
         if self._query_parameters is None:
-            self._query_parameters = urllib.parse.parse_qs(self.get_query_string())
+            self._query_parameters = {
+                key: val[0] if len(val) == 1 else val
+                for (key, val)
+                in urllib.parse.parse_qs(self.get_query_string()).items()
+            }
 
     def get_query_parameter(self, key):
         self._parse_query_parameters()

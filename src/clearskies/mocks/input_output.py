@@ -10,6 +10,7 @@ class InputOutput(input_outputs.InputOutput):
     _query_string = ''
     _content_type = ''
     _protocol = ''
+    _query_parameters = None
     response = None
 
     def __init__(
@@ -23,6 +24,7 @@ class InputOutput(input_outputs.InputOutput):
         query_string = '',
         content_type = '',
         protocol = '',
+        query_parameters = None
     ):
         self.set_request_method(request_method)
         self.set_body(body)
@@ -32,6 +34,7 @@ class InputOutput(input_outputs.InputOutput):
         self._query_string = query_string
         self._content_type = content_type
         self._protocol = protocol
+        self._query_parameters = query_parameters if query_parameters is not None else {}
 
     def respond(self, body, status_code=200):
         self.response = {
@@ -96,7 +99,7 @@ class InputOutput(input_outputs.InputOutput):
         return self._request_headers[header_name.lower()]
 
     def get_query_parameter(self, key):
-        return ''
+        return self._query_parameters[key] if key in self._query_parameters else ''
 
     def get_query_parameters(self):
-        return ''
+        return self._query_parameters

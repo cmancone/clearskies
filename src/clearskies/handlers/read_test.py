@@ -140,6 +140,43 @@ class ReadTest(unittest.TestCase):
             'table_name': 'models',
         }, Models.iterated[0])
 
+    def test_query_parameters(self):
+        user_input = {
+            'sort': [{'column': 'age', 'direction': 'DESC'}],
+            'start': 10,
+            'limit': 5,
+        }
+        read = Read(self.di)
+        read.configure({
+            'models': self.models,
+            'readable_columns': ['name', 'email', 'age'],
+            'searchable_columns': ['email'],
+            'where': ['age>5', 'age<10'],
+            'default_sort_column': 'email',
+            'authentication': Public(),
+        })
+        response = read(InputOutput(body=user_input, query_parameters={'email': 'bob@example.com'}))
+        json_response = response[0]
+        response_data = json_response['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('success', json_response['status'])
+        self.assertEquals(2, len(response_data))
+        self.assertEquals({'numberResults': 2, 'start': 10, 'limit': 5}, json_response['pagination'])
+        self.assertEquals({
+            'wheres': [
+                {'table': '', 'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>%s'},
+                {'table': '', 'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<%s'},
+                {'table': '', 'column': 'email', 'operator': 'LIKE', 'values': ['%bob@example.com%'], 'parsed': 'email LIKE %s'},
+            ],
+            'sorts': [{'column': 'age', 'direction': 'DESC'}],
+            'group_by_column': None,
+            'joins': [],
+            'limit_start': 10,
+            'limit_length': 5,
+            'selects': None,
+            'table_name': 'models',
+        }, Models.iterated[0])
+
     def test_output_map(self):
         read = Read(self.di)
         read.configure({

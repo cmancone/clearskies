@@ -23,18 +23,19 @@ class WSGITest(unittest.TestCase):
         wsgi = WSGI({
             'REQUEST_METHOD': 'POST',
             'PATH_INFO': 'sup',
-            'QUERY_STRING': 'age=2&bob=hey',
+            'QUERY_STRING': 'age=2&bob=hey&sup=1&sup=2',
             'CONTENT_TYPE': 'application/json',
             'wsgi.url_scheme': 'HTTPS',
         }, start_response)
         self.assertEquals('POST', wsgi.get_request_method())
         self.assertEquals('sup', wsgi.get_path_info())
-        self.assertEquals('age=2&bob=hey', wsgi.get_query_string())
+        self.assertEquals('age=2&bob=hey&sup=1&sup=2', wsgi.get_query_string())
         self.assertEquals('application/json', wsgi.get_content_type())
         self.assertEquals('https', wsgi.get_protocol())
-        self.assertEquals(['2'], wsgi.get_query_parameter('age'))
-        self.assertEquals(['hey'], wsgi.get_query_parameter('bob'))
-        self.assertEquals({'age': ['2'], 'bob': ['hey']}, wsgi.get_query_parameters())
+        self.assertEquals('2', wsgi.get_query_parameter('age'))
+        self.assertEquals('hey', wsgi.get_query_parameter('bob'))
+        self.assertEquals(['1', '2'], wsgi.get_query_parameter('sup'))
+        self.assertEquals({'age': '2', 'bob': 'hey', 'sup': ['1', '2']}, wsgi.get_query_parameters())
 
     def test_headers(self):
         start_response = MagicMock()

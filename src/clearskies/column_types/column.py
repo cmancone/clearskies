@@ -164,7 +164,7 @@ class Column(ABC):
 
         Note that this may look like it is vulnerable to SQLi, but it isn't.  These conditions aren't passed directly
         into a query.  Rather, they are parsed by the condition parser before being sent into the backend.
-        The condition parser can safely reconstruct the original piecesk, and the backend can then use the data
+        The condition parser can safely reconstruct the original pieces, and the backend can then use the data
         safely (and remember, the backend may not be an SQL anyway)
 
         As a result, this is perfectly safe for any user input, assuming normal system flow.

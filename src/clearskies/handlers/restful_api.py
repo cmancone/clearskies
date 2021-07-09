@@ -83,7 +83,7 @@ class RestfulAPI(Routing):
         except InvalidUrl:
             return None
         if self._is_search:
-            return self.configuration('read_handler') if self.configuration('allow_search') else None
+            return self.configuration('read_handler') if (self.configuration('allow_search') and self.configuration('allow_read')) else None
         request_method = input_output.get_request_method()
         if self._resource_id:
             if request_method == self.configuration('update_request_method'):

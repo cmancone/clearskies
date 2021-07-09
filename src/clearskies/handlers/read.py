@@ -42,11 +42,12 @@ class Read(Base):
         models = models.limit(start, limit)
 
         request_data = input_output.request_data(False)
+        query_parameters = input_output.get_query_parameters()
         if request_data:
-            error = self._check_request_data(request_data)
+            error = self._check_request_data(request_data, query_parameters)
             if error:
                 return self.error(input_output, error, 400)
-            [models, start, limit] = self._configure_models_from_request_data(models, request_data)
+            [models, start, limit] = self._configure_models_from_request_data(models, request_data, query_parameters)
         if not models.sorts:
             models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
 
@@ -64,7 +65,7 @@ class Read(Base):
             limit=limit,
         )
 
-    def _configure_models_from_request_data(self, models, request_data):
+    def _configure_models_from_request_data(self, models, request_data, query_parameters):
         start = 0
         limit = self.configuration('default_limit')
         if 'start' in request_data:
@@ -98,10 +99,16 @@ class Read(Base):
                         operator=where['operator'] if 'operator' in where else None
                     )
                 )
+        for (column_name, value) in query_parameters.items():
+            if column_name == 'id':
+                column_name = self.configuration('id_column')
+            column = self._columns[column_name]
+            models = models.where(column.build_condition(value))
+
         return [models, start, limit]
 
 
-    def _check_request_data(self, request_data):
+    def _check_request_data(self, request_data, query_parameters):
         # first, check that they didn't provide something unexpected
         allowed_request_keys = ['where', 'sort', 'start', 'limit']
         for key in request_data.keys():
@@ -155,6 +162,14 @@ class Read(Base):
                 value_error = self._columns[column_name].check_search_value(where['value'])
                 if value_error:
                     return f"Invalid request: {value_error} for 'where' entry #{index+1}"
+        # similarly, query parameters mean search conditions
+        for (column_name, value) in query_parameters.items():
+            if column_name not in self.configuration('searchable_columns'):
+                return f"Invalid request: invalid search column: '{column_name}'"
+            value_error = self._columns[column_name].check_search_value(value)
+            if value_error:
+                return f"Invalid request: {value_error} for search column '{column_name}'"
+
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
