@@ -61,7 +61,6 @@ class ManyToMany(Integer):
     ]
 
     my_configs = [
-        'related_models',
         'foreign_column_name_in_pivot',
         'own_column_name_in_pivot',
         'pivot_table',
@@ -72,6 +71,8 @@ class ManyToMany(Integer):
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
+        self.validate_models_class(configuration['pivot_models_class'])
+        self.validate_models_class(configuration['related_models_class'])
         if self.name[-3:] == '_id' or self.name[-4:] == '_ids':
             raise ValueError(
                 f"Invalid name for column '{self.name}' in '{self.model_class.__name__}' - " + \
@@ -96,8 +97,6 @@ class ManyToMany(Integer):
         return {
             **super()._finalize_configuration(configuration),
             **{
-                'related_models': related_models,
-                'pivot_models': pivot_models,
                 'foreign_column_name_in_pivot': foreign_column_name,
                 'own_column_name_in_pivot': own_column_name,
                 'pivot_table': pivot_models.get_table_name(),
@@ -107,7 +106,7 @@ class ManyToMany(Integer):
     def input_error_for_value(self, value):
         if type(value) != list:
             return f'{self.name} should be a list of ids'
-        related_models = self.di.build(self.config('related_models_class'), cache=False)
+        related_models = self.related_models
         for id_to_check in value:
             integer_check = super().input_error_for_value(id_to_check)
             if integer_check:
@@ -123,7 +122,7 @@ class ManyToMany(Integer):
         foreign_column_name_in_pivot = self.config('foreign_column_name_in_pivot')
         own_column_name_in_pivot = self.config('own_column_name_in_pivot')
         pivot_table = self.config('pivot_table')
-        models = self.di.build(self.config('related_models_class'), cache=False)
+        models = self.related_models
         join = f"JOIN {pivot_table} ON {pivot_table}.{foreign_column_name_in_pivot}={models.get_table_name()}.id"
         related_models = models.join(join).where(f"{pivot_table}.{own_column_name_in_pivot}={data['id']}")
         if column_name == self.name:
@@ -157,7 +156,7 @@ class ManyToMany(Integer):
             for model_to_delete in related_models.where("id IN (" + join(',', map(str, to_delete)) + ")"):
                 model_to_delete.delete()
         if to_create:
-            pivot_models = self.config('pivot_models')
+            pivot_models = self.pivot_models
             foreign_column_name = self.config('foreign_column_name_in_pivot')
             own_column_name = self.config('own_column_name_in_pivot')
             for to_insert in new_ids-old_ids:
@@ -167,3 +166,11 @@ class ManyToMany(Integer):
                 })
 
         return data
+
+    @property
+    def pivot_models(self):
+        return self.di.build(self.config('pivot_models'), cache=False)
+
+    @property
+    def related_models(self):
+        return self.di.build(self.config('related_models_class'), cache=False)

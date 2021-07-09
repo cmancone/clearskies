@@ -15,10 +15,6 @@ class BelongsToTest(unittest.TestCase):
         self.di = type('', (), {'build': MagicMock(return_value=self.models)})()
         self.belongs_to = BelongsTo(self.di)
 
-    def test_configure(self):
-        self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
-        self.di.build.assert_called_with(Models, cache=False)
-
     def test_require_proper_name(self):
         with self.assertRaises(ValueError) as context:
             self.belongs_to.configure('user', {'parent_models_class': Models}, BelongsToTest)
@@ -31,7 +27,7 @@ class BelongsToTest(unittest.TestCase):
         with self.assertRaises(KeyError) as context:
             self.belongs_to.configure('user_id', {}, BelongsToTest)
         self.assertEquals(
-            "\"Missing required configuration 'parent_models_class' for column 'user_id' in model class 'BelongsToTest'\"",
+            "\"Missing required configuration 'parent_models_class' for column 'user_id' in 'BelongsToTest'\"",
             str(context.exception)
         )
 

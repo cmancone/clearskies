@@ -19,7 +19,6 @@ class HasMany(Column):
 
     my_configs = [
         'foreign_column_name',
-        'child_models',
         'child_columns',
         'is_readable',
         'readable_child_columns',
@@ -40,6 +39,7 @@ class HasMany(Column):
                 f"Missing required configuration 'child_models_class' for column '{name}' in model class " + \
                 f"'{model_class.__name__}'"
             )
+        self.validate_models_class(configuration['child_models_class'])
 
         # if readable_child_columns is set then load up the child models/columns now, because we'll need it in the
         # _check_configuration step, but we don't want to load it there because we can't save it back into the config
@@ -49,9 +49,6 @@ class HasMany(Column):
                 '_',
                 model_class.__name__.replace('_', '')
             ).lower() + '_id'
-        if configuration.get('readable_child_columns'):
-            configuration['child_models'] = self.di.build(configuration['child_models_class'], cache=False)
-            configuration['child_columns'] = configuration['child_models'].columns()
 
         # continue normally now...
         super().configure(name, configuration, model_class)
@@ -59,6 +56,7 @@ class HasMany(Column):
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
         if configuration.get('is_readable'):
+            child_columns = self.di.build(configuration['child_models_class'], cache=False).columns()
             error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             if not 'readable_child_columns' in configuration:
                 raise ValueError(f"{error_prefix} must provide 'readable_child_columns' if is_readable is set")
@@ -74,25 +72,20 @@ class HasMany(Column):
                     'with the list of child columns to output.'
                 )
             for column_name in readable_child_columns:
-                if column_name not in configuration['child_columns']:
+                if column_name not in child_columns:
                     raise ValueError(
                         f"{error_prefix} 'readable_child_columns' references column named '{column_name}' but this" + \
                         'column does not exist in the model class.'
                     )
-                if not configuration['child_columns'][column_name].is_readable:
+                if not child_columns[column_name].is_readable:
                     raise ValueError(
                         f"{error_prefix} 'readable_child_columns' references column named '{column_name}' but this" + \
                         'column is not readable.'
                     )
 
-    def get_child_models(self):
-        if 'child_models' not in self.configuration:
-            self.configuration['child_models'] = self.di.build(self.config('child_models_class'), cache=False)
-        return self.configuration['child_models']
-
     def get_child_columns(self):
         if 'child_columns' not in self.configuration:
-            self.configuration['child_columns'] = self.get_child_models().columns()
+            self.configuration['child_columns'] = self.child_models.columns()
         return self.configuration['child_columns']
 
     def can_provide(self, column_name):
@@ -100,7 +93,7 @@ class HasMany(Column):
 
     def provide(self, data, column_name):
         foreign_column_name = self.config('foreign_column_name')
-        return self.get_child_models().where(f"{foreign_column_name}={data['id']}")
+        return self.child_models.where(f"{foreign_column_name}={data['id']}")
 
     def to_json(self, model):
         children = []
@@ -112,3 +105,7 @@ class HasMany(Column):
                 json[column_name] = columns[column_name].to_json(child)
             children.append(json)
         return children
+
+    @property
+    def child_models(self):
+        return self.di.build(self.config('child_models_class'), cache=False)

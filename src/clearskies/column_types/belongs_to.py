@@ -23,29 +23,13 @@ class BelongsTo(Integer):
         'parent_models_class',
     ]
 
-    my_configs = [
-        'parent_models',
-    ]
-
     def __init__(self, di):
         self.di = di
 
-    def configure(self, name, configuration, model_class):
-        if 'parent_models_class' not in configuration:
-            raise KeyError(
-                f"Missing required configuration 'parent_models_class' for column '{name}' in model class " + \
-                f"'{model_class.__name__}'"
-            )
-
-        # load up the parent models class now, because we'll need it in both the _check_configuration step
-        # and can't load it there directly because we can't load it
-        configuration['parent_models'] = self.di.build(configuration['parent_models_class'], cache=False)
-
-        # continue normally now...
-        super().configure(name, configuration, model_class)
-
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
+        self.validate_models_class(configuration['parent_models_class'])
+
         if self.name[-3:] != '_id':
             raise ValueError(
                 f"Invalid name for column '{self.name}' in '{self.model_class.__name__}' - " + \
@@ -62,7 +46,7 @@ class BelongsTo(Integer):
         integer_check = super().input_error_for_value(value)
         if integer_check:
             return integer_check
-        if not len(self.config('parent_models').where(f"id={value}")):
+        if not len(self.parent_models.where(f"id={value}")):
             return f'Invalid selection for {self.name}: record does not exist'
         return ''
 
@@ -71,7 +55,10 @@ class BelongsTo(Integer):
 
     def provide(self, data, column_name):
         model_column_name = self.config('model_column_name')
-        models = self.config('parent_models')
         if model_column_name not in data or not data[model_column_name]:
-            return models.where(f"id={data[self.name]}").first()
-        return models.empty_model()
+            return self.parent_models.where(f"id={data[self.name]}").first()
+        return self.parent_models.empty_model()
+
+    @property
+    def parent_models(self):
+        return self.di.build(self.config('parent_models_class'), cache=False)
