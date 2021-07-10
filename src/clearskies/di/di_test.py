@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, call
 from .di import DI
 from .. import BindingConfig
-from . import test_module
+from . import test_module, AdditionalConfig
 
 class HasProvides(DI):
     def provide_blahblah(self, some_class):
@@ -40,6 +40,10 @@ class AnotherClass:
         self.some_class = some_class
         self.more_classes = more_classes
 
+class MoreAdditionalConfig(AdditionalConfig):
+    def provide_really_awesome_stuff(self, some_class):
+        return MoreStuff(some_class, 'hey')
+
 class ModelTest(unittest.TestCase):
     def setUp(self):
         self.di = HasProvides(classes=[SomeClass, more_classes, AnotherClass])
@@ -64,6 +68,12 @@ class ModelTest(unittest.TestCase):
         self.di.add_modules(test_module)
         with_module = self.di.build(RequiresSubModule)
         self.assertEquals(test_module.another_module.AnotherModuleClass, with_module.another_module_class.__class__)
+
+    def test_additional_config(self):
+        self.di.add_additional_configs(MoreAdditionalConfig)
+        awesome = self.di.build('really_awesome_stuff')
+        self.assertEquals('hey', awesome.blahblah)
+        self.assertEquals(SomeClass, awesome.some_class.__class__)
 
     def test_circular(self):
         self.di.add_classes([Circular, WillBeCircular])

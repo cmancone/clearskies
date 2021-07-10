@@ -11,13 +11,15 @@ class DI:
     _classes = None
     _prepared = None
     _added_modules = None
+    _additional_configs = None
 
-    def __init__(self, classes=None, modules=None, bindings=None):
+    def __init__(self, classes=None, modules=None, bindings=None, additional_configs=None):
         self._bindings = {}
         self._prepared = {}
         self._classes = {}
         self._building = {}
         self._added_modules = {}
+        self._additional_configs = []
         if classes is not None:
             self.add_classes(classes)
         if modules is not None:
@@ -25,6 +27,8 @@ class DI:
         if bindings is not None:
             for (key, value) in bindings.items():
                 self.bind(key, value)
+        if additional_configs is not None:
+            self.add_additional_configs(additional_configs)
 
     def add_classes(self, classes):
         if inspect.isclass(classes):
@@ -66,6 +70,14 @@ class DI:
                     if module.__name__ == 'clearskies':
                         break
                     self.add_modules([item], root=root, is_root=False)
+
+    def add_additional_configs(self, additional_configs):
+        if type(additional_configs) != list:
+            additional_configs = [additional_configs]
+        for additional_config in additional_configs:
+            self._additional_configs.append(
+                additional_config() if inspect.isclass(additional_config) else additional_config
+            )
 
     def bind(self, key, value):
         if key in self._building:
@@ -124,6 +136,14 @@ class DI:
 
         if name in self._prepared and cache:
             return self._prepared[name]
+
+        for additional_config in self._additional_configs:
+            if not additional_config.can_build(name):
+                continue
+            built_value = additional_config.build(name, self, context=context)
+            if cache:
+                self._prepared[name] = built_value
+            return built_value
 
         if name in self._bindings:
             built_value = self.build(self._bindings[name], context=context)
