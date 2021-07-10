@@ -174,3 +174,18 @@ class ManyToMany(Integer):
     @property
     def related_models(self):
         return self.di.build(self.config('related_models_class'), cache=False)
+
+    def input_error_for_value(self, value):
+        return f'{self.name} must be an integer' if type(value) != int else ''
+
+    def add_search(self, models, value, operator=None):
+        foreign_column_name_in_pivot = self.config('foreign_column_name_in_pivot')
+        own_column_name_in_pivot = self.config('own_column_name_in_pivot')
+        pivot_table = self.config('pivot_table')
+        my_table_name = self.di.build(self.model_class).table_name
+        related_table_name = self.related_models.get_table_name()
+        join_pivot = f"JOIN {pivot_table} ON {pivot_table}.{own_column_name_in_pivot}={my_table_name}.id"
+        # no reason we can't support searching by both an id or a list of ids
+        values = value if type(value) == list else [value]
+        search = ' IN (' + ', '.join([str(int(val)) for val in value]) + ')'
+        return models.join(join_pivot).where(f"{pivot_table}.{foreign_column_name_in_pivot}{search}")

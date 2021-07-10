@@ -28,6 +28,10 @@ class HasMany(Column):
         self.di = di
 
     @property
+    def is_writeable(self):
+        return False
+
+    @property
     def is_readable(self):
         is_readable = self.config('is_readable', True)
         # default is_readable to False

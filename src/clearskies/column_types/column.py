@@ -158,6 +158,9 @@ class Column(ABC):
         """
         pass
 
+    def add_search(self, models, value, operator=None):
+        return models.where(self.build_condition(value, operator=operator))
+
     def build_condition(self, value, operator=None):
         """
         This is called by the read (and related) handlers to turn user input into a condition.

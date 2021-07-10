@@ -93,17 +93,16 @@ class Read(Base):
                 if column_name == 'id':
                     column_name = self.configuration('id_column')
                 column = self._columns[column_name]
-                models = models.where(
-                    column.build_condition(
-                        where['value'],
-                        operator=where['operator'] if 'operator' in where else None
-                    )
+                models = column.add_search(
+                    models,
+                    where['value'],
+                    operator=where['operator'] if 'operator' in where else None
                 )
         for (column_name, value) in query_parameters.items():
             if column_name == 'id':
                 column_name = self.configuration('id_column')
             column = self._columns[column_name]
-            models = models.where(column.build_condition(value))
+            models = column.add_search(models, value)
 
         return [models, start, limit]
 
