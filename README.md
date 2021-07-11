@@ -40,23 +40,23 @@ clearskies can also automatically generate the swagger docs for your APIs, simpl
 
 ### Secrets Management
 
-Secret management is often neglected in the early days of application development, and many startups ignore it until poor secret hygiene causes a public breach.  The reality though is that proper secret management actually _simplifies_ application development and should be encouraged from the start.  As a result, clearskies integrates with modern secret managment platforms to simplify application management.  For instance, take [AKeyless](https://akeyless.io), which has a number of options to solve the secret-zero problem.  For instance, your cloud infrastructure can use [IAM Auth](to create a streamlined ) to login to AKeyless, your Gitlab pipelines can use their `CI_JOB_JWT` to [login via OAuth2](https://docs.akeyless.io/docs/openid), your developers can [use SAML](https://docs.akeyless.io/docs/saml), and on-prem infrastructure can use [universal identity](https://docs.akeyless.io/docs/universal-identity).  clearskies supports this by allowing you to easily adjust the process used to login to the secret manager at runtime, which means that your workloads are able to access the necessary secrets regardless of where they run, and do so by logging in exclusively with short-lived, dynamic credentials.
+Secret management is often neglected in the early days of application development, and many startups ignore it until poor secret hygiene causes a public breach.  The reality though is that proper secret management actually _simplifies_ application development and should be encouraged from the start.  As a result, clearskies integrates with modern secret managment platforms to simplify application management.  For instance, take [AKeyless](https://akeyless.io), which has a number of options to solve the secret-zero problem.  Your cloud infrastructure can use [IAM Auth](to create a streamlined) to login to AKeyless, your Gitlab pipelines can use their `CI_JOB_JWT` to [login via OAuth2](https://docs.akeyless.io/docs/openid), your developers can [use SAML](https://docs.akeyless.io/docs/saml), and on-prem infrastructure can use [universal identity](https://docs.akeyless.io/docs/universal-identity).  clearskies supports this by allowing you to easily adjust the process used to login to the secret manager at runtime, which means that your workloads are able to access the necessary secrets regardless of where they run, and do so by logging in exclusively with short-lived, dynamic credentials.
 
 Finally, clearskies also supports the use of [dynamic secrets](https://docs.akeyless.io/docs/how-to-create-dynamic-secret) where appropriate, meaning that you can create application deployments that don't rely on any static secrets at all, with minimal fuss.
 
 ### Testing
 
-clearskies aims to simplify testing with two key methods: dependency injection and configurable backends.  The first is hardly a new concept, but the second item is worth expanding on.  As part of the sideloading capabilities, clearskies does not make any assumptions about how your models store and retrieve data.  During testing, the "typical" SQL database backend is automatically swapped out for an in-memory backend.  This change is transparent to your models, which dramatically simplifes integration tests.  Rather than setting up an actual database for integration tests and then having to worry about clearing/reseting the database tables between runs, clearskies "repoints" your models to an in-memory data store so you don't have to worry about setting up infrastructure just for testing.
+clearskies aims to simplify testing with two key methods: dependency injection and configurable backends.  The first is hardly a new concept, but the second item is worth expanding on.  As part of the sideloading capabilities, clearskies does not make any assumptions about how your models store and retrieve data.  In many frameworks, integration tests work by spinning up an actual database for the application to connect to, with tables cleared/reset between tests.  In clearskies, the models make no assumptions at all about what kind of system data is stored in.  As a result, during testing, the "typical" SQL database backend is automatically swapped out for an in-memory backend.  This change is transparent to your models and requires absolutely no infrastructure, dramatically simplifying testing.
 
 # Simple Example
 
-For a simple example of using clearskies, imagine you need an API endpoint to allow clients to manage a list of products.  You want to keep track of the name, description, cost, and created/updated timestamps for each product in an SQL database, and have some input requirements for the API.  You would declare a model like this:
+For a simple example of using clearskies, imagine you need an API endpoint to allow clients to manage a list of products.  You want to keep track of the name, description, cost, and created/updated timestamps for each product in an SQL database.  You also have some input requirements for the API.  You would declare a model like this:
 
 ```
 from collections import OrderedDict
 from clearskies import Model
 from clearskies.column_types import string, email, float, created, updated
-from clearskies.input_requirements import Required, MaximumLength
+from clearskies.input_requirements import required, maximum_length
 
 
 class Product(Model):
@@ -65,15 +65,15 @@ class Product(Model):
 
     def columns_configuration(self):
         return OrderedDict([
-            string('name', input_requirements=[Required, (MaximumLength, 255)]),
-            string('description', input_requirements=[Required, (MaximumLength, 1024)]),
+            string('name', input_requirements=[required(), maximum_length(255)]),
+            string('description', input_requirements=[required(), maximum_length(1024)]),
             float('price'),
             created('created'),
             updated('updated'),
         ])
 ```
 
-And would also create a query builder/model factory:
+You would also create a query builder/model factory:
 
 ```
 from clearskies import Models
@@ -88,35 +88,37 @@ class Products(Models):
         return product.Product
 ```
 
-You then need to create your application.  This includes a handler+configuration (which tells clearskies what *kind* of behavior to execute) and some basic configuration for the dependency injection container:
+You then need to create your application.  This includes a handler+configuration (which tells clearskies what *kind* of behavior to execute) and, optionally, some basic configuration for the dependency injection container:
 
 ```
 import clearskies
-from products import Products
+import models
 
 
 products_api = clearskies.Application(
     clearskies.handlers.RestfulAPI,
     {
         'authentication': clearskies.authentication.public(),
-        'models_class': Products,
+        'models_class': models.Products,
         'readable_columns': ['name', 'description', 'price', 'created', 'updated'],
         'writeable_columns': ['name', 'description', 'price'],
         'searchable_columns': ['name', 'description', 'price'],
         'default_sort_column': 'name',
     },
+    binding_modules=[models]
 )
 ```
 
-This application defines a "standard" RESTful API with CRUD endpoints (including search+pagination), detailed input errors for end users, and strict configuration checking for developers.
+This application defines a "standard" RESTful API with CRUD endpoints (including search+pagination), detailed input errors for end users, and strict configuration checking for developers.  It informs the dependency injection container about the `models` module, so that our model classes can all be injected automatically.
 
-To run this, we need to attach this to a context.  If running in a WSGI server you would just:
+To run this, we just need to attach the application to a context.  If running in a WSGI server you would just:
 
 ```
 import clearskies
+from applications import products_api
+
 
 api = clearskies.contexts.wsgi(products_api)
-
 def application(env, start_response):
     return api(env, start_response)
 ```
@@ -125,9 +127,10 @@ If you wanted to run it in a Lambda behind an load balancer, you would just do t
 
 ```
 import clearskies
+from applications import products_api
+
 
 api = clearskies.contexts.aws_lambda_elb(products_api)
-
 def application(event, context):
     return api(event, context)
 ```
@@ -137,6 +140,8 @@ and you can even turn it into a command line executable:
 ```
 #!/usr/bin/env python3
 import clearskies
+from applications import products_api
+
 
 cli = clearskies.contexts.cli(products_api)
 cli()
