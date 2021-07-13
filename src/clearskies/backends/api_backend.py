@@ -13,6 +13,7 @@ class ApiBackend(Backend):
         'limit_start',
         'limit_length',
         'table_name',
+        'model_columns',
     ]
 
     _empty_configs = [

@@ -13,6 +13,7 @@ class CursorBackend(Backend):
         'limit_length',
         'selects',
         'joins',
+        'model_columns',
     ]
 
     _required_configs = [

@@ -145,6 +145,7 @@ class MemoryBackend(Backend):
         'limit_start',
         'limit_length',
         'selects',
+        'model_columns',
     ]
 
     _required_configs = [
