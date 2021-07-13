@@ -205,7 +205,7 @@ class ManyToMany(Integer):
 
     @property
     def pivot_models(self):
-        return self.di.build(self.config('pivot_models'), cache=False)
+        return self.di.build(self.config('pivot_models_class'), cache=False)
 
     @property
     def related_models(self):
