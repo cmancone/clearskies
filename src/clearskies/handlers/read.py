@@ -260,3 +260,37 @@ class Read(Base):
         if self._searchable_columns is None:
             self._searchable_columns = self._get_columns('searchable')
         return self._searchable_columns
+
+    def documentation(self):
+        nice_models = self.camel_to_nice(self.configuration('models_class').__name__)
+        nice_model = self.camel_to_nice(self._models.model_class().__name__)
+        response_schema = self.documentation_response_schema()
+
+        return [
+            {
+                'relative_path': '',
+                'request_method': 'GET',
+                'description': f'Fetch the list of current {nice_models}',
+                'optional_params': [],
+                'responses': [
+                    {
+                        'status': 200,
+                        'description': f'The details of the matching {nice_models}',
+                        'schema': self.documentation_success_schema('array', response_schema),
+                    },
+                ],
+            },
+            {
+                'relative_path': '{id}',
+                'request_method': 'GET',
+                'description': f'Fetch the details of a {nice_model} by id',
+                'optional_params': [],
+                'responses': [
+                    {
+                        'status': 200,
+                        'description': f'The details of the {nice_model}',
+                        'schema': self.documentation_success_schema('object', response_schema),
+                    },
+                ],
+            },
+        ]

@@ -11,6 +11,9 @@ class Column(ABC):
     my_configs = []
     required_configs = []
 
+    response_schema_type = 'string'
+    response_schema_format = None
+
     @property
     def is_writeable(self):
         is_writeable = self.config('is_writeable', True)
@@ -198,3 +201,16 @@ class Column(ABC):
                     f"'parent_models_class' in configuration for column '{self.name}' should be a Models class, " + \
                     f"but it appears to be something unknown."
                 )
+
+    def response_schema(self, name=None):
+        if name is None:
+            name = self.name
+
+        schema = {
+            'name': name,
+            'type': self.response_schema_type,
+        }
+
+        if self.response_schema_format:
+            schema['format'] = self.response_schema_format
+        return schema

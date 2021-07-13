@@ -69,7 +69,7 @@ class ApiBackend(Backend):
             raise ValueError("Unexpected response to delete API request")
         return json['status'] == 'success'
 
-    def count(self, configuration):
+    def count(self, configuration, model):
         configuration = self._check_query_configuration(configuration)
         [url, method, json_data, headers] = self._build_count_request(configuration)
         response = self._execute_request(url, method, json=json_data, headers=headers, retry_auth=True)
@@ -88,7 +88,7 @@ class ApiBackend(Backend):
             raise ValueError("Unexpected API response when executing count request")
         return json['total_matches']
 
-    def records(self, configuration):
+    def records(self, configuration, model):
         configuration = self._check_query_configuration(configuration)
         [url, method, json_data, headers] = self._build_records_request(configuration)
         response = self._execute_request(url, method, json=json_data, headers=headers, retry_auth=True)

@@ -113,3 +113,26 @@ class HasMany(Column):
     @property
     def child_models(self):
         return self.di.build(self.config('child_models_class'), cache=False)
+
+    def response_schema(self, name=None):
+        columns = self.get_child_columns()
+        schema = []
+        if 'id' in columns:
+            schema.append(columns['id'].response_schema())
+        else:
+            schema.append({'name': 'id', 'type': 'integer', 'example': 1})
+
+        for column_name in self.config('readable_child_columns'):
+            schema.append(columns[column_name].response_schema())
+
+        if name is None:
+            name = self.name
+
+        return {
+            'name': name,
+            'type': 'array',
+            'schema': {
+                'type': 'object',
+                'schema': schema,
+            }
+        }

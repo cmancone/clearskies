@@ -58,7 +58,7 @@ class ApiBackendTest(unittest.TestCase):
             'sorts': [{'column': 'age', 'direction': 'desc'}],
             'limit_start': 200,
             'limit_length': 100,
-        })
+        }, 'model')
         self.assertEquals(10, count)
         self.requests.request.assert_called_with(
             'GET',
@@ -87,7 +87,7 @@ class ApiBackendTest(unittest.TestCase):
             'sorts': [{'column': 'age', 'direction': 'desc'}],
             'limit_start': 200,
             'limit_length': 100,
-        })
+        }, 'model')
         self.requests.request.assert_called_with(
             'GET',
             'https://example.com',
@@ -114,7 +114,7 @@ class ApiBackendTest(unittest.TestCase):
             'sorts': [],
             'limit_start': 0,
             'limit_length': 0,
-        })
+        }, 'model')
         self.requests.request.assert_called_with(
             'GET',
             'https://example.com',

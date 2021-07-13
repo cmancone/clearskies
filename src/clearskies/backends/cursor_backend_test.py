@@ -67,7 +67,7 @@ class CursorBackendTest(unittest.TestCase):
                 {'values': [5], 'parsed': 'id=%s'},
                 {'values': ['2', '3'], 'parsed': 'status_id IN (%s,%s)'},
             ],
-        })
+        }, 'model')
         self.assertEquals(10, my_count)
         self.cursor.execute.assert_called_with(
             'SELECT COUNT(' + \
@@ -106,7 +106,7 @@ class CursorBackendTest(unittest.TestCase):
                 {'values': [5], 'parsed': 'id=%s'},
                 {'values': ['2', '3'], 'parsed': 'status_id IN (%s,%s)'},
             ],
-        })
+        }, 'model')
         self.assertEquals(10, my_count)
         self.cursor.execute.assert_called_with(
             'SELECT COUNT(*) AS count FROM `my_table` JOIN peeps AS peeps ON peeps.id=dogs.id ' + \
@@ -127,7 +127,7 @@ class CursorBackendTest(unittest.TestCase):
                 {'values': [5], 'parsed': 'id=%s'},
                 {'values': ['2', '3'], 'parsed': 'status_id IN (%s,%s)'},
             ],
-        })
+        }, 'model')
         self.cursor.execute.assert_called_with(
             'SELECT sup FROM `my_table` ' +
                 'LEFT JOIN dogs ON dogs.id=ages.id ' + \

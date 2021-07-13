@@ -38,7 +38,7 @@ class CursorBackend(Backend):
         results = self.records({
             'table_name': model.table_name,
             'wheres': [{'parsed': 'id=%s', 'values': [id]}]
-        })
+        }, model)
         return results[0]
 
     def create(self, data, model):
@@ -53,7 +53,7 @@ class CursorBackend(Backend):
         results = self.records({
             'table_name': model.table_name,
             'wheres': [{'parsed': 'id=%s', 'values': [self._cursor.lastrowid]}]
-        })
+        }, model)
         return results[0]
 
     def delete(self, id, model):
@@ -63,7 +63,7 @@ class CursorBackend(Backend):
         )
         return True
 
-    def count(self, configuration):
+    def count(self, configuration, model):
         configuration = self._check_query_configuration(configuration)
         [query, parameters] = self.as_count_sql(configuration)
         self._cursor.execute(query, tuple(parameters))
@@ -71,7 +71,7 @@ class CursorBackend(Backend):
             return row[0] if type(row) == tuple else row['count']
         return 0
 
-    def records(self, configuration):
+    def records(self, configuration, model):
         # I was going to get fancy and have this return an iterator, but since I'm going to load up
         # everything into a list anyway, I may as well just return the list, right?
         configuration = self._check_query_configuration(configuration)

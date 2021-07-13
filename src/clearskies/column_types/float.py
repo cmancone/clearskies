@@ -2,6 +2,9 @@ from .column import Column
 
 
 class Float(Column):
+    response_schema_type = 'number'
+    response_schema_format = 'float'
+
     def from_database(self, value):
         return float(value)
 

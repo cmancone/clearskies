@@ -16,11 +16,11 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def count(self, configuration):
+    def count(self, configuration, model):
         pass
 
     @abstractmethod
-    def records(self, configuration):
+    def records(self, configuration, model):
         pass
 
     def create_record_with_class(self, model_or_class, data):

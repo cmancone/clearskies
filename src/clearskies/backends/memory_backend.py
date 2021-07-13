@@ -182,7 +182,7 @@ class MemoryBackend(Backend):
         self.create_table(model)
         return self._tables[model.table_name].delete(id)
 
-    def count(self, configuration):
+    def count(self, configuration, model):
         if configuration['table_name'] not in self._tables:
             if self._silent_on_missing_tables:
                 return 0
@@ -201,7 +201,7 @@ class MemoryBackend(Backend):
         configuration['joins'] = [join for join in configuration['joins'] if join['type'] != 'LEFT']
         return len(self.rows_with_joins(configuration))
 
-    def records(self, configuration):
+    def records(self, configuration, model):
         table_name = configuration['table_name']
         if table_name not in self._tables:
             if self._silent_on_missing_tables:

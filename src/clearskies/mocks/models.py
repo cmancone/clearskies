@@ -109,7 +109,7 @@ class Models(ModelsBase):
         Models.deleted.append({'id': id, 'model': model})
         return True
 
-    def count(self, configuration):
+    def count(self, configuration, model):
         if self.search_responses is None:
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
         if Models.counted == None:
@@ -119,7 +119,7 @@ class Models(ModelsBase):
         counted = self.search_responses.pop(0)
         return len(counted)
 
-    def records(self, configuration):
+    def records(self, configuration, model):
         if self.search_responses is None:
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
         if Models.iterated == None:

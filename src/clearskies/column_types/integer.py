@@ -2,6 +2,8 @@ from .column import Column
 
 
 class Integer(Column):
+    response_schema_type = 'integer'
+
     def from_database(self, value):
         return int(value)
 

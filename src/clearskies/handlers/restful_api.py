@@ -110,3 +110,22 @@ class RestfulAPI(Routing):
             else:
                 configuration['resource_id'] = self._resource_id
         return configuration
+
+    def documentation(self):
+        self.configuration('read_handler') if self.configuration('allow_read') else None,
+        docs = []
+        # read handler is slightly different so handle that individually....
+        if self.configuration('allow_read'):
+            read_handler = self.build_handler(self.configuration('read_handler'))
+            docs.extend(read_handler.documentation())
+            if self.configuration('allow_search'):
+                docs.extend(read_handler.documentation_search())
+
+        for name in ['create', 'update', 'delete']:
+            if not self.configuration(f'allow_{name}'):
+                continue
+            action_docs = self.build_handler(f'{name}_handler').documentation()
+            for doc in action_docs:
+                docs.append({**doc, 'request_method': self.configuration(f'{name}_request_method')})
+
+        return docs

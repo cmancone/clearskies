@@ -17,7 +17,7 @@ class MemoryBackendTest(unittest.TestCase):
         self.assertEquals([
             {'id': 1, 'name': 'Conor', 'email': 'cmancone@example.com'},
             {'id': 2, 'name': 'Ronoc', 'email': 'rmancone@example.com'},
-        ], self.memory_backend.records({'table_name': 'users'}))
+        ], self.memory_backend.records({'table_name': 'users'}, self.user_model))
 
     def test_create_check_columns(self):
         with self.assertRaises(ValueError) as context:
@@ -32,7 +32,7 @@ class MemoryBackendTest(unittest.TestCase):
         self.memory_backend.update(1, {'name': 'Ronoc', 'email': 'rmancone@example.com'}, self.user_model)
         self.assertEquals([
             {'id': 1, 'name': 'Ronoc', 'email': 'rmancone@example.com'},
-        ], self.memory_backend.records({'table_name': 'users'}))
+        ], self.memory_backend.records({'table_name': 'users'}, self.user_model))
 
     def test_update_check_columns(self):
         self.memory_backend.create({'name': 'Conor', 'email': 'cmancone@example.com'}, self.user_model)
@@ -54,7 +54,7 @@ class MemoryBackendTest(unittest.TestCase):
     def test_delete(self):
         self.memory_backend.create({'name': 'Conor', 'email': 'cmancone@example.com'}, self.user_model)
         self.memory_backend.delete(1, self.user_model)
-        self.assertEquals([], self.memory_backend.records({'table_name': 'users'}))
+        self.assertEquals([], self.memory_backend.records({'table_name': 'users'}, self.user_model))
 
     def test_multiple_tables(self):
         self.memory_backend.create({'name': 'Conor', 'email': 'cmancone@example.com'}, self.user_model)
@@ -64,10 +64,10 @@ class MemoryBackendTest(unittest.TestCase):
         self.assertEquals([
             {'id': 1, 'review': 'cool', 'email': None},
             {'id': 2, 'review': 'okay', 'email': None},
-        ], self.memory_backend.records({'table_name': 'reviews'}))
+        ], self.memory_backend.records({'table_name': 'reviews'}, self.reviews_model))
         self.assertEquals([
             {'id': 1, 'name': 'Conor', 'email': 'cmancone@example.com'},
-        ], self.memory_backend.records({'table_name': 'users'}))
+        ], self.memory_backend.records({'table_name': 'users'}, self.user_model))
 
     def test_filter_and_sort(self):
         self.memory_backend.create({'name': 'Zeb', 'email': 'a@example.com'}, self.user_model)
@@ -79,7 +79,7 @@ class MemoryBackendTest(unittest.TestCase):
             'sorts': [
                 {'column': 'email', 'direction': 'DESC'},
             ]
-        })
+        }, self.user_model)
         self.assertEquals([
             {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
             {'id': 1, 'name': 'Zeb', 'email': 'a@example.com'},
@@ -91,7 +91,7 @@ class MemoryBackendTest(unittest.TestCase):
             'sorts': [
                 {'column': 'name', 'direction': 'ASC'},
             ]
-        })
+        }, self.user_model)
         self.assertEquals([
             {'id': 3, 'name': 'A', 'email': 'c@example.com'},
             {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
@@ -103,7 +103,7 @@ class MemoryBackendTest(unittest.TestCase):
                 {'column': 'name', 'operator': '=', 'values': ['Zeb']},
                 {'column': 'email', 'operator': 'like', 'values': ['a@example.com']}
             ],
-        })
+        }, self.user_model)
         self.assertEquals([
             {'id': 1, 'name': 'Zeb', 'email': 'a@example.com'},
         ], records)
@@ -114,7 +114,7 @@ class MemoryBackendTest(unittest.TestCase):
                 {'column': 'name', 'direction': 'ASC'},
                 {'column': 'email', 'direction': 'DESC'},
             ],
-        })
+        }, self.user_model)
         self.assertEquals([
             {'id': 3, 'name': 'A', 'email': 'c@example.com'},
             {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
@@ -129,7 +129,7 @@ class MemoryBackendTest(unittest.TestCase):
             ],
             'limit_start': 1,
             'limit_length': 1,
-        })
+        }, self.user_model)
         self.assertEquals([
             {'id': 2, 'name': 'Zeb', 'email': 'b@example.com'},
         ], records)
@@ -147,7 +147,7 @@ class MemoryBackendTest(unittest.TestCase):
                     {'column': 'email', 'direction': 'DESC'},
                 ],
                 'limit_length': 1
-            })
+            }, self.user_model)
         )
 
     def test_inner_join_records(self):
@@ -176,7 +176,7 @@ class MemoryBackendTest(unittest.TestCase):
             'sorts': [
                 {'column': 'email', 'direction': 'DESC'},
             ],
-        })
+        }, self.user_model)
 
         self.assertEquals([
             {'name': 'A', 'email': 'c@example.com', 'id': 3},
@@ -201,7 +201,7 @@ class MemoryBackendTest(unittest.TestCase):
             'sorts': [
                 {'column': 'email', 'direction': 'DESC'},
             ],
-        })
+        }, self.user_model)
 
         self.assertEquals([
             {'name': 'A', 'email': 'c@example.com', 'id': 3},
@@ -229,7 +229,7 @@ class MemoryBackendTest(unittest.TestCase):
             'sorts': [
                 {'column': 'email', 'direction': 'DESC'},
             ],
-        })
+        }, self.user_model)
 
         self.assertEquals([
             {'name': 'Zeb', 'email': 'b@example.com', 'id': 2},

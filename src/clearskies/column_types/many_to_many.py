@@ -64,10 +64,18 @@ class ManyToMany(Integer):
         'foreign_column_name_in_pivot',
         'own_column_name_in_pivot',
         'pivot_table',
+        'readable_related_columns',
+        'is_readable',
     ]
 
     def __init__(self, di):
         self.di = di
+
+    @property
+    def is_readable(self):
+        is_readable = self.config('is_readable', True)
+        # default is_readable to False
+        return True if (is_readable and is_readable is not None) else False
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
@@ -78,6 +86,34 @@ class ManyToMany(Integer):
                 f"Invalid name for column '{self.name}' in '{self.model_class.__name__}' - " + \
                 "ManyToMany column should not end in '_id' or '_ids'"
             )
+
+        if configuration.get('is_readable'):
+            related_columns = self.di.build(configuration['related_models_class'], cache=False).columns()
+            error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
+            if not 'readable_related_columns' in configuration:
+                raise ValueError(f"{error_prefix} must provide 'readable_related_columns' if is_readable is set")
+            readable_related_columns = configuration['readable_related_columns']
+            if not hasattr(readable_related_columns, '__iter__'):
+                raise ValueError(
+                    f"{error_prefix} 'readable_related_columns' should be an iterable " + \
+                    'with the list of child columns to output.'
+                )
+            if isinstance(readable_related_columns, str):
+                raise ValueError(
+                    f"{error_prefix} 'readable_related_columns' should be an iterable " + \
+                    'with the list of child columns to output.'
+                )
+            for column_name in readable_related_columns:
+                if column_name not in related_columns:
+                    raise ValueError(
+                        f"{error_prefix} 'readable_related_columns' references column named '{column_name}' but this" + \
+                        'column does not exist in the model class.'
+                    )
+                if not related_columns[column_name].is_readable:
+                    raise ValueError(
+                        f"{error_prefix} 'readable_related_columns' references column named '{column_name}' but this" + \
+                        'column is not readable.'
+                    )
 
     def _finalize_configuration(self, configuration):
         pivot_models = self.di.build(configuration['pivot_models_class'], cache=False)
@@ -175,6 +211,10 @@ class ManyToMany(Integer):
     def related_models(self):
         return self.di.build(self.config('related_models_class'), cache=False)
 
+    @property
+    def related_columns(self):
+        self.related_models.model_columns
+
     def input_error_for_value(self, value):
         return f'{self.name} must be an integer' if type(value) != int else ''
 
@@ -189,3 +229,34 @@ class ManyToMany(Integer):
         values = value if type(value) == list else [value]
         search = ' IN (' + ', '.join([str(int(val)) for val in value]) + ')'
         return models.join(join_pivot).where(f"{pivot_table}.{foreign_column_name_in_pivot}{search}")
+
+    def to_json(self, model):
+        records = []
+        columns = self.related_columns
+        for related in model.__getattr__(self.name):
+            json = OrderedDict()
+            json['id'] = int(related.id)
+            for column_name in self.config('readable_related_columns'):
+                json[column_name] = columns[column_name].to_json(related)
+            records.append(json)
+        return records
+
+    def response_schema(self, name=None):
+        columns = self.related_columns
+        schema = []
+        if 'id' in columns:
+            schema.append(columns['id'].response_schema())
+        else:
+            schema.append({'name': 'id', 'type': 'integer', 'example': 1})
+
+        for column_name in self.config('readable_related_columns'):
+            schema.append(columns[column_name].response_schema())
+
+        return {
+            'name': name if name is not None else self.name,
+            'type': 'array',
+            'schema': {
+                'type': 'object',
+                'schema': schema,
+            }
+        }

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from .exceptions import ClientError, InputError
 from collections import OrderedDict
 import inspect
+import re
 
 
 class Base(ABC):
@@ -15,6 +16,7 @@ class Base(ABC):
         'output_map': None,
         'column_overrides': None,
         'id_column': 'id',
+        'doc_description': '',
     }
     _di = None
     _configuration = None
@@ -87,14 +89,14 @@ class Base(ABC):
                 if not authentication.authenticate(input_output):
                     return self.error(input_output, 'Not Authenticated', 401)
             except ClientError as client_error:
-                return self.error(input_output, str(client_error), 400)
+                return self.error(input_output, str(client_error), 401)
             authorization = self._configuration.get('authorization')
             if authorization:
                 try:
                     if not authentication.authorize(authorization):
-                        return self.error(input_output, 'Not Authorized', 401)
+                        return self.error(input_output, 'Not Authorized', 403)
                 except ClientError as client_error:
-                    return self.error(input_output, str(client_error), 400)
+                    return self.error(input_output, str(client_error), 403)
 
         try:
             response = self.handle(input_output)
@@ -160,3 +162,66 @@ class Base(ABC):
         for column in self._get_readable_columns().values():
             json[column.name] = column.to_json(model)
         return json
+
+    def camel_to_nice(self, string):
+        string = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', string)
+        string = re.sub('([a-z0-9])([A-Z])', r'\1_\2', string).lower()
+        return string
+
+    def documentation(self):
+        raise NotImplemented(f"No docs defined for handler class '{self.__class__.__name__}'")
+
+    def documentation_success_schema(self, data_schema_type, data_schema):
+        return [
+            {
+                'name': 'status',
+                'type': 'string',
+                'value': 'success',
+            },
+            {
+                'name': 'data',
+                'type': data_schema_type,
+                'schema': data_schema,
+            },
+            {
+                'name': 'pagination',
+                'type': 'object',
+                'schema': [
+                    {
+                        'name': 'numberResults',
+                        'type': 'integer',
+                        'example': 10,
+                    },
+                    {
+                        'name': 'start',
+                        'type': 'integer',
+                        'example': 0,
+                    },
+                    {
+                        'name': 'limit',
+                        'type': 'integer',
+                        'example': 100,
+                    },
+                ]
+            },
+            {
+                'name': 'error',
+                'type': 'string',
+                'value': '',
+            },
+            {
+                'name': 'inputErrors',
+                'type': 'array',
+                'value': [],
+            },
+        ]
+
+    def documentation_response_schema(self):
+        id_column = self.configuration('id_column')
+        if id_column in self._columns:
+            id_schema = self._columns[id_column].response_schema(name='id')
+        else:
+            id_schema = {'name': 'id', 'type': 'integer', 'example': 1}
+
+        for column in self._get_readable_columns().values():
+            json[column.name] = column.to_json(model)

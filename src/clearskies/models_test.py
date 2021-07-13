@@ -24,11 +24,18 @@ class User(Model):
 
 
 class Users(Models):
+    _empty_model = None
+
     def __init__(self, cursor, columns):
         super().__init__(cursor, columns)
 
     def model_class(self):
         return User
+
+    def empty_model(self):
+        if self._empty_model is None:
+            self._empty_model = User(self._backend, self._columns)
+        return self._empty_model
 
 
 class TestModels(unittest.TestCase):
@@ -120,7 +127,7 @@ class TestModels(unittest.TestCase):
                 'selects': '*',
                 'table_name': 'users',
                 'model_columns': users.model_columns,
-            })
+            }, users.empty_model())
         ])
         user = iterator.__next__()
         self.assertEquals(User, user.__class__)
@@ -140,7 +147,7 @@ class TestModels(unittest.TestCase):
                 'selects': None,
                 'table_name': 'users',
                 'model_columns': None,
-            })
+            }, users.empty_model())
         ])
 
     def test_length(self):
@@ -191,5 +198,5 @@ class TestModels(unittest.TestCase):
                 'selects': '*',
                 'table_name': 'users',
                 'model_columns': users.model_columns,
-            })
+            }, users.empty_model())
         ])

@@ -197,12 +197,12 @@ class Models(ABC, ConditionParser):
 
     def __len__(self):
         if self.must_recount:
-            self.count = self._backend.count(self.configuration)
+            self.count = self._backend.count(self.configuration, self.empty_model())
             self.must_recount = False
         return self.count
 
     def __iter__(self):
-        return iter([self.model(row) for row in self._backend.records(self.configuration)])
+        return iter([self.model(row) for row in self._backend.records(self.configuration, self.empty_model())])
 
     def model(self, data):
         model = self._build_model()

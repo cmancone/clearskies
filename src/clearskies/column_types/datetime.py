@@ -4,6 +4,9 @@ import dateparser
 
 
 class DateTime(Column):
+    response_schema_type = 'string'
+    response_schema_format = 'date-time'
+
     def from_database(self, value):
         if value == None:
             date = datetime.strptime('1970-01-01', '%Y-%m-%d')
