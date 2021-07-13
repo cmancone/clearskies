@@ -101,7 +101,7 @@ class Models(ABC, ConditionParser):
     def where_in_place(self, where):
         """ Adds the given condition to the query for the current Models object """
         condition = self.parse_condition(where)
-        self._validate_column(condition['column'], 'filter')
+        self._validate_column(condition['column'], 'filter', table=condition['table'])
         self.wheres.append(self.parse_condition(where))
         self.must_rexecute = True
         self.must_recount = True
@@ -159,18 +159,25 @@ class Models(ABC, ConditionParser):
         # down the line we may ask the model class what columns we can sort on, but we're good for now
         return { 'column': sort['column'], 'direction': sort['direction'] }
 
-    def _validate_column(self, column_name, action):
+    def _validate_column(self, column_name, action, table=None):
         """
         Down the line we may use the model configuration to check what columns are valid sort/group/search targets
         """
         # for now, only validate columns that belong to *our* table.
+        # in some cases we are explicitly told the column name
+        if table is not None:
+            # note that table may be '', in which case it is implicitly "our" table
+            if table != '' and table != self.get_table_name():
+                return
+
+        # but in some cases we should check and see if it is included with the column name
         column_name = column_name.replace('`', '')
         if '.' in column_name:
             parts = column_name.split('.')
             if parts[0] != self.get_table_name():
                 return
-
             column_name = column_name.split('.')[1]
+
         model_columns = self.model_columns
         if column_name not in model_columns:
             model_class = self.model_class()
