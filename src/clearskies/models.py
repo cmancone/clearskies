@@ -238,3 +238,6 @@ class Models(ABC, ConditionParser):
     def columns(self, overrides=None):
         model = self.model({})
         return model.columns(overrides=None)
+
+    def raw_columns_configuration(self):
+        return self.model({}).all_columns()

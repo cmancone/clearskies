@@ -1,6 +1,7 @@
 import unittest
 from .column import Column
 from ..input_requirements import MinimumLength
+from ..autodoc.response import String as AutoDocString
 
 
 class RealColumn(Column):
@@ -29,3 +30,21 @@ class ColumnTest(unittest.TestCase):
         self.assertEquals({}, errors)
         errors = self.column.input_errors('model', {'age': '1234567890'})
         self.assertEquals({}, errors)
+
+    def test_documentation(self):
+        self.column.configure(
+            'my_name',
+            {'input_requirements': [self.minimum_length]},
+            RealColumn
+        )
+        doc = self.column.documentation()
+
+        self.assertEquals(AutoDocString, doc.__class__)
+        self.assertEquals('my_name', doc.name)
+        self.assertEquals('string', doc.example)
+
+        more_doc = self.column.documentation(name='hey', example='sup', value='okay')
+        self.assertEquals(AutoDocString, more_doc.__class__)
+        self.assertEquals('hey', more_doc.name)
+        self.assertEquals('sup', more_doc.example)
+        self.assertEquals('okay', more_doc.value)

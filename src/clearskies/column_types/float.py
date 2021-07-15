@@ -1,9 +1,9 @@
 from .column import Column
+from ..autodoc.response import Number as AutoDocNumber
 
 
 class Float(Column):
-    response_schema_type = 'number'
-    response_schema_format = 'float'
+    _auto_doc_class = AutoDocNumber
 
     def from_database(self, value):
         return float(value)

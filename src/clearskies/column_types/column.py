@@ -1,7 +1,10 @@
 from abc import ABC
+import re
+from ..autodoc.response import String as AutoDocString
 
 
 class Column(ABC):
+    _auto_doc_class = AutoDocString
     configuration = None
     common_configs = [
         'input_requirements',
@@ -10,9 +13,6 @@ class Column(ABC):
     ]
     my_configs = []
     required_configs = []
-
-    response_schema_type = 'string'
-    response_schema_format = None
 
     @property
     def is_writeable(self):
@@ -202,15 +202,14 @@ class Column(ABC):
                     f"but it appears to be something unknown."
                 )
 
-    def response_schema(self, name=None):
-        if name is None:
-            name = self.name
+    def camel_to_nice(self, string):
+        string = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', string)
+        string = re.sub('([a-z0-9])([A-Z])', r'\1 \2', string).lower()
+        return string
 
-        schema = {
-            'name': name,
-            'type': self.response_schema_type,
-        }
-
-        if self.response_schema_format:
-            schema['format'] = self.response_schema_format
-        return schema
+    def documentation(self, name=None, example=None, value=None):
+        return self._auto_doc_class(
+            name if name is not None else self.name,
+            example=(example if example is not None else 'string'),
+            value=value
+        )

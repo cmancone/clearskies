@@ -1,4 +1,8 @@
+import re
 from .integer import Integer
+from ..autodoc.response import Array as AutoDocArray
+from ..autodoc.response import Object as AutoDocObject
+from ..autodoc.response import Integer as AutoDocInteger
 
 
 class BelongsTo(Integer):
@@ -23,6 +27,10 @@ class BelongsTo(Integer):
         'parent_models_class',
     ]
 
+    my_configs = [
+        'readable_parent_columns',
+    ]
+
     def __init__(self, di):
         self.di = di
 
@@ -35,6 +43,27 @@ class BelongsTo(Integer):
                 f"Invalid name for column '{self.name}' in '{self.model_class.__name__}' - " + \
                 "BelongsTo column names must end in '_id'"
             )
+
+        if configuration.get('readable_parent_columns'):
+            parent_columns = self.di.build(configuration['parent_models_class'], cache=False).raw_columns_configuration()
+            error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
+            readable_parent_columns = configuration['readable_parent_columns']
+            if not hasattr(readable_parent_columns, '__iter__'):
+                raise ValueError(
+                    f"{error_prefix} 'readable_parent_columns' should be an iterable " + \
+                    'with the list of child columns to output.'
+                )
+            if isinstance(readable_parent_columns, str):
+                raise ValueError(
+                    f"{error_prefix} 'readable_parent_columns' should be an iterable " + \
+                    'with the list of child columns to output.'
+                )
+            for column_name in readable_parent_columns:
+                if column_name not in parent_columns:
+                    raise ValueError(
+                        f"{error_prefix} 'readable_parent_columns' references column named '{column_name}' but this" + \
+                        'column does not exist in the model class.'
+                    )
 
     def _finalize_configuration(self, configuration):
         return {
@@ -62,3 +91,38 @@ class BelongsTo(Integer):
     @property
     def parent_models(self):
         return self.di.build(self.config('parent_models_class'), cache=False)
+
+    @property
+    def parent_columns(self):
+        return self.parent_models.model_columns
+
+    def to_json(self, model):
+        # if we don't have readable parent columns specified, then just return the id
+        if not self.config('readable_parent_columns', silent=True):
+            return super().to_json(model)
+
+        # otherwise return an object with the readable parent columns
+        columns = self.parent_columns
+        parent = model.__getattr__(self.name)
+        json = OrderedDict()
+        if 'id' not in self.config('readable_parent_columns'):
+            json['id'] = int(parent.id) if 'id' not in columns else columns['id'].to_json(parent)
+        for column_name in self.config('readable_parent_columns'):
+            json[column_name] = columns[column_name].to_json(parent)
+        return json
+
+    def documentation(self, name=None, example=None, value=None):
+        columns = self.parent_columns
+        parent_properties = [
+            columns['id'].documentation() if ('id' in columns) else AutoDocInteger('id')
+        ]
+
+        for column_name in self.config('readable_parent_columns'):
+            if column_name == 'id':
+                continue
+            parent_properties.append(columns[column_name].documentation())
+
+        return AutoDocObject(
+            name if name is not None else self.name,
+            parent_properties,
+        )

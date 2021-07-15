@@ -1,11 +1,11 @@
 from .column import Column
 from datetime import datetime, timezone
 import dateparser
+from ..autodoc.response import DateTime as AutoDocDateTime
 
 
 class DateTime(Column):
-    response_schema_type = 'string'
-    response_schema_format = 'date-time'
+    _auto_doc_class = AutoDocDateTime
 
     def from_database(self, value):
         if value == None:

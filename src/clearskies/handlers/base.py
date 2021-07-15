@@ -165,7 +165,7 @@ class Base(ABC):
 
     def camel_to_nice(self, string):
         string = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', string)
-        string = re.sub('([a-z0-9])([A-Z])', r'\1_\2', string).lower()
+        string = re.sub('([a-z0-9])([A-Z])', r'\1 \2', string).lower()
         return string
 
     def documentation(self):

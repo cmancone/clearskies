@@ -1,8 +1,9 @@
 from .column import Column
+from ..autodoc.response import Integer as AutoDocInteger
 
 
 class Integer(Column):
-    response_schema_type = 'integer'
+    _auto_doc_class = AutoDocInteger
 
     def from_database(self, value):
         return int(value)

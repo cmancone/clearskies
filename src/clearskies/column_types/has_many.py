@@ -1,6 +1,9 @@
 from .column import Column
 import re
 from collections import OrderedDict
+from ..autodoc.response import Array as AutoDocArray
+from ..autodoc.response import Object as AutoDocObject
+from ..autodoc.response import Integer as AutoDocInteger
 
 
 class HasMany(Column):
@@ -60,7 +63,7 @@ class HasMany(Column):
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
         if configuration.get('is_readable'):
-            child_columns = self.di.build(configuration['child_models_class'], cache=False).columns()
+            child_columns = self.di.build(configuration['child_models_class'], cache=False).raw_columns_configuration()
             error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             if not 'readable_child_columns' in configuration:
                 raise ValueError(f"{error_prefix} must provide 'readable_child_columns' if is_readable is set")
@@ -80,11 +83,6 @@ class HasMany(Column):
                     raise ValueError(
                         f"{error_prefix} 'readable_child_columns' references column named '{column_name}' but this" + \
                         'column does not exist in the model class.'
-                    )
-                if not child_columns[column_name].is_readable:
-                    raise ValueError(
-                        f"{error_prefix} 'readable_child_columns' references column named '{column_name}' but this" + \
-                        'column is not readable.'
                     )
 
     def get_child_columns(self):
@@ -114,25 +112,21 @@ class HasMany(Column):
     def child_models(self):
         return self.di.build(self.config('child_models_class'), cache=False)
 
-    def response_schema(self, name=None):
+    def documentation(self, name=None, example=None, value=None):
         columns = self.get_child_columns()
-        schema = []
-        if 'id' in columns:
-            schema.append(columns['id'].response_schema())
-        else:
-            schema.append({'name': 'id', 'type': 'integer', 'example': 1})
+        child_properties = [
+            (columns['id'].documentation() if ('id' in columns) else AutoDocInteger('id'))
+        ]
 
         for column_name in self.config('readable_child_columns'):
-            schema.append(columns[column_name].response_schema())
+            child_properties.append(columns[column_name].documentation())
 
-        if name is None:
-            name = self.name
-
-        return {
-            'name': name,
-            'type': 'array',
-            'schema': {
-                'type': 'object',
-                'schema': schema,
-            }
-        }
+        child_object = AutoDocObject(
+            self.camel_to_nice(self.child_models.model_class().__name__),
+            child_properties,
+        )
+        return AutoDocArray(
+            name if name is not None else self.name,
+            child_object,
+            value=value
+        )
