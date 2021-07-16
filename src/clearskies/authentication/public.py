@@ -1,4 +1,6 @@
 class Public:
+    is_public = True
+    can_authorize = False
     has_dynamic_credentials = False
 
     def headers(self, retry_auth=False):

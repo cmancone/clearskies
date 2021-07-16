@@ -2,6 +2,8 @@ from ..handlers.exceptions import ClientError
 import datetime
 
 class Auth0JWKS:
+    is_public = False
+    can_authorize = True
     has_dynamic_credentials = True
     _environment = None
     _requests = None

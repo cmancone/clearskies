@@ -1,11 +1,13 @@
 from .base import Base
 from collections import OrderedDict
+from ..autodoc.response import Response as AutoDocResponse
+from ..autodoc.response import Array as AutoDocArray
+from ..autodoc.request import Request as AutoDocRequest
 
 
 class Read(Base):
     _models = None
     _columns = None
-    _authentication = None
     _searchable_columns = None
     _readable_columns = None
 
@@ -262,35 +264,43 @@ class Read(Base):
         return self._searchable_columns
 
     def documentation(self):
-        nice_models = self.camel_to_nice(self.configuration('models_class').__name__)
+        nice_models = self.camel_to_nice(self._models.__class__.__name__)
         nice_model = self.camel_to_nice(self._models.model_class().__name__)
-        response_schema = self.documentation_response_schema()
+        data_schema = self.documentation_data_schema()
 
-        return [
-            {
-                'relative_path': '',
-                'request_method': 'GET',
-                'description': f'Fetch the list of current {nice_models}',
-                'optional_params': [],
-                'responses': [
-                    {
-                        'status': 200,
-                        'description': f'The details of the matching {nice_models}',
-                        'schema': self.documentation_success_schema('array', response_schema),
-                    },
+        authentication = self.configuration('authentication')
+        standard_error_responses = []
+        if not getattr(authentication, 'is_public', False):
+            standard_error_responses.append(self.documentation_access_denied_response())
+            if getattr(authentication, 'can_authorize', False):
+                standard_error_responses.append(self.documentation_unauthorized_response())
+
+        requests = [
+            AutoDocRequest(
+                f'Fetch the list of current {nice_models}',
+                [
+                    self.documentation_success_response(
+                        AutoDocArray(nice_model, data_schema),
+                        description=f'The matching {nice_models}'
+                    ),
+                    *standard_error_responses,
                 ],
-            },
-            {
-                'relative_path': '{id}',
-                'request_method': 'GET',
-                'description': f'Fetch the details of a {nice_model} by id',
-                'optional_params': [],
-                'responses': [
-                    {
-                        'status': 200,
-                        'description': f'The details of the {nice_model}',
-                        'schema': self.documentation_success_schema('object', response_schema),
-                    },
+                optional_parameters=self.documentation_search_parameters()
+            ),
+            AutoDocRequest(
+                'Fetch the details of the ' + nice_model + ' with an id of {id}',
+                [
+                    self.documentation_success_response(data_schema, description=f'The matching {nice_models}'),
+                    *standard_error_responses,
+                    self.documentation_not_found(),
                 ],
-            },
+                relative_path='{id}'
+            )
         ]
+
+        # figure out what to do with the search endpoint
+
+        return requests
+
+    def documentation_search_parameters(self):
+        return [column.documentation() for column in self._get_searchable_columns().values()]

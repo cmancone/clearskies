@@ -1,4 +1,6 @@
 class SecretBearer:
+    is_public = False
+    can_authorize = False
     has_dynamic_credentials = False
     _environment = None
     _secret = None

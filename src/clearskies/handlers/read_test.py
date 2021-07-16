@@ -196,15 +196,15 @@ class ReadTest(unittest.TestCase):
         self.assertEquals({'id': 5, 'awesome': 'conor'}, response_data[0])
         self.assertEquals({'id': 8, 'awesome': 'ronoc'}, response_data[1])
 
-    #def test_doc(self):
-        #read = Read(self.di)
-        #read.configure({
-            #'models': self.models,
-            #'readable_columns': ['name', 'email', 'age'],
-            #'searchable_columns': ['name'],
-            #'default_sort_column': 'email',
-            #'authentication': Public(),
-            #'output_map': lambda model: {'id': model.id, 'awesome': model.name},
-        #})
+    def test_doc(self):
+        read = Read(self.di)
+        read.configure({
+            'models': self.models,
+            'readable_columns': ['name', 'email', 'age'],
+            'searchable_columns': ['name'],
+            'default_sort_column': 'email',
+            'authentication': Public(),
+            'output_map': lambda model: {'id': model.id, 'awesome': model.name},
+        })
 
         #print(read.documentation())

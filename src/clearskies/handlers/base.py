@@ -3,6 +3,10 @@ from .exceptions import ClientError, InputError
 from collections import OrderedDict
 import inspect
 import re
+from ..autodoc.response import Integer as AutoDocInteger
+from ..autodoc.response import String as AutoDocString
+from ..autodoc.response import Object as AutoDocObject
+from ..autodoc.response import Response as AutoDocResponse
 
 
 class Base(ABC):
@@ -171,57 +175,86 @@ class Base(ABC):
     def documentation(self):
         raise NotImplemented(f"No docs defined for handler class '{self.__class__.__name__}'")
 
-    def documentation_success_schema(self, data_schema_type, data_schema):
-        return [
-            {
-                'name': 'status',
-                'type': 'string',
-                'value': 'success',
-            },
-            {
-                'name': 'data',
-                'type': data_schema_type,
-                'schema': data_schema,
-            },
-            {
-                'name': 'pagination',
-                'type': 'object',
-                'schema': [
-                    {
-                        'name': 'numberResults',
-                        'type': 'integer',
-                        'example': 10,
-                    },
-                    {
-                        'name': 'start',
-                        'type': 'integer',
-                        'example': 0,
-                    },
-                    {
-                        'name': 'limit',
-                        'type': 'integer',
-                        'example': 100,
-                    },
+    def documentation_pagination(self):
+        return AutoDocObject(
+            'pagination',
+            [
+                AutoDocInteger('numberResults', example=10),
+                AutoDocInteger('start', example=0),
+                AutoDocInteger('limit', example=100),
+            ],
+        )
+
+    def documentation_success_response(self, data_schema, description=''):
+        return AutoDocResponse(
+            200,
+            AutoDocObject(
+                'body',
+                [
+                    AutoDocString('status', value='success'),
+                    data_schema,
+                    self.documentation_pagination(),
+                    AutoDocString('error', value=''),
+                    AutoDocObject('inputErrors', [], value={}),
                 ]
-            },
-            {
-                'name': 'error',
-                'type': 'string',
-                'value': '',
-            },
-            {
-                'name': 'inputErrors',
-                'type': 'array',
-                'value': [],
-            },
+            ),
+            description=description,
+        )
+
+    def documentation_generic_error_response(self, description='Invalid Call', status=400):
+        return AutoDocResponse(
+            400,
+            AutoDocObject(
+                'body',
+                [
+                    AutoDocString('status', value='error'),
+                    AutoDocObject('data', [], value={}),
+                    self.documentation_pagination(),
+                    AutoDocString('error', example='User readable error message'),
+                    AutoDocObject('inputErrors', [], value={}),
+                ]
+            ),
+            description='Invalid Call'
+        )
+
+    def documentation_input_error_response(self, description='Invalid client-side input'):
+        return AutoDocResponse(
+            200,
+            AutoDocObject(
+                'body',
+                [
+                    AutoDocString('status', value='inputErrors'),
+                    AutoDocObject('data', [], value={}),
+                    self.documentation_pagination(),
+                    AutoDocString('error', value=''),
+                    AutoDocObject(
+                        'inputErrors',
+                        [
+                            AutoDocString('[COLUMN_NAME]', example='User friendly error message')
+                        ],
+                        example={'email': 'email was not a valid email address'}
+                    ),
+                ]
+            ),
+            description=description
+        )
+
+    def documentation_access_denied_response(self):
+        return self.documentation_generic_error_response(description='Access Denied', status=401)
+
+    def documentation_unauthorized_response(self):
+        return self.documentation_generic_error_response(description='Unauthorized', status=403)
+
+    def documentation_not_found(self):
+        return self.documentation_generic_error_response(description='Not Found', status=404)
+
+    def documentation_data_schema(self):
+        id_column = self.configuration('id_column')
+        properties = [
+            self._columns[id_column].documentation(name='id') if id_column in self._columns else AutoDocInteger('id')
         ]
 
-    def documentation_response_schema(self):
-        id_column = self.configuration('id_column')
-        if id_column in self._columns:
-            id_schema = self._columns[id_column].response_schema(name='id')
-        else:
-            id_schema = {'name': 'id', 'type': 'integer', 'example': 1}
-
         for column in self._get_readable_columns().values():
-            json[column.name] = column.to_json(model)
+            properties.append(column.documentation())
+
+        return properties
