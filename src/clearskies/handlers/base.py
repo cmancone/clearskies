@@ -175,7 +175,9 @@ class Base(ABC):
     def documentation(self):
         raise NotImplemented(f"No docs defined for handler class '{self.__class__.__name__}'")
 
-    def documentation_pagination(self):
+    def documentation_pagination_response(self, include_pagination=True):
+        if not include_pagination:
+            return AutoDocObject('pagination', [], value={})
         return AutoDocObject(
             'pagination',
             [
@@ -185,7 +187,7 @@ class Base(ABC):
             ],
         )
 
-    def documentation_success_response(self, data_schema, description=''):
+    def documentation_success_response(self, data_schema, description='', include_pagination=False):
         return AutoDocResponse(
             200,
             AutoDocObject(
@@ -193,7 +195,7 @@ class Base(ABC):
                 [
                     AutoDocString('status', value='success'),
                     data_schema,
-                    self.documentation_pagination(),
+                    self.documentation_pagination_response(include_pagination=include_pagination),
                     AutoDocString('error', value=''),
                     AutoDocObject('inputErrors', [], value={}),
                 ]
@@ -203,18 +205,18 @@ class Base(ABC):
 
     def documentation_generic_error_response(self, description='Invalid Call', status=400):
         return AutoDocResponse(
-            400,
+            status,
             AutoDocObject(
                 'body',
                 [
                     AutoDocString('status', value='error'),
                     AutoDocObject('data', [], value={}),
-                    self.documentation_pagination(),
+                    self.documentation_pagination_response(),
                     AutoDocString('error', example='User readable error message'),
                     AutoDocObject('inputErrors', [], value={}),
                 ]
             ),
-            description='Invalid Call'
+            description=description
         )
 
     def documentation_input_error_response(self, description='Invalid client-side input'):
@@ -225,7 +227,7 @@ class Base(ABC):
                 [
                     AutoDocString('status', value='inputErrors'),
                     AutoDocObject('data', [], value={}),
-                    self.documentation_pagination(),
+                    self.documentation_pagination_response(),
                     AutoDocString('error', value=''),
                     AutoDocObject(
                         'inputErrors',

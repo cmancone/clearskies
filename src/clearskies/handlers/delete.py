@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from .base import Base
+from .. import autodoc
 
 
 class Delete(Base):
@@ -40,3 +41,27 @@ class Delete(Base):
         if has_models and has_models_class:
             raise KeyError(f"{error_prefix} you specified both 'models' and 'models_class', but can only provide one")
         self._models = self._di.build(configuration['models_class']) if has_models_class else configuration['models']
+
+    def documentation(self):
+        nice_model = self.camel_to_nice(self._models.model_class().__name__)
+
+        authentication = self.configuration('authentication')
+        standard_error_responses = []
+        if not getattr(authentication, 'is_public', False):
+            standard_error_responses.append(self.documentation_access_denied_response())
+            if getattr(authentication, 'can_authorize', False):
+                standard_error_responses.append(self.documentation_unauthorized_response())
+
+        return [
+            autodoc.request.Request(
+                'Delete the ' + nice_model + ' with an id of {id}',
+                [
+                    self.documentation_success_response(
+                        autodoc.response.Object('data', children=[]),
+                        description=f'The {nice_model} was deleted',
+                    ),
+                    *standard_error_responses,
+                    self.documentation_not_found(),
+                ],
+            )
+        ]

@@ -2,6 +2,7 @@ from .base import Base
 from .exceptions import InputError
 from collections import OrderedDict
 from abc import abstractmethod
+from .. import autodoc
 
 
 class Write(Base):
@@ -130,3 +131,48 @@ class Write(Base):
         if self.configuration('resource_id'):
             request_data[self.configuration('id_column')] = self.configuration('resource_id')
         return request_data
+
+    def _documentation(self, description='', response_description=''):
+        nice_model = self.camel_to_nice(self._models.model_class().__name__)
+        data_schema = self.documentation_data_schema()
+
+        authentication = self.configuration('authentication')
+        standard_error_responses = [
+            self.documentation_input_error_response(),
+        ]
+        if not getattr(authentication, 'is_public', False):
+            standard_error_responses.append(self.documentation_access_denied_response())
+            if getattr(authentication, 'can_authorize', False):
+                standard_error_responses.append(self.documentation_unauthorized_response())
+
+        return [
+            autodoc.request.Request(
+                description,
+                [
+                    self.documentation_success_response(
+                        autodoc.response.Object(
+                            'data',
+                            children=data_schema,
+                        ),
+                        description=description,
+                    ),
+                    *standard_error_responses,
+                    self.documentation_not_found(),
+                ],
+                relative_path='{id}',
+                parameters=[
+                    *self.configuration('authentication').docuemntation_request_parameters(),
+                    *self.documentation_write_parameters(nice_model),
+                ],
+            )
+        ]
+
+    def documentation_write_parameters(self, model_name):
+        return [
+            autodoc.request.JSONBody(
+                column.documentation(),
+                description=f"Set '{column.name}' for the {model_name}",
+                required=column.is_required,
+            )
+            for column in self._get_writeable_columns().values()
+        ]

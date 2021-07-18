@@ -90,3 +90,12 @@ class Auth0JWKS:
             if value != self.jwt_claims[key]:
                 return False
         return True
+
+    def docuemntation_request_parameters(self):
+        return [
+            autodoc.request.Header(
+                autodoc.request.String('Authorization', example='Bearer [JWT_HERE]'),
+                description="The Auth0 JWT provided via a standard 'Authorization: Bearer [JWT]' header",
+                required=True,
+            )
+        ]

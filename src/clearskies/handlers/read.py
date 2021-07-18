@@ -1,8 +1,7 @@
 from .base import Base
 from collections import OrderedDict
-from ..autodoc.response import Response as AutoDocResponse
-from ..autodoc.response import Array as AutoDocArray
-from ..autodoc.request import Request as AutoDocRequest
+from .. import autodoc
+from .. import condition_parser
 
 
 class Read(Base):
@@ -75,6 +74,8 @@ class Read(Base):
         if 'limit' in request_data:
             limit = request_data['limit']
         models = models.limit(start, limit)
+        if 'sort' in query_parameters and 'direction' in query_parameters:
+            models = models.sort_by(query_parameters['sort'], query_parameters['direction'])
         if 'sort' in request_data:
             primary_column = request_data['sort'][0]['column']
             primary_direction = request_data['sort'][0]['direction']
@@ -120,15 +121,25 @@ class Read(Base):
                 return f"Invalid request: '{key_name}' should be an integer"
         if 'limit' in request_data and request_data['limit'] > self.configuration('max_limit'):
             return f"Invalid request: 'limit' must be at most {self.configuration('max_limit')}"
+        allowed_sort_columns = self.configuration('sortable_columns')
+        if not allowed_sort_columns:
+            allowed_sort_columns = self._columns
+        if 'sort' in query_parameters or 'direction' in query_parameters:
+            if 'sort' not in query_parameters or 'direction' not in query_parameters:
+                return "You must specify 'sort' and 'direction' together in the query parameters - not just one of them"
+            if query_parameters['sort'] not in allowed_sort_columns:
+                return f"Invalid request: invalid sort column"
+            if sort['direction'].lower() not in ['asc', 'desc']:
+                return "Invalid request: sort direction must be 'asc' or 'desc'"
         if 'sort' in request_data:
+            if 'sort' in query_parameters or 'direction' in query_parameters:
+                return "Invalid request: sort information was specified in both the query parameters and post body " + \
+                    "It must not be in both places"
             if type(request_data['sort']) != list:
                 return "Invalid request: if provided, 'sort' must be a list of " + \
                     "objects with 'column' and 'direction' keys"
             if len(request_data['sort']) > 2:
                 return "Invalid request: at most 2 sort directives may be specified"
-            allowed_sort_columns = self.configuration('sortable_columns')
-            if not allowed_sort_columns:
-                allowed_sort_columns = self._columns
             for (index, sort) in enumerate(request_data['sort']):
                 error_prefix = "Invalid request: 'sort' must be a list of objects with 'column' and 'direction'" + \
                     f" keys, but entry #{index+1}"
@@ -263,7 +274,7 @@ class Read(Base):
             self._searchable_columns = self._get_columns('searchable')
         return self._searchable_columns
 
-    def documentation(self):
+    def documentation(self, include_search=False):
         nice_models = self.camel_to_nice(self._models.__class__.__name__)
         nice_model = self.camel_to_nice(self._models.model_class().__name__)
         data_schema = self.documentation_data_schema()
@@ -276,31 +287,160 @@ class Read(Base):
                 standard_error_responses.append(self.documentation_unauthorized_response())
 
         requests = [
-            AutoDocRequest(
+            autodoc.request.Request(
                 f'Fetch the list of current {nice_models}',
                 [
                     self.documentation_success_response(
-                        AutoDocArray(nice_model, data_schema),
-                        description=f'The matching {nice_models}'
+                        autodoc.response.Array('data', data_schema),
+                        description=f'The matching {nice_models}',
+                        include_pagination=True,
                     ),
                     *standard_error_responses,
+                    self.documentation_generic_error_response(),
                 ],
-                optional_parameters=self.documentation_search_parameters()
+                parameters=[
+                    *self.documentation_url_search_parameters(),
+                    *self.documentation_pagination_parameters(),
+                    *self.documentation_url_sort_parameters(),
+                    *self.configuration('authentication').docuemntation_request_parameters()
+                ],
             ),
-            AutoDocRequest(
+            autodoc.request.Request(
                 'Fetch the details of the ' + nice_model + ' with an id of {id}',
                 [
-                    self.documentation_success_response(data_schema, description=f'The matching {nice_models}'),
+                    self.documentation_success_response(
+                        autodoc.response.Object(
+                            'data',
+                            children=data_schema,
+                        ),
+                        description=f'The matching {nice_model}'
+                    ),
                     *standard_error_responses,
                     self.documentation_not_found(),
                 ],
-                relative_path='{id}'
+                relative_path='{id}',
+                parameters=[
+                    *self.configuration('authentication').docuemntation_request_parameters(),
+                ],
             )
         ]
 
         # figure out what to do with the search endpoint
+        if not include_search:
+            return requests
 
+        requests.append(autodoc.request.Request(
+            f'Advanced options for searching {nice_models}',
+            [
+                self.documentation_success_response(
+                    autodoc.response.Array('data', data_schema),
+                    description=f'The matching {nice_models}',
+                    include_pagination=True,
+                ),
+                *standard_error_responses,
+                self.documentation_generic_error_response(),
+            ],
+            relative_path='search',
+            request_methods='POST',
+            parameters=[
+                *self.documentation_json_search_parameters(),
+                *self.configuration('authentication').docuemntation_request_parameters()
+            ],
+        ))
         return requests
 
-    def documentation_search_parameters(self):
-        return [column.documentation() for column in self._get_searchable_columns().values()]
+    def documentation_pagination_parameters(self):
+        return [
+            autodoc.request.URLParameter(
+                autodoc.response.Integer('start'),
+                description='The index of the record to start listing results at (0-indexed)'
+            ),
+            autodoc.request.URLParameter(
+                autodoc.response.Integer('limit'),
+                description='The number of records to return'
+            ),
+        ]
+
+    def documentation_url_sort_parameters(self):
+        sort_columns = self.configuration('sortable_columns')
+        if not sort_columns:
+            sort_columns = list(self._columns.keys())
+        directions = ['asc', 'desc']
+
+        return [
+            autodoc.request.URLParameter(
+                autodoc.response.Enum('sort', sort_columns, autodoc.response.String('sort'), example='name'),
+                description=f'Column to sort by',
+            ),
+            autodoc.request.URLParameter(
+                autodoc.response.Enum('direction', directions, autodoc.response.String('direction'), example='asc'),
+                description=f'Direction to sort',
+            ),
+        ]
+
+    def documentation_url_search_parameters(self):
+        return [
+            autodoc.request.URLParameter(
+                column.documentation(),
+                description=f'Search by {column.name} (via exact match)',
+            )
+            for column in self._get_searchable_columns().values()
+        ]
+
+    def documentation_json_search_parameters(self):
+        # named 'where' in the request
+        where_condition = autodoc.response.Object(
+            'condition',
+            [
+                autodoc.response.Enum(
+                    'column',
+                    [column.name for column in self._get_searchable_columns().values()],
+                    autodoc.response.String('column_name'),
+                    example='name',
+                ),
+                autodoc.response.Enum(
+                    'operator',
+                    condition_parser.ConditionParser.operators,
+                    autodoc.response.String('operator'),
+                    example='=',
+                ),
+                autodoc.response.String('value', example='Jane'),
+            ],
+        )
+
+        allowed_sort_columns = self.configuration('sortable_columns')
+        if not allowed_sort_columns:
+            allowed_sort_columns = list(self._columns.keys())
+
+        sort_item = autodoc.response.Object(
+            'sort',
+            [
+                autodoc.response.Enum(
+                    'column',
+                    allowed_sort_columns,
+                    autodoc.response.String('column'),
+                    example='name',
+                ),
+                autodoc.response.Enum(
+                    'direction',
+                    ['asc', 'desc'],
+                    autodoc.response.String('direction'),
+                    example='asc',
+                ),
+            ]
+        )
+
+        return [
+            autodoc.request.JSONBody(
+                autodoc.response.Array('where', where_condition), description='List of search conditions'
+            ),
+            autodoc.request.JSONBody(
+                autodoc.response.Array('sort', sort_item), description='List of sort directives (max 2)'
+            ),
+            autodoc.request.JSONBody(
+                autodoc.response.Integer('start', example=0), description='The 0-indexed record to start results from'
+            ),
+            autodoc.request.JSONBody(
+                autodoc.response.Integer('limit', example=100), description='The number of records to return'
+            ),
+        ]

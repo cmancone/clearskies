@@ -1,6 +1,7 @@
 from abc import ABC
 import re
 from ..autodoc.response import String as AutoDocString
+from .. import input_requirements
 
 
 class Column(ABC):
@@ -22,6 +23,16 @@ class Column(ABC):
     @property
     def is_readable(self):
         return True
+
+    @property
+    def is_required(self):
+        requirements = self.config('input_requirements')
+        if not requirements:
+            return False
+        for requirement in requirements:
+            if isinstance(requirement, input_requirements.Required):
+                return True
+        return False
 
     def configure(self, name, configuration, model_class):
         if not name:

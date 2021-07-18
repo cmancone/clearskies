@@ -190,3 +190,30 @@ class UpdateTest(unittest.TestCase):
         response = update(InputOutput(body={'id': 10, 'name': 'Conor', 'email': 'c@example.com', 'age': 10}))
         self.assertEquals(404, response[1])
         self.assertEquals("Not Found", response[0]['error'])
+
+    def test_doc(self):
+        update = Update(self.di)
+        update.configure({
+            'models': self.models,
+            'columns': ['name', 'email', 'age'],
+            'authentication': Public(),
+        })
+
+        documentation = update.documentation()[0]
+
+        self.assertEquals('{id}', documentation.relative_path)
+
+        self.assertEquals(3, len(documentation.parameters))
+        self.assertEquals(['name', 'email', 'age'], [param.definition.name for param in documentation.parameters])
+        self.assertEquals([True, True, False], [param.required for param in documentation.parameters])
+
+        self.assertEquals(3, len(documentation.responses))
+        self.assertEquals([200, 200, 404], [response.status for response in documentation.responses])
+        success_response = documentation.responses[0]
+        self.assertEquals(
+            ['status', 'data', 'pagination', 'error', 'inputErrors'],
+            [schema.name for schema in success_response.schema.children]
+        )
+        data_response_properties = success_response.schema.children[1].children
+        self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
+        self.assertEquals(['integer', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])

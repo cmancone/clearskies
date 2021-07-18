@@ -4,6 +4,7 @@ from .boolean import Boolean
 from .date import Date
 from .datetime import DateTime
 from .double import Double
+from .enum import Enum
 from .integer import Integer
 from .long import Long
 from .number import Number

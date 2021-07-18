@@ -26,3 +26,10 @@ class Update(Write):
         model.save(input_data)
 
         return self.success(input_output, self._model_as_json(model))
+
+    def documentation(self):
+        nice_model = self.camel_to_nice(self._models.model_class().__name__)
+        return self._documentation(
+            description='Update the ' + nice_model + ' with an id of {id}',
+            response_description=f'The updated {nice_model}'
+        )

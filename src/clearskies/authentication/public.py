@@ -14,3 +14,6 @@ class Public:
 
     def authorize(self, authorization):
         raise ValueError("Public endpoints do not support authorization")
+
+    def docuemntation_request_parameters(self):
+        return []

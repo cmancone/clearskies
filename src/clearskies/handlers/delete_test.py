@@ -35,3 +35,21 @@ class DeleteTest(unittest.TestCase):
         self.assertEquals('id', condition['column'])
         self.assertEquals(['5'], condition['values'])
         self.assertEquals('=', condition['operator'])
+
+    def test_documentation(self):
+        delete = Delete(self.di)
+        delete.configure({
+            'models': self.models,
+            'authentication': Public(),
+        })
+
+        documentation = delete.documentation()[0]
+
+        self.assertEquals(0, len(documentation.parameters))
+        self.assertEquals(2, len(documentation.responses))
+        self.assertEquals([200, 404], [response.status for response in documentation.responses])
+        success_response = documentation.responses[0]
+        self.assertEquals(
+            ['status', 'data', 'pagination', 'error', 'inputErrors'],
+            [schema.name for schema in success_response.schema.children]
+        )
