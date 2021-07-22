@@ -70,3 +70,10 @@ class SimpleRouting(Base):
                 authentication=authentication,
             )
             self._routes.append(route)
+
+    def documentation(self):
+        base_url = self.configuration('base_url')
+        docs = []
+        for route in self._routes:
+            docs.extend(route.documentation(base_url))
+        return docs

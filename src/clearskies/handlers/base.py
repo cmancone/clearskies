@@ -173,7 +173,7 @@ class Base(ABC):
         return string
 
     def documentation(self):
-        raise NotImplemented(f"No docs defined for handler class '{self.__class__.__name__}'")
+        return []
 
     def documentation_pagination_response(self, include_pagination=True):
         if not include_pagination:

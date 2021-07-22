@@ -129,3 +129,21 @@ class RestfulAPI(Routing):
                 docs.append({**doc, 'request_method': self.configuration(f'{name}_request_method')})
 
         return docs
+
+    def documentation(self):
+        requests = []
+        if self.configuration('allow_read'):
+            read_handler = self.build_handler(self.configuration('read_handler'))
+            requests.extend(read_handler.documentation(include_search=self.configuration('allow_search')))
+
+        for handler_name in ['create', 'update', 'delete']:
+            if self.configuration(f'allow_{handler_name}'):
+                request_doc = self.build_handler(self.configuration('read_handler')).documentation()
+                request_doc.set_request_methods(self.configuration(f'{handler_name}_request_method'))
+                requests.extend(request_doc)
+
+        base_url = self.configuration('base_url')
+        if base_url:
+            requests = [request.prepend_relative_path(base_url) for request in requests]
+
+        return requests
