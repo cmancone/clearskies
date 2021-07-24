@@ -1,7 +1,7 @@
 import unittest
 from .column import Column
 from ..input_requirements import MinimumLength
-from ..autodoc.response import String as AutoDocString
+from ..autodoc.schema import String as AutoDocString
 
 
 class RealColumn(Column):

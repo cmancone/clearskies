@@ -1,5 +1,5 @@
 from .column import Column
-from ..autodoc.response import Integer as AutoDocInteger
+from ..autodoc.schema import Integer as AutoDocInteger
 
 
 class Integer(Column):

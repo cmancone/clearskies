@@ -2,6 +2,7 @@ from .di import DI
 from ..columns import Columns
 from ..environment import Environment
 from ..backends import CursorBackend, MemoryBackend
+from .. import autodoc
 import os
 
 
@@ -71,3 +72,6 @@ class StandardDependencies(DI):
     def provide_jose_jwt(self):
         from jose import jwt
         return jwt
+
+    def provide_oai3_schema_resolver(self):
+        return autodoc.formats.oai3_json.OAI3SchemaResolver()

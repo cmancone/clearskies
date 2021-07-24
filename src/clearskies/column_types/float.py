@@ -1,5 +1,5 @@
 from .column import Column
-from ..autodoc.response import Number as AutoDocNumber
+from ..autodoc.schema import Number as AutoDocNumber
 
 
 class Float(Column):

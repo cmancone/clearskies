@@ -53,3 +53,6 @@ class SimpleRoutingRoute:
                 doc.prepend_relative_path(base_url)
             docs.append(doc)
         return docs
+
+    def documentation_models(self):
+        return self._handler.documentation_models()

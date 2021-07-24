@@ -277,6 +277,7 @@ class Read(Base):
     def documentation(self, include_search=False):
         nice_models = self.camel_to_nice(self._models.__class__.__name__)
         nice_model = self.camel_to_nice(self._models.model_class().__name__)
+        schema_model_name = self.camel_to_snake(self._models.model_class().__name__)
         data_schema = self.documentation_data_schema()
 
         authentication = self.configuration('authentication')
@@ -291,7 +292,11 @@ class Read(Base):
                 f'Fetch the list of current {nice_models}',
                 [
                     self.documentation_success_response(
-                        autodoc.response.Array('data', data_schema),
+                        autodoc.schema.Array('data', autodoc.schema.Object(
+                            nice_model,
+                            children=data_schema,
+                            model_name=schema_model_name
+                        )),
                         description=f'The matching {nice_models}',
                         include_pagination=True,
                     ),
@@ -309,9 +314,10 @@ class Read(Base):
                 'Fetch the details of the ' + nice_model + ' with an id of {id}',
                 [
                     self.documentation_success_response(
-                        autodoc.response.Object(
+                        autodoc.schema.Object(
                             'data',
                             children=data_schema,
+                            model_name=schema_model_name,
                         ),
                         description=f'The matching {nice_model}'
                     ),
@@ -321,6 +327,7 @@ class Read(Base):
                 relative_path='{id}',
                 parameters=[
                     *self.configuration('authentication').docuemntation_request_parameters(),
+                    self.documentation_id_url_parameter(),
                 ],
             )
         ]
@@ -333,7 +340,11 @@ class Read(Base):
             f'Advanced options for searching {nice_models}',
             [
                 self.documentation_success_response(
-                    autodoc.response.Array('data', data_schema),
+                    autodoc.schema.Array('data', autodoc.schema.Object(
+                        nice_model,
+                        children=data_schema,
+                        model_name=schema_model_name
+                    )),
                     description=f'The matching {nice_models}',
                     include_pagination=True,
                 ),
@@ -344,19 +355,41 @@ class Read(Base):
             request_methods='POST',
             parameters=[
                 *self.documentation_json_search_parameters(),
-                *self.configuration('authentication').docuemntation_request_parameters()
+                *self.configuration('authentication').docuemntation_request_parameters(),
             ],
         ))
         return requests
 
+    def documentation_models(self):
+        schema_model_name = self.camel_to_snake(self._models.model_class().__name__)
+
+        return {
+            schema_model_name: autodoc.schema.Object(
+                'data',
+                children=self.documentation_data_schema(),
+            ),
+        }
+
+    def documentation_id_url_parameter(self):
+        id_column_name = self.configuration('id_column')
+        if id_column_name in self._columns:
+            id_column_schema = self._columns[id_column_name].documentation()
+        else:
+            id_column_schema = autodoc.schema.Integer('id')
+        return autodoc.request.URLPath(
+            id_column_schema,
+            description='The id of the record to fetch',
+            required=True,
+        )
+
     def documentation_pagination_parameters(self):
         return [
             autodoc.request.URLParameter(
-                autodoc.response.Integer('start'),
+                autodoc.schema.Integer('start'),
                 description='The index of the record to start listing results at (0-indexed)'
             ),
             autodoc.request.URLParameter(
-                autodoc.response.Integer('limit'),
+                autodoc.schema.Integer('limit'),
                 description='The number of records to return'
             ),
         ]
@@ -369,11 +402,11 @@ class Read(Base):
 
         return [
             autodoc.request.URLParameter(
-                autodoc.response.Enum('sort', sort_columns, autodoc.response.String('sort'), example='name'),
+                autodoc.schema.Enum('sort', sort_columns, autodoc.schema.String('sort'), example='name'),
                 description=f'Column to sort by',
             ),
             autodoc.request.URLParameter(
-                autodoc.response.Enum('direction', directions, autodoc.response.String('direction'), example='asc'),
+                autodoc.schema.Enum('direction', directions, autodoc.schema.String('direction'), example='asc'),
                 description=f'Direction to sort',
             ),
         ]
@@ -389,22 +422,22 @@ class Read(Base):
 
     def documentation_json_search_parameters(self):
         # named 'where' in the request
-        where_condition = autodoc.response.Object(
+        where_condition = autodoc.schema.Object(
             'condition',
             [
-                autodoc.response.Enum(
+                autodoc.schema.Enum(
                     'column',
                     [column.name for column in self._get_searchable_columns().values()],
-                    autodoc.response.String('column_name'),
+                    autodoc.schema.String('column_name'),
                     example='name',
                 ),
-                autodoc.response.Enum(
+                autodoc.schema.Enum(
                     'operator',
                     condition_parser.ConditionParser.operators,
-                    autodoc.response.String('operator'),
+                    autodoc.schema.String('operator'),
                     example='=',
                 ),
-                autodoc.response.String('value', example='Jane'),
+                autodoc.schema.String('value', example='Jane'),
             ],
         )
 
@@ -412,19 +445,19 @@ class Read(Base):
         if not allowed_sort_columns:
             allowed_sort_columns = list(self._columns.keys())
 
-        sort_item = autodoc.response.Object(
+        sort_item = autodoc.schema.Object(
             'sort',
             [
-                autodoc.response.Enum(
+                autodoc.schema.Enum(
                     'column',
                     allowed_sort_columns,
-                    autodoc.response.String('column'),
+                    autodoc.schema.String('column'),
                     example='name',
                 ),
-                autodoc.response.Enum(
+                autodoc.schema.Enum(
                     'direction',
                     ['asc', 'desc'],
-                    autodoc.response.String('direction'),
+                    autodoc.schema.String('direction'),
                     example='asc',
                 ),
             ]
@@ -432,15 +465,15 @@ class Read(Base):
 
         return [
             autodoc.request.JSONBody(
-                autodoc.response.Array('where', where_condition), description='List of search conditions'
+                autodoc.schema.Array('where', where_condition), description='List of search conditions'
             ),
             autodoc.request.JSONBody(
-                autodoc.response.Array('sort', sort_item), description='List of sort directives (max 2)'
+                autodoc.schema.Array('sort', sort_item), description='List of sort directives (max 2)'
             ),
             autodoc.request.JSONBody(
-                autodoc.response.Integer('start', example=0), description='The 0-indexed record to start results from'
+                autodoc.schema.Integer('start', example=0), description='The 0-indexed record to start results from'
             ),
             autodoc.request.JSONBody(
-                autodoc.response.Integer('limit', example=100), description='The number of records to return'
+                autodoc.schema.Integer('limit', example=100), description='The number of records to return'
             ),
         ]

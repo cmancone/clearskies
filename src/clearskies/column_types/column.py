@@ -1,6 +1,6 @@
 from abc import ABC
 import re
-from ..autodoc.response import String as AutoDocString
+from ..autodoc.schema import String as AutoDocString
 from .. import input_requirements
 
 
@@ -221,6 +221,6 @@ class Column(ABC):
     def documentation(self, name=None, example=None, value=None):
         return self._auto_doc_class(
             name if name is not None else self.name,
-            example=(example if example is not None else 'string'),
+            example=example,
             value=value
         )

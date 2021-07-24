@@ -57,7 +57,7 @@ class Delete(Base):
                 'Delete the ' + nice_model + ' with an id of {id}',
                 [
                     self.documentation_success_response(
-                        autodoc.response.Object('data', children=[]),
+                        autodoc.schema.Object('data', children=[]),
                         description=f'The {nice_model} was deleted',
                     ),
                     *standard_error_responses,

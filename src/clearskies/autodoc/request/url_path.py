@@ -1,5 +1,5 @@
-class URLParameter:
-    location = 'url_parameter'
+class URLPath:
+    location = 'url_path'
     in_body = False
 
     def __init__(self, definition, description='', required=False):

@@ -77,3 +77,9 @@ class SimpleRouting(Base):
         for route in self._routes:
             docs.extend(route.documentation(base_url))
         return docs
+
+    def documentation_models(self):
+        models = {}
+        for route in self._routes:
+            models = {**models, **route.documentation_models()}
+        return models

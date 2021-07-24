@@ -30,3 +30,9 @@ class RequestMethodRouting(Routing):
             doc.set_request_methods(method)
             docs.append(doc)
         return docs
+
+    def documentation_models(self):
+        models = {}
+        for (method, handler) in self.method_handler_map.items():
+            models = {**models, **self.build_handler(method_handler_map[request_method]).documentation_models()}
+        return models

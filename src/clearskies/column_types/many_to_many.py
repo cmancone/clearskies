@@ -1,8 +1,8 @@
 from .integer import Integer
 import re
-from ..autodoc.response import Array as AutoDocArray
-from ..autodoc.response import Object as AutoDocObject
-from ..autodoc.response import Integer as AutoDocInteger
+from ..autodoc.schema import Array as AutoDocArray
+from ..autodoc.schema import Object as AutoDocObject
+from ..autodoc.schema import Integer as AutoDocInteger
 
 
 class ManyToMany(Integer):

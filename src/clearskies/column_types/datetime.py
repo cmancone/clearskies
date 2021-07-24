@@ -1,7 +1,7 @@
 from .column import Column
 from datetime import datetime, timezone
 import dateparser
-from ..autodoc.response import DateTime as AutoDocDateTime
+from ..autodoc.schema import DateTime as AutoDocDateTime
 
 
 class DateTime(Column):

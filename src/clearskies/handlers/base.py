@@ -3,9 +3,9 @@ from .exceptions import ClientError, InputError
 from collections import OrderedDict
 import inspect
 import re
-from ..autodoc.response import Integer as AutoDocInteger
-from ..autodoc.response import String as AutoDocString
-from ..autodoc.response import Object as AutoDocObject
+from ..autodoc.schema import Integer as AutoDocInteger
+from ..autodoc.schema import String as AutoDocString
+from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.response import Response as AutoDocResponse
 
 
@@ -172,8 +172,14 @@ class Base(ABC):
         string = re.sub('([a-z0-9])([A-Z])', r'\1 \2', string).lower()
         return string
 
+    def camel_to_snake(self, string):
+        return self.camel_to_nice(string).replace(' ', '_')
+
     def documentation(self):
         return []
+
+    def documentation_models(self):
+        return {}
 
     def documentation_pagination_response(self, include_pagination=True):
         if not include_pagination:

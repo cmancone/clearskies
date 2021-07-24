@@ -7,10 +7,10 @@ from .belongs_to import BelongsTo
 from ..backends import MemoryBackend
 from collections import OrderedDict
 from ..di import StandardDependencies
-from ..autodoc.response import Array as AutoDocArray
-from ..autodoc.response import Object as AutoDocObject
-from ..autodoc.response import Integer as AutoDocInteger
-from ..autodoc.response import String as AutoDocString
+from ..autodoc.schema import Array as AutoDocArray
+from ..autodoc.schema import Object as AutoDocObject
+from ..autodoc.schema import Integer as AutoDocInteger
+from ..autodoc.schema import String as AutoDocString
 
 
 class User(Model):

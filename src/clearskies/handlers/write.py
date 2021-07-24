@@ -132,9 +132,20 @@ class Write(Base):
             request_data[self.configuration('id_column')] = self.configuration('resource_id')
         return request_data
 
+    def documentation_models(self):
+        schema_model_name = self.camel_to_snake(self._models.model_class().__name__)
+
+        return {
+            schema_model_name: autodoc.schema.Object(
+                'data',
+                children=self.documentation_data_schema(),
+            ),
+        }
+
     def _documentation(self, description='', response_description=''):
         nice_model = self.camel_to_nice(self._models.model_class().__name__)
         data_schema = self.documentation_data_schema()
+        schema_model_name = self.camel_to_snake(self._models.model_class().__name__)
 
         authentication = self.configuration('authentication')
         standard_error_responses = [
@@ -150,9 +161,10 @@ class Write(Base):
                 description,
                 [
                     self.documentation_success_response(
-                        autodoc.response.Object(
+                        autodoc.schema.Object(
                             'data',
                             children=data_schema,
+                            model_name=schema_model_name,
                         ),
                         description=description,
                     ),

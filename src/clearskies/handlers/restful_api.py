@@ -115,35 +115,28 @@ class RestfulAPI(Routing):
         self.configuration('read_handler') if self.configuration('allow_read') else None,
         docs = []
         # read handler is slightly different so handle that individually....
+        relative_path = self.configuration('base_url')
         if self.configuration('allow_read'):
             read_handler = self.build_handler(self.configuration('read_handler'))
-            docs.extend(read_handler.documentation())
-            if self.configuration('allow_search'):
-                docs.extend(read_handler.documentation_search())
+            for doc in read_handler.documentation(include_search=self.configuration('allow_search')):
+                if relative_path:
+                    doc.prepend_relative_path(relative_path)
+                docs.append(doc)
 
         for name in ['create', 'update', 'delete']:
             if not self.configuration(f'allow_{name}'):
                 continue
-            action_docs = self.build_handler(f'{name}_handler').documentation()
+            handler = self.build_handler(self.configuration(f'{name}_handler'))
+            action_docs = handler.documentation()
             for doc in action_docs:
-                docs.append({**doc, 'request_method': self.configuration(f'{name}_request_method')})
+                if relative_path:
+                    doc.prepend_relative_path(relative_path)
+                doc.set_request_methods([self.configuration(f'{name}_request_method')])
+                docs.append(doc)
 
         return docs
 
-    def documentation(self):
-        requests = []
-        if self.configuration('allow_read'):
-            read_handler = self.build_handler(self.configuration('read_handler'))
-            requests.extend(read_handler.documentation(include_search=self.configuration('allow_search')))
-
-        for handler_name in ['create', 'update', 'delete']:
-            if self.configuration(f'allow_{handler_name}'):
-                request_doc = self.build_handler(self.configuration('read_handler')).documentation()
-                request_doc.set_request_methods(self.configuration(f'{handler_name}_request_method'))
-                requests.extend(request_doc)
-
-        base_url = self.configuration('base_url')
-        if base_url:
-            requests = [request.prepend_relative_path(base_url) for request in requests]
-
-        return requests
+    def documentation_models(self):
+        # read and write use the same model, so we just need one
+        read_handler = self.build_handler(self.configuration('read_handler'))
+        return read_handler.documentation_models()

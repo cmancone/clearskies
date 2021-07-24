@@ -222,7 +222,7 @@ class ReadTest(unittest.TestCase):
             ['status', 'data', 'pagination', 'error', 'inputErrors'],
             [schema.name for schema in all_doc.responses[0].schema.children]
         )
-        data_response_properties = all_doc.responses[0].schema.children[1].item_definition
+        data_response_properties = all_doc.responses[0].schema.children[1].item_definition.children
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
         self.assertEquals(['integer', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
         self.assertEquals(
@@ -240,6 +240,7 @@ class ReadTest(unittest.TestCase):
         data_response_properties = resource_doc.responses[0].schema.children[1].children
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
         self.assertEquals(['integer', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
+        self.assertEquals(['id'], [param.definition.name for param in resource_doc.parameters])
 
         # Check our 'search' endpoint which returns all records with fancy search options
         self.assertEquals(2, len(search_doc.responses))
