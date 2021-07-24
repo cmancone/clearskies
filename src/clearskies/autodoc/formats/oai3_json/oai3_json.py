@@ -40,9 +40,22 @@ class OAI3JSON:
         return json.dumps(data)
 
     def convert(self):
+        paths = {}
+        for request in self.formatted:
+            if request.relative_path not in paths:
+                paths[request.relative_path] = {}
+
+            path_data = request.convert()
+            for (request_method, path_doc) in path_data.items():
+                if request_method in paths[request.relative_path]:
+                    raise ValueError(
+                        f"Two routes had the same path and method: {request.relative_path} - {request_method}"
+                    )
+                paths[request.relative_path][request_method] = path_doc
+
         data = {
             'openapi': '3.0.0',
-            'paths': {request.relative_path: request.convert() for request in self.formatted}
+            'paths': paths,
         }
 
         if self.models:

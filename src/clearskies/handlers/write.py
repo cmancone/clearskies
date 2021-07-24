@@ -142,7 +142,7 @@ class Write(Base):
             ),
         }
 
-    def _documentation(self, description='', response_description=''):
+    def _documentation(self, description='', response_description='', include_id_in_path=False):
         nice_model = self.camel_to_nice(self._models.model_class().__name__)
         data_schema = self.documentation_data_schema()
         schema_model_name = self.camel_to_snake(self._models.model_class().__name__)
@@ -171,7 +171,7 @@ class Write(Base):
                     *standard_error_responses,
                     self.documentation_not_found(),
                 ],
-                relative_path='{id}',
+                relative_path='{id}' if include_id_in_path else '',
                 parameters=[
                     *self.configuration('authentication').docuemntation_request_parameters(),
                     *self.documentation_write_parameters(nice_model),

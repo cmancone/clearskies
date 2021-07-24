@@ -10,7 +10,7 @@ class Request:
         self.responses = responses
         self.relative_path = relative_path
         self.request_methods = [request_methods] if type(request_methods) == str else request_methods
-        self.parameters = parameters if parameters else []
+        self.set_parameters(parameters)
 
     def set_request_methods(self, request_methods):
         self.request_methods = [request_methods] if type(request_methods) == str else request_methods
@@ -19,3 +19,9 @@ class Request:
     def prepend_relative_path(self, path):
         self.relative_path = path.rstrip('/') + '/' + self.relative_path.lstrip('/')
         return self
+
+    def set_parameters(self, parameters=None):
+        self.parameters = parameters if parameters else []
+
+    def add_parameter(self, parameter):
+        self.parameters.append(parameter)

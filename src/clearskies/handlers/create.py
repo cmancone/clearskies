@@ -24,5 +24,5 @@ class Create(Write):
         nice_model = self.camel_to_nice(self._models.model_class().__name__)
         return self._documentation(
             description=f'Create a new {nice_model}',
-            response_description=f'The new {nice_model}'
+            response_description=f'The new {nice_model}',
         )

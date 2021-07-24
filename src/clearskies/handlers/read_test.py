@@ -250,8 +250,8 @@ class ReadTest(unittest.TestCase):
             [schema.name for schema in search_doc.responses[0].schema.children]
         )
         data_response_properties = search_doc.responses[0].schema.children[1].item_definition
-        self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
-        self.assertEquals(['integer', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
+        self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties.children])
+        self.assertEquals(['integer', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties.children])
         self.assertEquals(
             ['where', 'sort', 'start', 'limit'],
             [param.definition.name for param in search_doc.parameters]

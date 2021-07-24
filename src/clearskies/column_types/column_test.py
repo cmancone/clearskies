@@ -41,7 +41,6 @@ class ColumnTest(unittest.TestCase):
 
         self.assertEquals(AutoDocString, doc.__class__)
         self.assertEquals('my_name', doc.name)
-        self.assertEquals('string', doc.example)
 
         more_doc = self.column.documentation(name='hey', example='sup', value='okay')
         self.assertEquals(AutoDocString, more_doc.__class__)

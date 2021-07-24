@@ -3,6 +3,8 @@ from .create import Create
 from .update import Update
 from .delete import Delete
 from .read import Read
+from .. import autodoc
+
 
 class InvalidUrl(Exception):
     pass
@@ -115,12 +117,9 @@ class RestfulAPI(Routing):
         self.configuration('read_handler') if self.configuration('allow_read') else None,
         docs = []
         # read handler is slightly different so handle that individually....
-        relative_path = self.configuration('base_url')
         if self.configuration('allow_read'):
             read_handler = self.build_handler(self.configuration('read_handler'))
             for doc in read_handler.documentation(include_search=self.configuration('allow_search')):
-                if relative_path:
-                    doc.prepend_relative_path(relative_path)
                 docs.append(doc)
 
         for name in ['create', 'update', 'delete']:
@@ -129,9 +128,19 @@ class RestfulAPI(Routing):
             handler = self.build_handler(self.configuration(f'{name}_handler'))
             action_docs = handler.documentation()
             for doc in action_docs:
-                if relative_path:
-                    doc.prepend_relative_path(relative_path)
                 doc.set_request_methods([self.configuration(f'{name}_request_method')])
+
+                # the restful API adjusts the routing behavior of delete and update, so we want to clobber
+                # the parameters
+                if name != 'create':
+                    doc.add_parameter(
+                        autodoc.request.URLPath(
+                            autodoc.schema.Integer('id'),
+                            description=f'The id of the record to {name}',
+                            required=True,
+                        )
+                    )
+
                 docs.append(doc)
 
         return docs

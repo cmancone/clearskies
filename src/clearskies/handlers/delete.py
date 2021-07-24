@@ -63,5 +63,6 @@ class Delete(Base):
                     *standard_error_responses,
                     self.documentation_not_found(),
                 ],
+                relative_path='{id}',
             )
         ]

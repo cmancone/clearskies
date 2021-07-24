@@ -31,5 +31,6 @@ class Update(Write):
         nice_model = self.camel_to_nice(self._models.model_class().__name__)
         return self._documentation(
             description='Update the ' + nice_model + ' with an id of {id}',
-            response_description=f'The updated {nice_model}'
+            response_description=f'The updated {nice_model}',
+            include_id_in_path=True,
         )
