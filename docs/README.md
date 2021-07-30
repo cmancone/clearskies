@@ -1,10 +1,10 @@
-- Installation and Dependency Management
-- Handlers, Applications, and Contexts, oh my!
-- Models and Columns
-- Cursor Backend
-- RESTful APIs
-- Simple Routing
-- API Backend
-- Dependency Injection
-- Testing
-- Secret Management
+1. [Installation and Dependency Management](./1_installation_dependencies.md)
+2. [Models and Columns](./2_models_and_columns.md)
+3. Handlers, Applications, and Contexts, oh my!
+4. Cursor Backend
+5. RESTful APIs
+6. Simple Routing
+7. API Backend
+8. Dependency Injection
+9. Testing
+10. Secret Managemente
