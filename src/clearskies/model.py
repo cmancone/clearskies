@@ -9,6 +9,7 @@ class Model(ABC):
     _configured_columns = None
     _backend = None
     _data = None
+    _previous_data = None
     _transformed = None
 
     def __init__(self, backend, columns):
@@ -16,6 +17,7 @@ class Model(ABC):
         self._columns = columns
         self._transformed = {}
         self._data = {}
+        self._previous_data = None
 
     def _camel_case_to_snake_case(self, string):
         return re.sub(
@@ -61,30 +63,37 @@ class Model(ABC):
         if not self.exists:
             return None
 
+        return self.get_transformed_from_data(column_name, self._data)
+
+    def get_transformed_from_data(self, column_name, data, cache=True, check_providers=True, silent=False):
+        if cache and column_name in self._transformed:
+            return self._transformed[column_name]
+
         # everything in self._data came directly out of the database, but we don't want to send that off.
         # instead, the corresponding column has an opportunity to make changes as needed.  Moreover,
         # it could be that the requested column_name doesn't even exist directly in self._data, but
         # can be provided by a column.  Therefore, we're going to do some work to fulfill the request,
         # raise an Error if we *really* can't fulfill it, and store the results in self._transformed
         # as a simple local cache (self._transformed is cleared during a save operation)
-        if column_name not in self._transformed:
-            columns = self.columns()
-            if column_name not in self._data or self._data[column_name] is None:
-                for column in columns.values():
-                    if column.can_provide(column_name):
-                        self._transformed[column_name] = column.provide(self._data, column_name)
-                        break
-                if column_name not in self._transformed and column_name not in self._data:
+        columns = self.columns()
+        value = None
+        if (column_name not in data or data[column_name] is None) and check_providers:
+            for column in columns.values():
+                if column.can_provide(column_name):
+                    value = column.provide(data, column_name)
+                    break
+            if column_name not in data and value is None:
+                if not silent:
                     raise KeyError(f"Unknown column '{column_name}' requested from model '{self.__class__.__name__}'")
+                return None
+        else:
+            value = self.columns()[column_name].from_database(data[column_name]) \
+                if column_name in self.columns() \
+                else data[column_name]
 
-            else:
-                self._transformed[column_name] = \
-                    self.columns()[column_name].from_database(self._data[column_name]) \
-                    if column_name in self.columns() \
-                    else self._data[column_name]
-
-        return self._transformed.get(column_name, None)
-
+        if cache:
+            self._transformed[column_name] = value
+        return value
 
     @property
     def exists(self):
@@ -108,12 +117,14 @@ class Model(ABC):
             raise ValueError("You have to pass in something to save!")
         columns = self.columns()
 
+        old_data = self.data
         data = self.columns_pre_save(data, columns)
         data = self.pre_save(data)
         if data is None:
             raise ValueError("pre_save forgot to return the data array!")
 
-        to_save = self._to_backend(data, columns)
+        to_save = self.columns_to_backend(data, columns)
+        to_save = self.to_backend(to_save, columns)
         if self.exists:
             new_data = self._backend.update(self.id, to_save, self)
         else:
@@ -121,13 +132,51 @@ class Model(ABC):
         id = columns['id'].from_database(new_data['id'])
 
         data = self.columns_post_save(data, id, columns)
-        data = self.post_save(data, id)
-        if data is None:
-            raise ValueError("post_save forgot to return the data array!")
+        self.post_save(data, id)
 
-        self._data = new_data
+        self.data = new_data
         self._transformed = {}
+        self._previous_data = old_data
         return True
+
+    def is_changing(self, key, data):
+        """
+        Returns True/False to denote if the given column is being modified by the active save operation
+
+        Pass in the name of the column to check and the data dictionary from the save in progress
+        """
+        has_old_value = key in self._data
+        has_new_value = key in data
+
+        if not has_new_value:
+            return False
+        if not has_old_value:
+            return True
+
+        return self.__getattr__(key) == data[key]
+
+    def latest(self, key, data):
+        """
+        Returns the 'latest' value for a column during the save operation
+
+        Returns either the column value from the data dictionary or the current value stored in the model
+        Basically, shorthand for the optimized version of:  `data.get(key, default=getattr(self, key))` (which is
+        less than ideal because it always builds the default value, even when not necessary)
+
+        Pass in the name of the column to check and the data dictionary from the save in progress
+        """
+        if key in data:
+            return data[key]
+        return self.__getattr__(key)
+
+    def was_changed(self, key):
+        """ Returns True/False to denote if a column was changed in the last save """
+        if self._previous_data is None:
+            raise ValueError("was_changed was called before a save was finished - you must save something first")
+        return self.is_changing(key, self._previous_data)
+
+    def previous_value(self, key):
+        return self.get_transformed_from_data(key, self._previous_data, cache=False, check_providers=False, silent=True)
 
     def delete(self, except_if_not_exists=True):
         if not self.exists:
@@ -163,9 +212,13 @@ class Model(ABC):
         """
         return data
 
-    def _to_backend(self, data, columns):
+    def columns_to_backend(self, data, columns):
         backend_data = {**data}
         for column in columns.values():
+            if column.is_temporary and column.name in backend_data:
+                del backend_data[column.name]
+                continue
+
             backend_data = column.to_database(backend_data)
             if backend_data is None:
                 raise ValueError(
@@ -173,6 +226,9 @@ class Model(ABC):
                 )
 
         return backend_data
+
+    def to_backend(self, data, columns):
+        return data
 
     def columns_post_save(self, data, id, columns):
         """ Uses the column information present in the model to make additional changes as needed after saving """
@@ -191,7 +247,7 @@ class Model(ABC):
         It is passed in the data being saved as well as the id.  It should take action as needed and then return
         either the original data array or an adjusted one if appropriate.
         """
-        return data
+        pass
 
     def pre_save(self, data):
         """

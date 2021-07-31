@@ -11,7 +11,9 @@ class Column(ABC):
         'input_requirements',
         'class',
         'is_writeable',
+        'is_temporary',
     ]
+
     my_configs = []
     required_configs = []
 
@@ -23,6 +25,10 @@ class Column(ABC):
     @property
     def is_readable(self):
         return True
+
+    @property
+    def is_temporary(self):
+        return bool(self.config('is_temporary', silent=True))
 
     @property
     def is_required(self):

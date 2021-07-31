@@ -1,6 +1,6 @@
 # clearskies
 
-clearskies is a Python framework intended for developing microservices in the cloud via declarative programming principles.  It is mainly intended for backend services and havs built-in support for RESTful API endpoints, queue listeners, scheduled tasks, and the like.
+clearskies is a very opinionated Python framework intended for developing microservices in the cloud via declarative programming principles.  It is mainly intended for backend services and so is designed for RESTful API endpoints, queue listeners, scheduled tasks, and the like.
 
 # Installation, Documentation, and Usage
 
@@ -22,13 +22,18 @@ For usage examples see:
 
 clearskies is really just a set of loosely coupled classes that play nicely with eachother and coordinate via dependency injection.  The primary goals of this framework include:
 
- - [Context neutral: your applications run them same whether they are in a lambda, queue listener, behind a WSGI server, or run locally via the CLI](context-neutral)
- - [Extreme flexibility: all apsects of the framework can be easily replaced via sideloading](sideloading)
- - [Creating backend APIs via declarative principles, rather than "direct" programming](declarative-apis)
- - [Secrets Management/Dynamic credentials as a first-class citizen](secrets-management)
- - [Ease of testing](testing)
+ - [Truly Reusable business logic (by killing controllers)](#die-controllers-die)
+ - [Context neutral: your applications run them same whether they are in a lambda, queue listener, behind a WSGI server, or run locally via the CLI](#context-neutral)
+ - [Extreme flexibility: all apsects of the framework can be easily replaced via sideloading](#sideloading)
+ - [Creating backend APIs via declarative principles, rather than "direct" programming](#declarative-apis)
+ - [Secrets Management/Dynamic credentials as a first-class citizen](#secrets-management)
+ - [Ease of testing](#testing)
 
 But what does that actually mean?
+
+### Die Controllers Die
+
+This is actually a key goal of clearskies, and a substantial departure from other frameworks, so [there is an entire page devoted to it in the documentation](./docs/2_but_why.md).
 
 ### Context Neutral
 
