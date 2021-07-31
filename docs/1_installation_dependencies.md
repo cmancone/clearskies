@@ -20,4 +20,4 @@ If you try to use one of the above features but haven't installed the required d
 
 Of course, this only covers the dependencies for core clearskies functionality.  Since clearskies focuses on adding features via sideloading, additional functionality is typically packaged up through separate installable modules, which come with their own required dependencies.
 
-Next: [Models and Columns](./2_models_and_columns.md)
+Next: [But Why?](./2_but_why.md)
