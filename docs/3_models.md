@@ -1,15 +1,15 @@
 # Models and Columns
 
 1. [Model Classes](#model-classes)
-    1. [Overview](#overview)
+    1. [Overview](#model-overview)
     2. [Example and Usage](#example-and-usage)
     3. [Lifecycle Hooks](#lifecycle-hooks)
 2. [Models Classes](#models-classes)
-3. [Column Classes](#column-classes)
+    1. [Overview](#models-overview)
 
 ## Model Classes
 
-### Overview
+### Model Overview
 
 clearskies makes use of fairly standard models.  As in other python frameworks, a schema is declared in the model class.  This schema is then used throughout clearskies in order to automate a number of common tasks (input validation, transforming data during the save process, building API endpoints, autodocumentation, etc...).
 
@@ -166,3 +166,49 @@ Name is changing to awesome!
 sending email to user!
 {'name': 'awesome!', 'id': 5, 'updated': <datetime.datetime object>}
 ```
+## Models Classes
+
+The model**s** classes in clearskies server as a query builder and factory for the model class.  Building off of the example User model class above, a Users class would look like:
+
+```
+from clearskies import Models
+
+
+class Users(Models):
+    def __init__(self, cursor_backend, columns):
+        super().__init__(cursor_backend, columns)
+
+    def model_class(self):
+        return User
+```
+
+The models and model classes then work together like so:
+
+```
+bob = users.where('email=bob@example.com')
+print(bob.email)
+
+start = 0
+limit = 100
+for user in users.where("age>20").sort_by('name', 'desc').limit(start, limit):
+    print(user.email)
+
+for user in users.where("name in ('bob', 'alice')"):
+    user.delete()
+
+new_user = users.create({'name': 'bob', 'email': 'bob@example.com', 'age': 25})
+
+# or...
+new_user = users.empty_model()
+new_user.save({'name': 'bob', 'email': 'bob@example.com', 'age': 25})
+
+# find() only returns the first record, which will be empty if the record does not exist
+first_record = users.find('id=1')
+if first_record.exists:
+   print('Found it!')
+
+# chaining `where` clauses together combines with AND
+matching_users = users.where("age>20").where("age<50").where("name LIKE '%greg%'")
+```
+
+The `where` method is worth a mention.  In short, you can pass in most "standard" SQL conditions.  Specifically, conditions using any of the operators defined [at the top of this class](../src/clearskies/condition_parser.py).  Despite how this looks, you're not generating actual SQL and you can safely inject raw user input into these conditions without the risk of SQL injection.  The input to the `where` method is **not** injected directly into an SQL query.  After all, clearskies is meant to work with a variety of backends - not just SQL.  Rather, this is just a convenient way to configure your conditions.  At least, I find it easier than having a separate method for each operator, and having to remember their names (e.g. `models.where_equals()`, `models.where_gt()`, `models.where_lt()`, etc...).

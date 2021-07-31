@@ -1,11 +1,12 @@
 1. [Installation and Dependency Management](./1_installation_dependencies.md)
 2. [Why do we need another framework?](./2_but_why.md)
-2. [Models and Columns](./3_models_and_columns.md)
-3. Handlers, Applications, and Contexts, oh my!
-4. Cursor Backend
-5. RESTful APIs
-6. Simple Routing
-7. API Backend
-8. Dependency Injection
-9. Testing
-10. Secret Managemente
+3. [Models](./3_models.md)
+4. [Columns](./4_columns.md)
+5. Handlers, Applications, and Contexts, oh my!
+6. Cursor Backend
+7. RESTful APIs
+8. Simple Routing
+9. API Backend
+10. Dependency Injection
+11. Testing
+12. Secret Management

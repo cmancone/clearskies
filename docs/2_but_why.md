@@ -26,4 +26,4 @@ Most importantly though, this makes it substantially easier to reuse business lo
 
 One side effect of this is the death of controllers.  Not that controllers are bad guys - they just aren't necessary.  After all, when each column already knows how to validate user input, apply business logic, and update external systems, you don't really need a controller anyway.  Therefore, setting up and endpoint in clearskies is really just a matter of setting which columns are available for reading and writing.  Clearskies does the rest.
 
-Next: [Models and Columns](./3_models_and_columns.md)
+Next: [Models](./3_models.md)
