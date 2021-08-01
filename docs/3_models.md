@@ -15,11 +15,9 @@ clearskies makes use of fairly standard models.  As in other python frameworks, 
 
 Dependencies are passed in via the model constructor.  To work, models need to at least receive a proper backend as well as the the [columns](../src/clearskies/columns.py) object.  You can add more dependencies as needed, of course.
 
-Most of your models will probably use the `cursor_backend`.  This means that the model will save/load data from an SQL database using the `pymysql` library, with the table name determined by calling `model.table_name`.  Unless you override this property, clearskies will "pluralize" the model class name, make it all lower case, and use it as the table name (e.g. User -> users).
+Most of your models will probably use the `cursor_backend`.  This means that the model will save/load data from an SQL database using the `pymysql` library, with the table name determined by calling `model.table_name`.  Unless you override this property, clearskies will "pluralize" the model class name, convert to snake case, and use it as the table name (e.g. `UserOrders` -> `user_orders`).
 
-An OrderedDict is used for the columns definition to allow clearskies to order results in the JSON response of API endpoints, in the auto generated documentation, and other places as appropriate.
-
-All models are assumed to have a column named `id` which is an auto-incrementing integer.  This is automatically added to your column definitions, even if you don't specify it yourself.  You cannot remove this column (file an issue if that is a problem for you), but if you need a different column type you can do that by explicitly declaring the `id` column in your columns definition.
+All models are assumed to have a column named `id` which is an auto-incrementing integer.  This is automatically added to your column definitions, even if you don't specify it yourself.  You cannot remove this column (report an issue if that is a problem for you), but if you need a different column type you can do that by explicitly declaring the `id` column in your columns definition.
 
 ### Example and Usage
 
@@ -75,6 +73,7 @@ Model classes have a number of lifecycle hooks to give fine-grained control over
 In addition there are 4 methods you can call to query metadata about the save process:
 
 | Method Name    | Parameters        | Availability | Usage                                                                        |
+|----------------|-------------------|--------------|------------------------------------------------------------------------------|
 | is_changing    | column_name, data | During Save  | Returns True/False to denote if the given column is changing during the save |
 | latest         | column_name, data | During Save  | Returns the new data if the column is changing, or the old data if not       |
 | was_changed    | column_name       | After Save   | Returns True/False to denote if the column was changed during the last save  |
@@ -168,7 +167,7 @@ sending email to user!
 ```
 ## Models Classes
 
-The model**s** classes in clearskies server as a query builder and factory for the model class.  Building off of the example User model class above, a Users class would look like:
+The model**s** classes in clearskies serves as a query builder and factory for the model class.  Building off of the example User model class above, a Users class would look like:
 
 ```
 from clearskies import Models
@@ -185,9 +184,6 @@ class Users(Models):
 The models and model classes then work together like so:
 
 ```
-bob = users.where('email=bob@example.com')
-print(bob.email)
-
 start = 0
 limit = 100
 for user in users.where("age>20").sort_by('name', 'desc').limit(start, limit):
@@ -205,10 +201,15 @@ new_user.save({'name': 'bob', 'email': 'bob@example.com', 'age': 25})
 # find() only returns the first record, which will be empty if the record does not exist
 first_record = users.find('id=1')
 if first_record.exists:
-   print('Found it!')
+    print('Found it!')
+else:
+    # model properties are None for a non-existent record
+    print(first_record.name == None)
 
 # chaining `where` clauses together combines with AND
 matching_users = users.where("age>20").where("age<50").where("name LIKE '%greg%'")
 ```
 
-The `where` method is worth a mention.  In short, you can pass in most "standard" SQL conditions.  Specifically, conditions using any of the operators defined [at the top of this class](../src/clearskies/condition_parser.py).  Despite how this looks, you're not generating actual SQL and you can safely inject raw user input into these conditions without the risk of SQL injection.  The input to the `where` method is **not** injected directly into an SQL query.  After all, clearskies is meant to work with a variety of backends - not just SQL.  Rather, this is just a convenient way to configure your conditions.  At least, I find it easier than having a separate method for each operator, and having to remember their names (e.g. `models.where_equals()`, `models.where_gt()`, `models.where_lt()`, etc...).
+The `where` method is worth a mention.  Despite appearances, you aren't actually building SQL, and you can safely inject raw user input here.  `where` is looking for a string with the format `[COLUMN_NAME] [OPERATOR] [VALUE]`.  The list of allowed operators is defined [at the top of this class](../src/clearskies/condition_parser.py).  This is just intended as a convenient way to specify conditions without having to remember the name of the method for each operator (e.g. clearskies does not have methods like `models.where_equals()`, `models.where_gt()`, `models.where_lt()`, etc...).
+
+The models class also has methods for `join` and `group_by`.  Note that these methods may not work in all backends.
