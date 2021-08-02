@@ -3,9 +3,9 @@ from .float import Float
 
 
 class FloatTest(unittest.TestCase):
-    def test_from_database(self):
+    def test_from_backend(self):
         float_column = Float()
-        self.assertEquals(5.0, float_column.from_database('5'))
+        self.assertEquals(5.0, float_column.from_backend('5'))
 
     def test_check_input_bad(self):
         float_column = Float()

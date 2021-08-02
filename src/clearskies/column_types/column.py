@@ -80,7 +80,7 @@ class Column(ABC):
 
         return self.configuration[key]
 
-    def from_database(self, value):
+    def from_backend(self, value):
         """
         Takes the database representation and returns a python representation
 
@@ -88,9 +88,9 @@ class Column(ABC):
         """
         return value
 
-    def to_database(self, data):
+    def to_backend(self, data):
         """
-        Makes any changes needed to save the data to the database.
+        Makes any changes needed to save the data to the backend.
 
         This typically means formatting changes - converting DateTime objects to database
         date strings, etc...

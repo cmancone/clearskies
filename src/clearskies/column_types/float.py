@@ -5,7 +5,7 @@ from ..autodoc.schema import Number as AutoDocNumber
 class Float(Column):
     _auto_doc_class = AutoDocNumber
 
-    def from_database(self, value):
+    def from_backend(self, value):
         return float(value)
 
     def check_input(self, model, data):

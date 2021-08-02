@@ -5,7 +5,7 @@ from ..autodoc.schema import Integer as AutoDocInteger
 class Integer(Column):
     _auto_doc_class = AutoDocInteger
 
-    def from_database(self, value):
+    def from_backend(self, value):
         return int(value)
 
     def input_error_for_value(self, value):

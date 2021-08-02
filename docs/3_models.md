@@ -82,7 +82,6 @@ In addition there are 4 methods you can call to query metadata about the save pr
 The difference between `pre_save` and `to_backend` is subtle but important.  If you make changes to the data in `pre_save`, those changes will be reflected everywhere: both in the data persisted to the backend and then also in the data passed to `post_save`.  In contrast, `to_backend` only affects the data which is persisted to the backend.  A common use-case for this is to exclude data from the save.  For instance, you may want to accept user input to control behavior in pre/post save, but don't can't persist it to the backend because it doesn't have a corresponding column in the database.  In that case, you can use `to_backend` to remove it from being saved to the backend.  You can also use it to make necessary transformations when saving to the backend.
 
 
-
 ```
 import datetime
 import clearskies

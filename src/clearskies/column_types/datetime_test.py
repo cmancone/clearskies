@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 
 
 class DateTimeTest(unittest.TestCase):
-    def test_from_database(self):
-        date = DateTime().from_database('2020-11-28 12:30:45')
+    def test_from_backend(self):
+        date = DateTime().from_backend('2020-11-28 12:30:45')
         self.assertEquals(type(date), datetime)
         self.assertEquals(2020, date.year)
         self.assertEquals(11, date.month)
@@ -16,10 +16,10 @@ class DateTimeTest(unittest.TestCase):
         self.assertEquals(45, date.second)
         self.assertEquals(timezone.utc, date.tzinfo)
 
-    def test_to_database(self):
+    def test_to_backend(self):
         date = DateTime()
         date.configure('created', {}, int)
-        data = date.to_database({'created': datetime.strptime('2021-01-07 22:45:13', '%Y-%m-%d %H:%M:%S')})
+        data = date.to_backend({'created': datetime.strptime('2021-01-07 22:45:13', '%Y-%m-%d %H:%M:%S')})
         self.assertEquals('2021-01-07 22:45:13', data['created'])
 
     def test_to_json(self):

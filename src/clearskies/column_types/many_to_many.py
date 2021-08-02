@@ -163,7 +163,7 @@ class ManyToMany(Integer):
             return [model for model in related_models]
         return [model.id for model in related_models]
 
-    def to_database(self, data):
+    def to_backend(self, data):
         # we can't persist our mapping data to the database directly, so remove anything here
         # and take care of things in post_save
         if self.name in data:

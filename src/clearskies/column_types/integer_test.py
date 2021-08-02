@@ -3,9 +3,9 @@ from .integer import Integer
 
 
 class IntegerTest(unittest.TestCase):
-    def test_from_database(self):
+    def test_from_backend(self):
         integer = Integer()
-        self.assertEquals(5, integer.from_database('5'))
+        self.assertEquals(5, integer.from_backend('5'))
 
     def test_check_input_bad(self):
         integer = Integer()

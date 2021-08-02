@@ -7,7 +7,7 @@ from ..autodoc.schema import DateTime as AutoDocDateTime
 class DateTime(Column):
     _auto_doc_class = AutoDocDateTime
 
-    def from_database(self, value):
+    def from_backend(self, value):
         if value == None:
             date = datetime.strptime('1970-01-01', '%Y-%m-%d')
         elif type(value) == str:
@@ -16,7 +16,7 @@ class DateTime(Column):
             date = value
         return date.replace(tzinfo=timezone.utc)
 
-    def to_database(self, data):
+    def to_backend(self, data):
         if not self.name in data or type(data[self.name]) == str:
             return data
 

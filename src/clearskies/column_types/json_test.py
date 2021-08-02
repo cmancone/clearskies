@@ -3,14 +3,14 @@ from .json import JSON
 
 
 class JSONTest(unittest.TestCase):
-    def test_from_database(self):
+    def test_from_backend(self):
         json = JSON()
-        self.assertDictEqual({'name': 'Bob', 'age': 5}, json.from_database('{"name":"Bob","age":5}'))
+        self.assertDictEqual({'name': 'Bob', 'age': 5}, json.from_backend('{"name":"Bob","age":5}'))
 
-    def test_to_database(self):
+    def test_to_backend(self):
         json = JSON()
         json.configure('some_data', {}, JSON)
-        for_database = json.to_database({
+        for_database = json.to_backend({
             'some_data': {'peeps': [1, 2, 3], 'more_peeps': "okay"},
             'more_data': {'okay': 'hey'},
         })
