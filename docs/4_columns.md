@@ -1,6 +1,6 @@
 # Columns
 
-Columns are a first class citizen in clearskies, and the preferred avenue for making business logic reusable.  Like in other frameworks, columns are attached to models to define its schema.  Clearskies will use this schema to automatically generate API endpoints, validate user input, etc...
+Columns are a first class citizen in clearskies, and the preferred avenue for making business logic reusable.  Like in other frameworks, columns are attached to models to define its schema.  Clearskies uses this schema to automatically generate API endpoints, validate user input, etc...
 
 clearskies comes with a number of pre-defined column types to cover "standard" framework usage, relationships, etc.  These are all meant to be extended, which is what you want to do to add your own business logic.  In an ideal world of course, you won't have to do this _too_ often.
 

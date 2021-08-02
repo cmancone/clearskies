@@ -1,4 +1,4 @@
-# Models and Columns
+# Models
 
 1. [Model Classes](#model-classes)
     1. [Overview](#model-overview)
@@ -212,3 +212,5 @@ matching_users = users.where("age>20").where("age<50").where("name LIKE '%greg%'
 The `where` method is worth a mention.  Despite appearances, you aren't actually building SQL, and you can safely inject raw user input here.  `where` is looking for a string with the format `[COLUMN_NAME] [OPERATOR] [VALUE]`.  The list of allowed operators is defined [at the top of this class](../src/clearskies/condition_parser.py).  This is just intended as a convenient way to specify conditions without having to remember the name of the method for each operator (e.g. clearskies does not have methods like `models.where_equals()`, `models.where_gt()`, `models.where_lt()`, etc...).
 
 The models class also has methods for `join` and `group_by`.  Note that these methods may not work in all backends.
+
+Next: [Columns](./4_columns.md)
