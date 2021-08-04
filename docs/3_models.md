@@ -147,7 +147,7 @@ lifecycle_example.data = {'name': 'test', 'id': 5}
 
 print(lifecycle_example.data)
 
-lifecycle_example.save({'name': 'awesome!'})
+lifecycle_example.save({'name': 'awesome!', 'send_email': True})
 
 print(lifecycle_example.data)
 ```

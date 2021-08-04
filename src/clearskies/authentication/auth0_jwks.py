@@ -1,5 +1,7 @@
 from ..handlers.exceptions import ClientError
 import datetime
+from .. import autodoc
+
 
 class Auth0JWKS:
     is_public = False
@@ -91,10 +93,10 @@ class Auth0JWKS:
                 return False
         return True
 
-    def docuemntation_request_parameters(self):
+    def documentation_request_parameters(self):
         return [
             autodoc.request.Header(
-                autodoc.request.String('Authorization', example='Bearer [JWT_HERE]'),
+                autodoc.schema.String('Authorization', example='Bearer [JWT_HERE]'),
                 description="The Auth0 JWT provided via a standard 'Authorization: Bearer [JWT]' header",
                 required=True,
             )

@@ -56,3 +56,11 @@ class Auth0JWKSTest(unittest.TestCase):
         with self.assertRaises(ClientError) as context:
             auth0_jwks.authenticate(input_output)
         self.assertEquals("Missing 'Bearer ' prefix in authorization header", str(context.exception))
+
+    def test_doc(self):
+        auth0_jwks = Auth0JWKS('environment', self.requests, self.jose_jwt)
+        auth0_jwks.configure(auth0_domain='example.com', audience='sup')
+        params = auth0_jwks.documentation_request_parameters()
+        self.assertEquals(1, len(params))
+        self.assertEquals('header', params[0].location)
+        self.assertEquals('Authorization', params[0].definition.name)

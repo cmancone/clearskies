@@ -40,10 +40,10 @@ class SecretBearer:
         if not self._secret:
             raise ValueError("Attempted to use SecretBearer authentication class without providing the configuration")
 
-    def docuemntation_request_parameters(self):
+    def documentation_request_parameters(self):
         return [
             autodoc.request.Header(
-                autodoc.request.String('Authorization', example='Bearer [AUTH_TOKEN_HERE]'),
+                autodoc.schema.String('Authorization', example='Bearer [AUTH_TOKEN_HERE]'),
                 description="Auth token provided via 'Authorization: Bearer [TOKEN]' header",
                 required=True
             )

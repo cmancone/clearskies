@@ -307,7 +307,7 @@ class Read(Base):
                     *self.documentation_url_search_parameters(),
                     *self.documentation_pagination_parameters(),
                     *self.documentation_url_sort_parameters(),
-                    *self.configuration('authentication').docuemntation_request_parameters()
+                    *self.configuration('authentication').documentation_request_parameters()
                 ],
             ),
             autodoc.request.Request(
@@ -326,7 +326,7 @@ class Read(Base):
                 ],
                 relative_path='{id}',
                 parameters=[
-                    *self.configuration('authentication').docuemntation_request_parameters(),
+                    *self.configuration('authentication').documentation_request_parameters(),
                     self.documentation_id_url_parameter(),
                 ],
             )
@@ -355,7 +355,7 @@ class Read(Base):
             request_methods='POST',
             parameters=[
                 *self.documentation_json_search_parameters(),
-                *self.configuration('authentication').docuemntation_request_parameters(),
+                *self.configuration('authentication').documentation_request_parameters(),
             ],
         ))
         return requests

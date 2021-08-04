@@ -173,7 +173,7 @@ class Write(Base):
                 ],
                 relative_path='{id}' if include_id_in_path else '',
                 parameters=[
-                    *self.configuration('authentication').docuemntation_request_parameters(),
+                    *self.configuration('authentication').documentation_request_parameters(),
                     *self.documentation_write_parameters(nice_model),
                 ],
             )
