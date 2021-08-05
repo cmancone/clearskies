@@ -2,6 +2,7 @@ from abc import ABC
 import re
 from ..autodoc.schema import String as AutoDocString
 from .. import input_requirements
+import inspect
 
 
 class Column(ABC):
@@ -39,6 +40,11 @@ class Column(ABC):
             if isinstance(requirement, input_requirements.Required):
                 return True
         return False
+
+    def model_column_configurations(self):
+        nargs = len(inspect.getfullargspec(self.model_class.__init__).args) - 1
+        fake_model = self.model_class(*(['']*nargs))
+        return fake_model.all_columns()
 
     def configure(self, name, configuration, model_class):
         if not name:

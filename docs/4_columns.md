@@ -140,12 +140,15 @@ def scheduled(name, **kwargs):
 ```
 
 
-So we have a class named `Scheduled` that extends the `DateTime` class, is not writeable, and has the same builder function as the other column type classes (for convenience).
+So we have a class named `Scheduled` that extends the `DateTime` class, is not writeable, and has the same builder function as the other column type classes.
 
 Now let's tackle configuration: we want to accept two required configs: `source_column_name` and `timedelta`.  The former will be a string and the latter will be a dictionary which we will pass as kwargs to a `datetime.timedelta` object.  We'll add the following to our class definition:
 
 
 ```
+import datetime
+
+
 class Scheduled(clearskies.column_types.DateTime):
     # if we specify some config names here, the base `_check_configuration` method will
     # raise exceptions if the developer doesn't set them.
@@ -159,5 +162,65 @@ class Scheduled(clearskies.column_types.DateTime):
         super()._check_configuration(configuration)
 
         # but we have to check the values.  In particular, the `source_column_name` should correspond
-        # to an actual column in our model.  We check this via the model columns, which is a dictionary
-        # containing all the known columns in the model.
+        # to an actual column in our model.  We check this via the model column configuration, which is a dictionary
+        # containing all the known columns in the model (e.g., the result of calling model.columns_configuration(),
+        # plus the id field.
+        model_columns = self.model_column_configurations()
+        if configuration['source_column_name'] not in model_columns:
+            raise KeyError(
+                f"Column '{self.name}' references source column {configuration['source_column_name']} but this " + \
+                "column does not exist in model '{self.model_class.__name__}'"
+            )
+
+        # now let's verify that the contents of timedelta is a valid set of arguments for the timedelta object
+        # first, make sure it is a dictionary
+        if type(configuration['timedelta']) != dict:
+            raise ValueError(
+                f"timedelta for column '{self.name}' in model class {self.model_class.__name__} should be a " + \
+                "dictionary with a valid set of datetime.timedelta parameters, but it is not a dictionary"
+            )
+        # then just pass it to datetime.timedelta and see if it works.  This doesn't give us a great error
+        # message, but it's something
+        try:
+            datetime.timedelta(**configuration['timedelta'])
+        except Exception:
+            raise ValueError(
+                "Invalid timedelta configuration passed for column '{self.name}' in model class " + \
+                "'{self.model_class.__name__}'.  See datetime.timedelta documentation for allowed config keys"
+            )
+```
+
+Finally, we'll extend the `pre_save` hook and check the data dictionary to see if our source column is set.  If so, we'll take action!
+
+```
+    def pre_save(self, data, model):
+        source_column_name = self.config('source_column_name')
+        if source_column_name not in data:
+            return data
+
+        return {
+            **data,
+            self.name: data[source_column_name] + datetime.timedelta(**self.config('timedelta'))
+        }
+```
+
+And that's it!  We would use this column in a model like so:
+
+```
+import clearskies
+from .scheduled import scheduled
+
+
+class Order(Model):
+    def __init__(self, cursor_backend, columns):
+        super().__init__(cursor_backend, columns)
+
+    def columns_configuration(self):
+        return OrderedDict([
+            clearskies.column_types.string('name'),
+            clearskies.column_types.created('date_placed_at'),
+            scheduled('send_reorder_notice_at', source_column_name='date_placed_at', timedelta={'days': 30})
+        ])
+```
+
+When an order is placed it will automatically store the current time in the `date_placed_at` column.  When it sets the `date_placed_at` column, it will also set the `send_reorder_notice_at` column to have a datetime 30 days in the future.  This will happen for all save operations of the model, regardless of whether the model is updated from an API endpoint, a scheduled task, or anything else.
