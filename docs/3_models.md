@@ -15,7 +15,7 @@ clearskies makes use of fairly standard models.  As in other python frameworks, 
 
 Dependencies are passed in via the model constructor.  To work, models need to at least receive a proper backend as well as the the [columns](../src/clearskies/columns.py) object.  You can add more dependencies as needed, of course.
 
-Most of your models will probably use the `cursor_backend`.  This means that the model will save/load data from an SQL database using the `pymysql` library, with the table name determined by calling `model.table_name`.  Unless you override this property, clearskies will "pluralize" the model class name, convert to snake case, and use it as the table name (e.g. `UserOrders` -> `user_orders`).
+Most of your models will probably use the `cursor_backend`.  This means that the model will save/load data from an SQL database using the [pymysql library](https://pypi.org/project/PyMySQL/), with the table name determined by calling `model.table_name`.  Unless you override this property, clearskies will "pluralize" the model class name, convert to snake case, and use it as the table name (e.g. `UserOrders` -> `user_orders`).
 
 All models are assumed to have a column named `id` which is an auto-incrementing integer.  This is automatically added to your column definitions, even if you don't specify it yourself.  You cannot remove this column (report an issue if that is a problem for you), but if you need a different column type you can do that by explicitly declaring the `id` column in your columns definition.
 
@@ -93,24 +93,28 @@ class LifeCycleExample(clearskies.Model):
     def columns_configuration(self):
         return OrderedDict([
             clearskies.column_types.string('name'),
+            clearskies.column_types.datetime('updated'),
         ])
 
     def pre_save(self, data):
         print('pre_save invoked!')
 
         return {
-            # First, make sure and return the old stuf!  If you skip something in the returned dictionary,
-            # it will not be saved.
+            # First, make sure and return the old stuff! If you remove anything from the returned dictionary,
+            # then clearskies will simply forget that data and not save it.
             **data,
 
-            # then let's also keep track of when the record is saved
+            # then let's also keep track of when the record is saved.  This is just for example purposes,
+            # you wouldn't actually want to do this with a lifecycle hook because the clearskies.column_types.updated
+            # column type already does exactly this.
             'updated': datetime.datetime.now(),
         }
 
     def to_backend(self, data, columns):
         print('to_backend invoked!')
 
-        # remove `send_email` if it is present because this doesn't exist in the database
+        # remove `send_email` if it is present because it doesn't have a corresponding column in
+        # the database, so if we don't remove it we will get an SQL error.
         if 'send_email' in data:
             del data['send_email']
 
@@ -118,6 +122,7 @@ class LifeCycleExample(clearskies.Model):
             **data,
 
             # of course, we can't save a datetime object to the database, so we need to stringify it.
+            # Again, the clearskies.column_types.upated column already does this, so this is just an example.
             'updated': data['updated'].strftime('%Y-%m-%d')
         }
 
@@ -125,16 +130,22 @@ class LifeCycleExample(clearskies.Model):
         print('post_save invoked!')
 
         # data['updated'] exists here and is still a datetime object, because changes made in `to_backend`
-        # are only reflected in the backend - not in `post_save`
+        # are only reflected in the backend - not in `post_save`.  Also, since our pre_save hook *always*
+        # adds in the 'updated' key, we can count on data['updated'] always existing here, even if it
+        # wasn't originally part of the save data.
         print(data['updated'].year)
 
         if self.is_changing('name', data):
-            # Since I know that `name` is changing, `self.latest('name', data)` is actually just returning
-            # data['name'].  So why use it?  It's just a convenient shorthand to get either the new value
+            # self.latest is just a convenient shorthand to get either the new value
             # (out of the data object) or the old value (out of self.data) depending on whether or not
-            # the value is changing in the save.
+            # the value is changing in the save data.  This is redundant in this case though,
+            # because we already used is_changing to decide that data['name'] is changing, which
+            # means that the 'name' key exists in data.  Therefore, self.latest('name', data)
+            # will just return data['name'], since that is the latest value!
             print('Name is changing to ' + self.latest('name', data))
 
+        # data is just a dictionary, so we use data.get('send_email') as a quick shorthand
+        # to check if send_email both exists in data and has a truthy value.
         if data.get('send_email'):
             print('Sending email to user!')
 ```
@@ -209,7 +220,7 @@ else:
 matching_users = users.where("age>20").where("age<50").where("name LIKE '%greg%'")
 ```
 
-The `where` method is worth a mention.  Despite appearances, you aren't actually building SQL, and you can safely inject raw user input here.  `where` is looking for a string with the format `[COLUMN_NAME] [OPERATOR] [VALUE]`.  The list of allowed operators is defined [at the top of this class](../src/clearskies/condition_parser.py).  This is just intended as a convenient way to specify conditions without having to remember the name of the method for each operator (e.g. clearskies does not have methods like `models.where_equals()`, `models.where_gt()`, `models.where_lt()`, etc...).
+The `where` method is worth a mention.  Despite appearances, you aren't actually building SQL, and you can safely inject raw user input here.  `where` accepts a string with the format `[COLUMN_NAME] [OPERATOR] [VALUE]`.  The list of allowed operators is defined [at the top of this class](../src/clearskies/condition_parser.py).  This is just intended as a convenient way to specify conditions without having to remember the name of the method for each operator (e.g. clearskies does not have methods like `models.where_equals()`, `models.where_gt()`, `models.where_lt()`, etc...).
 
 The models class also has methods for `join` and `group_by`.  Note that these methods may not work in all backends.
 

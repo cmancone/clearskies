@@ -26,4 +26,6 @@ Most importantly though, this makes it substantially easier to reuse business lo
 
 One side effect of this is the death of controllers.  Not that controllers are bad guys - they just aren't necessary.  After all, when each column already knows how to validate user input, apply business logic, and update external systems, you don't really need a controller anyway.  Therefore, setting up and endpoint in clearskies is really just a matter of setting which columns are available for reading and writing.  Clearskies does the rest.
 
+This might make it seem like clearskies takes a "model-first" approach to development, but even this isn't true.  Even models are optional!  A model mainly provides a convenient way to define your schema and manage your backend connection.  Instead, you can attach a schema directly to an endpoint.  In this case, clearskies will still perform the same strict user input validation, automatic generation of API documentation, etc... and then pass the processed user data to a function you provide.  From there, you can do whatever you want with it.
+
 Next: [Models](./3_models.md)

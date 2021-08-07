@@ -2,7 +2,7 @@
 2. [Why do we need another framework?](./2_but_why.md)
 3. [Models](./3_models.md)
 4. [Columns](./4_columns.md)
-5. Handlers, Applications, and Contexts, oh my!
+5. [Handlers, Applications, and Contexts, oh my!](./5_handlers.md)
 6. Cursor Backend
 7. RESTful APIs
 8. Simple Routing

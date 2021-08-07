@@ -121,7 +121,7 @@ To show how you can use columns and lifecycles to generate your own custom logic
 3. We want to check the configuration to make sure it makes sense
 4. We only want to change the scheduled time when the "source" column changes
 5. We always want to change the scehduled time when the "source" column changes
-6. This column should not be writeable (since it will set itself automatically)
+6. This column should be read-only (it will set itself automatically, so we don't need users to provide a value)
 
 Let's call this column type `Scheduled`.  Let's start with a base column definition:
 
@@ -199,7 +199,10 @@ Finally, we'll extend the `pre_save` hook and check the data dictionary to see i
             return data
 
         return {
+            # always return the previous data first
             **data,
+
+            # and then add on any new data
             self.name: data[source_column_name] + datetime.timedelta(**self.config('timedelta'))
         }
 ```
@@ -219,8 +222,12 @@ class Order(Model):
         return OrderedDict([
             clearskies.column_types.string('name'),
             clearskies.column_types.created('date_placed_at'),
-            scheduled('send_reorder_notice_at', source_column_name='date_placed_at', timedelta={'days': 30})
+            scheduled('send_feedback_request_at', source_column_name='date_placed_at', timedelta={'days': 30})
         ])
 ```
 
-When an order is placed it will automatically store the current time in the `date_placed_at` column.  When it sets the `date_placed_at` column, it will also set the `send_reorder_notice_at` column to have a datetime 30 days in the future.  This will happen for all save operations of the model, regardless of whether the model is updated from an API endpoint, a scheduled task, or anything else.
+When an order object is created it will automatically store the current time in the `date_placed_at` column.  When the model sets the `date_placed_at` column, it will also set the `send_feedback_request_at` column to have a datetime 30 days in the future.  This will happen for all save operations of the model, regardless of whether the model is updated from an API endpoint, a scheduled task, or anything else.  Therefore, we have acheived all the goals we set out at the beginning. In particular, not only does the business logic for our `send_feedback_request_at` column automatically apply throughout the application, but it is easily reconfigured or re-used for other similar needs.  The logic is wrapped up in a column class which can be dropped into any model with a single line of code!
+
+The final column class can be viewed [here](./Scheduled.py)
+
+Next: [Handlers](5_handlers.md)
