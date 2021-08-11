@@ -1,18 +1,12 @@
 from ..input_outputs import WSGI as WSGIInputOutput
 from ..di import StandardDependencies
 from .build_context import build_context
+from .context import Context
 
 
-class WSGI:
-    _di = None
-    _handler = None
-
+class WSGI(Context):
     def __init__(self, di):
-        self._di = di
-
-    def configure(self, application):
-        self._handler = self._di.build(application.handler_class, cache=False)
-        self._handler.configure(application.handler_config)
+        super().__init__(di)
 
     def __call__(self, env, start_response):
         if self._handler is None:

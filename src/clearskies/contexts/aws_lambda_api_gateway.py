@@ -1,27 +1,18 @@
 from ..input_outputs import AWSLambdaAPIGateway as AWSInputOutput
 from ..di import StandardDependencies
 from .build_context import build_context
+from .context import Context
 
 
-class AWSLambdaAPIGateway:
-    _di = None
-    _handler = None
-
+class AWSLambdaAPIGateway(Context):
     def __init__(self, di):
-        self._di = di
-
-    def configure(self, application):
-        self._handler = self._di.build(application.handler_class, cache=False)
-        self._handler.configure(application.handler_config)
+        super().__init__(di)
 
     def __call__(self, event, context):
         if self._handler is None:
             raise ValueError("Cannot execute AWSLambda context without first configuring it")
 
-        return self._handler(AWSInputOutput(event, context))
-
-    def bind(self, key, value):
-        self._di.bind(key, value)
+        return self.handler(AWSInputOutput(event, context))
 
 def aws_lambda_api_gateway(
     application,

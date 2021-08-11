@@ -1,31 +1,22 @@
 from ..input_outputs import AWSLambdaELB as AWSLambdaELBInputOutput
-from ..di import StandardDependencies
+import clearskies
 from .build_context import build_context
+from .context import Context
 
 
-class AWSLambdaELB:
-    _di = None
-    _handler = None
-
+class AWSLambdaELB(Context):
     def __init__(self, di):
-        self._di = di
-
-    def configure(self, application):
-        self._handler = self._di.build(application.handler_class, cache=False)
-        self._handler.configure(application.handler_config)
+        super().__init__(di)
 
     def __call__(self, event, context):
         if self._handler is None:
-            raise ValueError("Cannot execute AWSLambda context without first configuring it")
+            raise ValueError("Cannot execute AWSLambdaELB context without first configuring it")
 
         return self._handler(AWSLambdaELBInputOutput(event, context))
 
-    def bind(self, key, value):
-        self._di.bind(key, value)
-
 def aws_lambda_elb(
     application,
-    di_class=StandardDependencies,
+    di_class=clearskies.di.StandardDependencies,
     bindings=None,
     binding_classes=None,
     binding_modules=None

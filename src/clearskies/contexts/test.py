@@ -4,21 +4,24 @@ from ..di import StandardDependencies
 from ..backends import MemoryBackend
 from datetime import datetime, timezone
 from .build_context import build_context
+from .context import Context
+from .convert_to_application import convert_to_application
 
 
-class Test:
+class Test(Context):
     _application = None
-    _handler = None
     input_output = None
     memory_backend = None
     now = None
 
     def __init__(self, di):
-        self.di = di
+        super().__init__(di)
 
     def configure(self, application):
+        # so for the other contexts, the application is just a way to manage configuration,
+        # and so gets promptly thrown away.  We actually want it though
         self.now = datetime.now().replace(tzinfo=timezone.utc, microsecond=0)
-        self._application = application
+        self._application = convert_to_application(application)
         self.memory_backend = self.di.build(MemoryBackend, cache=False)
         self.memory_backend.silent_on_missing_tables(silent=True)
 
@@ -46,9 +49,6 @@ class Test:
             **self._application.handler_config,
         })
         return self._handler(input_output)
-
-    def bind(self, key, value):
-        self.di.bind(key, value)
 
     def build(self, key):
         return self.di.build(key)

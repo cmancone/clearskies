@@ -1,3 +1,8 @@
+from ..application import Application
+from ..handlers.callable import Callable
+from .convert_to_application import convert_to_application
+
+
 def build_context(
     context_class,
     application,
@@ -6,6 +11,8 @@ def build_context(
     binding_classes=None,
     binding_modules=None,
 ):
+    application = convert_to_application(application)
+
     if bindings is None:
         bindings = {}
     if binding_classes is None:

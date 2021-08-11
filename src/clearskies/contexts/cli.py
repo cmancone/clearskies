@@ -3,21 +3,18 @@ from ..di import StandardDependencies
 from ..input_outputs import CLI as CLIInputOutput
 from ..input_outputs import exceptions
 from .build_context import build_context
+from .context import Context
 
 
-class CLI:
-    _di = None
-    _handler = None
-
+class CLI(Context):
     def __init__(self, di):
-        self._di = di
+        super().__init__(di)
 
-    def configure(self, application):
-        self._handler = self._di.build(application.handler_class)
-        self._handler.configure({
-            **{'authentication': public()},
-            **application.handler_config
-        })
+    def finalize_handler_config(self, config):
+        return {
+            'authentication': public(),
+            **config,
+        }
 
     def __call__(self):
         if self._handler is None:
@@ -27,9 +24,6 @@ class CLI:
             return self._handler(self._di.build(CLIInputOutput))
         except exceptions.CLINotFound:
             print('help (aka 404 not found)!')
-
-    def bind(self, key, value):
-        self._di.bind(key, value)
 
 def cli(
     application,
