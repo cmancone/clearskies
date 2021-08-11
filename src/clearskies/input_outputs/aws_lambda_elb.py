@@ -1,7 +1,4 @@
 from .aws_lambda_api_gateway import AWSLambdaAPIGateway
-import json
-import base64
-import urllib
 
 
 class AWSLambdaELB(AWSLambdaAPIGateway):

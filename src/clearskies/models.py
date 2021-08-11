@@ -53,10 +53,10 @@ class Models(ABC, ConditionParser):
     @property
     def configuration(self):
         return {
-            'wheres': self.wheres,
-            'sorts': self.sorts,
+            'wheres': [*self.wheres],
+            'sorts': [*self.sorts],
             'group_by_column': self.group_by_column,
-            'joins': self.joins,
+            'joins': [*self.joins],
             'limit_start': self.limit_start,
             'limit_length': self.limit_length,
             'selects': self.selects,

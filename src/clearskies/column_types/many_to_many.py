@@ -186,8 +186,8 @@ class ManyToMany(Integer):
         to_delete = old_ids-new_ids
         to_create = new_ids-old_ids
         if to_delete:
-            related_models = self.config('related_models')
-            for model_to_delete in related_models.where("id IN (" + join(',', map(str, to_delete)) + ")"):
+            related_models = self.related_models
+            for model_to_delete in related_models.where("id IN (" + ','.join(map(str, to_delete)) + ")"):
                 model_to_delete.delete()
         if to_create:
             pivot_models = self.pivot_models
