@@ -9,10 +9,10 @@ class WSGI(Context):
         super().__init__(di)
 
     def __call__(self, env, start_response):
-        if self._handler is None:
+        if self.handler is None:
             raise ValueError("Cannot execute WSGI context without first configuring it")
 
-        return self._handler(WSGIInputOutput(env, start_response))
+        return self.handler(WSGIInputOutput(env, start_response))
 
 def wsgi(
     application,

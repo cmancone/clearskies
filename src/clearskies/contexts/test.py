@@ -9,7 +9,7 @@ from .convert_to_application import convert_to_application
 
 
 class Test(Context):
-    _application = None
+    application = None
     input_output = None
     memory_backend = None
     now = None
@@ -21,7 +21,7 @@ class Test(Context):
         # so for the other contexts, the application is just a way to manage configuration,
         # and so gets promptly thrown away.  We actually want it though
         self.now = datetime.now().replace(tzinfo=timezone.utc, microsecond=0)
-        self._application = convert_to_application(application)
+        self.application = convert_to_application(application)
         self.memory_backend = self.di.build(MemoryBackend, cache=False)
         self.memory_backend.silent_on_missing_tables(silent=True)
 
@@ -29,7 +29,7 @@ class Test(Context):
         self.di.bind('cursor_backend', self.memory_backend)
 
     def __call__(self, method=None, body=None, headers=None, url=None, input_output=None):
-        if self._application is None:
+        if self.application is None:
             raise ValueError("Cannot call the test context without an application")
 
         if input_output is None:
@@ -43,12 +43,12 @@ class Test(Context):
         if url is not None:
             input_output.set_request_url(url)
 
-        self._handler = self.di.build(self._application.handler_class, cache=False)
-        self._handler.configure({
+        self.handler = self.di.build(self.application.handler_class, cache=False)
+        self.handler.configure({
             **{'authentication': public()},
-            **self._application.handler_config,
+            **self.application.handler_config,
         })
-        return self._handler(input_output)
+        return self.handler(input_output)
 
     def build(self, key):
         return self.di.build(key)

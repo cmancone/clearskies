@@ -9,7 +9,7 @@ class AWSLambdaAPIGateway(Context):
         super().__init__(di)
 
     def __call__(self, event, context):
-        if self._handler is None:
+        if self.handler is None:
             raise ValueError("Cannot execute AWSLambda context without first configuring it")
 
         return self.handler(AWSInputOutput(event, context))

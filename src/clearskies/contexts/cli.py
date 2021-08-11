@@ -17,11 +17,11 @@ class CLI(Context):
         }
 
     def __call__(self):
-        if self._handler is None:
+        if self.handler is None:
             raise ValueError("Cannot execute CLI context without first configuring it")
 
         try:
-            return self._handler(self._di.build(CLIInputOutput))
+            return self.handler(self.di.build(CLIInputOutput))
         except exceptions.CLINotFound:
             print('help (aka 404 not found)!')
 

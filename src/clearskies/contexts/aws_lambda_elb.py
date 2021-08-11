@@ -9,10 +9,10 @@ class AWSLambdaELB(Context):
         super().__init__(di)
 
     def __call__(self, event, context):
-        if self._handler is None:
+        if self.handler is None:
             raise ValueError("Cannot execute AWSLambdaELB context without first configuring it")
 
-        return self._handler(AWSLambdaELBInputOutput(event, context))
+        return self.handler(AWSLambdaELBInputOutput(event, context))
 
 def aws_lambda_elb(
     application,
