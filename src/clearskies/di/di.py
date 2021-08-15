@@ -50,6 +50,8 @@ class DI:
             modules = [modules]
 
         for module in modules:
+            if not hasattr(module, '__file__'):
+                continue
             module_id = id(module)
             if is_root:
                 root = os.path.dirname(module.__file__)
@@ -137,7 +139,10 @@ class DI:
         if name in self._prepared and cache:
             return self._prepared[name]
 
-        for additional_config in self._additional_configs:
+        # additional configs are meant to override ones that come before, with most recent ones
+        # taking precedence.  Therefore, start at the end (e.g. FILO instead of FIFO, except nothing actually leaves)
+        for index in range(len(self._additional_configs)-1, -1, -1):
+            additional_config = self._additional_configs[index]
             if not additional_config.can_build(name):
                 continue
             built_value = additional_config.build(name, self, context=context)
