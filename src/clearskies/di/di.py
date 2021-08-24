@@ -50,7 +50,7 @@ class DI:
             modules = [modules]
 
         for module in modules:
-            if not hasattr(module, '__file__'):
+            if not hasattr(module, '__file__') or not module.__file__:
                 continue
             module_id = id(module)
             if is_root:
@@ -64,7 +64,7 @@ class DI:
                 if inspect.isclass(item):
                     self.add_classes([item])
                 if inspect.ismodule(item):
-                    if not hasattr(item, '__file__'):
+                    if not hasattr(item, '__file__') or not item.__file__:
                         continue
                     child_root = os.path.dirname(module.__file__)
                     if child_root[:root_len] != root:

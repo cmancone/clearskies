@@ -23,4 +23,4 @@ class Application:
         self.bindings = {} if bindings is None else bindings
         self.binding_classes = [] if binding_classes is None else binding_classes
         self.binding_modules = [] if binding_modules is None else binding_modules
-        self.additional_configs = additional_configs
+        self.additional_configs = [] if additional_configs is None else additional_configs
