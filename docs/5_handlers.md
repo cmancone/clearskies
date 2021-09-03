@@ -8,13 +8,13 @@ A context is explicitly required to execute your code.  It's job is to normalize
 
 ### Applications
 
-The application class has a very simple job: configure the dependency injection container.  It wraps up your handler configuration as well as the dependency injection confiugration and will execute your handler when invoked by the context object.  The application class is optional: the context is capable of executing your handler without it.  However, it is often useful, as there is typically some dependency injection configuration that remains the same regardless of what context your application is running in.  This will become clearer after discussing the context:
+The application class has a very simple job: configure the dependency injection container.  It wraps up your handler configuration as well as the dependency injection configuration and will execute your handler when invoked by the context object.  The application class is optional: the context is capable of executing your handler without it.  However, it is often useful, as there are typically some dependency injection settings that remain the same regardless of what context your application is running in.
 
 ### Handlers
 
-The handler class defines the general behavior to execute.  The simplest handler is the `callable` handler and it just executes code: it accepts a function which it will call when executed.  There are also handlers for all the standard CRUD operations, a RestfulAPI handler that automatically builds a "standard" API endpoint, another to add on simple routing, one for publishing healthcheck endpoints, etc...  Handlers typically require some configuration to define the precise behavior: host a standard CRUD API endpoint for _this_ model, execute _this_ function, return a 200 status code to declare the application is healthy as long as you can connect to _these_ backends, etc...
+The handler class defines what to actually do.  The simplest handler is the `callable` handler and it just executes code: it accepts a function which it will call when executed.  There are also handlers for all the standard CRUD operations, a RestfulAPI handler that automatically builds a "standard" API endpoint, another to add on simple routing, one for publishing healthcheck endpoints, etc...  Handlers typically require some configuration to define the precise behavior: host a standard CRUD API endpoint for _this_ model, execute _this_ function, return a 200 status code to declare that the application is healthy as long as you can connect to _these_ backends, etc...
 
-The handler class is a required part of clearskies execution, but it can be defined implicitly.  Specifically, if you attach a function to an application or context, clearskies will default to the standard "callable" handler which provides your declared dependencies and executes your function.
+The handler class is a required part of clearskies execution, but it defaults to the `callable` handler if not explicitly defined (aka, it expects you to pass along a function which it will execute).
 
 # Practical Example: Lambdas, ECS, RDS, and developer machines all working together
 
@@ -23,7 +23,7 @@ Let's look at a practical example.  Your company sells lightbulbs and you are re
  1. You use an RDS to store the bulk of your product data
  2. You use ECS for your API endpoints, running your Python code via a uWSGI server (to avoid issues with cold boots for sporadic loads).  These connect to your database via credentials fetched out of SSM.
  3. A number of background processes run via Lambda.  These connect to your database via IAM Auth.
- 4. Developers occassionally run processes on their local machines against the database.  These connect to the database via IAM Auth and use a bastion host to access the database.  They connect to the bastion host using SSM instead of SSH to avoid having open ports.
+ 4. Developers occassionally run processes on their local machines against the database.  These connect to the database via IAM Auth and use a bastion host to access the database.  They connect to the bastion host using SSM instead of SSH to avoid having open ports on the bastion.
 
 ### Folder Structure
 
@@ -49,9 +49,11 @@ Thinking about a microservice, you may have all the code for these things in one
 └── wsgi.py
 ```
 
+clearskies doesn't actually care how you organize your code, so you can organize it however makes sense to you.  As the name suggests though, the `models` directory contains your [model and models classes](./3_models.md).  The python files in the `app` folder contain your actual application logic - callables and API definitions.
+
 ### Application Logic
 
-clearskies doesn't actually care how you organize your code, so you can organize it however makes sense to you.  As the name suggests though, the `models` directory contains your [model and models classes](./3_models.md).  The python files in the `app` folder contain your actual application logic - callables and API definitions.  Let's look at an example of what might actually live in these files.  For instance, our `a_background_process.py` file might look like this:
+Let's look at an example of what might actually live in these files.  For instance, our `a_background_process.py` file might look like this:
 
 ```
 import datetime
@@ -64,31 +66,33 @@ def a_background_process(products, now):
         print(f'Do something with {product.id}!')
 ```
 
-`clearskies` will fill in our dependencies: the `products` variable will be an instance of `app.models.products.Products` (aka the query builder for the Product model).  `now` is a pre-defined dependency in `clearskies`, and will be a `datetime` object set to the current time.  As discussed, one goal of `clearskies` is to make sure that we can run this logic from within a Lambda, in a devbox, or in a test environment, without worrying about the completely different ways that our backend connections work in those cases.  So let's see how that works out here!
+`clearskies` will fill in our dependencies: the `products` variable will be an instance of `app.models.products.Products` (aka the query builder for the Product model).  `now` is a pre-defined dependency in `clearskies`, and will be a `datetime` object set to the current time.
 
 ### Context: Simple Executable
 
-In our root folder we have the files that are intended to actually run things.  Not surprisingly, the `lambda.py` file contains our lambda handlers that will be attached to an lambda, so let's see what that would look like:
+As discussed, one goal of `clearskies` is to make sure that we can run this logic from within a Lambda, in a devbox, or in a test environment, without worrying about the completely different ways that our backend connections work in those cases.  So let's see how that works for our background process!
+
+In our root folder we have the files that are the "entry points" for execution.  Not surprisingly, the `lambda.py` file contains our lambda handlers that will be attached to a lambda, so let's see what that would look like:
 
 ```
 import clearskies
 import clearskies_aws
 import app
 
-background_process_context = clearskies_aws.contexts.lambda(
+background_process_in_lambda = clearskies_aws.contexts.lambda(
     app.a_background_process,
     additional_configs=clearskies_aws.di.iam_db_auth()
 )
 
 def lambda_handler(event, context):
-    return background_process_context(event, context)
+    return background_process_in_lambda(event, context)
 ```
 
-In short, we create a context for the Lambda environment.  By default, clearskies will try to connect to the database using credentials in the environment, but we want to connect via IAM Auth.  A class is available to do exactly that, so we just provide it as an additional class for depdnency injection configuration.  Of course, clearskies still needs to know where the RDS cluster endpoint is.  You could provide that directly to the `iam_db_auth` method, but it will also look for it in the environment as a variable named `CLUSTER_ENDPOINT`.  This example assumes that the `CLUSTER_ENDPOINT` environment variable is being set on the Lambda and populated with the actual cluster endpoint.
+In short, we create a context for the Lambda environment.  By default, clearskies will try to connect to the database using credentials in the environment, but we want to connect via IAM Auth.  A class is available to do exactly that, so we just specify it as an additional class for dependency injection configuration.  Now though, clearskies needs to know where the RDS cluster endpoint is.  You could provide that directly to the `iam_db_auth` method, but it will also look for it in the environment as a variable named `CLUSTER_ENDPOINT`.  Therefore, this example assumes that the `CLUSTER_ENDPOINT` environment variable is being set on the Lambda and populated with the actual cluster endpoint.
 
 Note that we define our context **outside** of the lambda handler.  If we do it like this, AWS will cache our context object for us, which means that clearskies won't have to re-initialize/re-connect to everything on each run (because the dependency injection container itself is cached by the context object).  This will improve performance overall.
 
-Finally though, we have our actual `lambda_handler` function that we will be invoked by the Lambda.  This simply invokes the `background_process_context` object, passing in the event and context.  In our simple example we're neither using input nor sending output, but of course that would not always be the case.  If our function needed to make use of input/output then we would just include `input_output` in the list of parameters, and clearskies would inject in the relevant [InputOutput](https://github.com/cmancone/clearskies/blob/master/src/clearskies/input_outputs/input_output.py) object to do exactly that.
+Finally, we have our actual `lambda_handler` function that will be invoked by the Lambda.  This simply invokes the `background_process_in_lambda` object, passing in the event and context that AWS gave us.  In our simple example we're not using input or sending output, but of course that would not always be the case.  If our function needed to make use of input/output then we would just include `input_output` in the list of parameters, and clearskies would inject in the relevant [InputOutput](https://github.com/cmancone/clearskies/blob/master/src/clearskies/input_outputs/input_output.py) object to do exactly that.
 
 What if we want to run this same code but from a developer machine?  Let's look at the `dev.py` file:
 
@@ -100,7 +104,7 @@ import clearskies_aws
 import app
 
 
-background_process_context = clearskies.contexts.cli(
+background_process_in_dev_box = clearskies.contexts.cli(
     app.a_background_process,
     additional_configs=clearskies_aws.di.iam_db_auth_with_ssm_bastion(
         bastion_instance_id='i-????????',
@@ -109,7 +113,7 @@ background_process_context = clearskies.contexts.cli(
 )
 
 if __name__ == '__main__':
-    return background_process_context()
+    return background_process_in_dev_box()
 ```
 
 The process looks almost identical, but with a few main differences:
@@ -123,7 +127,7 @@ Otherwise though, our lambda still gets executed and it sees no differences betw
 
 ### Context, Handler, and Application to build an API
 
-Having clearskies execute a function is easy and doesn't require more than the context.  However, this changes quickly when we start looking at more complicated application.  Let's look at how we would use clearskies to auto-generate an API endpoint for the application.  Specifically, we want to generate a RESTful API for our product.  Examining the folder structure below, we would create an application in our `app/api.py` file like so:
+Having clearskies execute a function is easy and doesn't require more than the context.  However, this changes quickly when we start looking at a more complicated application.  Let's look at how we would use clearskies to auto-generate an API endpoint for the application.  Specifically, we want to generate a RESTful API for our product.  Examining the folder structure below, we would create an application in our `app/api.py` file like so:
 
 ```
 import clearskies
@@ -249,4 +253,4 @@ background_process_context = clearskies.contexts.cli(
 
 More details are available in the section about [dependency injection](./10_dependency_injection.md).
 
-Next: [Cursor Backend](./6_cursor_backend.md)
+Next: [Backends](./6_backends.md)
