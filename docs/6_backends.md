@@ -4,9 +4,9 @@ The backend (i.e, the place where data is loaded from and persisted to) is very 
 
 The main "kinds" of backends currently available are the:
 
-[Cursor Backend](#cursor-backend), which persists data to a MySQL/MariaDB database via [PyMySQL](https://pypi.org/project/PyMySQL/)
-[Memory Backend](#memory-backend), which stores data locally.  This is useful for working with temporary data or when running test suites.
-[API Backend](#api-backend), which is used to normalize API interactions as well as to automate integrations with APIs powered by clearskies
+1. [Cursor Backend](#cursor-backend), which persists data to a MySQL/MariaDB database via [PyMySQL](https://pypi.org/project/PyMySQL/)
+2. [Memory Backend](#memory-backend), which stores data locally.  This is useful for working with temporary data or when running test suites.
+3. [API Backend](#api-backend), which is used to normalize API interactions as well as to automate integrations with APIs powered by clearskies
 
 # Cursor Backend
 
