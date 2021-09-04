@@ -80,6 +80,8 @@ The test context actually does this by default.
 
 # API Backend
 
+### Using the API Backend with other clearskies API endpoints
+
 The API backend turns an API into an external data source from which you can read or write data.  This provides a different approach to API integration because it allows your code to interact with API endpoints just like it would data that comes out of a database.  This can be a big win for microservices where all APIs behave similarly - even more so when the APIs are backed by a clearskies RESTful API handler, which is what the API backend assumes by default.  Imagine for instance that a 3rd party is hosting an API endpoint that is defined like this:
 
 ```
@@ -117,7 +119,6 @@ api = clearskies_aws.contexts.lambda_alb(
             'readable_columns': ['name', 'description', 'height', 'width', 'length'],
             'searchable_columns': ['name', 'description', 'height', 'width', 'length'],
             'default_sort_column': 'name',
-            'read_only': True,
             'authentication': clearskies.authentication.secret_bearer(secret='SECRET_API_KEY'),
         },
     },
@@ -192,14 +193,63 @@ class WidgetApiBackend(clearskies.backends.ApiBackend):
         secret_bearer_auth = clearskies.authentication.SecretBearer()
         secret_bearer_auth.configure(secret='SECRET_API_KEY')
         self.configure(url='https://api.example.com/widgets/v1', auth=secret_bearer_auth)
+```
 
-application = clearskies.application(
-    some_callable,
-    binding_classes=[WidgetApiBackend],
-)
+The one advantage of this is that clearskies will automatically provide any imported classes for dependency injection under their snake-cased name (see [the documentation on dependency injection](./10_dependency_injection.md) for more information).
 
-context = clearskies.contexts.cli(
-    some_callable,
-    binding_classes=[WidgetApiBackend]
-)
+So what does this get us?  We can now use our widget model just like we would use a model that utilizes a cursor backend:
+
+```
+def my_callable(widgets):
+    for widget in widgets.where('width>100').where('width<=200').sort_by('length', 'desc').limit(0, 50):
+        print(widget.name)
+```
+
+Behind the scenes clearskies is building an API request to `https://api.example.com/widgets/v1/search` with the appropriate pagination, sort, and filtering parameters set to find the records we requested.  We're not limited to reading of course, and can create/update records as well (assuming those capabilities are enabled on the API endpoint):
+
+```
+def my_other_callable(widgets):
+    widget = widgets.where('id=10').first()
+    if not widget.exists:
+        return 'Whoops, record doesn't exist'
+
+    # make a new widget with double the size of the original
+    new_widget = widgets.create({
+        'name': 'Double size',
+        'width': 2*widget.width,
+        'length': 2*widget.length,
+        'height': 2*widget.height,
+    })
+    print(new_widget.id)
+
+    # and update the description of the original widget
+    widget.save({'description': 'the smaller widget'})
+```
+
+### Swapping out the memory backend for testing
+
+In addition, we can still swap out the API backend for the memory backend in tests, letting us do things like this:
+
+```
+# launch our callable in a test context
+test_context = clearskies.contexts.test(my_callable)
+
+# the test context always generates a memory backend, but it can only automatically replace the
+# cursor backend.  As a result, we have to ask it to replace our api backend
+test_context.bind('widget_api_backend', test_context.memory_backend)
+
+# now let's go ahead and create a few records in the memory backend for our model class:
+widgets = test_context.build(Widgets)
+widgets.create({'name': 'will get returned', 'width': 101, 'length': 500})
+widgets.create({'name': 'will get returned last', 'width': 200, 'length': 400})
+widgets.create({'name': 'will be ignored', 'width': 50, 'length': 200})
+widgets.create({'name': 'also ignored', 'width': 201, 'length': 200})
+
+# and run our test
+test_context()
+# which prints out:
+"""
+will get returned
+will get returned last
+"""
 ```
