@@ -14,6 +14,9 @@ class Context:
     def bind(self, key, value):
         self.di.bind(key, value)
 
+    def build(self, key):
+        return self.di.build(key)
+
     def extract_handler(self, application):
         """
         This accepts the application passed in to the context and returns the handler

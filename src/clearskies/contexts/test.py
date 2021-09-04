@@ -17,7 +17,7 @@ class Test(Context):
     def __init__(self, di):
         super().__init__(di)
 
-    def configure(self, application):
+    def configure(self, application, cursor_backend_to_memory_backend=True):
         # so for the other contexts, the application is just a way to manage configuration,
         # and so gets promptly thrown away.  We actually want it though
         self.now = datetime.now().replace(tzinfo=timezone.utc, microsecond=0)
@@ -26,7 +26,8 @@ class Test(Context):
         self.memory_backend.silent_on_missing_tables(silent=True)
 
         self.di.bind('now', self.now)
-        self.di.bind('cursor_backend', self.memory_backend)
+        if cursor_backend_to_memory_backend:
+            self.di.bind('cursor_backend', self.memory_backend)
 
     def __call__(self, method=None, body=None, headers=None, url=None, input_output=None):
         if self.application is None:
@@ -50,9 +51,6 @@ class Test(Context):
         })
         return self.handler(input_output)
 
-    def build(self, key):
-        return self.di.build(key)
-
 def test(
     application,
     di_class=StandardDependencies,
@@ -61,6 +59,7 @@ def test(
     binding_modules=None,
     additional_configs=None,
     auto_inject_loaded_modules=True,
+    cursor_backend_to_memory_backend=True,
 ):
     return build_context(
         Test,
@@ -71,4 +70,5 @@ def test(
         binding_modules=binding_modules,
         additional_configs=additional_configs,
         auto_inject_loaded_modules=auto_inject_loaded_modules,
+        additional_kwargs={'cursor_backend_to_memory_backend': cursor_backend_to_memory_backend}
     )

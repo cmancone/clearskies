@@ -13,6 +13,7 @@ def build_context(
     binding_modules=None,
     additional_configs=None,
     auto_inject_loaded_modules=True,
+    additional_kwargs=None,
 ):
     application = convert_to_application(application)
 
@@ -24,6 +25,8 @@ def build_context(
         binding_modules = []
     if additional_configs is None:
         additional_configs = []
+    if additional_kwargs is None:
+        additional_kwargs = {}
 
     bindings = {
         **application.bindings,
@@ -49,5 +52,5 @@ def build_context(
 
     di = di_class.init(*binding_classes, **bindings, modules=binding_modules, additional_configs=additional_configs)
     context = di.build(context_class, cache=False)
-    context.configure(application)
+    context.configure(application, **additional_kwargs)
     return context
