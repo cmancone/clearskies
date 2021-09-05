@@ -4,9 +4,8 @@
 4. [Columns](./4_columns.md)
 5. [Handlers, Applications, and Contexts, oh my!](./5_handlers.md)
 6. [Backends](./6_backends.md)
-7. RESTful APIs
-8. Simple Routing
-9. API Backend
-10. Dependency Injection
-11. Testing
-12. Secret Management
+7. [RESTful APIs](./7_restful_apis.md)
+8. [Simple Routing](./8_simple_routing.md)
+9. Dependency Injection
+10. Testing
+11. Secret Management

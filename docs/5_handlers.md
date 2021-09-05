@@ -79,7 +79,7 @@ import clearskies
 import clearskies_aws
 import app
 
-background_process_in_lambda = clearskies_aws.contexts.lambda(
+background_process_in_lambda = clearskies_aws.contexts.lambda_alb(
     app.a_background_process,
     additional_configs=clearskies_aws.di.iam_db_auth()
 )

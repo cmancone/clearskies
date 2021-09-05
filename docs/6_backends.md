@@ -195,7 +195,7 @@ class WidgetApiBackend(clearskies.backends.ApiBackend):
         self.configure(url='https://api.example.com/widgets/v1', auth=secret_bearer_auth)
 ```
 
-The one advantage of this is that clearskies will automatically provide any imported classes for dependency injection under their snake-cased name (see [the documentation on dependency injection](./10_dependency_injection.md) for more information).
+The one advantage of this is that clearskies will automatically provide any imported classes for dependency injection under their snake-cased name (see [the documentation on dependency injection](./9_dependency_injection.md) for more information).
 
 So what does this get us?  We can now use our widget model just like we would use a model that utilizes a cursor backend:
 
@@ -240,8 +240,8 @@ test_context.bind('widget_api_backend', test_context.memory_backend)
 
 # now let's go ahead and create a few records in the memory backend for our model class:
 widgets = test_context.build(Widgets)
-widgets.create({'name': 'will get returned', 'width': 101, 'length': 500})
 widgets.create({'name': 'will get returned last', 'width': 200, 'length': 400})
+widgets.create({'name': 'will get returned first', 'width': 101, 'length': 500})
 widgets.create({'name': 'will be ignored', 'width': 50, 'length': 200})
 widgets.create({'name': 'also ignored', 'width': 201, 'length': 200})
 
@@ -249,7 +249,10 @@ widgets.create({'name': 'also ignored', 'width': 201, 'length': 200})
 test_context()
 # which prints out:
 """
-will get returned
+will get returned first
 will get returned last
 """
 ```
+### Working with non-clearskies APIs
+
+Of course, the API backend can integrate with more than just clearskies API endpoints.  For other APIs you would extend the API backend directly and then build the integration logic for the API.  There are more details about this in the (TBW) docblock of API backend class.

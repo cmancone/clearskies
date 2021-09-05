@@ -64,14 +64,20 @@ class SimpleRouting(Base):
     def _build_routes(self, routes, authentication=None):
         self._routes = []
         for (i, route_config) in enumerate(routes):
+            if route_config.get('application'):
+                application = route_config.get('application')
+                if not hasattr(application, 'handler_config') or not hasattr(application, 'handler_class'):
+                    raise ValueError(f"A non application was passed in the 'application' key of route #{i+1}")
+                route_config['handler_class'] = application.handler_class
+                route_config['handler_config'] = application.handler_config
             if not route_config.get('handler_class'):
                 raise ValueError(
-                    "Each route must specify a handler class via 'handler_class', " + \
+                    "Each route must specify a handler class via 'handler_class' key, " + \
                     f"but 'handler_class' was missing for route #{i+1}"
                 )
             if not route_config.get('handler_config'):
                 raise ValueError(
-                    "Each route must specify the handler configuration via 'handler_config', " + \
+                    "Each route must specify the handler configuration via 'handler_config' key, " + \
                     f"but 'handler_config' was missing for route #{i+1}"
                 )
             route = SimpleRoutingRoute(self._di)
