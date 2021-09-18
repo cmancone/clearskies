@@ -33,11 +33,11 @@ Since `my_function` is being executed by the clearskies context, clearskies prov
 
 There are probably too many ways to configure the dependency injection container.  In order of priority (highest priority items first):
 
-1. ["di"](#1.-di)
-2. [Directly Binding Values](#2.-directly-binding-values)
-3. [Add Classes and Modules](#3.-add-classes-and-modules)
-4. [Additional Configuration Classes](#4.-additional-configuration-classes)
-5. [Pre-Defined Dependencies](#5.-pre-defined-dependencies)
+1. ["di"](#1-di)
+2. [Directly Binding Values](#2-directly-binding-values)
+3. [Add Classes and Modules](#3-add-classes-and-modules)
+4. [Additional Configuration Classes](#4-additional-configuration-classes)
+5. [Pre-Defined Dependencies](#5-pre-defined-dependencies)
 
 ### 1. di
 
