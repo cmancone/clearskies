@@ -6,6 +6,6 @@
 6. [Backends](./6_backends.md)
 7. [RESTful APIs](./7_restful_apis.md)
 8. [Simple Routing](./8_simple_routing.md)
-9. Dependency Injection
+9. [Dependency Injection](./9_dependency_injection.md)
 10. Testing
 11. Secret Management

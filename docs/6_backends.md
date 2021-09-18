@@ -256,3 +256,5 @@ will get returned last
 ### Working with non-clearskies APIs
 
 Of course, the API backend can integrate with more than just clearskies API endpoints.  For other APIs you would extend the API backend directly and then build the integration logic for the API.  There are more details about this in the (TBW) docblock of API backend class.
+
+Next: [Restful APIs](./7_restful_apis.md)

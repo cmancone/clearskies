@@ -113,3 +113,5 @@ old_api_in_wsgi = clearskies.contexts.wsgi(users_statuses_api)
 def wsgi_handler(env, start_response):
     return old_api_in_wsgi(env, start_response)
 ```
+
+Next: [Dependency Injection](./9_dependency_injection.md)

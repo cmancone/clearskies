@@ -130,14 +130,27 @@ class DI:
           1. 'di' (aka self)
           2. Already prepared things
           3. Things set via `bind(name, value)`
-          4. Method on DI class called `provide_[name]`
-          5. Class via add_classes or add_modules
+          4. Class via add_classes or add_modules
+          5. Things set in "additional_config" classes
+          6. Method on DI class called `provide_[name]`
         """
         if name == 'di':
             return self
 
         if name in self._prepared and cache:
             return self._prepared[name]
+
+        if name in self._bindings:
+            built_value = self.build(self._bindings[name], context=context)
+            if cache:
+                self._prepared[name] = built_value
+            return built_value
+
+        if name in self._classes:
+            built_value = self.build_class(self._classes[name]['class'], context=context)
+            if cache:
+                self._prepared[name] = built_value
+            return built_value
 
         # additional configs are meant to override ones that come before, with most recent ones
         # taking precedence.  Therefore, start at the end (e.g. FILO instead of FIFO, except nothing actually leaves)
@@ -150,20 +163,8 @@ class DI:
                 self._prepared[name] = built_value
             return built_value
 
-        if name in self._bindings:
-            built_value = self.build(self._bindings[name], context=context)
-            if cache:
-                self._prepared[name] = built_value
-            return built_value
-
         if hasattr(self, f'provide_{name}'):
             built_value = self.call_function(getattr(self, f'provide_{name}'))
-            if cache:
-                self._prepared[name] = built_value
-            return built_value
-
-        if name in self._classes:
-            built_value = self.build_class(self._classes[name]['class'], context=context)
             if cache:
                 self._prepared[name] = built_value
             return built_value
@@ -275,9 +276,13 @@ class DI:
     @classmethod
     def init(cls, *binding_classes, **bindings):
         modules = None
+        additional_configs = None
         if 'modules' in bindings:
             modules = bindings['modules']
             del bindings['modules']
+        if 'additional_configs' in bindings:
+            additional_configs = bindings['additional_configs']
+            del bindings['additional_configs']
 
-        di = cls(classes=binding_classes, modules=modules, bindings=bindings)
+        di = cls(classes=binding_classes, modules=modules, bindings=bindings, additional_configs=additional_configs)
         return di
