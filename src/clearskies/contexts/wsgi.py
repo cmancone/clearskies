@@ -1,5 +1,4 @@
 from ..input_outputs import WSGI as WSGIInputOutput
-from ..di import StandardDependencies
 from .build_context import build_context
 from .context import Context
 
@@ -16,7 +15,7 @@ class WSGI(Context):
 
 def wsgi(
     application,
-    di_class=StandardDependencies,
+    di_class=None,
     bindings=None,
     binding_classes=None,
     binding_modules=None,
@@ -26,7 +25,7 @@ def wsgi(
     return build_context(
         WSGI,
         application,
-        di_class,
+        di_class=None,
         bindings=bindings,
         binding_classes=binding_classes,
         binding_modules=binding_modules,

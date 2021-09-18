@@ -4,7 +4,15 @@ The dependency injection system from clearskies is a name-based system, rather t
 
 Dependency injection settings can be configured at both the application and context level.  This allows you to set defaults for an application and then override them if necessary at run time.  In addition, there are a variety of ways to configure dependency injection, with a clear order priority to resolve conflicts.  Finally, clearskies can auto-load all the classes in your application to make dependency injection configuration as automated as possible.
 
-## Name-based injection?
+There is a lot to unpack, so this is broken into a number of sections:
+
+1. [Name Based Injection](#name-based-injection)
+2. [Configuring Dependency Injection](#configuring-dependency-injection)
+3. [Standard Dependencies](#standard-dependencies)
+4. [Configuring Dependencies](#configuring-dependencies)
+5. [Example Uses](#example-uses)
+
+## Name Based Injection
 
 Name-based injection means that when clearskies is deciding what to inject for a function/contructor parameter, it looks at the actual parameter name rather than the parameter type.  Consider the following code:
 
@@ -31,13 +39,13 @@ Since `my_function` is being executed by the clearskies context, clearskies prov
 
 ## Configuring Dependency Injection
 
-There are probably too many ways to configure the dependency injection container.  In order of priority (highest priority items first):
+There are a number of ways to configure the dependency injection container.  In order of priority (highest priority items first):
 
 1. ["di"](#1-di)
 2. [Directly Binding Values](#2-directly-binding-values)
 3. [Add Classes and Modules](#3-add-classes-and-modules)
 4. [Additional Configuration Classes](#4-additional-configuration-classes)
-5. [Pre-Defined Dependencies](#5-pre-defined-dependencies)
+5. [Base Dependencies](#5-base-dependencies)
 
 ### 1. di
 
@@ -148,11 +156,11 @@ if __name__ == '__main__':
 Which prints:
 
 ```
-`
+1
 2
 ```
 
-**HOWEVER**, you probably don't have to do this.  by default clearskies will automatically find any imported classes and modules that are defined in a subdirectory of the current script, and import those, so actually this works exactly the same as the previous example:
+**HOWEVER**, you probably don't have to do this.  By default clearskies will automatically find any classes that are defined in the current script or which are defined in a module in the current directory or a subdirectory of the current directory, and import those, so actually this works exactly the same as the previous example:
 
 ```
 import clearskies
@@ -174,25 +182,27 @@ if __name__ == '__main__':
 
 ### 4. Additional Configuration Classes
 
-The dependency injection container allows you to provide additional classes that define dependencies by declaring methods named `provide_[name]` where `[name]` is the name of the dependency to inject.  clearskies will call the appropriate `provide` method when it is needed, and when it does so, it will also provide any parameters needed by the method.
+The dependency injection container allows you to provide additional classes that extend the `clearskies.di.AdditionalConfig` class and then define dependencies by declaring methods named `provide_[name]`, where `[name]` is the dependency name.  clearskies will call the appropriate method when it is needed, as well as provide any parameters needed by the method.
 
-You can specify these classes via the `add_additional_configs` methods on the dependency injection container, which is exposed via the `additional_configs` kwarg when building a context or an application.  This kwarg accepts a list of either classes and/or objects:
+You can specify these classes via the `add_additional_configs` method on the dependency injection container, which is exposed via the `additional_configs` kwarg when building a context or an application.  This kwarg accepts a list such classes, or an instance of such a class.
 
 ```
 import clearskies
 
-class MoarConfiguration(clearskies.di.AdditionalConfig):
-    def provide_double_it(self, my_number):
-        return my_number*2
+class MultiplyThem(clearskies.di.AdditionalConfig):
+    def __init__(self, first_number):
+        self.first_number = first_number
 
-def my_function(my_number, double_it):
-    print(my_number)
-    print(double_it)
+    def provide_multiplied_value(self, second_number):
+        return self.first_number*second_number
+
+def my_function(multiplied_value):
+    print(multiplied_value)
 
 cli_callable = clearskies.contexts.cli(
     my_function,
-    bindings={'my_number': 4},
-    additional_configs=[MoarConfiguration],
+    bindings={'first_number': 2, 'second_number': 4},
+    additional_configs=[MultiplyThem],
 )
 if __name__ == '__main__':
     cli_callable()
@@ -201,10 +211,47 @@ if __name__ == '__main__':
 Which prints:
 
 ```
-4
 8
 ```
 
-### 5. Pre-Defined Dependencies
+### 5. Base Dependencies
+
+Finally, the dependency injection container has a base class that can provide "default" dependencies.  clearskies uses the [StandardDependencies](../src/clearsies/di/standard_dependencies.py) for this, but you can override the class to use in your application or context.  This class must extend the `clearskies.di.DI` class, but you should probably extend `clearskies.di.StandardDependencies` so you'll have the same defaults as clearskies itself.  The class specifies default dependencies by declaring `provide_[name]` functions, just like the [additional configuration classes do](#additional-configuration-classes).  The base DI class can be changed in either the application or context by setting the `di_class` kwarg:
+
+```
+import clearskies
+
+class MyDefaultDependencies(clearskies.di.StandardDependencies):
+    def provide_some_value(self):
+        return 'hey'
+
+def my_function(some_value):
+    print(some_value)
+
+# you can set it here
+my_application = clearskies.Application(
+    clearskies.handlers.Callable,
+    {'callable': my_function},
+    di_class=MyDefaultDependencies,
+)
+
+# or here
+cli_callable = clearskies.contexts.cli(
+    my_application,
+    di_class=MyDefaultDependencies,
+)
+if __name__ == '__main__':
+    cli_callable()
+```
+
+which prints:
+
+```
+hey
+```
 
 ## Standard Dependencies
+
+## Configuring Dependencies
+
+## Example Uses

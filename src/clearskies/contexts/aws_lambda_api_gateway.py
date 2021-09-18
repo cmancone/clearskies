@@ -1,5 +1,4 @@
 from ..input_outputs import AWSLambdaAPIGateway as AWSInputOutput
-from ..di import StandardDependencies
 from .build_context import build_context
 from .context import Context
 
@@ -16,7 +15,7 @@ class AWSLambdaAPIGateway(Context):
 
 def aws_lambda_api_gateway(
     application,
-    di_class=StandardDependencies,
+    di_class=None,
     bindings=None,
     binding_classes=None,
     binding_modules=None,
@@ -26,7 +25,7 @@ def aws_lambda_api_gateway(
     return build_context(
         AWSLambdaAPIGateway,
         application,
-        di_class,
+        di_class=di_class,
         bindings=bindings,
         binding_classes=binding_classes,
         binding_modules=binding_modules,

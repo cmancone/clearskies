@@ -1,4 +1,5 @@
 from ..application import Application
+from ..di import StandardDependencies
 from ..handlers.callable import Callable
 from .convert_to_application import convert_to_application
 import sys
@@ -7,7 +8,7 @@ import sys
 def build_context(
     context_class,
     application,
-    di_class,
+    di_class=None,
     bindings=None,
     binding_classes=None,
     binding_modules=None,
@@ -16,6 +17,9 @@ def build_context(
     additional_kwargs=None,
 ):
     application = convert_to_application(application)
+
+    if di_class is None:
+        di_class = application.di_class if application.di_class is not None else StandardDependencies
 
     if bindings is None:
         bindings = {}

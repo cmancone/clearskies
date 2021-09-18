@@ -1,5 +1,4 @@
 from ..authentication import public
-from ..di import StandardDependencies
 from ..input_outputs import CLI as CLIInputOutput
 from ..input_outputs import exceptions
 from .build_context import build_context
@@ -27,7 +26,7 @@ class CLI(Context):
 
 def cli(
     application,
-    di_class=StandardDependencies,
+    di_class=None,
     bindings=None,
     binding_classes=None,
     binding_modules=None,
@@ -37,7 +36,7 @@ def cli(
     return build_context(
         CLI,
         application,
-        di_class,
+        di_class=di_class,
         bindings=bindings,
         binding_classes=binding_classes,
         binding_modules=binding_modules,

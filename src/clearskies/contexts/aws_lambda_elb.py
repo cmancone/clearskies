@@ -16,7 +16,7 @@ class AWSLambdaELB(Context):
 
 def aws_lambda_elb(
     application,
-    di_class=clearskies.di.StandardDependencies,
+    di_class=None,
     bindings=None,
     binding_classes=None,
     binding_modules=None,
@@ -26,7 +26,7 @@ def aws_lambda_elb(
     return build_context(
         AWSLambdaELB,
         application,
-        di_class,
+        di_class=di_class,
         bindings=bindings,
         binding_classes=binding_classes,
         binding_modules=binding_modules,
