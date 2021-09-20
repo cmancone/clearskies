@@ -271,13 +271,14 @@ The following standard dependencies are defined in the [StandardDependencies](..
 
 ## Configuring Dependencies
 
-In addition to confguring the dependency injection container, clearskies also supports configuring the dependencies themselves.  This is frequently used to add flexibility to core classes.  For instance, a class used to integrate with a third party service may accept some simple configuration parameters to control whether it pulls an API key out of the environment or a secret manager.  You declare a dependency with it configuration by creating an instance of the [BindingConfig class](../src/clearskies/binding_config.py).  You can then [bind](#2-directly-binding-values) the configured dependency to an application or context.  When clearskies builds an instance of the class, it will look for and call a `configure` method on the instance and pass in the configuration.
+In addition to confguring the dependency injection container, clearskies also supports configuring the dependencies themselves.  This is frequently used to add flexibility to core classes.  For instance, a class used to integrate with a third party service may accept some simple configuration parameters to control whether it pulls an API key out of the environment or a secret manager.  You configure a dependency by creating an instance of the [BindingConfig class](../src/clearskies/binding_config.py), which carries information about the dependency and its configuration.  You can then [bind](#2-directly-binding-values) the BindingConfig object to an application or context.  The actual configuration happens via a `configure` method which clearskies expects the dependency to have.  When clearskies builds an instance of the class, it will call this method and pass in the configuration.
 
 Here is an example of such a configurable class:
 
 ```
 class ApiService:
-    def __init__(self, environment, secrets):
+    def __init__(self, requets, environment, secrets):
+        self.requests = requests
         self.secrets = secrets
         self.environment = environment
 
@@ -290,6 +291,10 @@ class ApiService:
             self.api_key = self.environment.get(key_from_environment)
         else:
             self.api_key = self.secrets.get(key_from_secrets)
+
+    def do_something(self):
+        # do something with our API key
+        self.requests.get('https://www.example.com', headers={'Authorization': f'Bearer {sefl.api_key}'})
 ```
 
 And you could use it like this:
@@ -318,6 +323,6 @@ if __name__ == '__main__':
 
 ## Example Uses
 
-This might seem like overkill, as far as "options to configure dependency injection" go, but the variety of options gives clearskies the flexibility it needs to match a wide variety of use-cases and operational modes.  To help give a concrete picture of how these things work, here are some examples of mixing and matching these options to quickly reconfigure an application:
+This variety of dependency injection configuration options gives clearskies the flexibility it needs to match a wide variety of use-cases and operational modes.  To help give a concrete picture of how these things work, here are some examples of mixing and matching these options to streamline application development and maintenance:
 
 **Switching DB connection method:** perhaps most of your production workloads use a "standard" database connection by grabbing username/password/host/database out of environment keys.  However, some workloads grab [temporary credentials from a dynamic secret producer](https://docs.akeyless.io/docs/create-dynamic-secret-to-sql-db).  The exact producer used varies depending on the level of access the application needs.  Developers also use temporary credentials but have to connect through a bastion host.  In this case, the "standard" dependency injection configuration will work for most of your production workloads.  For workloads that use temporary credentials, you can create an [additional configuration class](#4-additional-configuration-classes) that replaces the standard database connection process (by declaring a `provide_cursor` method).  It fetches temporary credentials from a dynamic producer with a name that can be specified via [dependency configuration](#configuring-dependencies) and which depends on the configured environment.  This is configured in the applications that need the dynamic credentials.  However, you also need to support developers who connect through a bastion!  Since they will execute the application differently (i.e., they use a different context), you override the database connection method again in the context that developers will execute.  In this case, you switch it out for a different configuration class which similarly accepts the name of the dynamic producer to use, but also requires the hostname of the bastion host.  It will then connect through the bastion, fetch temporary credentials, and connect to the database.  All by just switching out a single line of code depending on the context.
