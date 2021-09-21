@@ -62,6 +62,13 @@ class DI:
 
             for (name, item) in module.__dict__.items():
                 if inspect.isclass(item):
+                    try:
+                        class_root = os.path.dirname(inspect.getfile(item))
+                    except TypeError:
+                        # built-ins will end up here
+                        continue
+                    if class_root[:root_len] != root:
+                        continue
                     self.add_classes([item])
                 if inspect.ismodule(item):
                     if not hasattr(item, '__file__') or not item.__file__:
