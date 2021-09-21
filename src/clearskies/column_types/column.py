@@ -206,10 +206,10 @@ class Column(ABC):
         """
         return operator == '='
 
-    def check_search_value(self, value):
-        return self.input_error_for_value(value)
+    def check_search_value(self, value, operator=None):
+        return self.input_error_for_value(value, operator=None)
 
-    def input_error_for_value(self, value):
+    def input_error_for_value(self, value, operator=None):
         return ''
 
     def validate_models_class(self, models_class):

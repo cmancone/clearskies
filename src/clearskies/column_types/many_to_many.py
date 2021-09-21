@@ -137,7 +137,7 @@ class ManyToMany(Integer):
             }
         }
 
-    def input_error_for_value(self, value):
+    def input_error_for_value(self, value, operator=None):
         if type(value) != list:
             return f'{self.name} should be a list of ids'
         related_models = self.related_models

@@ -99,7 +99,7 @@ class Read(Base):
                 models = column.add_search(
                     models,
                     where['value'],
-                    operator=where['operator'] if 'operator' in where else None
+                    operator=where['operator'].lower() if 'operator' in where else None
                 )
         for (column_name, value) in query_parameters.items():
             if column_name == 'id':
@@ -169,9 +169,14 @@ class Read(Base):
                     return f"Invalid request: invalid search column specified in where entry #{index+1}"
                 if 'value' not in where:
                     return f"Invalid request: 'value' missing in 'where' entry #{index+1}"
-                if 'operator' in where and not self._columns[column_name].is_allowed_operator(where['operator']):
-                    return f"Invalid request: given operator is not allowed for column in 'where' entry #{index+1}"
-                value_error = self._columns[column_name].check_search_value(where['value'])
+                operator = None
+                if 'operator' in where:
+                    if type(where['operator']) != str:
+                        return f"Invalid request: operator must be a string in 'where' entry #{index+1}"
+                    if not self._columns[column_name].is_allowed_operator(where['operator']):
+                        return f"Invalid request: given operator is not allowed for column in 'where' entry #{index+1}"
+                    operator = where['operator'].lower()
+                value_error = self._columns[column_name].check_search_value(where['value'], operator)
                 if value_error:
                     return f"Invalid request: {value_error} for 'where' entry #{index+1}"
         # similarly, query parameters mean search conditions

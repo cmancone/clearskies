@@ -71,7 +71,7 @@ class BelongsTo(Integer):
             **{'model_column_name': self.name[:-3]}
         }
 
-    def input_error_for_value(self, value):
+    def input_error_for_value(self, value, operator=None):
         integer_check = super().input_error_for_value(value)
         if integer_check:
             return integer_check

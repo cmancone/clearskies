@@ -23,5 +23,5 @@ class Float(Column):
     def is_allowed_operator(self, operator):
         return operator in ['=', '<', '>', '<=', '>=']
 
-    def input_error_for_value(self, value):
+    def input_error_for_value(self, value, operator=None):
         return 'value should be an integer or float' if (type(value) != int and type(value) != float and value is not None) else ''

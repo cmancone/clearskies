@@ -41,7 +41,7 @@ class DateTime(Column):
         """
         return operator in ['=', '<', '>', '<=', '>=']
 
-    def input_error_for_value(self, value):
+    def input_error_for_value(self, value, operator=None):
         value = dateparser.parse(value)
         if not value:
             return 'given value did not appear to be a valid date'
