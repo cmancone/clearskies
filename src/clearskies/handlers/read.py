@@ -24,12 +24,15 @@ class Read(Base):
         'default_limit': 100,
         'max_limit': 200,
         'single_record': False,
+        'debug': False,
     }
 
     def __init__(self, di):
         super().__init__(di)
 
     def handle(self, input_output):
+        if self.configuration('debug'):
+            print('processing read request')
         # first configure our models object with the defaults
         models = self._models
         for where in self.configuration('where'):
@@ -41,6 +44,9 @@ class Read(Base):
         start = 0
         limit = self.configuration('default_limit')
         models = models.limit(start, limit)
+        if self.configuration('debug'):
+            print('Models config after adding default settings:')
+            print(models.configuration)
 
         request_data = input_output.request_data(False)
         query_parameters = input_output.get_query_parameters()
@@ -52,7 +58,13 @@ class Read(Base):
         if not models.sorts:
             models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
 
+        if self.configuration('debug'):
+            print('Models config after adding user input:')
+            print(models.configuration)
+
         if self.configuration('single_record'):
+            if self.configuration('debug'):
+                print('Executing single record mode')
             json_output = [self._model_as_json(model) for model in models]
             if not len(json_output):
                 return self.error(input_output, 'Record not found', 400)
