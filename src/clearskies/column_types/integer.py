@@ -15,6 +15,7 @@ class Integer(Column):
             for val in value:
                 if type(val) != int:
                     return f'All items in {self.name} must be integers'
+            return ''
         return f'{self.name} must be an integer' if type(value) != int else ''
 
     def build_condition(self, value, operator=None):
