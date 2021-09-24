@@ -175,10 +175,10 @@ class Read(Base):
                 if 'column' not in where or not where['column']:
                     return f"Invalid request: 'column' missing in 'where' entry #{index+1}"
                 column_name = where['column']
-                if column_name == 'id':
-                    column_name = self.configuration('id_column')
                 if column_name not in self.configuration('searchable_columns'):
                     return f"Invalid request: invalid search column specified in where entry #{index+1}"
+                if column_name == 'id':
+                    column_name = self.configuration('id_column')
                 if 'value' not in where:
                     return f"Invalid request: 'value' missing in 'where' entry #{index+1}"
                 operator = None
