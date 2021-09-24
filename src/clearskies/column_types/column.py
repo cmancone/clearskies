@@ -207,7 +207,7 @@ class Column(ABC):
         return operator == '='
 
     def check_search_value(self, value, operator=None):
-        return self.input_error_for_value(value, operator=None)
+        return self.input_error_for_value(value, operator=operator)
 
     def input_error_for_value(self, value, operator=None):
         return ''
