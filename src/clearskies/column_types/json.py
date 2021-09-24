@@ -6,9 +6,14 @@ class JSON(Column):
     def from_backend(self, value):
         if type(value) == list or type(value) == dict:
             return value
-        return json.loads(value) if value else {}
+        if not value:
+            return None
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return None
 
     def to_backend(self, data):
         if self.name in data:
-            data[self.name] = json.dumps(data[self.name]) if data[self.name] else {}
+            data[self.name] = json.dumps(data[self.name]) if data[self.name] else ''
         return data

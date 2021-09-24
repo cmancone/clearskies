@@ -57,7 +57,6 @@ def test(
     binding_classes=None,
     binding_modules=None,
     additional_configs=None,
-    auto_inject_loaded_modules=True,
     cursor_backend_to_memory_backend=True,
 ):
     return build_context(
@@ -68,6 +67,5 @@ def test(
         binding_classes=binding_classes,
         binding_modules=binding_modules,
         additional_configs=additional_configs,
-        auto_inject_loaded_modules=auto_inject_loaded_modules,
         additional_kwargs={'cursor_backend_to_memory_backend': cursor_backend_to_memory_backend}
     )

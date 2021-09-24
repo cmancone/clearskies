@@ -31,7 +31,6 @@ def cli(
     binding_classes=None,
     binding_modules=None,
     additional_configs=None,
-    auto_inject_loaded_modules=True,
 ):
     return build_context(
         CLI,
@@ -41,5 +40,4 @@ def cli(
         binding_classes=binding_classes,
         binding_modules=binding_modules,
         additional_configs=additional_configs,
-        auto_inject_loaded_modules=auto_inject_loaded_modules,
     )
