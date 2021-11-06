@@ -224,7 +224,7 @@ class ReadTest(unittest.TestCase):
         )
         data_response_properties = all_doc.responses[0].schema.children[1].item_definition.children
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
-        self.assertEquals(['integer', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
+        self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
         self.assertEquals(
             ['name', 'email', 'start', 'limit', 'sort', 'direction'],
             [param.definition.name for param in all_doc.parameters]
@@ -239,7 +239,7 @@ class ReadTest(unittest.TestCase):
         )
         data_response_properties = resource_doc.responses[0].schema.children[1].children
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
-        self.assertEquals(['integer', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
+        self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
         self.assertEquals(['id'], [param.definition.name for param in resource_doc.parameters])
 
         # Check our 'search' endpoint which returns all records with fancy search options
@@ -251,7 +251,7 @@ class ReadTest(unittest.TestCase):
         )
         data_response_properties = search_doc.responses[0].schema.children[1].item_definition
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties.children])
-        self.assertEquals(['integer', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties.children])
+        self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties.children])
         self.assertEquals(
             ['where', 'sort', 'start', 'limit'],
             [param.definition.name for param in search_doc.parameters]

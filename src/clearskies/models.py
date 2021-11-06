@@ -17,6 +17,7 @@ class Models(ABC, ConditionParser):
     must_recount = True
     count = None
     _table_name = None
+    _id_column_name = None
 
     def __init__(self, backend, columns):
         self._backend = backend
@@ -49,6 +50,11 @@ class Models(ABC, ConditionParser):
         if self._table_name is None:
             self._table_name = self.empty_model().table_name
         return self._table_name
+
+    def get_id_column_name(self):
+        if self._id_column_name is None:
+            self._id_column_name = self.empty_model().id_column_name
+        return self._id_column_name
 
     @property
     def configuration(self):

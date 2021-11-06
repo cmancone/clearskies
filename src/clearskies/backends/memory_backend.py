@@ -33,6 +33,8 @@ class MemoryTable:
     _column_names = None
     _rows = None
     null = None
+    _id_index = None
+    id_column_name = None
 
     # here be dragons.  This is not a 100% drop-in replacement for the equivalent SQL operators
     # https://codereview.stackexchange.com/questions/259198/in-memory-table-filtering-in-python
@@ -52,22 +54,25 @@ class MemoryTable:
         'in': lambda column, values, null: lambda row: row.get(column, null) in values,
     }
 
-    def __init__(self, model=None):
+    def __init__(self, model):
         self.null = Null()
         self._column_names = []
         self._rows = []
+        self._id_index = {}
+        self.id_column_name = model.id_column_name
 
-        if model is not None:
-            self._table_name = model.table_name
-            self._column_names.extend(model.columns_configuration().keys())
+        self._table_name = model.table_name
+        self._column_names.extend(model.columns_configuration().keys())
+        if self.id_column_name not in self._column_names:
+            self._column_names.append(self.id_column_name)
 
     def update(self, id, data):
-        if id > len(self._rows) or id < 1:
-            raise ValueError(f"Cannot update non existent record with id of '{id}'")
-        index = id-1
+        if id not in self._id_index:
+            raise ValueError(f"Attempt to update non-existent record with '{self.id_column_name}' of '{id}'")
+        index = self._id_index[id]
         row = self._rows[index]
         if row is None:
-            raise ValueError(f"Cannot update record with id of '{id}' because it was already deleted")
+            raise ValueError(f"Cannot update record with '{self.id_column_name}' of '{id}' because it was already deleted")
         for column_name in data.keys():
             if column_name not in self._column_names:
                 raise ValueError(
@@ -85,19 +90,24 @@ class MemoryTable:
                 raise ValueError(
                     f"Cannot create record: column '{column_name}' does not exist in table '{self._table_name}'"
                 )
-        if 'id' not in data:
-            new_id = len(self._rows) + 1
-            data['id'] = new_id
+        if self.id_column_name not in data:
+            raise ValueError(
+                "An '{self.id_column_name}' key with a unique value is required when working with the memory backend, " + \
+                "but I was asked to create a record without one"
+            )
+        if data[self.id_column_name] in self._id_index and self._rows[self._id_index[data[self.id_column_name]]] is not None:
+            return self.update(data[self.id_column_name], data)
         for column_name in self._column_names:
             if column_name not in data:
                 data[column_name] = None
         self._rows.append({**data})
+        self._id_index[data[self.id_column_name]] = len(self._rows)-1
         return data
 
     def delete(self, id):
-        if id > len(self._rows) or id < 1:
-            raise ValueError(f"Cannot delete non existent record with id of '{id}'")
-        index = id-1
+        if id not in self._id_index:
+            return True
+        index = self._id_index[id]
         if self._rows[index] is None:
             return True
         # we set the row to None because if we remove it we'll change the indexes of the rest
@@ -169,7 +179,7 @@ class MemoryBackend(Backend):
         model = self.cheez_model(model)
         if model.table_name in self._tables:
             return
-        self._tables[model.table_name] = MemoryTable(model=model)
+        self._tables[model.table_name] = MemoryTable(model)
 
     def update(self, id, data, model):
         self.create_table(model)

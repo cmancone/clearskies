@@ -34,7 +34,7 @@ class BelongsToTest(unittest.TestCase):
     def test_check_input_no_match(self):
         self.models.add_search_response([])
         self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
-        error = self.belongs_to.input_errors('model', {'user_id': 5})
+        error = self.belongs_to.input_errors('model', {'user_id': '5'})
         self.assertEquals({'user_id': 'Invalid selection for user_id: record does not exist'}, error)
         self.assertEquals(1, len(Models.counted))
         self.assertEquals(
@@ -45,7 +45,7 @@ class BelongsToTest(unittest.TestCase):
     def test_check_input_match(self):
         self.models.add_search_response([{'id': 1}])
         self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
-        error = self.belongs_to.input_errors('model', {'user_id': 10})
+        error = self.belongs_to.input_errors('model', {'user_id': '10'})
         self.assertEquals({}, error)
         self.assertEquals(1, len(Models.counted))
         self.assertEquals(

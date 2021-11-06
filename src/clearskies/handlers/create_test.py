@@ -79,7 +79,6 @@ class CreateTest(unittest.TestCase):
         self.assertEquals(1, response_data['id'])
         self.assertEquals(10, response_data['age'])
         self.assertTrue('email' not in response_data)
-        self.assertEquals({'name': 'Conor', 'age': 10}, Models.created[0]['data'])
 
     def test_extra_columns(self):
         create = Create(self.di)
@@ -118,7 +117,6 @@ class CreateTest(unittest.TestCase):
         self.assertEquals(1, response_data['id'])
         self.assertEquals(10, response_data['age'])
         self.assertEquals('default@email.com', response_data['email'])
-        self.assertEquals({'name': 'Conor', 'age': 10}, Models.created[0]['data'])
 
     def test_auth_failure(self):
         input_output = InputOutput(

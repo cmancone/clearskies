@@ -63,7 +63,7 @@ class ApiBackend(Backend):
         return self._validate_delete_response(response.json())
 
     def _build_delete_request(self, id, model):
-        return [self.url, 'DELETE', {'id': id}, {}]
+        return [self.url, 'DELETE', {model.id_column_name: id}, {}]
 
     def _validate_delete_response(self, json):
         if 'status' not in json:

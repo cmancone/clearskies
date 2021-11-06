@@ -82,7 +82,6 @@ class RestfulAPITest(unittest.TestCase):
         self.assertEquals(200, result[1])
         self.assertEquals(OrderedDict([('id', 1), ('name', 'Conor')]), result[0]['data'])
         self.assertEquals({}, result[0]['pagination'])
-        self.assertEquals({'name': 'Conor'}, Models.created[0]['data'])
 
     def test_update_record(self):
         self.models.add_search_response([{'id': 125, 'name': 'Ronoc'}])

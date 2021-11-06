@@ -216,4 +216,4 @@ class UpdateTest(unittest.TestCase):
         )
         data_response_properties = success_response.schema.children[1].children
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
-        self.assertEquals(['integer', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
+        self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])

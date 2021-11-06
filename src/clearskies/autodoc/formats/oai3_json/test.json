@@ -4,8 +4,7 @@
       "status": {
         "properties": {
           "id": {
-            "format": "int32",
-            "type": "integer"
+            "type": "string"
           },
           "name": {
             "type": "string"
@@ -20,8 +19,7 @@
             "type": "integer"
           },
           "id": {
-            "format": "int32",
-            "type": "integer"
+            "type": "string"
           },
           "name": {
             "type": "string"
@@ -209,8 +207,7 @@
             "name": "id",
             "required": true,
             "schema": {
-              "format": "int32",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -881,8 +878,7 @@
             "name": "id",
             "required": true,
             "schema": {
-              "format": "int32",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],

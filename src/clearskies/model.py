@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from .column_types import Integer
+from .column_types import UUID
 import re
 
 
@@ -11,6 +11,7 @@ class Model(ABC):
     _data = None
     _previous_data = None
     _transformed = None
+    id_column_name = 'id'
 
     def __init__(self, backend, columns):
         self._backend = backend
@@ -41,7 +42,7 @@ class Model(ABC):
         pass
 
     def all_columns(self):
-        default = OrderedDict([('id', {'class': Integer})])
+        default = OrderedDict([(self.id_column_name, {'class': UUID})])
         default.update(self.columns_configuration())
         return default
 
@@ -97,7 +98,7 @@ class Model(ABC):
 
     @property
     def exists(self):
-        return True if ('id' in self._data and self._data['id']) else False
+        return True if (self.id_column_name in self._data and self._data[self.id_column_name]) else False
 
     @property
     def data(self):
@@ -129,7 +130,7 @@ class Model(ABC):
             new_data = self._backend.update(self.id, to_save, self)
         else:
             new_data = self._backend.create(to_save, self)
-        id = columns['id'].from_backend(new_data['id'])
+        id = columns[self.id_column_name].from_backend(new_data[self.id_column_name])
 
         data = self.columns_post_save(data, id, columns)
         self.post_save(data, id)

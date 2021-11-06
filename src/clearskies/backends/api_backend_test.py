@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, call
 from .api_backend import ApiBackend
+from types import SimpleNamespace
 
 
 class ApiBackendTest(unittest.TestCase):
@@ -37,7 +38,8 @@ class ApiBackendTest(unittest.TestCase):
         self.assertEquals({"id": 5}, response)
 
     def test_delete(self):
-        response = self.backend.delete(5, 'model')
+        model = SimpleNamespace(id_column_name='id')
+        response = self.backend.delete(5, model)
         self.requests.request.assert_called_with(
             'DELETE',
             'https://example.com',

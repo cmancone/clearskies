@@ -4,6 +4,7 @@ from ..environment import Environment
 from ..backends import CursorBackend, MemoryBackend
 from .. import autodoc
 import os
+import uuid
 
 
 class StandardDependencies(DI):
@@ -75,3 +76,10 @@ class StandardDependencies(DI):
 
     def provide_oai3_schema_resolver(self):
         return autodoc.formats.oai3_json.OAI3SchemaResolver()
+
+    def provide_boto3(self):
+        import boto3
+        return boto3
+
+    def provide_uuid(self):
+        return uuid

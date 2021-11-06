@@ -10,6 +10,7 @@ from .json import JSON
 from .many_to_many import ManyToMany
 from .string import String
 from .updated import Updated
+from .uuid import UUID
 
 def build_column_config(name, column_class, **kwargs):
     return (
@@ -52,3 +53,6 @@ def string(name, **kwargs):
 
 def updated(name, **kwargs):
     return build_column_config(name, Updated, **kwargs)
+
+def uuid(name, **kwargs):
+    return build_column_config(name, UUID, **kwargs)

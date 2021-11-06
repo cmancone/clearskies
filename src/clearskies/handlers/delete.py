@@ -24,7 +24,6 @@ class Delete(Base):
             resource_id = input_data['id']
         if not resource_id:
             return self.error(input_output, "Missing 'id'", 404)
-        resource_id = int(resource_id)
         model = self._models.find(f'id={resource_id}')
         if not model.exists:
             return self.error(input_output, "Not Found", 404)

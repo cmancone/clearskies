@@ -3,7 +3,7 @@ import re
 from collections import OrderedDict
 from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
-from ..autodoc.schema import Integer as AutoDocInteger
+from ..autodoc.schema import String as AutoDocString
 
 
 class HasMany(Column):
@@ -25,6 +25,7 @@ class HasMany(Column):
         'child_columns',
         'is_readable',
         'readable_child_columns',
+        'parent_id_column_name',
     ]
 
     def __init__(self, di):
@@ -47,6 +48,7 @@ class HasMany(Column):
                 f"'{model_class.__name__}'"
             )
         self.validate_models_class(configuration['child_models_class'])
+        configuration['parent_id_column_name'] = model_class.id_column_name
 
         # if readable_child_columns is set then load up the child models/columns now, because we'll need it in the
         # _check_configuration step, but we don't want to load it there because we can't save it back into the config
@@ -95,14 +97,16 @@ class HasMany(Column):
 
     def provide(self, data, column_name):
         foreign_column_name = self.config('foreign_column_name')
-        return self.child_models.where(f"{foreign_column_name}={data['id']}")
+        id_column_name = self.config('parent_id_column_name')
+        return self.child_models.where(f"{foreign_column_name}={data[id_column_name]}")
 
     def to_json(self, model):
         children = []
         columns = self.get_child_columns()
         for child in model.__getattr__(self.name):
             json = OrderedDict()
-            json['id'] = int(child.id)
+            child_id_column_name = child.id_column_name
+            json[child_id_column_name] = columns[child_id_column_name].to_json(child)
             for column_name in self.config('readable_child_columns'):
                 json[column_name] = columns[column_name].to_json(child)
             children.append(json)
@@ -114,9 +118,8 @@ class HasMany(Column):
 
     def documentation(self, name=None, example=None, value=None):
         columns = self.get_child_columns()
-        child_properties = [
-            (columns['id'].documentation() if ('id' in columns) else AutoDocInteger('id'))
-        ]
+        child_id_column_name = self.child_models.get_id_column_name()
+        child_properties = [columns[child_id_column_name].documentation()]
 
         for column_name in self.config('readable_child_columns'):
             child_properties.append(columns[column_name].documentation())

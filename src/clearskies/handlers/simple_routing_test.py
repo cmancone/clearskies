@@ -52,20 +52,24 @@ class SimpleRoutingTest(unittest.TestCase):
         self.memory_backend = MemoryBackend()
         self.memory_backend.create_table(User)
         self.memory_backend.create_record_with_class(User, {
+            'id': '1-2-3-4',
             'name': 'Conor',
             'age': 120,
         })
         self.memory_backend.create_record_with_class(User, {
+            'id': '1-2-3-5',
             'name': 'Enoch',
             'age': 30,
         })
 
         self.memory_backend.create_table(Status)
         self.memory_backend.create_record_with_class(Status, {
+            'id': '1-2-3-6',
             'name': 'Active',
             'order': 1,
         })
         self.memory_backend.create_record_with_class(Status, {
+            'id': '1-2-3-7',
             'name': 'Inactive',
             'order': 2,
         })
@@ -124,12 +128,12 @@ class SimpleRoutingTest(unittest.TestCase):
             'status': 'success',
             'data': [
                 OrderedDict([
-                    ('id', 1),
+                    ('id', '1-2-3-4'),
                     ('name', 'Conor'),
                     ('age', 120),
                 ]),
                 OrderedDict([
-                    ('id', 2),
+                    ('id', '1-2-3-5'),
                     ('name', 'Enoch'),
                     ('age', 30),
                 ]),
@@ -153,11 +157,11 @@ class SimpleRoutingTest(unittest.TestCase):
             'status': 'success',
             'data': [
                 OrderedDict([
-                    ('id', 1),
+                    ('id', '1-2-3-6'),
                     ('name', 'Active'),
                 ]),
                 OrderedDict([
-                    ('id', 2),
+                    ('id', '1-2-3-7'),
                     ('name', 'Inactive'),
                 ]),
             ],
@@ -180,12 +184,12 @@ class SimpleRoutingTest(unittest.TestCase):
             'status': 'success',
             'data': [
                 OrderedDict([
-                    ('id', 1),
+                    ('id', '1-2-3-6'),
                     ('name', 'Active'),
                     ('order', 1),
                 ]),
                 OrderedDict([
-                    ('id', 2),
+                    ('id', '1-2-3-7'),
                     ('name', 'Inactive'),
                     ('order', 2),
                 ]),

@@ -11,7 +11,7 @@ class Update(Write):
         input_data = self.request_data(input_output)
         if 'id' not in input_data:
             return self.error(input_output, "Missing 'id' in request body", 404)
-        model_id = int(input_data['id'])
+        model_id = input_data['id']
         model = self._models.find(f'id={model_id}')
         if not model.exists:
             return self.error(input_output, "Not Found", 404)

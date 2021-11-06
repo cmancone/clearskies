@@ -64,13 +64,10 @@ class RestfulAPI(Routing):
             raise InvalidUrl()
         url = full_path[len(base_url):].strip('/')
         if url:
-            if not url.isnumeric():
-                if url == 'search' and self.configuration('allow_search'):
-                    self._is_search = True
-                else:
-                    raise InvalidUrl()
+            if url == 'search' and self.configuration('allow_search'):
+                self._is_search = True
             else:
-                self._resource_id = int(url)
+                self._resource_id = url
 
     def handle(self, input_output):
         handler_class = self._get_handler_class_for_route(input_output)
