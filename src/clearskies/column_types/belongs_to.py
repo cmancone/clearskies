@@ -45,7 +45,7 @@ class BelongsTo(String):
             )
 
         if configuration.get('readable_parent_columns'):
-            parent_columns = self.di.build(configuration['parent_models_class'], cache=False).raw_columns_configuration()
+            parent_columns = self.di.build(configuration['parent_models_class'], cache=True).raw_columns_configuration()
             error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             readable_parent_columns = configuration['readable_parent_columns']
             if not hasattr(readable_parent_columns, '__iter__'):
@@ -92,7 +92,7 @@ class BelongsTo(String):
 
     @property
     def parent_models(self):
-        return self.di.build(self.config('parent_models_class'), cache=False)
+        return self.di.build(self.config('parent_models_class'), cache=True)
 
     @property
     def parent_columns(self):

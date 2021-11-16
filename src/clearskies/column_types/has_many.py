@@ -65,7 +65,7 @@ class HasMany(Column):
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
         if configuration.get('is_readable'):
-            child_columns = self.di.build(configuration['child_models_class'], cache=False).raw_columns_configuration()
+            child_columns = self.di.build(configuration['child_models_class'], cache=True).raw_columns_configuration()
             error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             if not 'readable_child_columns' in configuration:
                 raise ValueError(f"{error_prefix} must provide 'readable_child_columns' if is_readable is set")
@@ -114,7 +114,7 @@ class HasMany(Column):
 
     @property
     def child_models(self):
-        return self.di.build(self.config('child_models_class'), cache=False)
+        return self.di.build(self.config('child_models_class'), cache=True)
 
     def documentation(self, name=None, example=None, value=None):
         columns = self.get_child_columns()

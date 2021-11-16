@@ -91,7 +91,7 @@ class ManyToMany(String):
             )
 
         if configuration.get('is_readable'):
-            related_columns = self.di.build(configuration['related_models_class'], cache=False).raw_columns_configuration()
+            related_columns = self.di.build(configuration['related_models_class'], cache=True).raw_columns_configuration()
             error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             if not 'readable_related_columns' in configuration:
                 raise ValueError(f"{error_prefix} must provide 'readable_related_columns' if is_readable is set")
@@ -114,8 +114,8 @@ class ManyToMany(String):
                     )
 
     def _finalize_configuration(self, configuration):
-        pivot_models = self.di.build(configuration['pivot_models_class'], cache=False)
-        related_models = self.di.build(configuration['related_models_class'], cache=False)
+        pivot_models = self.di.build(configuration['pivot_models_class'], cache=True)
+        related_models = self.di.build(configuration['related_models_class'], cache=True)
 
         if not configuration.get('foreign_column_name_in_pivot'):
             model_class = related_models.model_class()
@@ -208,11 +208,11 @@ class ManyToMany(String):
 
     @property
     def pivot_models(self):
-        return self.di.build(self.config('pivot_models_class'), cache=False)
+        return self.di.build(self.config('pivot_models_class'), cache=True)
 
     @property
     def related_models(self):
-        return self.di.build(self.config('related_models_class'), cache=False)
+        return self.di.build(self.config('related_models_class'), cache=True)
 
     @property
     def related_columns(self):
