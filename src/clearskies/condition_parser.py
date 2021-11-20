@@ -26,12 +26,21 @@ class ConditionParser:
         '>': 1,
         '<': 1,
         '=': 1,
-        'in': 2,
-        'is not null': 11,
-        'is null': 7,
-        'is not': 6,
-        'is': 2,
-        'like': 4,
+        'in': 4,
+        'is not null': 12,
+        'is null': 8,
+        'is not': 8,
+        'is': 4,
+        'like': 6,
+    }
+
+    # some operators require spaces around them
+    operators_for_matching = {
+        'like': ' like ',
+        'in': ' in ',
+        'is not null': ' is not null',
+        'is null': ' is null',
+        'is': ' is ',
     }
 
     operators_with_simple_placeholders = {
@@ -57,7 +66,8 @@ class ConditionParser:
         # earliest operator so we don't get weird results for things like 'age=name<=5'.
         for operator in self.operators:
             try:
-                index = lowercase_condition.index(operator)
+                operator_for_match = self.operators_for_matching.get(operator, operator)
+                index = lowercase_condition.index(operator_for_match)
             except ValueError:
                 continue
             if index < matching_index:

@@ -33,7 +33,7 @@ def datetime(name, **kwargs):
 def email(name, **kwargs):
     return build_column_config(name, Email, **kwargs)
 
-def float_column(name, **kwargs):
+def float(name, **kwargs):
     return build_column_config(name, Float, **kwargs)
 
 def has_many(name, **kwargs):

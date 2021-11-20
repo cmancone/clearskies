@@ -1,7 +1,7 @@
 from .di import DI
 from ..columns import Columns
 from ..environment import Environment
-from ..backends import CursorBackend, MemoryBackend
+from ..backends import CursorBackend, MemoryBackend, DynamoDBBackend
 from .. import autodoc
 import os
 import uuid
@@ -59,6 +59,9 @@ class StandardDependencies(DI):
 
     def provide_memory_backend(self):
         return MemoryBackend()
+    
+    def provide_dynamo_db_backend(self, boto3, environment):
+        return DynamoDBBackend(boto3, environment)
 
     def provide_now(self):
         import datetime
