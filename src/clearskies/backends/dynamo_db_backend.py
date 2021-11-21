@@ -164,6 +164,7 @@ class DynamoDBBackend(Backend):
         ##########
         ########
         ##### I'm not including limit!!!!
+        ##### I need to adjust the way clearskies handles pagination.
 
         # so we want to put together the kwargs for scan/query:
         kwargs = {
@@ -186,7 +187,7 @@ class DynamoDBBackend(Backend):
         # DynamoDB only supports sorting by a single column, and only if we can find a supporting index
         # figure out if and what we are sorting by.
         sort_column = None
-        sort_direction = 'ASC'
+        sort_direction = 'asc'
         if 'sorts' in configuration and configuration['sorts']:
             sort_column = configuration['sorts'][0]['column']
             sort_direction = configuration['sorts'][0]['direction']
@@ -213,7 +214,7 @@ class DynamoDBBackend(Backend):
             self._as_attr_filter_expressions(remaining_conditions, model),
             key_condition_expression,
             index_name, # we don't need to specify the name of the primary index
-            sort_direction == 'asc',
+            sort_direction.lower() == 'asc',
         ]
 
     def _find_key_condition_expressions(self, conditions, id_column_name, sort_column, model):
@@ -340,7 +341,7 @@ class DynamoDBBackend(Backend):
         # or an index that hits the sort column, or the default index.
         used_condition_indexes = [primary_condition_index]
         if index_condition_counts:
-            index_to_use = max(index_condition_counts, key=lambda key: test[key]['count'])
+            index_to_use = max(index_condition_counts, key=lambda key: index_condition_counts[key]['count'])
             used_condition_indexes.extend(index_condition_counts[index_to_use]['condition_indexes'])
         elif sort_column in index_data['sortable_columns']:
             index_to_use = index_data['sortable_columns'][sort_column]
@@ -356,7 +357,8 @@ class DynamoDBBackend(Backend):
         for condition_index in used_condition_indexes:
             condition = conditions[condition_index]
             dynamodb_operator_method = self._index_operators[condition['operator']]
-            value = self._value_for_condition_expression(condition['values'][0], condition['column'], model)
+            raw_search_value = condition['values'][0] if condition['values'] else None
+            value = self._value_for_condition_expression(raw_search_value, condition['column'], model)
             condition_expression = getattr(dynamodb_conditions.Key(condition['column']), dynamodb_operator_method)(value)
             # add to our key condition expression
             if key_condition_expression is None:
@@ -377,7 +379,7 @@ class DynamoDBBackend(Backend):
         filter_expression = None
         for condition in conditions:
             operator = condition['operator']
-            value = condition['values'][0]
+            value = condition['values'][0] if condition['values'] else None
             column_name = condition['column']
             if operator not in self._attribute_operators:
                 raise ValueError(f"I was asked to filter by operator '{operator}' but this operator is not supported by DynamoDB")
@@ -398,7 +400,7 @@ class DynamoDBBackend(Backend):
                 condition_expression = dynamodb_conditions.Attr(column_name).not_exists()
             else:
                 dynamodb_operator = self._attribute_operators[operator]
-                value = self._value_for_condition_expression(condition['values'][0], column_name, model)
+                value = self._value_for_condition_expression(value, column_name, model)
                 condition_expression = getattr(dynamodb_conditions.Attr(column_name), dynamodb_operator)(value)
 
             if filter_expression is None:
