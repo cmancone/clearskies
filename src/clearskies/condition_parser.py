@@ -41,6 +41,7 @@ class ConditionParser:
         'is not null': ' is not null',
         'is null': ' is null',
         'is': ' is ',
+        'is not': ' is not ',
     }
 
     operators_with_simple_placeholders = {
