@@ -5,8 +5,8 @@ from types import SimpleNamespace
 
 class MemoryBackendTest(unittest.TestCase):
     def setUp(self):
-        self.user_model = SimpleNamespace(table_name='users', columns_configuration=lambda: {'name': '', 'email': ''}, id_column_name='id')
-        self.reviews_model = SimpleNamespace(table_name='reviews', columns_configuration=lambda: {'review': '', 'email': ''}, id_column_name='id')
+        self.user_model = SimpleNamespace(table_name=lambda: 'users', columns_configuration=lambda: {'name': '', 'email': ''}, id_column_name='id')
+        self.reviews_model = SimpleNamespace(table_name=lambda: 'reviews', columns_configuration=lambda: {'review': '', 'email': ''}, id_column_name='id')
         self.memory_backend = MemoryBackend()
         self.memory_backend.create_table(self.user_model)
         self.memory_backend.create_table(self.reviews_model)

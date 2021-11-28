@@ -48,7 +48,7 @@ class Models(ABC, ConditionParser):
 
     def get_table_name(self):
         if self._table_name is None:
-            self._table_name = self.empty_model().table_name
+            self._table_name = self.model_class().table_name()
         return self._table_name
 
     def get_id_column_name(self):
@@ -80,11 +80,6 @@ class Models(ABC, ConditionParser):
         self.limit_length = configuration['limit_length']
         self.selects = configuration['selects']
         self._model_columns = configuration['model_columns']
-
-    @property
-    def table_name(self):
-        """ Returns the name of the table for the model class """
-        return self.model(None).table_name
 
     @property
     def model_columns(self):

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from .column_types import UUID
+from .functional import string
 import re
 
 
@@ -20,16 +21,10 @@ class Model(ABC):
         self._data = {}
         self._previous_data = None
 
-    def _camel_case_to_snake_case(self, string):
-        return re.sub(
-            '([a-z0-9])([A-Z])', r'\1_\2',
-            re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
-        ).lower()
-
-    @property
-    def table_name(self):
+    @classmethod
+    def table_name(cls):
         """ Return the name of the table that the model uses for data storage """
-        singular = self._camel_case_to_snake_case(self.__class__.__name__)
+        singular = string.camel_case_to_snake_case(cls.__name__)
         if singular[-1] == 'y':
             return singular[:-1] + 'ies'
         if singular[-1] == 's':

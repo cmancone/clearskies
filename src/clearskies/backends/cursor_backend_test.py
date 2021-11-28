@@ -6,7 +6,7 @@ from collections import OrderedDict, namedtuple
 
 class CursorBackendTest(unittest.TestCase):
     def setUp(self):
-        self.model = type('', (), {'table_name': 'my_table'})
+        self.model = type('', (), {'table_name': lambda: 'my_table'})
         self.cursor = type('', (), {
             'execute': MagicMock(),
             'lastrowid': 10,

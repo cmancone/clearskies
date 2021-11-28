@@ -123,7 +123,7 @@ class DynamoDBBackend(Backend):
         pass
 
     def update(self, id, data, model):
-        table = self._dynamodb.Table(model.table_name)
+        table = self._dynamodb.Table(model.table_name())
         updated = table.update_item(
             Key={model.id_column_name: model.__getattr__(model.id_column_name)},
             UpdateExpression=','.join([f"set {column_name} = :{column_name}" for column_name in data.keys()]),
@@ -135,12 +135,12 @@ class DynamoDBBackend(Backend):
         return self._map_from_boto3(updated['Attributes'])
 
     def create(self, data, model):
-        table = self._dynamodb.Table(model.table_name)
+        table = self._dynamodb.Table(model.table_name())
         table.put_item(Item=data)
         return {**data}
 
     def delete(self, id, model):
-        table = self._dynamodb.Table(model.table_name)
+        table = self._dynamodb.Table(model.table_name())
         table.delete_item(Key={model.id_column_name: model.__getattr__(model.id_column_name)})
         return True
 
@@ -159,7 +159,7 @@ class DynamoDBBackend(Backend):
             index_name,
             scan_index_forward
         ] = self._create_dynamodb_query_parameters(configuration, model)
-        table = self._dynamodb.Table(model.table_name)
+        table = self._dynamodb.Table(model.table_name())
 
         ##########
         ########
@@ -427,8 +427,8 @@ class DynamoDBBackend(Backend):
 
     def _get_indexes_for_model(self, model):
         """ Loads up the indexes for the DynamoDB table for the given model """
-        if model.table_name in self._table_indexes:
-            return self._table_indexes[model.table_name]
+        if model.table_name() in self._table_indexes:
+            return self._table_indexes[model.table_name()]
 
         # Store the indexes by column name.  The HASH attribute for each key is basically
         # an indexed column, and the RANGE attribute is a column we can sort by.
@@ -446,7 +446,7 @@ class DynamoDBBackend(Backend):
         # and then is further subdivided for columns that have RANGE/Sort attributes, giving you
         # the index name for that HASH+RANGE combination.
         table_indexes = {}
-        table = self._dynamodb.Table(model.table_name)
+        table = self._dynamodb.Table(model.table_name())
         schemas = []
         # the primary index for the table doesn't have a name, and it will be used by default
         # if we don't specify an index name. Therefore, we just pass around None for it's name
@@ -470,7 +470,7 @@ class DynamoDBBackend(Backend):
             if range_column:
                 table_indexes[hash_column]['sortable_columns'][range_column] = schema['IndexName']
 
-        self._table_indexes[model.table_name] = table_indexes
+        self._table_indexes[model.table_name()] = table_indexes
         return table_indexes
 
     def _map_from_boto3(self, record):

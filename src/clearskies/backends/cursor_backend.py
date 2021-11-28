@@ -34,10 +34,11 @@ class CursorBackend(Backend):
             parameters.append(val)
         updates = ', '.join(query_parts)
 
-        self._cursor.execute(f'UPDATE `{model.table_name}` SET {updates} WHERE id=%s', tuple([*parameters, id]))
+        table_name = model.table_name()
+        self._cursor.execute(f'UPDATE `{table_name}` SET {updates} WHERE id=%s', tuple([*parameters, id]))
 
         results = self.records({
-            'table_name': model.table_name,
+            'table_name': table_name,
             'wheres': [{'parsed': 'id=%s', 'values': [id]}]
         }, model)
         return results[0]
@@ -46,20 +47,22 @@ class CursorBackend(Backend):
         columns = '`' + '`, `'.join(data.keys()) + '`'
         placeholders = ', '.join(['%s' for i in range(len(data))])
 
+        table_name = model.table_name()
         self._cursor.execute(
-            f'INSERT INTO `{model.table_name}` ({columns}) VALUES ({placeholders})',
+            f'INSERT INTO `{table_name}` ({columns}) VALUES ({placeholders})',
             tuple(data.values())
         )
 
         results = self.records({
-            'table_name': model.table_name,
+            'table_name': table_name,
             'wheres': [{'parsed': 'id=%s', 'values': [self._cursor.lastrowid]}]
         }, model)
         return results[0]
 
     def delete(self, id, model):
+        table_name = model.table_name()
         self._cursor.execute(
-            f'DELETE FROM `{model.table_name}` WHERE id=%s',
+            f'DELETE FROM `{table_name}` WHERE id=%s',
             (id,)
         )
         return True

@@ -1,5 +1,5 @@
 from .columns import Columns
-from . import authentication, autodoc, backends, column_types, contexts, di, handlers, input_requirements, mocks, secrets
+from . import authentication, autodoc, backends, column_types, contexts, di, functional, handlers, input_requirements, mocks, secrets
 from .condition_parser import ConditionParser
 from .environment import Environment
 from .models import Models

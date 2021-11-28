@@ -223,7 +223,7 @@ class ManyToMany(String):
         own_column_name_in_pivot = self.config('own_column_name_in_pivot')
         own_id_column_name = self.config('own_id_column_name')
         pivot_table = self.config('pivot_table')
-        my_table_name = self.di.build(self.model_class).table_name
+        my_table_name = self.model_class.table_name()
         related_table_name = self.related_models.get_table_name()
         join_pivot = f"JOIN {pivot_table} ON {pivot_table}.{own_column_name_in_pivot}={my_table_name}.{own_id_column_name}"
         # no reason we can't support searching by both an id or a list of ids

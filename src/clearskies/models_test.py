@@ -11,10 +11,6 @@ class User(Model):
     def __init__(self, cursor, column):
         super().__init__(cursor, column)
 
-    @property
-    def table_name(self):
-        return 'users'
-
     def columns_configuration(self):
         return OrderedDict([
             column_types.string('last_name'),
@@ -84,7 +80,7 @@ class TestModels(unittest.TestCase):
         self.assertEquals('*', users.configuration['selects'])
 
     def test_table_name(self):
-        self.assertEquals('users', Users('cursor', self.columns).table_name)
+        self.assertEquals('users', Users('cursor', self.columns).get_table_name())
 
     def test_build_model(self):
         user = Users('cursor', self.columns).model({'id': 2, 'age': 5})

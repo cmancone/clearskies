@@ -61,7 +61,7 @@ class MemoryTable:
         self._id_index = {}
         self.id_column_name = model.id_column_name
 
-        self._table_name = model.table_name
+        self._table_name = model.table_name()
         self._column_names.extend(model.columns_configuration().keys())
         if self.id_column_name not in self._column_names:
             self._column_names.append(self.id_column_name)
@@ -177,21 +177,21 @@ class MemoryBackend(Backend):
         Accepts either a model or a model class and creates a "table" for it
         """
         model = self.cheez_model(model)
-        if model.table_name in self._tables:
+        if model.table_name() in self._tables:
             return
-        self._tables[model.table_name] = MemoryTable(model)
+        self._tables[model.table_name()] = MemoryTable(model)
 
     def update(self, id, data, model):
         self.create_table(model)
-        return self._tables[model.table_name].update(id, data)
+        return self._tables[model.table_name()].update(id, data)
 
     def create(self, data, model):
         self.create_table(model)
-        return self._tables[model.table_name].create(data)
+        return self._tables[model.table_name()].create(data)
 
     def delete(self, id, model):
         self.create_table(model)
-        return self._tables[model.table_name].delete(id)
+        return self._tables[model.table_name()].delete(id)
 
     def count(self, configuration, model):
         if configuration['table_name'] not in self._tables:

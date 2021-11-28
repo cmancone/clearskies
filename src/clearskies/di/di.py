@@ -3,6 +3,7 @@ import inspect
 import re
 import sys
 import os
+from ..functional import string
 
 
 class DI:
@@ -34,7 +35,7 @@ class DI:
         if inspect.isclass(classes):
             classes = [classes]
         for add_class in classes:
-            name = self._camel_case_to_snake_case(add_class.__name__)
+            name = string.camel_case_to_snake_case(add_class.__name__)
             #if name in self._classes:
                 ## if we're re-adding the same class twice then just ignore it.
                 #if id(add_class) == self._classes[name]['id']:
@@ -123,12 +124,6 @@ class DI:
         # if we got here then our thing is already and object of some sort and doesn't need anything further
         return thing
 
-    def _camel_case_to_snake_case(self, string):
-        return re.sub(
-            '([a-z0-9])([A-Z])', r'\1_\2',
-            re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
-        ).lower()
-
     def build_from_name(self, name, context=None, cache=False):
         """
         Builds a dependency based on its name
@@ -190,7 +185,7 @@ class DI:
         The class constructor cannot accept any kwargs.   See self._disallow_kwargs for more details
         """
         if name is None:
-            name = self._camel_case_to_snake_case(class_to_build.__name__)
+            name = string.camel_case_to_snake_case(class_to_build.__name__)
         if name in self._prepared and cache:
             return self._prepared[name]
 
