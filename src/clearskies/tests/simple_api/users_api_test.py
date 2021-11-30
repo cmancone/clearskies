@@ -13,8 +13,8 @@ class UsersApiTest(unittest.TestCase):
 
         # we're also going to switch our cursor backend for an in-memory backend, create a table, and add a record
         self.memory_backend = self.api.memory_backend
-        self.users = self.api.build(models.Users)
-        self.statuses = self.api.build(models.Statuses)
+        self.users = self.api.build(models.User)
+        self.statuses = self.api.build(models.Status)
         self.active_status = self.statuses.create({
             'name': 'Active',
         })

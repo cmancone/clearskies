@@ -60,7 +60,7 @@ class TestModels(unittest.TestCase):
                 'values': ['5'],
                 'parsed': 'age>%s',
             },
-            users.configuration['wheres'][0]
+            users.query_configuration['wheres'][0]
         )
         self.assertEquals(
             {
@@ -70,14 +70,14 @@ class TestModels(unittest.TestCase):
                 'values': ['10'],
                 'parsed': 'age<%s',
             },
-            users.configuration['wheres'][1]
+            users.query_configuration['wheres'][1]
         )
-        self.assertEquals({'column': 'created', 'direction': 'desc'}, users.configuration['sorts'][0])
-        self.assertEquals('last_name', users.configuration['group_by_column'])
-        self.assertEquals('LEFT JOIN posts ON posts.user_id=users.id', users.configuration['joins'][0]['raw'])
-        self.assertEquals(5, users.configuration['limit_start'])
-        self.assertEquals(10, users.configuration['limit_length'])
-        self.assertEquals('*', users.configuration['selects'])
+        self.assertEquals({'column': 'created', 'direction': 'desc'}, users.query_configuration['sorts'][0])
+        self.assertEquals('last_name', users.query_configuration['group_by_column'])
+        self.assertEquals('LEFT JOIN posts ON posts.user_id=users.id', users.query_configuration['joins'][0]['raw'])
+        self.assertEquals(5, users.query_configuration['limit_start'])
+        self.assertEquals(10, users.query_configuration['limit_length'])
+        self.assertEquals('*', users.query_configuration['selects'])
 
     def test_table_name(self):
         self.assertEquals('users', Users('cursor', self.columns).get_table_name())

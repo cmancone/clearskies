@@ -3,23 +3,29 @@ from collections import OrderedDict
 from .column_types import UUID
 from .functional import string
 import re
+from .models import Models
 
 
-class Model(ABC):
-    _columns = None
+class Model(Models):
     _configured_columns = None
-    _backend = None
     _data = None
     _previous_data = None
     _transformed = None
     id_column_name = 'id'
 
     def __init__(self, backend, columns):
-        self._backend = backend
-        self._columns = columns
+        super().__init__(backend, columns)
         self._transformed = {}
         self._data = {}
         self._previous_data = None
+
+    def model_class(self):
+        """
+        Return the model class that this models object will find/return instances of
+
+        This is needed by the models class
+        """
+        return self.__class__
 
     @classmethod
     def table_name(cls):

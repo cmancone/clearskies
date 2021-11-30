@@ -55,7 +55,7 @@ class Read(Base):
             if error:
                 return self.error(input_output, error, 400)
             [models, start, limit] = self._configure_models_from_request_data(models, request_data, query_parameters)
-        if not models.sorts:
+        if not models.query_sorts:
             models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
 
         if self.configuration('debug'):
