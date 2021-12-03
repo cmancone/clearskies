@@ -2,17 +2,18 @@ from .base import Base
 from collections import OrderedDict
 from .. import autodoc
 from .. import condition_parser
+from ..functional import string
 
 
 class Read(Base):
-    _models = None
+    _model = None
     _columns = None
     _searchable_columns = None
     _readable_columns = None
 
     _configuration_defaults = {
-        'models': None,
-        'models_class': None,
+        'model': None,
+        'model_class': None,
         'readable_columns': None,
         'searchable_columns': None,
         'sortable_columns': [],
@@ -34,7 +35,7 @@ class Read(Base):
         if self.configuration('debug'):
             print('processing read request')
         # first configure our models object with the defaults
-        models = self._models
+        models = self._model
         for where in self.configuration('where'):
             models = models.where(where)
         for join in self.configuration('join'):
@@ -203,15 +204,15 @@ class Read(Base):
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)
-        has_models_class = ('models_class' in configuration) and configuration['models_class'] is not None
-        has_models = ('models' in configuration) and configuration['models'] is not None
-        if not has_models and not has_models_class:
-            raise KeyError(f"{error_prefix} you must specify 'models' or 'models_class'")
-        if has_models and has_models_class:
-            raise KeyError(f"{error_prefix} you specified both 'models' and 'models_class', but can only provide one")
-        self._models = self._di.build(configuration['models_class']) if has_models_class else configuration['models']
-        self._columns = self._models.columns(overrides=configuration.get('overrides'))
-        model_class_name = self._models.__class__.__name__
+        has_model_class = ('model_class' in configuration) and configuration['model_class'] is not None
+        has_model = ('model' in configuration) and configuration['model'] is not None
+        if not has_model and not has_model_class:
+            raise KeyError(f"{error_prefix} you must specify 'model' or 'model_class'")
+        if has_model and has_model_class:
+            raise KeyError(f"{error_prefix} you specified both 'model' and 'model_class', but can only provide one")
+        self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
+        self._columns = self._model.columns(overrides=configuration.get('overrides'))
+        model_class_name = self._model.__class__.__name__
         # checks for searchable_columns and readable_columns
         for config_name in ['searchable_columns', 'readable_columns']:
             if not config_name in configuration or not configuration[config_name]:
@@ -273,7 +274,7 @@ class Read(Base):
         for column_name in self.configuration(f'{column_type}_columns'):
             if column_name not in self._columns:
                 class_name = self.__class__.__name__
-                model_class = self._models.model_class().__name__
+                model_class = self._model.__class__.__name__
                 raise ValueError(
                     f"Handler {class_name} was configured with {column_type} column '{column_name}' but this " +
                     f"column doesn't exist for model {model_class}"
@@ -292,9 +293,8 @@ class Read(Base):
         return self._searchable_columns
 
     def documentation(self, include_search=False):
-        nice_models = self.camel_to_nice(self._models.__class__.__name__)
-        nice_model = self.camel_to_nice(self._models.model_class().__name__)
-        schema_model_name = self.camel_to_snake(self._models.model_class().__name__)
+        nice_model = string.camel_case_to_words(self._models.model_class().__name__)
+        schema_model_name = string.camel_case_to_words(self._models.model_class().__name__)
         data_schema = self.documentation_data_schema()
 
         authentication = self.configuration('authentication')
@@ -306,7 +306,7 @@ class Read(Base):
 
         requests = [
             autodoc.request.Request(
-                f'Fetch the list of current {nice_models}',
+                f'Fetch the list of current {nice_model} records',
                 [
                     self.documentation_success_response(
                         autodoc.schema.Array('data', autodoc.schema.Object(
@@ -314,7 +314,7 @@ class Read(Base):
                             children=data_schema,
                             model_name=schema_model_name
                         )),
-                        description=f'The matching {nice_models}',
+                        description=f'The matching {nice_model} records',
                         include_pagination=True,
                     ),
                     *standard_error_responses,
@@ -354,7 +354,7 @@ class Read(Base):
             return requests
 
         requests.append(autodoc.request.Request(
-            f'Advanced options for searching {nice_models}',
+            f'Advanced options for searching {nice_model} records',
             [
                 self.documentation_success_response(
                     autodoc.schema.Array('data', autodoc.schema.Object(
@@ -362,7 +362,7 @@ class Read(Base):
                         children=data_schema,
                         model_name=schema_model_name
                     )),
-                    description=f'The matching {nice_models}',
+                    description=f'The matching {nice_model} records',
                     include_pagination=True,
                 ),
                 *standard_error_responses,
@@ -378,7 +378,7 @@ class Read(Base):
         return requests
 
     def documentation_models(self):
-        schema_model_name = self.camel_to_snake(self._models.model_class().__name__)
+        schema_model_name = string.camel_case_to_snake_case(self._model.__class__.__name__)
 
         return {
             schema_model_name: autodoc.schema.Object(

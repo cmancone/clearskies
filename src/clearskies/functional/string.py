@@ -10,6 +10,14 @@ def camel_case_to_snake_case(string: str) -> str:
         re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
     ).lower()
 
+def camel_case_to_title(string):
+    return camel_case_to_words.title()
+
+def camel_case_to_words(string):
+    string = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', string)
+    string = re.sub('([a-z0-9])([A-Z])', r'\1 \2', string).lower()
+    return string
+
 def snake_case_to_title_case(string: str) -> str:
     """
     Converts a snake case string (my_string) to title case (MyString)

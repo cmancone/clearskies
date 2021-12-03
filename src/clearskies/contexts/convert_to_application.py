@@ -21,7 +21,7 @@ def convert_to_application(application):
                 "build_context was passed a dictionary-like object with 'handler_class', but not " + \
                 "'handler_config'.  Both are required to build an application"
             )
-        return Application(application['handler_class'], applicaton['handler_config'])
+        return Application(application['handler_class'], application['handler_config'])
 
     # if we get a callable, then use the callable handler class
     if callable(application):

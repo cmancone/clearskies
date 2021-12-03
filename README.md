@@ -31,9 +31,9 @@ clearskies is really just a set of loosely coupled classes that play nicely with
 
 But what does that actually mean?
 
-### Die Controllers Die
+### Reusable Business Logic
 
-This is actually a key goal of clearskies, and a substantial departure from other frameworks, so [there is an entire page devoted to it in the documentation](./docs/2_but_why.md).
+A key goal of clearskies is to make business logic as easy to reuse as possible.  Since it's a primary goal, [there is an entire page devoted to it in the documentation](./docs/2_but_why.md).
 
 ### Context Neutral
 

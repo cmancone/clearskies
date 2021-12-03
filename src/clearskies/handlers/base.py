@@ -19,7 +19,7 @@ class Base(ABC):
         'authorization': None,
         'output_map': None,
         'column_overrides': None,
-        'id_column': 'id',
+        'id_column_name': None,
         'doc_description': '',
     }
     _di = None
@@ -156,7 +156,7 @@ class Base(ABC):
         if self.configuration('output_map'):
             return self.configuration('output_map')(model)
 
-        raw_model_id = getattr(model, self.configuration('id_column'))
+        raw_model_id = getattr(model, self.id_column_name)
         try:
             model_id = int(raw_model_id)
         except:
@@ -167,13 +167,38 @@ class Base(ABC):
             json[column.name] = column.to_json(model)
         return json
 
-    def camel_to_nice(self, string):
-        string = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', string)
-        string = re.sub('([a-z0-9])([A-Z])', r'\1 \2', string).lower()
-        return string
+    @property
+    def id_column_name(self) -> str:
+        """
+        This returns the name of the id column to use for requests
 
-    def camel_to_snake(self, string):
-        return self.camel_to_nice(string).replace(' ', '_')
+        There are three ways to determine the id column:
+
+         1. It may be defined in the handler configuration.
+         2. It may be overridden in the model class
+         3. It defaults to 'id'
+
+        The first happens if the developer wants to expose a different "id" column to the client.
+        The second happens if the developer wants to use a different id column internally.
+        The third is the clearskies default.
+
+        The first is easy to detect because the dev will set `id_column_name` in the handler config.
+        The second happens if the model class defines a different `id_column_name` property in the model class.
+        However, this is tricky because there is nothing in this base case that allows us to pull up the model.
+        In fact, not all handlers use a model, or they may use multiple models, etc...  Still, it's pretty
+        common for the handler to have a configuration named `model_class` or `model`, so let's check for that and assume
+        the handler will only ask for the id_column_name() if the handler has a `self.configuration('model_class')`
+        """
+        id_column_name = self.configuration('id_column_name')
+        if id_column_name is not None:
+            return id_column_name
+        if not self._configuration.get('model_class', False) and not self._configuration.get('model', False):
+            raise KeyError(
+                "To properly use handler.id_column_name, the handler must have a 'model_class' or 'model' configuration key"
+            )
+        if self._configuration.get('model_class', False):
+            return self._configuration.get('model_class').id_column_name
+        return self._configuration.get('model').id_column_name
 
     def documentation(self):
         return []
@@ -257,9 +282,9 @@ class Base(ABC):
         return self.documentation_generic_error_response(description='Not Found', status=404)
 
     def documentation_data_schema(self):
-        id_column = self.configuration('id_column')
+        id_column_name = self.id_column_name
         properties = [
-            self._columns[id_column].documentation(name='id') if id_column in self._columns else AutoDocInteger('id')
+            self._columns[id_column_name].documentation(name='id') if id_column_name in self._columns else AutoDocString('id')
         ]
 
         for column in self._get_readable_columns().values():

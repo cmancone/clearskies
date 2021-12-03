@@ -202,7 +202,7 @@ class Models(ABC, ConditionParser):
 
     def find(self, where):
         """ Returns the first model where condition """
-        return self.blank().where(where).first()
+        return self.clone().where(where).first()
 
     def __len__(self):
         if self.must_recount:

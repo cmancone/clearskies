@@ -2,7 +2,7 @@ from .routing import Routing
 from .create import Create
 from .update import Update
 from .delete import Delete
-from .read import Read
+from .get import Get
 from .. import autodoc
 
 
@@ -19,7 +19,7 @@ class RestfulAPI(Routing):
         'allow_search': True,
         'read_only': False,
         'create_handler': Create,
-        'read_handler': Read,
+        'get_handler': Get,
         'update_handler': Update,
         'delete_handler': Delete,
         'create_request_method': 'POST',
@@ -91,7 +91,7 @@ class RestfulAPI(Routing):
                 return self.configuration('delete_handler') if self.configuration('allow_delete') else None
             if request_method != 'GET':
                 return None
-            return self.configuration('read_handler') if self.configuration('allow_read') else None
+            return self.configuration('get_handler') if self.configuration('allow_read') else None
         if request_method == self.configuration('create_request_method'):
             return self.configuration('create_handler') if self.configuration('allow_create') else None
         if request_method == 'GET':
@@ -100,14 +100,7 @@ class RestfulAPI(Routing):
 
     def _finalize_configuration_for_sub_handler(self, configuration, handler_class):
         if self._resource_id:
-            if handler_class == self.configuration('read_handler'):
-                configuration['single_record'] = True
-                if not 'where' in configuration:
-                    configuration['where'] = []
-                id_column = self.configuration('id_column')
-                configuration['where'].append(f'{id_column}={self._resource_id}')
-            else:
-                configuration['resource_id'] = self._resource_id
+            configuration['resource_id'] = self._resource_id
         return configuration
 
     def documentation(self):

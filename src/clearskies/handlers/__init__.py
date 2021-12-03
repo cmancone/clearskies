@@ -2,6 +2,7 @@ from .callable import Callable
 from .create import Create
 from .crud_by_method import CRUDByMethod
 from .delete import Delete
+from .get import Get
 from .read import Read
 from .request_method_routing import RequestMethodRouting
 from .restful_api import RestfulAPI
