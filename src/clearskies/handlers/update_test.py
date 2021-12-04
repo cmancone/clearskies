@@ -1,6 +1,5 @@
 import unittest
 from .update import Update
-from ..mocks import InputOutput
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer

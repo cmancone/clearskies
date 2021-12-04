@@ -42,7 +42,7 @@ class Get(Base):
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)
         has_model_class = ('model_class' in configuration) and configuration['model_class'] is not None
         has_model = ('model' in configuration) and configuration['model'] is not None
-        if not has_model and not has_model_clas:
+        if not has_model and not has_model_class:
             raise KeyError(f"{error_prefix} you must specify 'model' or 'model_class'")
         if has_model and has_model_class:
             raise KeyError(f"{error_prefix} you specified both 'model' and 'model_class', but can only provide one")
