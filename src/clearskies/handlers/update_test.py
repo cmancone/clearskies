@@ -51,7 +51,7 @@ class UpdateTest(unittest.TestCase):
         response = self.update(body={'id': '5', 'name': 'Conor', 'email': 'c@example.com', 'age': 10})
         response_data = response[0]['data']
         self.assertEquals(200, response[1])
-        self.assertEquals(5, response_data['id'])
+        self.assertEquals('5', response_data['id'])
         self.assertEquals(10, response_data['age'])
         self.assertEquals('Conor', response_data['name'])
         self.assertEquals('c@example.com', response_data['email'])
@@ -71,7 +71,7 @@ class UpdateTest(unittest.TestCase):
         response = self.update_less_columns(body={'id': 5, 'name': 'Conor', 'age': 10})
         response_data = response[0]['data']
         self.assertEquals(200, response[1])
-        self.assertEquals(5, response_data['id'])
+        self.assertEquals('5', response_data['id'])
         self.assertEquals(10, response_data['age'])
         self.assertTrue('email' not in response_data)
 
@@ -101,7 +101,7 @@ class UpdateTest(unittest.TestCase):
         response = update(body={'id': 5, 'name': 'Conor', 'age': 10})
         response_data = response[0]['data']
         self.assertEquals(200, response[1])
-        self.assertEquals(5, response_data['id'])
+        self.assertEquals('5', response_data['id'])
         self.assertEquals(10, response_data['age'])
         self.assertEquals('default@email.com', response_data['email'])
 

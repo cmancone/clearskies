@@ -141,7 +141,7 @@ class MemoryTable:
     def _where_as_filter(self, where):
         column = where['column']
         values = where['values']
-        return self._operator_lambda_builders[where['operator']](column, values, self.null)
+        return self._operator_lambda_builders[where['operator'].lower()](column, values, self.null)
 
 class MemoryBackend(Backend):
     _tables = None

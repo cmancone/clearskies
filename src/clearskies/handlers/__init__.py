@@ -3,7 +3,7 @@ from .create import Create
 from .crud_by_method import CRUDByMethod
 from .delete import Delete
 from .get import Get
-from .read import Read
+from .list import List
 from .request_method_routing import RequestMethodRouting
 from .restful_api import RestfulAPI
 from .routing import Routing

@@ -156,11 +156,7 @@ class Base(ABC):
         if self.configuration('output_map'):
             return self.configuration('output_map')(model)
 
-        raw_model_id = getattr(model, self.id_column_name)
-        try:
-            model_id = int(raw_model_id)
-        except:
-            model_id = raw_model_id
+        model_id = getattr(model, self.id_column_name)
         json = OrderedDict()
         json['id'] = model_id
         for column in self._get_readable_columns().values():

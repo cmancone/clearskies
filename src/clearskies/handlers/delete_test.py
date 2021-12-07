@@ -89,7 +89,7 @@ class DeleteTest(unittest.TestCase):
     def test_documentation(self):
         delete = Delete(StandardDependencies())
         delete.configure({
-            'model': User,
+            'model_class': User,
             'authentication': Public(),
         })
 

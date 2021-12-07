@@ -116,7 +116,6 @@ class Models(ModelsBase):
             Models.counted = []
         del configuration['model_columns']
         Models.counted.append(configuration)
-        print(self.search_responses)
         counted = self.search_responses.pop(0)
         return len(counted)
 

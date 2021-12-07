@@ -21,12 +21,6 @@ class User(Model):
             string('name'),
             integer('age'),
         ])
-class Users(Models):
-    def __init__(self, cursor_backend, columns):
-        super().__init__(cursor_backend, columns)
-
-    def model_class(self):
-        return User
 
 class Status(Model):
     def __init__(self, cursor_backend, columns):
@@ -37,12 +31,6 @@ class Status(Model):
             string('name'),
             integer('order'),
         ])
-class Statuses(Models):
-    def __init__(self, cursor_backend, columns):
-        super().__init__(cursor_backend, columns)
-
-    def model_class(self):
-        return Status
 
 
 class SimpleRoutingTest(unittest.TestCase):
@@ -86,7 +74,7 @@ class SimpleRoutingTest(unittest.TestCase):
                     'methods': 'SECRET',
                     'handler_class': Read,
                     'handler_config': {
-                        'models_class': Statuses,
+                        'model_class': Status,
                         'readable_columns': ['name', 'order'],
                         'searchable_columns': ['name', 'order'],
                         'sortable_columns': ['name', 'order'],
@@ -97,7 +85,7 @@ class SimpleRoutingTest(unittest.TestCase):
                     'path': '/users/',
                     'handler_class': Read,
                     'handler_config': {
-                        'models_class': Users,
+                        'model_class': User,
                         'readable_columns': ['name', 'age'],
                         'searchable_columns': ['name'],
                         'sortable_columns': ['name', 'age'],
@@ -108,7 +96,7 @@ class SimpleRoutingTest(unittest.TestCase):
                     'path': '/statuses/',
                     'handler_class': Read,
                     'handler_config': {
-                        'models_class': Statuses,
+                        'model_class': Status,
                         'readable_columns': ['name'],
                         'searchable_columns': ['name'],
                         'sortable_columns': ['name'],

@@ -3,7 +3,6 @@ from .create import Create
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
-from ..di import StandardDependencies
 from ..model import Model
 from ..contexts import test
 from collections import OrderedDict
@@ -31,8 +30,26 @@ class CreateTest(unittest.TestCase):
             }
         })
         self.users = self.create.build(User)
-        self.secret_bearer = SecretBearer('environment')
-        self.secret_bearer.configure(secret='asdfer')
+
+        self.create_no_email = test({
+            'handler_class': Create,
+            'handler_config': {
+                'model_class': User,
+                'columns': ['name', 'age'],
+                'authentication': Public(),
+            }
+        })
+
+        secret_bearer = SecretBearer('environment')
+        secret_bearer.configure(secret='asdfer')
+        self.create_secret_bearer = test({
+            'handler_class': Create,
+            'handler_config': {
+                'model_class': User,
+                'columns': ['name', 'age', 'email'],
+                'authentication': secret_bearer,
+            }
+        })
 
     def test_save_flow(self):
         response = self.create(body={'name': 'Conor', 'email': 'c@example.com', 'age': 10})
@@ -57,101 +74,54 @@ class CreateTest(unittest.TestCase):
             response[0]['inputErrors']
         )
 
-    #def test_columns(self):
-        #self.models.add_create_response({
-            #'id': 1,
-            #'name': 'Conor',
-            #'email': '',
-            #'age': 10,
-        #})
+    def test_columns(self):
+        response = self.create_no_email(body={'name': 'Conor', 'age': 10})
+        response_data = response[0]['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals(36, len(response_data['id']))
+        self.assertEquals(10, response_data['age'])
+        self.assertTrue('email' not in response_data)
 
-        #create = Create(self.di)
-        #create.configure({
-            #'models': self.models,
-            #'columns': ['name', 'age'],
-            #'authentication': Public(),
-        #})
-        #response = create(InputOutput(body={'name': 'Conor', 'age': 10}))
-        #response_data = response[0]['data']
-        #self.assertEquals(200, response[1])
-        #self.assertEquals(1, response_data['id'])
-        #self.assertEquals(10, response_data['age'])
-        #self.assertTrue('email' not in response_data)
+    def test_extra_columns(self):
+        response = self.create_no_email(body={'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'})
+        self.assertEquals(
+            {
+                'email': "Input column 'email' is not an allowed column",
+                'yo': "Input column 'yo' is not an allowed column",
+            },
+            response[0]['inputErrors']
+        )
 
-    #def test_extra_columns(self):
-        #create = Create(self.di)
-        #create.configure({
-            #'models': self.models,
-            #'columns': ['name', 'age'],
-            #'authentication': Public(),
-        #})
-        #response = create(InputOutput(body={'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'}))
-        #self.assertEquals(
-            #{
-                #'email': "Input column 'email' is not an allowed column",
-                #'yo': "Input column 'yo' is not an allowed column",
-            #},
-            #response[0]['inputErrors']
-        #)
+    def test_readable_writeable(self):
+        create = test({
+            'handler_class': Create,
+            'handler_config': {
+                'model_class': User,
+                'writeable_columns': ['name', 'age'],
+                'readable_columns': ['name', 'age', 'email'],
+                'authentication': Public(),
+            }
+        })
 
-    #def test_readable_writeable(self):
-        #self.models.add_create_response({
-            #'id': 1,
-            #'name': 'Conor',
-            #'email': 'default@email.com',
-            #'age': 10,
-        #})
+        response = create(body={'name': 'Conor', 'age': 10})
+        response_data = response[0]['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals(36, len(response_data['id']))
+        self.assertEquals(10, response_data['age'])
+        self.assertEquals(None, response_data['email'])
 
-        #create = Create(self.di)
-        #create.configure({
-            #'models': self.models,
-            #'writeable_columns': ['name', 'age'],
-            #'readable_columns': ['name', 'age', 'email'],
-            #'authentication': Public(),
-        #})
-        #response = create(InputOutput(body={'name': 'Conor', 'age': 10}))
-        #response_data = response[0]['data']
-        #self.assertEquals(200, response[1])
-        #self.assertEquals(1, response_data['id'])
-        #self.assertEquals(10, response_data['age'])
-        #self.assertEquals('default@email.com', response_data['email'])
+    def test_auth_failure(self):
+        response = self.create_secret_bearer(
+            body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            headers={'Authorization': 'Bearer qwerty'},
+        )
+        self.assertEquals(401, response[1])
+        self.assertEquals('clientError', response[0]['status'])
+        self.assertEquals('Not Authenticated', response[0]['error'])
 
-    #def test_auth_failure(self):
-        #input_output = InputOutput(
-            #body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-            #request_headers={'Authorization': 'Bearer qwerty'},
-        #)
-        #secret_bearer = SecretBearer('environment')
-        #secret_bearer.configure(secret='asdfer')
-        #create = Create(self.di)
-        #create.configure({
-            #'models': self.models,
-            #'columns': ['name', 'email', 'age'],
-            #'authentication': secret_bearer,
-        #})
-        #response = create(input_output)
-        #self.assertEquals(401, response[1])
-        #self.assertEquals('clientError', response[0]['status'])
-        #self.assertEquals('Not Authenticated', response[0]['error'])
-
-    #def test_auth_success(self):
-        #self.models.add_create_response({
-            #'id': 1,
-            #'name': 'Conor',
-            #'email': 'default@email.com',
-            #'age': 10,
-        #})
-        #input_output = InputOutput(
-            #body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-            #request_headers={'Authorization': 'Bearer asdfer'},
-        #)
-        #secret_bearer = SecretBearer('environment')
-        #secret_bearer.configure(secret='asdfer')
-        #create = Create(self.di)
-        #create.configure({
-            #'models': self.models,
-            #'columns': ['name', 'email', 'age'],
-            #'authentication': secret_bearer,
-        #})
-        #response = create(input_output)
-        #self.assertEquals(200, response[1])
+    def test_auth_success(self):
+        response = self.create_secret_bearer(
+            body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            headers={'Authorization': 'Bearer asdfer'},
+        )
+        self.assertEquals(200, response[1])

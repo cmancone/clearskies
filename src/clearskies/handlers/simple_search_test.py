@@ -1,5 +1,5 @@
 import unittest
-from .read import Read
+from .list import List
 from ..column_types import String, Integer
 from ..di import StandardDependencies
 from ..authentication import Public, SecretBearer
@@ -20,10 +20,10 @@ class User(Model):
             ('age', {'class': Integer}),
         ])
 
-class ReadTest(unittest.TestCase):
+class ListTest(unittest.TestCase):
     def setUp(self):
-        self.read = test({
-            'handler_class': Read,
+        self.list = test({
+            'handler_class': List,
             'handler_config': {
                 'model_class': User,
                 'readable_columns': ['name', 'email', 'age'],
@@ -32,15 +32,15 @@ class ReadTest(unittest.TestCase):
                 'authentication': Public(),
             }
         })
-        self.users = self.read.build(User)
+        self.users = self.list.build(User)
         self.users.create({'id': '1', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': '6'})
         self.users.create({'id': '2', 'name': 'conor', 'email': 'cmancone2@example.com', 'age': '8'})
         self.users.create({'id': '5', 'name': 'conor', 'email': 'cmancone3@example.com', 'age': '15'})
         self.users.create({'id': '8', 'name': 'ronoc', 'email': 'cmancone4@example.com', 'age': '25'})
         self.users.create({'id': '12', 'name': 'ronoc', 'email': 'cmancone5@example.com', 'age': '35'})
 
-    def test_simple_read(self):
-        response = self.read()
+    def test_simple_list(self):
+        response = self.list()
         json_response = response[0]
         response_data = json_response['data']
         self.assertEquals(200, response[1])
@@ -53,8 +53,8 @@ class ReadTest(unittest.TestCase):
         self.assertEquals({'id': '12', 'name': 'ronoc', 'email': 'cmancone5@example.com', 'age': 35}, response_data[4])
 
     def test_configure(self):
-        read = test({
-            'handler_class': Read,
+        list = test({
+            'handler_class': List,
             'handler_config': {
                 'model_class': User,
                 'readable_columns': ['name'],
@@ -67,14 +67,14 @@ class ReadTest(unittest.TestCase):
                 'authentication': Public(),
             }
         })
-        users = read.build(User)
+        users = list.build(User)
         users.create({'id': '1', 'name': 'conor', 'email': 'cmancone1@example.com', 'age': '6'})
         users.create({'id': '2', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': '8'})
         users.create({'id': '5', 'name': 'conor', 'email': 'cmancone1@example.com', 'age': '15'})
         users.create({'id': '8', 'name': 'ronoc', 'email': 'cmancone2@example.com', 'age': '25'})
         users.create({'id': '10', 'name': 'ronoc', 'email': 'cmancone2@example.com', 'age': '30'})
 
-        response = read()
+        response = list()
         json_response = response[0]
         response_data = json_response['data']
         self.assertEquals(200, response[1])
@@ -84,26 +84,9 @@ class ReadTest(unittest.TestCase):
         self.assertEquals({'id': '1', 'name': 'conor'}, response_data[1])
         self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 50}, json_response['pagination'])
 
-    def test_user_input(self):
-        response = self.read(body={
-            'where': [{'column': 'name', 'operator': '=', 'value': 'ronoc'}],
-            'sort': [{'column': 'age', 'direction': 'DESC'}],
-            'start': 1,
-            'limit': 2,
-        })
-        json_response = response[0]
-        response_data = json_response['data']
-        self.assertEquals(200, response[1])
-        self.assertEquals('success', json_response['status'])
-        self.assertEquals(2, len(response_data))
-        self.assertEquals({'numberResults': 3, 'start': 1, 'limit': 2}, json_response['pagination'])
-
-        self.assertEquals({'id': '12', 'name': 'ronoc', 'email': 'cmancone5@example.com', 'age': 35}, response_data[0])
-        self.assertEquals({'id': '8', 'name': 'ronoc', 'email': 'cmancone4@example.com', 'age': 25}, response_data[1])
-
     def test_output_map(self):
-        read = test({
-            'handler_class': Read,
+        list = test({
+            'handler_class': List,
             'handler_config': {
                 'model_class': User,
                 'readable_columns': ['name', 'email', 'age'],
@@ -113,11 +96,11 @@ class ReadTest(unittest.TestCase):
                 'output_map': lambda model: {'id': model.id, 'awesome': model.name},
             }
         })
-        users = read.build(User)
+        users = list.build(User)
         users.create({'id': '1', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': '6'})
         users.create({'id': '2', 'name': 'conor', 'email': 'cmancone2@example.com', 'age': '8'})
 
-        response = read()
+        response = list()
         json_response = response[0]
         response_data = json_response['data']
         self.assertEquals(200, response[1])
@@ -127,8 +110,8 @@ class ReadTest(unittest.TestCase):
         self.assertEquals({'id': '2', 'awesome': 'conor'}, response_data[1])
 
     def test_doc(self):
-        read = Read(StandardDependencies())
-        read.configure({
+        list = List(StandardDependencies())
+        list.configure({
             'model_class': User,
             'readable_columns': ['name', 'email', 'age'],
             'searchable_columns': ['name', 'email'],
@@ -136,7 +119,7 @@ class ReadTest(unittest.TestCase):
             'authentication': Public(),
         })
 
-        documentation = read.documentation(include_search=True)
+        documentation = list.documentation(include_search=True)
         all_doc = documentation[0]
         resource_doc = documentation[1]
         search_doc = documentation[2]
