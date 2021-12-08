@@ -157,25 +157,8 @@ class List(Base):
         self._columns = self._model.columns(overrides=configuration.get('overrides'))
         model_class_name = self._model.__class__.__name__
         # checks for searchable_columns and readable_columns
-        for config_name in ['searchable_columns', 'readable_columns']:
-            if not config_name in configuration or not configuration[config_name]:
-                raise ValueError(f"{error_prefix} missing required configuration '{config_name}'")
-            if not hasattr(configuration[config_name], '__iter__'):
-                raise ValueError(
-                    f"{error_prefix} '{config_name}' should be an iterable of column names " +
-                    f", not {str(type(configuration[config_name]))}"
-                )
-            for column_name in configuration[config_name]:
-                if column_name not in self._columns:
-                    raise ValueError(
-                        f"{error_prefix} '{config_name}' references column named {column_name} " +
-                        f"but this column does not exist for model '{model_class_name}'"
-                    )
-                if config_name == 'readable_columns' and not self._columns[column_name].is_readable:
-                    raise ValueError(
-                        f"{error_prefix} '{config_name}' references column named {column_name} " +
-                        f"but this column does not exist for model '{model_class_name}'"
-                    )
+        self._check_columns_in_configuration(configuration, 'readable_columns')
+
         if not 'default_sort_column' in configuration:
             raise ValueError(f"{error_prefix} missing required configuration 'default_sort_column'")
 
@@ -210,6 +193,28 @@ class List(Base):
             if config_name in configuration and type(configuration[config_name]) != int:
                 raise ValueError(
                     f"{error_prefix} '{config_name}' should be an int, not {str(type(configuration[config_name]))}"
+                )
+
+    def _check_columns_in_configuration(self, configuration, config_name):
+        error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)
+        model_class_name = self._model.__class__.__name__
+        if not configuration.get(config_name):
+            raise ValueError(f"{error_prefix} missing required configuration '{config_name}'")
+        if not hasattr(configuration[config_name], '__iter__'):
+            raise ValueError(
+                f"{error_prefix} '{config_name}' should be an iterable of column names " +
+                f", not {str(type(configuration[config_name]))}"
+            )
+        for column_name in configuration[config_name]:
+            if column_name not in self._columns:
+                raise ValueError(
+                    f"{error_prefix} '{config_name}' references column named {column_name} " +
+                    f"but this column does not exist for model '{model_class_name}'"
+                )
+            if config_name == 'readable_columns' and not self._columns[column_name].is_readable:
+                raise ValueError(
+                    f"{error_prefix} '{config_name}' references column named {column_name} " +
+                    f"but this column does not exist for model '{model_class_name}'"
                 )
 
     def _from_either(self, request_data, query_parameters, key, default=None):
