@@ -81,10 +81,9 @@ class List(Base):
         )
 
     def configure_models_from_request_data(self, models, request_data, query_parameters):
-        models = models.limit(
-            int(self._from_either(request_data, query_parameters, 'start', default=0)),
-            int(self._from_either(request_data, query_parameters, 'limit', default=self.configuration('default_limit'))),
-        )
+        start = int(self._from_either(request_data, query_parameters, 'start', default=0))
+        limit = int(self._from_either(request_data, query_parameters, 'limit', default=self.configuration('default_limit')))
+        models = models.limit(start, limit)
         sort = self._from_either(request_data, query_parameters, 'sort')
         direction = self._from_either(request_data, query_parameters, 'direction')
         if sort and direction:
@@ -94,7 +93,7 @@ class List(Base):
 
     @property
     def allowed_request_keys(self):
-        return ['sort', 'start', 'limit']
+        return ['sort', 'direction', 'start', 'limit']
 
     def check_request_data(self, request_data, query_parameters):
         # first, check that they didn't provide something unexpected
@@ -135,7 +134,7 @@ class List(Base):
                 return "You must specify 'sort' and 'direction' together in the request - not just one of them"
             if sort not in allowed_sort_columns:
                 return f"Invalid request: invalid sort column"
-            if sort['direction'].lower() not in ['asc', 'desc']:
+            if direction.lower() not in ['asc', 'desc']:
                 return "Invalid request: direction must be 'asc' or 'desc'"
         return self.check_search_in_request_data(request_data, query_parameters)
 
@@ -221,7 +220,7 @@ class List(Base):
         """
         Returns the key from either object.  Assumes it is not present in both
         """
-        return request_data.get(query_parameters.get(key, default))
+        return request_data.get(key, query_parameters.get(key, default))
 
     def _get_columns(self, column_type):
         resolved_columns = OrderedDict()

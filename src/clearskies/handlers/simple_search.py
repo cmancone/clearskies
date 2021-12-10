@@ -1,14 +1,16 @@
 from .list import List
 
 class SimpleSearch(List):
+    search_control_columns = ['sort', 'direction', 'start', 'limit']
+
     @property
     def allowed_request_keys(self):
         return [
-            *['sort', 'start', 'limit'],
+            *self.search_control_columns,
             # the list comprehension seems unnecessary, but that is because we require searchable
             # columns to be an iterable, but that doesn't guarantee that it converts automatically
             # into a list.
-            *[key for key in self.configuration.get('searchable_columns'))],
+            *[key for key in self.configuration('searchable_columns')],
         ]
 
     def _check_search_in_request_data(self, request_data, query_parameters):
@@ -20,12 +22,14 @@ class SimpleSearch(List):
                 if value_error:
                     return f"Invalid request. {value_error} for search column '{column_name}' in the {input_source_label}"
 
-    def _configure_models_from_request_data(self, models, request_data, query_parameters):
-        [models, start, limit] = super()._configure_models_from_request_data(models, request_data, query_parameters)
+    def configure_models_from_request_data(self, models, request_data, query_parameters):
+        [models, start, limit] = super().configure_models_from_request_data(models, request_data, query_parameters)
         # we can play fast and loose with the possiblity of duplicate keys because our input checking already
         # disallows that
         for input_source in [request_data, query_parameters]:
             for (column_name, value) in input_source.items():
+                if column_name in self.search_control_columns:
+                    continue
                 if column_name == 'id':
                     column_name = self.id_column_name
                 column = self._columns[column_name]

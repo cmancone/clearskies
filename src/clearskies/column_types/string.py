@@ -3,9 +3,9 @@ from .column import Column
 
 class String(Column):
     def build_condition(self, value, operator=None):
-        if operator == '=':
-            return f"{self.name}={value}"
-        return f"{self.name} LIKE '%{value}%'"
+        if operator and operator.lower() == 'like':
+            return f"{self.name} LIKE '%{value}%'"
+        return f"{self.name}={value}"
 
     def is_allowed_operator(self, operator):
         """

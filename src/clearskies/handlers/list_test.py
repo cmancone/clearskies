@@ -52,6 +52,19 @@ class ListTest(unittest.TestCase):
         self.assertEquals({'id': '8', 'name': 'ronoc', 'email': 'cmancone4@example.com', 'age': 25}, response_data[3])
         self.assertEquals({'id': '12', 'name': 'ronoc', 'email': 'cmancone5@example.com', 'age': 35}, response_data[4])
 
+    def test_user_input(self):
+        response = self.list(body={'sort': 'name', 'direction': 'desc'})
+        json_response = response[0]
+        response_data = json_response['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('success', json_response['status'])
+        self.assertEquals({'numberResults': 5, 'start': 0, 'limit': 100}, json_response['pagination'])
+        self.assertEquals({'id': '1', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': 6}, response_data[0])
+        self.assertEquals({'id': '8', 'name': 'ronoc', 'email': 'cmancone4@example.com', 'age': 25}, response_data[1])
+        self.assertEquals({'id': '12', 'name': 'ronoc', 'email': 'cmancone5@example.com', 'age': 35}, response_data[2])
+        self.assertEquals({'id': '2', 'name': 'conor', 'email': 'cmancone2@example.com', 'age': 8}, response_data[3])
+        self.assertEquals({'id': '5', 'name': 'conor', 'email': 'cmancone3@example.com', 'age': 15}, response_data[4])
+
     def test_configure(self):
         list = test({
             'handler_class': List,
