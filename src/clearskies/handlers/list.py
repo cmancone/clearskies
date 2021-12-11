@@ -245,7 +245,7 @@ class List(Base):
             self._searchable_columns = self._get_columns('searchable')
         return self._searchable_columns
 
-    def documentation(self, include_search=False):
+    def documentation(self):
         nice_model = string.camel_case_to_words(self._model.__class__.__name__)
         schema_model_name = string.camel_case_to_words(self._model.__class__.__name__)
         data_schema = self.documentation_data_schema()
@@ -257,7 +257,7 @@ class List(Base):
             if getattr(authentication, 'can_authorize', False):
                 standard_error_responses.append(self.documentation_unauthorized_response())
 
-        requests = [
+        return [
             autodoc.request.Request(
                 f'Fetch the list of current {nice_model} records',
                 [
@@ -273,62 +273,18 @@ class List(Base):
                     *standard_error_responses,
                     self.documentation_generic_error_response(),
                 ],
-                parameters=[
-                    *self.documentation_url_search_parameters(),
-                    *self.documentation_pagination_parameters(),
-                    *self.documentation_url_sort_parameters(),
-                    *self.configuration('authentication').documentation_request_parameters()
-                ],
-            ),
-            autodoc.request.Request(
-                'Fetch the details of the ' + nice_model + ' with an id of {id}',
-                [
-                    self.documentation_success_response(
-                        autodoc.schema.Object(
-                            'data',
-                            children=data_schema,
-                            model_name=schema_model_name,
-                        ),
-                        description=f'The matching {nice_model}'
-                    ),
-                    *standard_error_responses,
-                    self.documentation_not_found(),
-                ],
-                relative_path='{id}',
-                parameters=[
-                    *self.configuration('authentication').documentation_request_parameters(),
-                    self.documentation_id_url_parameter(),
-                ],
+                parameters=self.documentation_request_parameters(),
             )
         ]
 
-        # figure out what to do with the search endpoint
-        if not include_search:
-            return requests
-
-        requests.append(autodoc.request.Request(
-            f'Advanced options for searching {nice_model} records',
-            [
-                self.documentation_success_response(
-                    autodoc.schema.Array('data', autodoc.schema.Object(
-                        nice_model,
-                        children=data_schema,
-                        model_name=schema_model_name
-                    )),
-                    description=f'The matching {nice_model} records',
-                    include_pagination=True,
-                ),
-                *standard_error_responses,
-                self.documentation_generic_error_response(),
-            ],
-            relative_path='search',
-            request_methods='POST',
-            parameters=[
-                *self.documentation_json_search_parameters(),
-                *self.configuration('authentication').documentation_request_parameters(),
-            ],
-        ))
-        return requests
+    def documentation_request_parameters(self):
+        return [
+            *self.documentation_url_pagination_parameters(),
+            *self.documentation_url_sort_parameters(),
+            *self.documentation_json_pagination_parameters(),
+            *self.documentation_json_sort_parameters(),
+            *self.configuration('authentication').documentation_request_parameters()
+        ]
 
     def documentation_models(self):
         schema_model_name = string.camel_case_to_snake_case(self._model.__class__.__name__)
@@ -352,7 +308,7 @@ class List(Base):
             required=True,
         )
 
-    def documentation_pagination_parameters(self):
+    def documentation_url_pagination_parameters(self):
         return [
             autodoc.request.URLParameter(
                 autodoc.schema.Integer('start'),
@@ -381,69 +337,31 @@ class List(Base):
             ),
         ]
 
-    def documentation_url_search_parameters(self):
+    def documentation_json_pagination_parameters(self):
         return [
-            autodoc.request.URLParameter(
-                column.documentation(),
-                description=f'Search by {column.name} (via exact match)',
-            )
-            for column in self._get_searchable_columns().values()
+            autodoc.request.JSONBody(
+                autodoc.schema.Integer('start'),
+                description='The index of the record to start listing results at (0-indexed)'
+            ),
+            autodoc.request.JSONBody(
+                autodoc.schema.Integer('limit'),
+                description='The number of records to return'
+            ),
         ]
 
-    def documentation_json_search_parameters(self):
-        # named 'where' in the request
-        where_condition = autodoc.schema.Object(
-            'condition',
-            [
-                autodoc.schema.Enum(
-                    'column',
-                    [column.name for column in self._get_searchable_columns().values()],
-                    autodoc.schema.String('column_name'),
-                    example='name',
-                ),
-                autodoc.schema.Enum(
-                    'operator',
-                    condition_parser.ConditionParser.operators,
-                    autodoc.schema.String('operator'),
-                    example='=',
-                ),
-                autodoc.schema.String('value', example='Jane'),
-            ],
-        )
-
-        allowed_sort_columns = self.configuration('sortable_columns')
-        if not allowed_sort_columns:
-            allowed_sort_columns = list(self._columns.keys())
-
-        sort_item = autodoc.schema.Object(
-            'sort',
-            [
-                autodoc.schema.Enum(
-                    'column',
-                    allowed_sort_columns,
-                    autodoc.schema.String('column'),
-                    example='name',
-                ),
-                autodoc.schema.Enum(
-                    'direction',
-                    ['asc', 'desc'],
-                    autodoc.schema.String('direction'),
-                    example='asc',
-                ),
-            ]
-        )
+    def documentation_json_sort_parameters(self):
+        sort_columns = self.configuration('sortable_columns')
+        if not sort_columns:
+            sort_columns = list(self._columns.keys())
+        directions = ['asc', 'desc']
 
         return [
             autodoc.request.JSONBody(
-                autodoc.schema.Array('where', where_condition), description='List of search conditions'
+                autodoc.schema.Enum('sort', sort_columns, autodoc.schema.String('sort'), example='name'),
+                description=f'Column to sort by',
             ),
             autodoc.request.JSONBody(
-                autodoc.schema.Array('sort', sort_item), description='List of sort directives (max 2)'
-            ),
-            autodoc.request.JSONBody(
-                autodoc.schema.Integer('start', example=0), description='The 0-indexed record to start results from'
-            ),
-            autodoc.request.JSONBody(
-                autodoc.schema.Integer('limit', example=100), description='The number of records to return'
+                autodoc.schema.Enum('direction', directions, autodoc.schema.String('direction'), example='asc'),
+                description=f'Direction to sort',
             ),
         ]

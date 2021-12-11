@@ -1,4 +1,6 @@
 from .list import List
+from .. import autodoc
+
 
 class SimpleSearch(List):
     search_control_columns = ['sort', 'direction', 'start', 'limit']
@@ -40,3 +42,32 @@ class SimpleSearch(List):
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
         self._check_columns_in_configuration(configuration, 'searchable_columns')
+
+    def documentation_request_parameters(self):
+        return [
+            *self.documentation_url_pagination_parameters(),
+            *self.documentation_url_sort_parameters(),
+            *self.documentation_url_search_parameters(),
+            *self.documentation_json_pagination_parameters(),
+            *self.documentation_json_sort_parameters(),
+            *self.documentation_json_search_parameters(),
+            *self.configuration('authentication').documentation_request_parameters()
+        ]
+
+    def documentation_url_search_parameters(self):
+        return [
+            autodoc.request.URLParameter(
+                column.documentation(),
+                description=f'Search by {column.name} (via exact match)',
+            )
+            for column in self._get_searchable_columns().values()
+        ]
+
+    def documentation_json_search_parameters(self):
+        return [
+            autodoc.request.JSONBody(
+                column.documentation(),
+                description=f'Search by {column.name} (via exact match)',
+            )
+            for column in self._get_searchable_columns().values()
+        ]
