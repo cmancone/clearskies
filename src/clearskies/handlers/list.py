@@ -108,11 +108,15 @@ class List(Base):
                 return f"Ambiguous request: '{key}' was found in both the request body and URL data"
         start = self._from_either(request_data, query_parameters, 'start')
         limit = self._from_either(request_data, query_parameters, 'limit')
+        if start is not None and type(start) != int and type(start) != float and type(start) != str:
+            return "Invalid request: 'start' should be an integer"
         if start:
             try:
                 start = int(start)
             except ValueError:
                 return "Invalid request: 'start' should be an integer"
+        if limit is not None and type(limit) != int and type(limit) != float and type(limit) != str:
+            return "Invalid request: 'limit' should be an integer"
         if limit:
             try:
                 limit = int(limit)
@@ -216,11 +220,17 @@ class List(Base):
                     f"but this column does not exist for model '{model_class_name}'"
                 )
 
-    def _from_either(self, request_data, query_parameters, key, default=None):
+    def _from_either(self, request_data, query_parameters, key, default=None, ignore_none=True):
         """
         Returns the key from either object.  Assumes it is not present in both
         """
-        return request_data.get(key, query_parameters.get(key, default))
+        if key in request_data:
+            if request_data[key] is not None or not ignore_none:
+                return request_data[key]
+        if key in query_parameters:
+            if query_parameters[key] is not None or not ignore_none:
+                return query_parameters[key]
+        return default
 
     def _get_columns(self, column_type):
         resolved_columns = OrderedDict()
