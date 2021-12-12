@@ -1,7 +1,6 @@
 from .base import Base
 from collections import OrderedDict
 from .. import autodoc
-from .. import condition_parser
 from ..functional import string
 import inspect
 
@@ -11,6 +10,7 @@ class List(Base):
     _columns = None
     _searchable_columns = None
     _readable_columns = None
+    expected_request_methods = 'GET'
 
     _configuration_defaults = {
         'model': None,
@@ -283,6 +283,7 @@ class List(Base):
                     *standard_error_responses,
                     self.documentation_generic_error_response(),
                 ],
+                request_methods=self.expected_request_methods,
                 parameters=self.documentation_request_parameters(),
             )
         ]

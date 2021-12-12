@@ -1,7 +1,11 @@
 from .simple_search import SimpleSearch
+from .. import autodoc
+from .. import condition_parser
 
 
 class AdvancedSearch(SimpleSearch):
+    expected_request_methods = 'POST'
+
     def allowed_request_keys(self):
         return ['sort', 'direction', 'where', 'start', 'limit']
 
@@ -127,3 +131,67 @@ class AdvancedSearch(SimpleSearch):
                 return f"Invalid request: {value_error} for search column '{column_name}'"
 
         return None
+
+    def documentation_request_parameters(self):
+        return [
+            *self.documentation_json_parameters(),
+            *self.configuration('authentication').documentation_request_parameters(),
+        ]
+
+    def documentation_json_parameters(self):
+        # named 'where' in the request
+        where_condition = autodoc.schema.Object(
+            'condition',
+            [
+                autodoc.schema.Enum(
+                    'column',
+                    [column.name for column in self._get_searchable_columns().values()],
+                    autodoc.schema.String('column_name'),
+                    example='name',
+                ),
+                autodoc.schema.Enum(
+                    'operator',
+                    condition_parser.ConditionParser.operators,
+                    autodoc.schema.String('operator'),
+                    example='=',
+                ),
+                autodoc.schema.String('value', example='Jane'),
+            ],
+        )
+
+        allowed_sort_columns = self.configuration('sortable_columns')
+        if not allowed_sort_columns:
+            allowed_sort_columns = list(self._columns.keys())
+
+        sort_item = autodoc.schema.Object(
+            'sort',
+            [
+                autodoc.schema.Enum(
+                    'column',
+                    allowed_sort_columns,
+                    autodoc.schema.String('column'),
+                    example='name',
+                ),
+                autodoc.schema.Enum(
+                    'direction',
+                    ['asc', 'desc'],
+                    autodoc.schema.String('direction'),
+                    example='asc',
+                ),
+            ]
+        )
+
+        return [
+            autodoc.request.JSONBody(
+                autodoc.schema.Array('where', where_condition), description='List of search conditions'
+            ),
+            autodoc.request.JSONBody(
+                autodoc.schema.Array('sort', sort_item), description='List of sort directives (max 2)'
+            ),
+            autodoc.request.JSONBody(
+                autodoc.schema.Integer('start', example=0), description='The 0-indexed record to start results from'
+            ),
+            autodoc.request.JSONBody(
+                autodoc.schema.Integer('limit', example=100), description='The number of records to return'
+            ),
+        ]

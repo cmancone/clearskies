@@ -67,72 +67,43 @@ class ReadTest(unittest.TestCase):
         self.assertEquals({'id': '1', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': 6}, response_data[0])
         self.assertEquals({'id': '8', 'name': 'ronoc', 'email': 'cmancone4@example.com', 'age': 25}, response_data[1])
 
-    #def test_doc(self):
-        #advanced_search = AdvancedSearch(StandardDependencies())
-        #advanced_search.configure({
-            #'model_class': User,
-            #'readable_columns': ['name', 'email', 'age'],
-            #'searchable_columns': ['name', 'email'],
-            #'default_sort_column': 'email',
-            #'authentication': Public(),
-        #})
+    def test_doc(self):
+        advanced_search = AdvancedSearch(StandardDependencies())
+        advanced_search.configure({
+            'model_class': User,
+            'readable_columns': ['name', 'email', 'age'],
+            'searchable_columns': ['name', 'email'],
+            'default_sort_column': 'email',
+            'authentication': Public(),
+        })
 
-        #documentation = advanced_search.documentation(include_search=True)
-        #all_doc = documentation[0]
-        #resource_doc = documentation[1]
-        #search_doc = documentation[2]
+        documentation = advanced_search.documentation()
+        self.assertEquals(1, len(documentation))
+        search_doc = documentation[0]
 
-        #self.assertEquals(3, len(documentation))
-        #self.assertEquals(['', '{id}', 'search'], [doc.relative_path for doc in documentation])
-        #self.assertEquals([['GET'], ['GET'], ['POST']], [doc.request_methods for doc in documentation])
+        self.assertEquals([''], [doc.relative_path for doc in documentation])
+        self.assertEquals([['POST']], [doc.request_methods for doc in documentation])
 
-        ## Check our 'all' endpoint which returns all records
-        #self.assertEquals(2, len(all_doc.responses))
-        #self.assertEquals([200, 400], [response.status for response in all_doc.responses])
-        #self.assertEquals(
-            #['status', 'data', 'pagination', 'error', 'inputErrors'],
-            #[schema.name for schema in all_doc.responses[0].schema.children]
-        #)
-        #data_response_properties = all_doc.responses[0].schema.children[1].item_definition.children
-        #self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
-        #self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
-        #self.assertEquals(
-            #['name', 'email', 'start', 'limit', 'sort', 'direction'],
-            #[param.definition.name for param in all_doc.parameters]
-        #)
-
-        ## then check our 'resource' endpoint which returns a particular record
-        #self.assertEquals(2, len(resource_doc.responses))
-        #self.assertEquals([200, 404], [response.status for response in resource_doc.responses])
-        #self.assertEquals(
-            #['status', 'data', 'pagination', 'error', 'inputErrors'],
-            #[schema.name for schema in resource_doc.responses[0].schema.children]
-        #)
-        #data_response_properties = resource_doc.responses[0].schema.children[1].children
-        #self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
-        #self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
-        #self.assertEquals(['id'], [param.definition.name for param in resource_doc.parameters])
-
-        ## Check our 'search' endpoint which returns all records with fancy search options
-        #self.assertEquals(2, len(search_doc.responses))
-        #self.assertEquals([200, 400], [response.status for response in search_doc.responses])
-        #self.assertEquals(
-            #['status', 'data', 'pagination', 'error', 'inputErrors'],
-            #[schema.name for schema in search_doc.responses[0].schema.children]
-        #)
-        #data_response_properties = search_doc.responses[0].schema.children[1].item_definition
-        #self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties.children])
-        #self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties.children])
-        #self.assertEquals(
-            #['where', 'sort', 'start', 'limit'],
-            #[param.definition.name for param in search_doc.parameters]
-        #)
-        #self.assertEquals(3, len(search_doc.parameters[0].definition.item_definition.children))
-        #self.assertEquals(
-            #['column', 'operator', 'value'],
-            #[child.name for child in search_doc.parameters[0].definition.item_definition.children]
-        #)
-        #self.assertEquals(
-            #['name', 'email'],
-            #search_doc.parameters[0].definition.item_definition.children[0].values
-        #)
+        # Check our 'search' endpoint which returns all records with fancy search options
+        self.assertEquals(2, len(search_doc.responses))
+        self.assertEquals([200, 400], [response.status for response in search_doc.responses])
+        self.assertEquals(
+            ['status', 'data', 'pagination', 'error', 'inputErrors'],
+            [schema.name for schema in search_doc.responses[0].schema.children]
+        )
+        data_response_properties = search_doc.responses[0].schema.children[1].item_definition
+        self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties.children])
+        self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties.children])
+        self.assertEquals(
+            ['where', 'sort', 'start', 'limit'],
+            [param.definition.name for param in search_doc.parameters]
+        )
+        self.assertEquals(3, len(search_doc.parameters[0].definition.item_definition.children))
+        self.assertEquals(
+            ['column', 'operator', 'value'],
+            [child.name for child in search_doc.parameters[0].definition.item_definition.children]
+        )
+        self.assertEquals(
+            ['name', 'email'],
+            search_doc.parameters[0].definition.item_definition.children[0].values
+        )
