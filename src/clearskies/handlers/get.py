@@ -12,7 +12,7 @@ class Get(Base):
     _configuration_defaults = {
         'model': None,
         'model_class': None,
-        'resource_id': None,
+        'readable_columns': None,
     }
 
     def __init__(self, di):
@@ -26,14 +26,10 @@ class Get(Base):
 
     def fetch_model(self, input_output):
         input_data = input_output.request_data()
-        resource_id = None
-        if self.configuration('resource_id'):
-            resource_id = self.configuration('resource_id')
-        elif 'id' in input_data:
-            resource_id = input_data['id']
-        if not resource_id:
+        if 'id' not in input_data:
             return "Missing 'id'"
-        model = self._model.find(f'{self.id_column_name}={resource_id}')
+        id = input_data['id']
+        model = self._model.find(f'{self.id_column_name}={id}')
         if not model.exists:
             return "Not Found"
 
@@ -50,6 +46,20 @@ class Get(Base):
         if has_model and inspect.isclass(configuration['model']):
             raise ValueError("{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead")
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
+        self._columns = self._model.columns(overrides=configuration.get('overrides'))
+
+    def _get_readable_columns(self):
+        resolved_columns = OrderedDict()
+        for column_name in self.configuration('readable_columns'):
+            if column_name not in self._columns:
+                class_name = self.__class__.__name__
+                model_class = self._model.__class__.__name__
+                raise ValueError(
+                    f"Handler {class_name} was configured with {column_type} column '{column_name}' but this " +
+                    f"column doesn't exist for model {model_class}"
+                )
+            resolved_columns[column_name] = self._columns[column_name]
+        return resolved_columns
 
     def documentation(self):
         nice_model = string.camel_case_to_words(self._model.__class__.__name__)
