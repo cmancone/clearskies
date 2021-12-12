@@ -35,7 +35,7 @@ class GetTest(unittest.TestCase):
         self.users.create({'id': '5', 'name': 'bob', 'email': 'bob@example.com', 'age': '25'})
 
     def test_get(self):
-        response = self.get(body={'id': '5'})
+        response = self.get(routing_data={'id': '5'})
         response_data = response[0]['data']
         self.assertEquals(200, response[1])
         self.assertEquals('5', response_data['id'])
@@ -44,7 +44,7 @@ class GetTest(unittest.TestCase):
         self.assertEquals('bob@example.com', response_data['email'])
 
     def test_not_found(self):
-        response = self.get(body={'id': '10'})
+        response = self.get(routing_data={'id': '10'})
         self.assertEquals(404, response[1])
         self.assertEquals(
             {'status': 'clientError', 'error': 'Not Found', 'data': [], 'pagination': {}, 'inputErrors': {}},

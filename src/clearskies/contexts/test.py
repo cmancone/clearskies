@@ -28,7 +28,7 @@ class Test(Context):
         if cursor_backend_to_memory_backend:
             self.di.bind('cursor_backend', self.memory_backend)
 
-    def __call__(self, method=None, body=None, headers=None, url=None, input_output=None):
+    def __call__(self, method=None, body=None, headers=None, url=None, routing_data=None, input_output=None):
         if self.application is None:
             raise ValueError("Cannot call the test context without an application")
 
@@ -42,6 +42,8 @@ class Test(Context):
             input_output.set_request_method(method)
         if url is not None:
             input_output.set_request_url(url)
+        if routing_data is not None:
+            input_output.set_routing_data(routing_data)
 
         self.handler = self.di.build(self.application.handler_class, cache=False)
         self.handler.configure({

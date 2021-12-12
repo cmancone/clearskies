@@ -8,6 +8,7 @@ class InputOutput(ABC):
     _response_headers = None
     _body_as_json = None
     _body_loaded_as_json = False
+    _routing_data = None
 
     @abstractmethod
     def respond(self, body, status_code=200):
@@ -52,6 +53,12 @@ class InputOutput(ABC):
     @abstractmethod
     def has_body(self):
         pass
+
+    def routing_data(self):
+        return self._routing_data if self._routing_data is not None else {}
+
+    def set_routing_data(self, data):
+        self._routing_data = data
 
     def request_data(self, required=True):
         request_data = self.json_body(False)

@@ -6,6 +6,12 @@ from .get import Get
 
 
 class Delete(Get):
+    _configuration_defaults = {
+        'model': None,
+        'model_class': None,
+        'readable_columns': None,
+    }
+
     def __init__(self, di):
         super().__init__(di)
 

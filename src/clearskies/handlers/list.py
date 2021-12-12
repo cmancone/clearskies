@@ -25,7 +25,6 @@ class List(Base):
         'default_sort_direction': 'asc',
         'default_limit': 100,
         'max_limit': 200,
-        'single_record': False,
         'debug': False,
     }
 
@@ -63,14 +62,6 @@ class List(Base):
         if self.configuration('debug'):
             print('Models config after adding user input:')
             print(models.configuration)
-
-        if self.configuration('single_record'):
-            if self.configuration('debug'):
-                print('Executing single record mode')
-            json_output = [self._model_as_json(model) for model in models]
-            if not len(json_output):
-                return self.error(input_output, 'Record not found', 400)
-            return self.success(input_output, json_output[0])
 
         return self.success(
             input_output,

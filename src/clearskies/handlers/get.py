@@ -25,10 +25,10 @@ class Get(Base):
         return self.success(input_output, self._model_as_json(model))
 
     def fetch_model(self, input_output):
-        input_data = input_output.request_data()
-        if 'id' not in input_data:
+        routing_data = input_output.routing_data()
+        if 'id' not in routing_data:
             return "Missing 'id'"
-        id = input_data['id']
+        id = routing_data['id']
         model = self._model.find(f'{self.id_column_name}={id}')
         if not model.exists:
             return "Not Found"

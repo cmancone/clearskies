@@ -37,13 +37,13 @@ class DeleteTest(unittest.TestCase):
         self.secret_bearer.configure(secret='asdfer')
 
     def test_delete_flow(self):
-        response = self.delete(body={'id': '5'})
+        response = self.delete(routing_data={'id': '5'})
         self.assertEquals('success', response[0]['status'])
         self.assertEquals(200, response[1])
         self.assertFalse(self.users.find('id=5').exists)
 
     def test_not_found(self):
-        response = self.delete(body={'id': '10'})
+        response = self.delete(routing_data={'id': '10'})
         self.assertEquals('clientError', response[0]['status'])
         self.assertEquals(404, response[1])
         self.assertTrue(self.users.find('id=5').exists)
@@ -80,7 +80,7 @@ class DeleteTest(unittest.TestCase):
         users.create({'id': '5', 'name': 'Bob', 'email': 'default@email.com', 'age': 10})
 
         response = delete(
-            body={'id': 5},
+            routing_data={'id': 5},
             headers={'Authorization': 'Bearer asdfer'},
         )
         self.assertEquals(200, response[1])

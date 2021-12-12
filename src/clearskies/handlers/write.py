@@ -21,7 +21,6 @@ class Write(Base):
         'columns': None,
         'writeable_columns': None,
         'readable_columns': None,
-        'resource_id': None,
     }
 
     def __init__(self, di):
@@ -132,8 +131,11 @@ class Write(Base):
 
     def request_data(self, input_output, required=True):
         request_data = input_output.request_data(required=required)
-        if self.configuration('resource_id'):
-            request_data[self.id_column_name] = self.configuration('resource_id')
+        # the parent handler should provide our resource id (we don't do any routing ourselves)
+        # dump it in to the request data for simplicity (which I'll probably regret later)
+        routing_data = input_output.routing_data()
+        if 'id' in routing_data:
+            request_data[self.id_column_name] = routing_data['id']
         return request_data
 
     def documentation_models(self):
