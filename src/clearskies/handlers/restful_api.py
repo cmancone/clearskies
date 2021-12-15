@@ -30,8 +30,11 @@ class RestfulAPI(Routing):
         'update_handler': Update,
         'read_only': False,
         'create_request_method': 'POST',
-        'update_request_method': 'PUT',
         'delete_request_method': 'DELETE',
+        'get_request_method': 'GET',
+        'list_request_method': 'GET',
+        'search_request_method': 'POST',
+        'update_request_method': 'PUT',
     }
 
     _resource_id = None
@@ -84,20 +87,22 @@ class RestfulAPI(Routing):
             [is_search, resource_id] = self._parse_url(input_output)
         except InvalidUrl:
             return [None, None]
-        if is_search:
-            return [resource_id, self.configuration('search_handler') if self.configuration('allow_search') else None]
         request_method = input_output.get_request_method()
+        if is_search:
+            if request_method != self.configuration('search_request_method'):
+                return [None, None]
+            return [resource_id, self.configuration('search_handler') if self.configuration('allow_search') else None]
         if resource_id:
             if request_method == self.configuration('update_request_method'):
                 return [resource_id, self.configuration('update_handler') if self.configuration('allow_update') else None]
             elif request_method == self.configuration('delete_request_method'):
                 return [resource_id, self.configuration('delete_handler') if self.configuration('allow_delete') else None]
-            if request_method != 'GET':
+            if request_method != self.configuration('get_request_method'):
                 return [None, None]
             return [resource_id, self.configuration('get_handler') if self.configuration('allow_get') else None]
         if request_method == self.configuration('create_request_method'):
             return [resource_id, self.configuration('create_handler') if self.configuration('allow_create') else None]
-        if request_method == 'GET':
+        if request_method == self.configuration('list_request_method'):
             return [resource_id, self.configuration('list_handler') if self.configuration('allow_list') else None]
         return [None, None]
 
@@ -146,5 +151,5 @@ class RestfulAPI(Routing):
 
     def documentation_models(self):
         # read and write use the same model, so we just need one
-        read_handler = self.build_handler(self.configuration('read_handler'))
+        read_handler = self.build_handler(self.configuration('get_handler'))
         return read_handler.documentation_models()

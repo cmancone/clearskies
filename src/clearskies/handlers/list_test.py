@@ -53,7 +53,7 @@ class ListTest(unittest.TestCase):
         self.assertEquals({'id': '12', 'name': 'ronoc', 'email': 'cmancone5@example.com', 'age': 35}, response_data[4])
 
     def test_user_input(self):
-        response = self.list(body={'sort': 'name', 'direction': 'desc'})
+        response = self.list(query_parameters={'sort': 'name', 'direction': 'desc'})
         json_response = response[0]
         response_data = json_response['data']
         self.assertEquals(200, response[1])
@@ -150,10 +150,10 @@ class ListTest(unittest.TestCase):
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
         self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
         self.assertEquals(
-            ['start', 'limit', 'sort', 'direction', 'start', 'limit', 'sort', 'direction'],
+            ['start', 'limit', 'sort', 'direction'],
             [param.definition.name for param in all_doc.parameters]
         )
         self.assertEquals(
-            ['url_parameter', 'url_parameter', 'url_parameter', 'url_parameter', 'json_body', 'json_body', 'json_body', 'json_body'],
+            ['url_parameter', 'url_parameter', 'url_parameter', 'url_parameter'],
             [param.location for param in all_doc.parameters]
         )

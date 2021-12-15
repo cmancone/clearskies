@@ -95,7 +95,7 @@ class RestfulAPITest(unittest.TestCase):
 
     def test_search(self):
         model = self.users.find('age=15')
-        result = self.api(body={'where': [{'column': 'age', 'operator': '=', 'value': '15'}]}, url='/search')
+        result = self.api(body={'where': [{'column': 'age', 'operator': '=', 'value': '15'}]}, url='/search', method='POST')
         self.assertEquals(200, result[1])
         self.assertEquals(
             {'id': model.id, 'name': 'conor', 'email': 'cmancone3@example.com', 'age': 15},

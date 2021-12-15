@@ -73,6 +73,12 @@ class InputOutput(input_outputs.InputOutput):
         for (key, value) in request_headers.items():
             self._request_headers[key.lower()] = value
 
+    def set_query_parameters(self, query_parameters):
+        if query_parameters is None:
+            self._query_parameters = {}
+        else:
+            self._query_parameters = query_parameters
+
     def get_script_name(self):
         return self._script_name
 

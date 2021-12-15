@@ -88,7 +88,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals({'numberResults': 4, 'start': 0, 'limit': 100}, json_response['pagination'])
 
     def test_user_input(self):
-        response = self.simple_search(body={
+        response = self.simple_search(query_parameters={
             'email': 'cmancone3@example.com',
         })
         json_response = response[0]
@@ -100,11 +100,15 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals({'id': '5', 'name': 'conor', 'email': 'cmancone3@example.com', 'age': 15}, response_data[0])
 
     def test_user_input_with_config(self):
-        response = self.simple_search_with_wheres(body={
-            'email': 'cmancone1@example.com',
-            'sort': 'name',
-            'direction': 'asc',
-        })
+        response = self.simple_search_with_wheres(
+            query_parameters={
+                'sort': 'name',
+                'direction': 'asc',
+            },
+            body={
+                'email': 'cmancone1@example.com',
+            }
+        )
         json_response = response[0]
         response_data = json_response['data']
         self.assertEquals(200, response[1])
@@ -142,10 +146,10 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
         self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
         self.assertEquals(
-            ['start', 'limit', 'sort', 'direction', 'name', 'email', 'start', 'limit', 'sort', 'direction', 'name', 'email'],
+            ['start', 'limit', 'sort', 'direction', 'name', 'email', 'name', 'email'],
             [param.definition.name for param in all_doc.parameters]
         )
         self.assertEquals(
-            ['url_parameter', 'url_parameter', 'url_parameter', 'url_parameter', 'url_parameter', 'url_parameter', 'json_body', 'json_body', 'json_body', 'json_body', 'json_body', 'json_body'],
+            ['url_parameter', 'url_parameter', 'url_parameter', 'url_parameter', 'url_parameter', 'url_parameter', 'json_body', 'json_body'],
             [param.location for param in all_doc.parameters]
         )

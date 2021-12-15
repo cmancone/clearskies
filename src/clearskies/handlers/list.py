@@ -51,7 +51,7 @@ class List(Base):
 
         request_data = input_output.request_data(False)
         query_parameters = input_output.get_query_parameters()
-        if request_data:
+        if request_data or query_parameters:
             error = self.check_request_data(request_data, query_parameters)
             if error:
                 return self.error(input_output, error, 400)
@@ -72,11 +72,11 @@ class List(Base):
         )
 
     def configure_models_from_request_data(self, models, request_data, query_parameters):
-        start = int(self._from_either(request_data, query_parameters, 'start', default=0))
-        limit = int(self._from_either(request_data, query_parameters, 'limit', default=self.configuration('default_limit')))
+        start = int(query_parameters.get('start', 0))
+        limit = int(query_parameters.get('limit', self.configuration('default_limit')))
         models = models.limit(start, limit)
-        sort = self._from_either(request_data, query_parameters, 'sort')
-        direction = self._from_either(request_data, query_parameters, 'direction')
+        sort = query_parameters.get('sort')
+        direction = query_parameters.get('direction')
         if sort and direction:
             models = models.sort_by(sort, direction)
 
@@ -90,15 +90,15 @@ class List(Base):
         # first, check that they didn't provide something unexpected
         allowed_request_keys = self.allowed_request_keys
         for key in request_data.keys():
-            if key not in allowed_request_keys:
+            if key not in allowed_request_keys or key in ['sort', 'direction', 'start', 'limit']:
                 return f"Invalid request parameter found in request body: '{key}'"
         for key in query_parameters.keys():
             if key not in allowed_request_keys:
                 return f"Invalid request parameter found in URL data: '{key}'"
             if key in request_data:
                 return f"Ambiguous request: '{key}' was found in both the request body and URL data"
-        start = self._from_either(request_data, query_parameters, 'start')
-        limit = self._from_either(request_data, query_parameters, 'limit')
+        start = query_parameters.get('start')
+        limit = query_parameters.get('limit')
         if start is not None and type(start) != int and type(start) != float and type(start) != str:
             return "Invalid request: 'start' should be an integer"
         if start:
@@ -283,8 +283,6 @@ class List(Base):
         return [
             *self.documentation_url_pagination_parameters(),
             *self.documentation_url_sort_parameters(),
-            *self.documentation_json_pagination_parameters(),
-            *self.documentation_json_sort_parameters(),
             *self.configuration('authentication').documentation_request_parameters()
         ]
 

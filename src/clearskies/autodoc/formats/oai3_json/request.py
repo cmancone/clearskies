@@ -47,10 +47,10 @@ class Request:
                 if len(self.json_body_parameters) > 1:
                     definitions = [parameter.definition for parameter in self.json_body_parameters]
                     json_body = Object('body', definitions)
-                    is_required = len([1 for param in self.json_body_parameters if param.required])
+                    is_required = len([1 for param in self.json_body_parameters if param.required]) >= 1
                 else:
                     json_body = self.json_body_parameters[0].definition
-                    is_required = len([1 for param in json_body.definition.children if param.required])
+                    is_required = len([1 for param in json_body.definition.children if param.required]) >= 1
 
                 data[request_method.lower()]['requestBody'] = {
                     'description': self.request.description,

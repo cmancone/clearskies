@@ -3,7 +3,7 @@ from collections import OrderedDict
 from ....model import Model
 from ....models import Models
 from ....column_types import string, integer
-from ....handlers import Read, SimpleRouting, RestfulAPI
+from ....handlers import SimpleRouting, RestfulAPI
 from ....authentication import public
 from ....di import StandardDependencies
 from ....backends import MemoryBackend
@@ -20,12 +20,6 @@ class User(Model):
             string('name'),
             integer('age'),
         ])
-class Users(Models):
-    def __init__(self, cursor_backend, columns):
-        super().__init__(cursor_backend, columns)
-
-    def model_class(self):
-        return User
 
 class Status(Model):
     def __init__(self, cursor_backend, columns):
@@ -36,14 +30,6 @@ class Status(Model):
             string('name'),
             integer('order'),
         ])
-
-class Statuses(Models):
-    def __init__(self, cursor_backend, columns):
-        super().__init__(cursor_backend, columns)
-
-    def model_class(self):
-        return Status
-
 
 class SimpleRoutingTest(unittest.TestCase):
     def setUp(self):
@@ -58,7 +44,7 @@ class SimpleRoutingTest(unittest.TestCase):
                     'path': '/users/',
                     'handler_class': RestfulAPI,
                     'handler_config': {
-                        'models_class': Users,
+                        'model_class': User,
                         'readable_columns': ['name', 'age'],
                         'writeable_columns': ['name', 'age'],
                         'searchable_columns': ['name'],
@@ -68,9 +54,10 @@ class SimpleRoutingTest(unittest.TestCase):
                 },
                 {
                     'path': '/statuses/',
-                    'handler_class': Read,
+                    'handler_class': RestfulAPI,
                     'handler_config': {
-                        'models_class': Statuses,
+                        'read_only': True,
+                        'model_class': Status,
                         'readable_columns': ['name'],
                         'searchable_columns': ['name'],
                         'sortable_columns': ['name'],

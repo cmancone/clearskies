@@ -48,8 +48,6 @@ class SimpleSearch(List):
             *self.documentation_url_pagination_parameters(),
             *self.documentation_url_sort_parameters(),
             *self.documentation_url_search_parameters(),
-            *self.documentation_json_pagination_parameters(),
-            *self.documentation_json_sort_parameters(),
             *self.documentation_json_search_parameters(),
             *self.configuration('authentication').documentation_request_parameters()
         ]
