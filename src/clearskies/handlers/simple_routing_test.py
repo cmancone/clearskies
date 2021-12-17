@@ -6,7 +6,7 @@ from ..backends import MemoryBackend
 from ..model import Model
 from ..models import Models
 from ..column_types import string, integer
-from .read import Read
+from .list import List
 from .simple_routing import SimpleRouting
 from ..authentication import public
 from ..di import StandardDependencies
@@ -72,7 +72,7 @@ class SimpleRoutingTest(unittest.TestCase):
             'routes': [
                 {
                     'methods': 'SECRET',
-                    'handler_class': Read,
+                    'handler_class': List,
                     'handler_config': {
                         'model_class': Status,
                         'readable_columns': ['name', 'order'],
@@ -83,7 +83,7 @@ class SimpleRoutingTest(unittest.TestCase):
                 },
                 {
                     'path': '/users/',
-                    'handler_class': Read,
+                    'handler_class': List,
                     'handler_config': {
                         'model_class': User,
                         'readable_columns': ['name', 'age'],
@@ -94,7 +94,7 @@ class SimpleRoutingTest(unittest.TestCase):
                 },
                 {
                     'path': '/statuses/',
-                    'handler_class': Read,
+                    'handler_class': List,
                     'handler_config': {
                         'model_class': Status,
                         'readable_columns': ['name'],
@@ -194,10 +194,10 @@ class SimpleRoutingTest(unittest.TestCase):
     def test_documentation(self):
         docs = self.handler.documentation()
         self.assertEquals(
-            ['', '{id}', '/users/', '/users/{id}', '/statuses/', '/statuses/{id}'],
+            ['', '/users/', '/statuses/'],
             [doc.relative_path for doc in docs]
         )
         self.assertEquals(
-            ['SECRET', 'SECRET', 'GET', 'GET', 'GET', 'GET'],
+            ['SECRET', 'GET', 'GET'],
             [doc.request_methods[0] for doc in docs]
         )

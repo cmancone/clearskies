@@ -7,6 +7,7 @@ from ..autodoc.schema import Integer as AutoDocInteger
 from ..autodoc.schema import String as AutoDocString
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.response import Response as AutoDocResponse
+from ..functional import string
 
 
 class Base(ABC):
@@ -21,6 +22,8 @@ class Base(ABC):
         'column_overrides': None,
         'id_column_name': None,
         'doc_description': '',
+        'internal_casing': '',
+        'external_casing': '',
     }
     _di = None
     _configuration = None
@@ -64,6 +67,26 @@ class Base(ABC):
                     "'output_map' should be a callable that accepts one parameter: the model. " + \
                     f"However, the provided one accepts {len(signature.args)}"
                 )
+        number_casings = 0
+        internal_casing = configuration.get('internal_casing')
+        if internal_casing is not None and internal_casing:
+            raise ValueError(
+                f"Invalid internal_casing config for handler '{self.__class__.__name__}': expected one of " + \
+                "'" + ", '".join(string.casings) + f"' but found '{internal_casing}'"
+            )
+            number_casings += 1
+        external_casing = configuration.get('external_casing')
+        if external_casing is not None and external_casing:
+            raise ValueError(
+                f"Invalid external_casing config for handler '{self.__class__.__name__}': expected one of " + \
+                "'" + ", '".join(string.casings) + f"' but found '{external_casing}'"
+            )
+            number_casings += 1
+        if number_casings == 1:
+            raise ValueError(
+                f"Configuration error for handler '{self.__class__.__name__}': external_casing and internal_casing" + \
+                " must be specified together, but only one was found"
+            )
 
     def apply_default_configuation(self, configuration):
         return {
@@ -160,8 +183,24 @@ class Base(ABC):
         json = OrderedDict()
         json['id'] = model_id
         for column in self._get_readable_columns().values():
-            json[column.name] = column.to_json(model)
+            json[self.auto_case_column_name(column.name, True)] = column.to_json(model)
         return json
+
+    def auto_case_column_name(self, column_name, internal_to_external):
+        if not self._configuration['internal_casing']:
+            return column_name
+        if internal_to_external:
+            return string.swap_casing(
+                column_name,
+                self._configuration['internal_casing'],
+                self._configuration['external_casing'],
+            )
+        return string.swap_casing(
+            column_name,
+            self._configuration['external_casing'],
+            self._configuration['internal_casing'],
+        )
+
 
     @property
     def id_column_name(self) -> str:
