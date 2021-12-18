@@ -47,7 +47,7 @@ class GetTest(unittest.TestCase):
         response = self.get(routing_data={'id': '10'})
         self.assertEquals(404, response[1])
         self.assertEquals(
-            {'status': 'clientError', 'error': 'Not Found', 'data': [], 'pagination': {}, 'inputErrors': {}},
+            {'status': 'client_error', 'error': 'Not Found', 'data': [], 'pagination': {}, 'input_errors': {}},
             response[0]
         )
 
@@ -68,7 +68,7 @@ class GetTest(unittest.TestCase):
         self.assertEquals([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]
         self.assertEquals(
-            ['status', 'data', 'pagination', 'error', 'inputErrors'],
+            ['status', 'data', 'pagination', 'error', 'input_errors'],
             [schema.name for schema in success_response.schema.children]
         )
         data_response_properties = success_response.schema.children[1].children

@@ -8,6 +8,7 @@ from ..autodoc.schema import String as AutoDocString
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.response import Response as AutoDocResponse
 from ..functional import string
+from typing import List, Dict
 
 
 class Base(ABC):
@@ -69,14 +70,14 @@ class Base(ABC):
                 )
         number_casings = 0
         internal_casing = configuration.get('internal_casing')
-        if internal_casing is not None and internal_casing:
+        if internal_casing and internal_casing not in string.casings:
             raise ValueError(
                 f"Invalid internal_casing config for handler '{self.__class__.__name__}': expected one of " + \
                 "'" + ", '".join(string.casings) + f"' but found '{internal_casing}'"
             )
             number_casings += 1
         external_casing = configuration.get('external_casing')
-        if external_casing is not None and external_casing:
+        if external_casing and external_casing not in string.casings:
             raise ValueError(
                 f"Invalid external_casing config for handler '{self.__class__.__name__}': expected one of " + \
                 "'" + ", '".join(string.casings) + f"' but found '{external_casing}'"
@@ -135,10 +136,10 @@ class Base(ABC):
         return response
 
     def input_errors(self, input_output, errors, status_code=200):
-        return self.respond(input_output, {'status': 'inputErrors', 'inputErrors': errors}, status_code)
+        return self.respond(input_output, {'status': 'input_errors', 'input_errors': errors}, status_code)
 
     def error(self, input_output, message, status_code):
-        return self.respond(input_output, {'status': 'clientError', 'error': message}, status_code)
+        return self.respond(input_output, {'status': 'client_error', 'error': message}, status_code)
 
     def success(self, input_output, data, number_results=None, start=None, limit=None):
         response_data = {'status': 'success', 'data': data, 'pagination': {}}
@@ -165,15 +166,13 @@ class Base(ABC):
     def _normalize_response(self, response_data):
         if not 'status' in response_data:
             raise ValueError("Huh, status got left out somehow")
-        if not 'error' in response_data:
-            response_data['error'] = ''
-        if not 'data' in response_data:
-            response_data['data'] = []
-        if not 'pagination' in response_data:
-            response_data['pagination'] = {}
-        if not 'inputErrors' in response_data:
-            response_data['inputErrors'] = {}
-        return response_data
+        return {
+            self.auto_case_internal_column_name('status'): self.auto_case_internal_column_name(response_data['status']),
+            self.auto_case_internal_column_name('error'): response_data.get('error', ''),
+            self.auto_case_internal_column_name('data'): response_data.get('data', []),
+            self.auto_case_internal_column_name('pagination'): response_data.get('pagination', {}),
+            self.auto_case_internal_column_name('input_errors'): response_data.get('input_errors', {})
+        }
 
     def _model_as_json(self, model):
         if self.configuration('output_map'):
@@ -181,10 +180,20 @@ class Base(ABC):
 
         model_id = getattr(model, self.id_column_name)
         json = OrderedDict()
-        json['id'] = model_id
+        json[self.auto_case_internal_column_name('id')] = model_id
         for column in self._get_readable_columns().values():
             json[self.auto_case_column_name(column.name, True)] = column.to_json(model)
         return json
+
+    def auto_case_internal_column_name(self, column_name):
+        if self._configuration['external_casing']:
+            return string.swap_casing(column_name, 'snake_case', self._configuration['external_casing'])
+        return column_name
+
+    def auto_case_to_internal_column_name(self, column_name):
+        if self._configuration['external_casing']:
+            return string.swap_casing(column_name, self._configuration['external_casing'], 'snake_case')
+        return column_name
 
     def auto_case_column_name(self, column_name, internal_to_external):
         if not self._configuration['internal_casing']:
@@ -200,7 +209,6 @@ class Base(ABC):
             self._configuration['external_casing'],
             self._configuration['internal_casing'],
         )
-
 
     @property
     def id_column_name(self) -> str:
@@ -243,9 +251,9 @@ class Base(ABC):
 
     def documentation_pagination_response(self, include_pagination=True):
         if not include_pagination:
-            return AutoDocObject('pagination', [], value={})
+            return AutoDocObject(self.auto_case_internal_column_name('pagination'), [], value={})
         return AutoDocObject(
-            'pagination',
+            self.auto_case_internal_column_name('pagination'),
             [
                 AutoDocInteger('numberResults', example=10),
                 AutoDocInteger('start', example=0),
@@ -259,11 +267,11 @@ class Base(ABC):
             AutoDocObject(
                 'body',
                 [
-                    AutoDocString('status', value='success'),
+                    AutoDocString(self.auto_case_internal_column_name('status'), value='success'),
                     data_schema,
                     self.documentation_pagination_response(include_pagination=include_pagination),
-                    AutoDocString('error', value=''),
-                    AutoDocObject('inputErrors', [], value={}),
+                    AutoDocString(self.auto_case_internal_column_name('error'), value=''),
+                    AutoDocObject(self.auto_case_internal_column_name('input_errors'), [], value={}),
                 ]
             ),
             description=description,
@@ -275,32 +283,33 @@ class Base(ABC):
             AutoDocObject(
                 'body',
                 [
-                    AutoDocString('status', value='error'),
-                    AutoDocObject('data', [], value={}),
+                    AutoDocString(self.auto_case_internal_column_name('status'), value='error'),
+                    AutoDocObject(self.auto_case_internal_column_name('data'), [], value={}),
                     self.documentation_pagination_response(),
-                    AutoDocString('error', example='User readable error message'),
-                    AutoDocObject('inputErrors', [], value={}),
+                    AutoDocString(self.auto_case_internal_column_name('error'), example='User readable error message'),
+                    AutoDocObject(self.auto_case_internal_column_name('input_errors'), [], value={}),
                 ]
             ),
             description=description
         )
 
     def documentation_input_error_response(self, description='Invalid client-side input'):
+        email_example = self.auto_case_internal_column_name('email')
         return AutoDocResponse(
             200,
             AutoDocObject(
                 'body',
                 [
-                    AutoDocString('status', value='inputErrors'),
-                    AutoDocObject('data', [], value={}),
+                    AutoDocString(self.auto_case_internal_column_name('status'), value='input_errors'),
+                    AutoDocObject(self.auto_case_internal_column_name('data'), [], value={}),
                     self.documentation_pagination_response(),
-                    AutoDocString('error', value=''),
+                    AutoDocString(self.auto_case_internal_column_name('error'), value=''),
                     AutoDocObject(
-                        'inputErrors',
+                        self.auto_case_internal_column_name('input_errors'),
                         [
                             AutoDocString('[COLUMN_NAME]', example='User friendly error message')
                         ],
-                        example={'email': 'email was not a valid email address'}
+                        example={email_example: f'{email_example} was not a valid email address'}
                     ),
                 ]
             ),
@@ -319,10 +328,15 @@ class Base(ABC):
     def documentation_data_schema(self):
         id_column_name = self.id_column_name
         properties = [
-            self._columns[id_column_name].documentation(name='id') if id_column_name in self._columns else AutoDocString('id')
+            self._columns[id_column_name].documentation(
+                name=self.auto_case_internal_column_name('id')
+            ) if id_column_name in self._columns
+            else AutoDocString(self.auto_case_internal_column_name('id'))
         ]
 
         for column in self._get_readable_columns().values():
-            properties.append(column.documentation())
+            column_doc = column.documentation()
+            column_doc.name = self.auto_case_internal_column_name(column_doc.name)
+            properties.append(column_doc)
 
         return properties

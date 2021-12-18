@@ -15,9 +15,11 @@ class SimpleSearch(List):
             *[key for key in self.configuration('searchable_columns')],
         ]
 
-    def _check_search_in_request_data(self, request_data, query_parameters):
-        for (input_source_label, input_data) in [('request body', request_data), (query_parameters, 'URL data')]:
+    def check_search_in_request_data(self, request_data, query_parameters):
+        for (input_source_label, input_data) in [('request body', request_data), ('URL data', query_parameters)]:
             for (column_name, value) in input_data.items():
+                if column_name in self.search_control_columns:
+                    continue
                 if column_name not in self.configuration('searchable_columns'):
                     return f"Invalid request. An invalid search column, '{column_name}', was found in the {input_source_label}"
                 value_error = self._columns[column_name].check_search_value(value)
@@ -53,19 +55,27 @@ class SimpleSearch(List):
         ]
 
     def documentation_url_search_parameters(self):
-        return [
-            autodoc.request.URLParameter(
-                column.documentation(),
-                description=f'Search by {column.name} (via exact match)',
+        docs = []
+        for column in self._get_searchable_columns().values():
+            column_doc = column.documentation()
+            column_doc.name = self.auto_case_internal_column_name(column_doc.name)
+            docs.append(
+                autodoc.request.URLParameter(
+                    column_doc,
+                    description=f'Search by {column_doc.name} (via exact match)',
+                )
             )
-            for column in self._get_searchable_columns().values()
-        ]
+        return docs
 
     def documentation_json_search_parameters(self):
-        return [
-            autodoc.request.JSONBody(
-                column.documentation(),
-                description=f'Search by {column.name} (via exact match)',
+        docs = []
+        for column in self._get_searchable_columns().values():
+            column_doc = column.documentation()
+            column_doc.name = self.auto_case_internal_column_name(column_doc.name)
+            docs.append(
+                autodoc.request.JSONBody(
+                    column_doc,
+                    description=f'Search by {column_doc.name} (via exact match)',
+                )
             )
-            for column in self._get_searchable_columns().values()
-        ]
+        return docs

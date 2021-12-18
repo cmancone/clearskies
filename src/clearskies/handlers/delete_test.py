@@ -44,7 +44,7 @@ class DeleteTest(unittest.TestCase):
 
     def test_not_found(self):
         response = self.delete(routing_data={'id': '10'})
-        self.assertEquals('clientError', response[0]['status'])
+        self.assertEquals('client_error', response[0]['status'])
         self.assertEquals(404, response[1])
         self.assertTrue(self.users.find('id=5').exists)
 
@@ -64,7 +64,7 @@ class DeleteTest(unittest.TestCase):
             headers={'Authorization': 'Bearer qwerty'},
         )
         self.assertEquals(401, response[1])
-        self.assertEquals('clientError', response[0]['status'])
+        self.assertEquals('client_error', response[0]['status'])
         self.assertEquals('Not Authenticated', response[0]['error'])
         self.assertTrue(users.find('id=5').exists)
 
@@ -100,6 +100,6 @@ class DeleteTest(unittest.TestCase):
         self.assertEquals([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]
         self.assertEquals(
-            ['status', 'data', 'pagination', 'error', 'inputErrors'],
+            ['status', 'data', 'pagination', 'error', 'input_errors'],
             [schema.name for schema in success_response.schema.children]
         )

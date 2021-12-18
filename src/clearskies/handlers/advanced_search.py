@@ -6,6 +6,7 @@ from .. import condition_parser
 class AdvancedSearch(SimpleSearch):
     expected_request_methods = 'POST'
 
+    @property
     def allowed_request_keys(self):
         return ['sort', 'direction', 'where', 'start', 'limit']
 
@@ -43,7 +44,7 @@ class AdvancedSearch(SimpleSearch):
 
     def check_request_data(self, request_data, query_parameters):
         # first, check that they didn't provide something unexpected
-        allowed_request_keys = self.allowed_request_keys()
+        allowed_request_keys = self.allowed_request_keys
         for key in request_data.keys():
             if key not in allowed_request_keys:
                 return f"Invalid request parameter found in request body: '{key}'"
@@ -96,7 +97,7 @@ class AdvancedSearch(SimpleSearch):
                     return f"Invalid request: invalid sort column specified in sort entry #{index+1}"
         return self.check_search_in_request_data(request_data, query_parameters)
 
-    def _check_search_in_request_data(self, request_data, query_parameters):
+    def check_search_in_request_data(self, request_data, query_parameters):
         if 'where' in request_data:
             if type(request_data['where']) != list:
                 return "Invalid request: if provided, 'where' must be a list of objects"
@@ -132,6 +133,44 @@ class AdvancedSearch(SimpleSearch):
 
         return None
 
+    def map_input_to_internal_names(self, input):
+        input = super().map_input_to_internal_names(input)
+
+        # the base will take care of most of this, but it won't handle the data inside of
+        # input['where'].  Therefore, we need to handle that
+        if 'where' not in input or type(input['where']) != list:
+            return input
+
+        mapped_wheres = []
+
+        # a map between the internal column name and the external column name: easier to have before hand
+        search_column_map = {}
+        for internal_name in self.configuration('searchable_columns'):
+            external_name = self.auto_case_column_name(internal_name, True)
+            search_column_map[external_name] = internal_name
+
+        # it's important that as we do this we only change things that we know we can change.
+        # we don't want to remove things that don't belong or things that seem wrong, otherwise
+        # the input checking won't be able to return meaningful error messages.
+        for where in input['where']:
+            if type(where) != dict:
+                mapped_wheres.append(where)
+                continue
+            mapped_where = {**where}
+            for internal_name in ['column', 'operator', 'value']:
+                external_name = self.auto_case_internal_column_name(internal_name)
+                if external_name != internal_name and external_name in mapped_where:
+                    mapped_where[internal_name] = mapped_where[external_name]
+                    del mapped_where[external_name]
+            if 'column' in mapped_where and type(mapped_where['column']) == str:
+                if mapped_where['column'] in search_column_map:
+                    mapped_where['column'] = search_column_map[mapped_where['column']]
+
+            mapped_wheres.append(mapped_where)
+
+        input['where'] = mapped_wheres
+        return input
+
     def documentation_request_parameters(self):
         return [
             *self.documentation_json_parameters(),
@@ -141,41 +180,41 @@ class AdvancedSearch(SimpleSearch):
     def documentation_json_parameters(self):
         # named 'where' in the request
         where_condition = autodoc.schema.Object(
-            'condition',
+            self.auto_case_internal_column_name('condition'),
             [
                 autodoc.schema.Enum(
-                    'column',
-                    [column.name for column in self._get_searchable_columns().values()],
-                    autodoc.schema.String('column_name'),
+                    self.auto_case_internal_column_name('column'),
+                    [self.auto_case_column_name(column.name, True) for column in self._get_searchable_columns().values()],
+                    autodoc.schema.String(self.auto_case_column_name('column_name', True)),
                     example='name',
                 ),
                 autodoc.schema.Enum(
-                    'operator',
+                    self.auto_case_internal_column_name('operator'),
                     condition_parser.ConditionParser.operators,
-                    autodoc.schema.String('operator'),
+                    autodoc.schema.String(self.auto_case_internal_column_name('operator')),
                     example='=',
                 ),
-                autodoc.schema.String('value', example='Jane'),
+                autodoc.schema.String(self.auto_case_internal_column_name('value'), example='Jane'),
             ],
         )
 
         allowed_sort_columns = self.configuration('sortable_columns')
         if not allowed_sort_columns:
-            allowed_sort_columns = list(self._columns.keys())
+            allowed_sort_columns = [self.auto_case_column_name(key, True) for key in self._columns.keys()]
 
         sort_item = autodoc.schema.Object(
-            'sort',
+            self.auto_case_internal_column_name('sort'),
             [
                 autodoc.schema.Enum(
-                    'column',
+                    self.auto_case_internal_column_name('column'),
                     allowed_sort_columns,
-                    autodoc.schema.String('column'),
-                    example='name',
+                    autodoc.schema.String(self.auto_case_internal_column_name('column')),
+                    example=self.auto_case_internal_column_name('name'),
                 ),
                 autodoc.schema.Enum(
-                    'direction',
+                    self.auto_case_internal_column_name('direction'),
                     ['asc', 'desc'],
-                    autodoc.schema.String('direction'),
+                    autodoc.schema.String(self.auto_case_internal_column_name('direction')),
                     example='asc',
                 ),
             ]
@@ -183,15 +222,31 @@ class AdvancedSearch(SimpleSearch):
 
         return [
             autodoc.request.JSONBody(
-                autodoc.schema.Array('where', where_condition), description='List of search conditions'
+                autodoc.schema.Array(
+                    self.auto_case_internal_column_name('where'),
+                    where_condition
+                ),
+                description='List of search conditions'
             ),
             autodoc.request.JSONBody(
-                autodoc.schema.Array('sort', sort_item), description='List of sort directives (max 2)'
+                autodoc.schema.Array(
+                    self.auto_case_internal_column_name('sort'),
+                    sort_item
+                ),
+                description='List of sort directives (max 2)'
             ),
             autodoc.request.JSONBody(
-                autodoc.schema.Integer('start', example=0), description='The 0-indexed record to start results from'
+                autodoc.schema.Integer(
+                    self.auto_case_internal_column_name('start'),
+                    example=0
+                ),
+                description='The 0-indexed record to start results from'
             ),
             autodoc.request.JSONBody(
-                autodoc.schema.Integer('limit', example=100), description='The number of records to return'
+                autodoc.schema.Integer(
+                    self.auto_case_internal_column_name('limit'),
+                    example=100
+                ),
+                description='The number of records to return'
             ),
         ]

@@ -48,7 +48,7 @@ class RequestMethodRoutingTest(unittest.TestCase):
         handle.configure({'authentication': Public()})
         result = handle(self._input_output)
         self.assertEquals(400, result[1])
-        self.assertEquals('clientError', result[0]['status'])
+        self.assertEquals('client_error', result[0]['status'])
         self.assertEquals('Invalid request method', result[0]['error'])
 
     def test_can_configure(self):

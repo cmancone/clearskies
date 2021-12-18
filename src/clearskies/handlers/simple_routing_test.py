@@ -132,7 +132,7 @@ class SimpleRoutingTest(unittest.TestCase):
                 'limit': 100,
             },
             'error': '',
-            'inputErrors': {},
+            'input_errors': {},
         }, result[0])
 
     def test_routing_statuses(self):
@@ -159,7 +159,7 @@ class SimpleRoutingTest(unittest.TestCase):
                 'limit': 100,
             },
             'error': '',
-            'inputErrors': {},
+            'input_errors': {},
         }, result[0])
 
     def test_routing_secret(self):
@@ -188,7 +188,7 @@ class SimpleRoutingTest(unittest.TestCase):
                 'limit': 100,
             },
             'error': '',
-            'inputErrors': {},
+            'input_errors': {},
         }, result[0])
 
     def test_documentation(self):

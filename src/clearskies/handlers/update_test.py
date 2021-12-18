@@ -56,6 +56,28 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals('Conor', response_data['name'])
         self.assertEquals('c@example.com', response_data['email'])
 
+    def test_casing(self):
+        update = test({
+            'handler_class': Update,
+            'handler_config': {
+                'model_class': User,
+                'columns': ['name', 'email', 'age'],
+                'authentication': Public(),
+                'internal_casing': 'snake_case',
+                'external_casing': 'TitleCase',
+            }
+        })
+        users = update.build(User)
+        users.create({'id': '5', 'name': '', 'email': '', 'age': 0})
+
+        response = update(body={'Id': '5', 'Name': 'Conor', 'Email': 'c@example.com', 'Age': 10})
+        response_data = response[0]['Data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('5', response_data['Id'])
+        self.assertEquals(10, response_data['Age'])
+        self.assertEquals('Conor', response_data['Name'])
+        self.assertEquals('c@example.com', response_data['Email'])
+
     def test_input_checks(self):
         response = self.update(body={'id': 5, 'email': 'cmancone@example.com', 'age': 10})
         self.assertEquals(200, response[1])
@@ -64,7 +86,7 @@ class UpdateTest(unittest.TestCase):
                 'name': "'name' is required.",
                 'email': "'email' must be at most 15 characters long."
             },
-            response[0]['inputErrors']
+            response[0]['input_errors']
         )
 
     def test_columns(self):
@@ -82,7 +104,7 @@ class UpdateTest(unittest.TestCase):
                 'email': "Input column 'email' is not an allowed column",
                 'yo': "Input column 'yo' is not an allowed column",
             },
-            response[0]['inputErrors']
+            response[0]['input_errors']
         )
 
     def test_readable_writeable(self):
@@ -123,7 +145,7 @@ class UpdateTest(unittest.TestCase):
             headers={'Authorization': 'Bearer qwerty'},
         )
         self.assertEquals(401, response[1])
-        self.assertEquals('clientError', response[0]['status'])
+        self.assertEquals('client_error', response[0]['status'])
         self.assertEquals('Not Authenticated', response[0]['error'])
 
     def test_auth_success(self):
@@ -177,7 +199,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals([200, 200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]
         self.assertEquals(
-            ['status', 'data', 'pagination', 'error', 'inputErrors'],
+            ['status', 'data', 'pagination', 'error', 'input_errors'],
             [schema.name for schema in success_response.schema.children]
         )
         data_response_properties = success_response.schema.children[1].children

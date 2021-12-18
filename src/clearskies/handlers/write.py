@@ -130,12 +130,19 @@ class Write(Base):
         return input_errors
 
     def request_data(self, input_output, required=True):
-        request_data = input_output.request_data(required=required)
+        request_data = {
+            self.auto_case_to_internal_column_name(key): value
+            for (key, value) in input_output.request_data(required=required).items()
+        }
+        external_id_column_name = self.auto_case_internal_column_name('id')
         # the parent handler should provide our resource id (we don't do any routing ourselves)
-        # dump it in to the request data for simplicity (which I'll probably regret later)
+        # However, our update/etc handlers need to find the id easily, so I'm going to be lazy and
+        # just dump it into the request.  I'll probably regret that.
         routing_data = input_output.routing_data()
+        # we don't have to worry about casing on the 'id' in routing_data because it doesn't come in from the
+        # route with a name.  Rather, it is populated by clearskies, so will always just be 'id'
         if 'id' in routing_data:
-            request_data[self.id_column_name] = routing_data['id']
+            request_data[external_id_column_name] = routing_data['id']
         return request_data
 
     def documentation_models(self):

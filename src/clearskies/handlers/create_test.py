@@ -63,6 +63,30 @@ class CreateTest(unittest.TestCase):
         id = response_data['id']
         self.assertTrue(self.users.find(f'id={id}').exists)
 
+    def test_casing(self):
+        create = test({
+            'handler_class': Create,
+            'handler_config': {
+                'model_class': User,
+                'columns': ['name', 'email', 'age'],
+                'authentication': Public(),
+                'internal_casing': 'snake_case',
+                'external_casing': 'TitleCase',
+            }
+        })
+        users = create.build(User)
+
+        response = create(body={'Name': 'Conor', 'Email': 'c@example.com', 'Age': 10})
+        response_data = response[0]['Data']
+        self.assertEquals(200, response[1])
+        self.assertEquals(36, len(response_data['Id']))
+        self.assertEquals(10, response_data['Age'])
+        self.assertEquals('Conor', response_data['Name'])
+        self.assertEquals('c@example.com', response_data['Email'])
+        self.assertEquals(1, len(users))
+        id = response_data['Id']
+        self.assertTrue(users.find(f'id={id}').exists)
+
     def test_input_checks(self):
         response = self.create(body={'email': 'cmancone@example.com', 'age': 10})
         self.assertEquals(200, response[1])
@@ -71,7 +95,7 @@ class CreateTest(unittest.TestCase):
                 'name': "'name' is required.",
                 'email': "'email' must be at most 15 characters long."
             },
-            response[0]['inputErrors']
+            response[0]['input_errors']
         )
 
     def test_columns(self):
@@ -89,7 +113,7 @@ class CreateTest(unittest.TestCase):
                 'email': "Input column 'email' is not an allowed column",
                 'yo': "Input column 'yo' is not an allowed column",
             },
-            response[0]['inputErrors']
+            response[0]['input_errors']
         )
 
     def test_readable_writeable(self):
@@ -116,7 +140,7 @@ class CreateTest(unittest.TestCase):
             headers={'Authorization': 'Bearer qwerty'},
         )
         self.assertEquals(401, response[1])
-        self.assertEquals('clientError', response[0]['status'])
+        self.assertEquals('client_error', response[0]['status'])
         self.assertEquals('Not Authenticated', response[0]['error'])
 
     def test_auth_success(self):

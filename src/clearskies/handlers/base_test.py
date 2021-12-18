@@ -20,6 +20,8 @@ class Handle(Base):
         'age': 5,
         'is_awesome': True,
         'test': 'value',
+        'internal_casing': '',
+        'external_casing': '',
     }
 
     def _finalize_configuration(self, configuration):
@@ -75,7 +77,7 @@ class BaseTest(unittest.TestCase):
             'error': '',
             'data': [1, 2, 3],
             'pagination': {},
-            'inputErrors': {},
+            'input_errors': {},
         }, data)
         self.assertEquals(200, code)
 
@@ -88,7 +90,7 @@ class BaseTest(unittest.TestCase):
             'error': '',
             'data': [1, 2, 3],
             'pagination': {'numberResults': 3, 'limit': 10, 'start': 1},
-            'inputErrors': {},
+            'input_errors': {},
         }, data)
         self.assertEquals(200, code)
 
@@ -97,11 +99,11 @@ class BaseTest(unittest.TestCase):
         handle.configure({'authentication': public()})
         (data, code) = handle.error(self.reflect_output, 'bah', 400)
         self.assertEquals({
-            'status': 'clientError',
+            'status': 'client_error',
             'error': 'bah',
             'data': [],
             'pagination': {},
-            'inputErrors': {},
+            'input_errors': {},
         }, data)
         self.assertEquals(400, code)
 
@@ -110,11 +112,11 @@ class BaseTest(unittest.TestCase):
         handle.configure({'authentication': public()})
         (data, code) = handle.input_errors(self.reflect_output, {'age': 'required', 'date': 'tomorrow'})
         self.assertEquals({
-            'status': 'inputErrors',
+            'status': 'input_errors',
             'error': '',
             'data': [],
             'pagination': {},
-            'inputErrors': {
+            'input_errors': {
                 'age': 'required',
                 'date': 'tomorrow',
             },
@@ -133,7 +135,7 @@ class BaseTest(unittest.TestCase):
             'error': '',
             'data': [1, 2, 3],
             'pagination': {},
-            'inputErrors': {},
+            'input_errors': {},
         }, data)
         self.assertEquals(200, code)
         authentication.authenticate.assert_called_with(self.reflect_output)
@@ -147,11 +149,11 @@ class BaseTest(unittest.TestCase):
         handle.handle = lambda input_output: raise_exception(ClientError('sup'))
         (data, code) = handle(self.reflect_output)
         self.assertEquals({
-            'status': 'clientError',
+            'status': 'client_error',
             'error': 'sup',
             'data': [],
             'pagination': {},
-            'inputErrors': {},
+            'input_errors': {},
         }, data)
         self.assertEquals(400, code)
 
@@ -164,10 +166,10 @@ class BaseTest(unittest.TestCase):
         handle.handle = lambda input_output: raise_exception(InputError({'id': 'required'}))
         (data, code) = handle(self.reflect_output)
         self.assertEquals({
-            'status': 'inputErrors',
+            'status': 'input_errors',
             'error': '',
             'data': [],
             'pagination': {},
-            'inputErrors': {'id': 'required'},
+            'input_errors': {'id': 'required'},
         }, data)
         self.assertEquals(200, code)

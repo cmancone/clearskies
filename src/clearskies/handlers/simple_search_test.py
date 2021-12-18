@@ -99,6 +99,35 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals({'numberResults': 1, 'start': 0, 'limit': 100}, json_response['pagination'])
         self.assertEquals({'id': '5', 'name': 'conor', 'email': 'cmancone3@example.com', 'age': 15}, response_data[0])
 
+    def test_case_map(self):
+        simple_search = test({
+            'handler_class': SimpleSearch,
+            'handler_config': {
+                'model_class': User,
+                'readable_columns': ['name', 'email', 'age'],
+                'searchable_columns': ['name', 'email'],
+                'default_sort_column': 'email',
+                'authentication': Public(),
+                'internal_casing': 'snake_case',
+                'external_casing': 'TitleCase',
+            }
+        })
+        users = simple_search.build(User)
+        users.create({'id': '1', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': '6'})
+        users.create({'id': '5', 'name': 'conor', 'email': 'cmancone3@example.com', 'age': '15'})
+        users.create({'id': '12', 'name': 'ronoc', 'email': 'cmancone5@example.com', 'age': '35'})
+
+        response = simple_search(query_parameters={
+            'Email': 'cmancone3@example.com',
+        })
+        json_response = response[0]
+        response_data = json_response['Data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('Success', json_response['Status'])
+        self.assertEquals(1, len(response_data))
+        self.assertEquals({'numberResults': 1, 'start': 0, 'limit': 100}, json_response['Pagination'])
+        self.assertEquals({'Id': '5', 'Name': 'conor', 'Email': 'cmancone3@example.com', 'Age': 15}, response_data[0])
+
     def test_user_input_with_config(self):
         response = self.simple_search_with_wheres(
             query_parameters={
@@ -139,7 +168,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals(2, len(all_doc.responses))
         self.assertEquals([200, 400], [response.status for response in all_doc.responses])
         self.assertEquals(
-            ['status', 'data', 'pagination', 'error', 'inputErrors'],
+            ['status', 'data', 'pagination', 'error', 'input_errors'],
             [schema.name for schema in all_doc.responses[0].schema.children]
         )
         data_response_properties = all_doc.responses[0].schema.children[1].item_definition.children

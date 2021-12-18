@@ -49,8 +49,8 @@ class List(Base):
             print('Models config after adding default settings:')
             print(models.configuration)
 
-        request_data = input_output.request_data(False)
-        query_parameters = input_output.get_query_parameters()
+        request_data = self.map_input_to_internal_names(input_output.request_data(False))
+        query_parameters = self.map_input_to_internal_names(input_output.get_query_parameters())
         if request_data or query_parameters:
             error = self.check_request_data(request_data, query_parameters)
             if error:
@@ -85,6 +85,26 @@ class List(Base):
     @property
     def allowed_request_keys(self):
         return ['sort', 'direction', 'start', 'limit']
+
+    @property
+    def internal_request_keys(self):
+        return ['sort', 'direction', 'start', 'limit']
+
+    def map_input_to_internal_names(self, input):
+        internal_request_keys = self.internal_request_keys
+        for key in self.internal_request_keys:
+            mapped_key = self.auto_case_internal_column_name(key)
+            if mapped_key != key and mapped_key in input:
+                input[key] = input[mapped_key]
+                del input[mapped_key]
+        # any non-internal fields are assumed to be column names and need to go
+        # through the full mapping
+        for key in set(self.allowed_request_keys) - set(internal_request_keys):
+            mapped_key = self.auto_case_column_name(key, True)
+            if mapped_key != key and mapped_key in input:
+                input[key] = input[mapped_key]
+                del input[mapped_key]
+        return input
 
     def check_request_data(self, request_data, query_parameters):
         # first, check that they didn't provide something unexpected
@@ -263,7 +283,7 @@ class List(Base):
                 f'Fetch the list of current {nice_model} records',
                 [
                     self.documentation_success_response(
-                        autodoc.schema.Array('data', autodoc.schema.Object(
+                        autodoc.schema.Array(self.auto_case_internal_column_name('data'), autodoc.schema.Object(
                             nice_model,
                             children=data_schema,
                             model_name=schema_model_name

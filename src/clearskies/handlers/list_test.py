@@ -78,6 +78,8 @@ class ListTest(unittest.TestCase):
                 'default_limit': 50,
                 'group_by': 'id',
                 'authentication': Public(),
+                'internal_casing': 'snake_case',
+                'external_casing': 'TitleCase',
             }
         })
         users = list.build(User)
@@ -89,13 +91,13 @@ class ListTest(unittest.TestCase):
 
         response = list()
         json_response = response[0]
-        response_data = json_response['data']
+        response_data = json_response['Data']
         self.assertEquals(200, response[1])
-        self.assertEquals('success', json_response['status'])
+        self.assertEquals('Success', json_response['Status'])
         self.assertEquals(2, len(response_data))
-        self.assertEquals({'id': '2', 'name': 'ronoc'}, response_data[0])
-        self.assertEquals({'id': '1', 'name': 'conor'}, response_data[1])
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 50}, json_response['pagination'])
+        self.assertEquals({'Id': '2', 'Name': 'ronoc'}, response_data[0])
+        self.assertEquals({'Id': '1', 'Name': 'conor'}, response_data[1])
+        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 50}, json_response['Pagination'])
 
     def test_output_map(self):
         list = test({
@@ -143,7 +145,7 @@ class ListTest(unittest.TestCase):
         self.assertEquals(2, len(all_doc.responses))
         self.assertEquals([200, 400], [response.status for response in all_doc.responses])
         self.assertEquals(
-            ['status', 'data', 'pagination', 'error', 'inputErrors'],
+            ['status', 'data', 'pagination', 'error', 'input_errors'],
             [schema.name for schema in all_doc.responses[0].schema.children]
         )
         data_response_properties = all_doc.responses[0].schema.children[1].item_definition.children
