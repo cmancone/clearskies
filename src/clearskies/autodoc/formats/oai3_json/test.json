@@ -104,7 +104,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -151,7 +151,7 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -295,7 +295,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -342,7 +342,7 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -407,7 +407,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -439,7 +439,7 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -547,7 +547,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -594,7 +594,7 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -666,7 +666,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {
                         "[COLUMN_NAME]": {
                           "example": "User friendly error message",
@@ -695,7 +695,7 @@
                       "type": "object"
                     },
                     "status": {
-                      "example": "inputErrors",
+                      "example": "input_errors",
                       "type": "string"
                     }
                   },
@@ -718,7 +718,7 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -863,7 +863,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -910,7 +910,7 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -975,7 +975,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -1007,7 +1007,7 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -1070,7 +1070,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -1102,7 +1102,7 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -1185,7 +1185,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {
                         "[COLUMN_NAME]": {
                           "example": "User friendly error message",
@@ -1214,7 +1214,7 @@
                       "type": "object"
                     },
                     "status": {
-                      "example": "inputErrors",
+                      "example": "input_errors",
                       "type": "string"
                     }
                   },
@@ -1237,7 +1237,7 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
