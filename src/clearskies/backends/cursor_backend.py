@@ -1,4 +1,5 @@
 from .backend import Backend
+from typing import Any, Dict, List
 
 
 class CursorBackend(Backend):
@@ -9,8 +10,8 @@ class CursorBackend(Backend):
         'wheres',
         'sorts',
         'group_by_column',
-        'limit_start',
-        'limit_length',
+        'limit',
+        'pagination',
         'selects',
         'joins',
         'model_columns',
@@ -95,7 +96,13 @@ class CursorBackend(Backend):
         else:
             order_by = ''
         group_by = ' GROUP BY `' + configuration['group_by_column'] + '`' if configuration['group_by_column'] else ''
-        limit = f' LIMIT {configuration["limit_start"]}, {configuration["limit_length"]}' if configuration['limit_length'] else ''
+        limit = ''
+        if configuration['limit']:
+            start = 0
+            if configuration['pagination'].get('start'):
+                start = int(configuration['pagination']['start'])
+            limit = f' LIMIT {start}, {configuration["limit"]}'
+
         return [
             f'SELECT {select} FROM `{configuration["table_name"]}`{joins}{wheres}{group_by}{order_by}{limit}'.strip(),
             parameters
@@ -139,7 +146,25 @@ class CursorBackend(Backend):
             if key not in configuration:
                 raise KeyError(f'Missing required configuration key {key}')
 
+        if 'pagination' not in configuration:
+            configuration['pagination'] = {'start': 0}
         for key in self._allowed_configs:
             if not key in configuration:
                 configuration[key] = [] if key[-1] == 's' else ''
         return configuration
+
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any]) -> str:
+        extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
+        if len(extra_keys):
+            return "Invalid pagination key(s): '" + "','".join(extra_keys) + "'.  Only 'start' is allowed"
+        if 'start' not in kwargs:
+            return "You must specify 'start' when setting pagination"
+        start = kwargs['start']
+        try:
+            start = int(start)
+        except:
+            return "Invalid pagination data: start must be a number"
+        return ''
+
+    def allowed_pagination_keys(self) -> List[str]:
+        return ['start']

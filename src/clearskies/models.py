@@ -11,8 +11,8 @@ class Models(ABC, ConditionParser):
     query_wheres = None
     query_sorts = None
     query_group_by_column = None
-    query_limit_start = None
-    query_limit_length = None
+    query_limit = None
+    query_pagination = None
     query_selects = None
     must_rexecute = True
     must_recount = True
@@ -32,8 +32,8 @@ class Models(ABC, ConditionParser):
         self.query_sorts = []
         self.query_group_by_column = None
         self.query_joins = []
-        self.query_limit_start = 0
-        self.query_limit_length = None
+        self.query_limit = None
+        self.query_pagination = {}
         self.query_selects = None
 
     @abstractmethod
@@ -66,8 +66,8 @@ class Models(ABC, ConditionParser):
             'sorts': [*self.query_sorts],
             'group_by_column': self.query_group_by_column,
             'joins': [*self.query_joins],
-            'limit_start': self.query_limit_start,
-            'limit_length': self.query_limit_length,
+            'limit': self.query_limit,
+            'pagination': self.query_pagination,
             'selects': self.query_selects,
             'table_name': self.get_table_name(),
             'model_columns': self._model_columns,
@@ -79,8 +79,8 @@ class Models(ABC, ConditionParser):
         self.query_sorts = configuration['sorts']
         self.query_group_by_column = configuration['group_by_column']
         self.query_joins = configuration['joins']
-        self.query_limit_start = configuration['limit_start']
-        self.query_limit_length = configuration['limit_length']
+        self.query_limit = configuration['limit']
+        self.query_pagination = configuration['pagination']
         self.query_selects = configuration['selects']
         self._model_columns = configuration['model_columns']
 
@@ -191,12 +191,25 @@ class Models(ABC, ConditionParser):
                 'to your model definition'
             )
 
-    def limit(self, start, length):
-        return self.clone().limit_in_place(start, length)
+    def limit(self, limit):
+        return self.clone().limit_in_place(limit)
 
-    def limit_in_place(self, start, length):
-        self.query_limit_start = start
-        self.query_limit_length = length
+    def limit_in_place(self, limit):
+        self.query_limit = limit
+        self.must_rexecute = True
+        return self
+
+    def pagination(self, **kwargs):
+        self.clone().pagination_in_place(**kwargs)
+
+    def pagination_in_place(self, **kwargs):
+        error = self._backend.validate_pagination_kwargs(kwargs)
+        if error:
+            raise ValueError(
+                f"Invalid pagination data for model {self.__class__.__name__} with backend " + \
+                f"{self._backend.__class__.__name__}. {error}"
+            )
+        self.query_pagination_kwargs = kwargs
         self.must_rexecute = True
         return self
 

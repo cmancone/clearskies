@@ -1,29 +1,62 @@
 from abc import ABC, abstractmethod
 import inspect
+from .. import model
+from typing import Any, Dict, List, Type, Union
 
 
 class Backend(ABC):
     @abstractmethod
-    def update(self, id, data, model):
+    def update(self, id: str, data: Dict[str, Any], model: model.Model) -> Dict[str, Any]:
+        """
+        Updates the record with the given id with the information from the data dictionary
+        """
         pass
 
     @abstractmethod
-    def create(self, data, model):
+    def create(self, data: Dict[str, Any], model: model.Model) -> Dict[str, Any]:
+        """
+        Creates a record with the information from the data dictionary
+        """
         pass
 
     @abstractmethod
-    def delete(self, id):
+    def delete(self, id: str) -> bool:
+        """
+        Deletes the record with the given id
+        """
         pass
 
     @abstractmethod
-    def count(self, configuration, model):
+    def count(self, configuration: Dict[str, Any], model: model.Model) -> int:
+        """
+        Returns the number of records which match the given query configuration
+        """
         pass
 
     @abstractmethod
-    def records(self, configuration, model):
+    def records(self, configuration: Dict[str, Any], model: model.Model) -> List[Dict[str, Any]]:
+        """
+        Returns a list of records that match the given query configuration
+        """
         pass
 
-    def create_record_with_class(self, model_or_class, data):
+    @abstractmethod
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any]) -> str:
+        """
+        Checks if the given dictionary is valid pagination data for the background.
+
+        Returns a string with an error message, or an empty string if the data is valid
+        """
+        pass
+
+    @abstractmethod
+    def allowed_pagination_keys(self) -> List[str]:
+        """
+        Returns the list of allowed keys in the pagination kwargs for the backend
+        """
+        pass
+
+    def create_record_with_class(self, model_or_class: Union[model.Model, Type[model.Model]], data: Dict[str, Any]) -> Dict[str, Any]:
         """
         This creates a record but, unlike with self.create, does not require a model - just the model class
 
@@ -32,7 +65,7 @@ class Backend(ABC):
         model = self.cheez_model(model_or_class)
         return self.create(data, model)
 
-    def cheez_model(self, model_or_class):
+    def cheez_model(self, model_or_class: Union[model.Model, Type[model.Model]]) -> model.Model:
         """
         Pass in a model or model class, and it returns a (possibly poorly constructed) model
 

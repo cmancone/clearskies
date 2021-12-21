@@ -49,8 +49,8 @@ class CursorBackendTest(unittest.TestCase):
         my_count = self.backend.count({
             'table_name': 'my_table',
             'group_by_column': 'age',
-            'limit_start': 5,
-            'limit_length': 10,
+            'pagination': {'start': 5},
+            'limit': 10,
             'sorts': [{'column': 'name', 'direction': 'asc'}],
             'joins': [
                 {
@@ -88,8 +88,8 @@ class CursorBackendTest(unittest.TestCase):
 
         my_count = self.backend.count({
             'table_name': 'my_table',
-            'limit_start': 5,
-            'limit_length': 10,
+            'pagination': {'start': 5},
+            'limit': 10,
             'sorts': [{'column': 'name', 'direction': 'asc'}],
             'joins': [
                 {
@@ -117,8 +117,8 @@ class CursorBackendTest(unittest.TestCase):
     def test_iterate(self):
         results = self.backend.records({
             'table_name': 'my_table',
-            'limit_start': 5,
-            'limit_length': 10,
+            'pagination': {'start': 5},
+            'limit': 10,
             'group_by_column': 'age',
             'sorts': [{'column': 'name', 'direction': 'ASC'}, {'column': 'first', 'direction': 'DESC'}],
             'joins': [{'raw': 'LEFT JOIN dogs ON dogs.id=ages.id'}, {'raw': 'JOIN peeps AS peeps ON peeps.id=dogs.id'}],

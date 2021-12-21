@@ -2,6 +2,7 @@ from .backend import Backend
 from collections import OrderedDict
 from functools import cmp_to_key
 import inspect
+from typing import Any, Dict, List
 
 
 class Null:
@@ -127,14 +128,16 @@ class MemoryTable:
             return rows
         if 'sorts' in configuration and configuration['sorts']:
             rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration['sorts'])))
-        if 'limit_start' in configuration or 'limit_length' in configuration:
+        if 'length' in configuration or ('pagination' in configuration and configuration['pagination'].get('start')):
             number_rows = len(rows)
-            start = configuration['limit_start'] if 'limit_start' in configuration and configuration['limit_start'] else 0
+            start = configuration['pagination'].get('start') if 'pagination' in configuration else 0
+            if not start:
+                start = 0
             if start >= number_rows:
                 start = number_rows-1
             end = len(rows)
-            if 'limit_length' in configuration and configuration['limit_length'] and start + configuration['limit_length'] <= number_rows:
-                end = start + configuration['limit_length']
+            if configuration.get('limit') and start + configuration['limit'] <= number_rows:
+                end = start + configuration['limit']
             rows = rows[start:end]
         return rows
 
@@ -152,8 +155,8 @@ class MemoryBackend(Backend):
         'wheres',
         'joins',
         'sorts',
-        'limit_start',
-        'limit_length',
+        'pagination',
+        'length',
         'selects',
         'model_columns',
     ]
@@ -330,6 +333,8 @@ class MemoryBackend(Backend):
         for key in self._allowed_configs:
             if not key in configuration:
                 configuration[key] = [] if key[-1] == 's' else ''
+        if 'pagination' not in configuration or 'start' not in configuration['pagination']:
+            configuration['pagination'] = {'start': 0}
         return configuration
 
     def _wheres_for_table(self, table_name, wheres, is_left=False):
@@ -415,3 +420,19 @@ class MemoryBackend(Backend):
                 })
 
         return rows
+
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any]) -> str:
+        extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
+        if len(extra_keys):
+            return "Invalid pagination key(s): '" + "','".join(extra_keys) + "'.  Only 'start' is allowed"
+        if 'start' not in kwargs:
+            return "You must specify 'start' when setting pagination"
+        start = kwargs['start']
+        try:
+            start = int(start)
+        except:
+            return "Invalid pagination data: start must be a number"
+        return ''
+
+    def allowed_pagination_keys(self) -> List[str]:
+        return ['start']

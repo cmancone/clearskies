@@ -127,8 +127,8 @@ class MemoryBackendTest(unittest.TestCase):
                 {'column': 'name', 'direction': 'ASC'},
                 {'column': 'email', 'direction': 'DESC'},
             ],
-            'limit_start': 1,
-            'limit_length': 1,
+            'pagination': {'start': 1},
+            'limit': 1,
         }, self.user_model)
         self.assertEquals([
             {'id': '1-2-3-5', 'name': 'Zeb', 'email': 'b@example.com'},
@@ -146,7 +146,7 @@ class MemoryBackendTest(unittest.TestCase):
                 'sorts': [
                     {'column': 'email', 'direction': 'DESC'},
                 ],
-                'limit_length': 1
+                'length': 1
             }, self.user_model)
         )
 
