@@ -3,6 +3,10 @@ from boto3.dynamodb import conditions as dynamodb_conditions
 from decimal import Decimal
 from clearskies.column_types.float import Float
 from clearskies.column_types.integer import Integer
+import json
+import base64
+from typing import Any, Callable, Dict, List
+from .. import model
 
 
 class DynamoDBBackend(Backend):
@@ -71,8 +75,8 @@ class DynamoDBBackend(Backend):
         'table_name',
         'wheres',
         'sorts',
-        'limit_start',
-        'limit_length',
+        'limit',
+        'pagination',
         'model_columns',
     ]
 
@@ -148,8 +152,10 @@ class DynamoDBBackend(Backend):
         response = self._dynamodb_query(configuration, model, 'COUNT')
         return response['Count']
 
-    def records(self, configuration, model):
+    def records(self, configuration: Dict[str, Any], model: model.Model, next_page_data: Dict[str, str]=None) -> List[Dict[str, Any]]:
         response = self._dynamodb_query(configuration, model, 'ALL_ATTRIBUTES')
+        if 'LastEvaluatedKey' in response and response['LastEvaluatedKey'] is not None and type(next_page_data) == dict:
+            next_page_data['next_token'] = self.serialize_next_token_for_response(response['LastEvaluatedKey'])
         return [self._map_from_boto3(item) for item in response['Items']]
 
     def _dynamodb_query(self, configuration, model, select_type):
@@ -161,17 +167,14 @@ class DynamoDBBackend(Backend):
         ] = self._create_dynamodb_query_parameters(configuration, model)
         table = self._dynamodb.Table(model.table_name())
 
-        ##########
-        ########
-        ##### I'm not including limit!!!!
-        ##### I need to adjust the way clearskies handles pagination.
-
         # so we want to put together the kwargs for scan/query:
         kwargs = {
             'IndexName': index_name,
             'KeyConditionExpression': key_condition_expression,
             'FilterExpression': filter_expression,
             'Select': select_type,
+            'ExclusiveStartKey': self.restore_next_token_from_config(configuration['pagination'].get('next_token')),
+            'Limit': configuration['limit'] if configuration['limit'] and select_type != 'COUNT' else None
         }
         # the trouble is that boto3 isn't okay with parameters of None.
         # therefore, we need to remove any of the above keys that are None
@@ -497,3 +500,33 @@ class DynamoDBBackend(Backend):
                 configuration[key] = [] if key[-1] == 's' else ''
 
         return configuration
+
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
+        extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
+        if len(extra_keys):
+            key_name = case_mapping('next_token')
+            return "Invalid pagination key(s): '" + "','".join(extra_keys) + f"'.  Only '{key_name}' is allowed"
+        if 'next_token' not in kwargs:
+            key_name = case_mapping('next_token')
+            return f"You must specify '{key_name}' when setting pagination"
+        # the next token should be a urlsafe-base64 encoded JSON string
+        try:
+            json.loads(base64.urlsafe_b64decode(kwargs['next_token']))
+        except:
+            key_name = case_mapping('next_token')
+            return "The provided '{key_name}' appears to be invalid."
+        return ''
+
+    def allowed_pagination_keys(self) -> List[str]:
+        return ['next_token']
+
+    def restore_next_token_from_config(self, next_token):
+        if not next_token:
+            return None
+        try:
+            return json.loads(base64.urlsafe_b64decode(next_token))
+        except:
+            return None
+
+    def serialize_next_token_for_response(self, last_evaluated_key):
+        return base64.urlsafe_b64encode(json.dumps(last_evaluated_key).encode('utf-8')).decode('utf8')

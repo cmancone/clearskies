@@ -1,5 +1,6 @@
 from .backend import Backend
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
+from .. import model
 
 
 class CursorBackend(Backend):
@@ -76,13 +77,19 @@ class CursorBackend(Backend):
             return row[0] if type(row) == tuple else row['count']
         return 0
 
-    def records(self, configuration, model):
+    def records(self, configuration: Dict[str, Any], model: model.Model, next_page_data: Dict[str, str]=None) -> List[Dict[str, Any]]:
         # I was going to get fancy and have this return an iterator, but since I'm going to load up
         # everything into a list anyway, I may as well just return the list, right?
         configuration = self._check_query_configuration(configuration)
         [query, parameters] = self.as_sql(configuration)
         self._cursor.execute(query, tuple(parameters))
-        return [row for row in self._cursor]
+        records = [row for row in self._cursor]
+        if type(next_page_data) == dict:
+            limit = configuration.get('limit', None)
+            start = configuration.get('pagination', {}).get('start', 0)
+            if limit and len(records) == limit:
+                next_page_data['start'] = start + limit
+        return records
 
     def as_sql(self, configuration):
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration['wheres'])
@@ -153,17 +160,20 @@ class CursorBackend(Backend):
                 configuration[key] = [] if key[-1] == 's' else ''
         return configuration
 
-    def validate_pagination_kwargs(self, kwargs: Dict[str, Any]) -> str:
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
         extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
         if len(extra_keys):
-            return "Invalid pagination key(s): '" + "','".join(extra_keys) + "'.  Only 'start' is allowed"
+            key_name = case_mapping('start')
+            return "Invalid pagination key(s): '" + "','".join(extra_keys) + f"'.  Only '{key_name}' is allowed"
         if 'start' not in kwargs:
-            return "You must specify 'start' when setting pagination"
+            key_name = case_mapping('start')
+            return f"You must specify '{key_name}' when setting pagination"
         start = kwargs['start']
         try:
             start = int(start)
         except:
-            return "Invalid pagination data: start must be a number"
+            key_name = case_mapping('start')
+            return f"Invalid pagination data: '{key_name}' must be a number"
         return ''
 
     def allowed_pagination_keys(self) -> List[str]:

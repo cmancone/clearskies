@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from .condition_parser import ConditionParser
+from typing import Any, Callable, Dict, List
 
 
 class Models(ABC, ConditionParser):
@@ -7,6 +8,7 @@ class Models(ABC, ConditionParser):
     _backend = None
     _columns = None
     _model_columns = None
+    _next_page_data = None
 
     query_wheres = None
     query_sorts = None
@@ -26,6 +28,7 @@ class Models(ABC, ConditionParser):
         self._backend = backend
         self._columns = columns
         self.must_rexecute = True
+        self._next_page_data = None
         self.must_recount = True
 
         self.query_wheres = []
@@ -96,6 +99,7 @@ class Models(ABC, ConditionParser):
     def select_in_place(self, selects):
         self.query_selects = selects
         self.must_rexecute = True
+        self._next_page_data = None
         return self
 
     def where(self, where):
@@ -108,6 +112,7 @@ class Models(ABC, ConditionParser):
         self._validate_column(condition['column'], 'filter', table=condition['table'])
         self.query_wheres.append(self.parse_condition(where))
         self.must_rexecute = True
+        self._next_page_data = None
         self.must_recount = True
         return self
 
@@ -117,6 +122,7 @@ class Models(ABC, ConditionParser):
     def join_in_place(self, join):
         self.query_joins.append(self.parse_join(join))
         self.must_rexecute = True
+        self._next_page_data = None
         self.must_recount = True
         return self
 
@@ -127,6 +133,7 @@ class Models(ABC, ConditionParser):
         self._validate_column(group_column, 'group')
         self.query_group_by_column = group_column
         self.must_rexecute = True
+        self._next_page_data = None
         self.must_recount = True
         return self
 
@@ -148,6 +155,7 @@ class Models(ABC, ConditionParser):
         if len(self.query_sorts) == 0:
             raise ValueError('Missing primary column or direction in call to sort_by')
         self.must_rexecute = True
+        self._next_page_data = None
         return self
 
     def _normalize_and_validate_sort(self, sort):
@@ -197,13 +205,14 @@ class Models(ABC, ConditionParser):
     def limit_in_place(self, limit):
         self.query_limit = limit
         self.must_rexecute = True
+        self._next_page_data = None
         return self
 
     def pagination(self, **kwargs):
         self.clone().pagination_in_place(**kwargs)
 
     def pagination_in_place(self, **kwargs):
-        error = self._backend.validate_pagination_kwargs(kwargs)
+        error = self._backend.validate_pagination_kwargs(kwargs, str)
         if error:
             raise ValueError(
                 f"Invalid pagination data for model {self.__class__.__name__} with backend " + \
@@ -211,6 +220,7 @@ class Models(ABC, ConditionParser):
             )
         self.query_pagination_kwargs = kwargs
         self.must_rexecute = True
+        self._next_page_data = None
         return self
 
     def find(self, where):
@@ -224,7 +234,14 @@ class Models(ABC, ConditionParser):
         return self.count
 
     def __iter__(self):
-        return iter([self.model(row) for row in self._backend.records(self.query_configuration, self.empty_model())])
+        self._next_page_data = {}
+        raw_rows = self._backend.records(
+            self.query_configuration,
+            self.empty_model(),
+            next_page_data=self._next_page_data,
+        )
+        models = iter([self.model(row) for row in raw_rows])
+        return models
 
     def model(self, data):
         model = self._build_model()
@@ -256,3 +273,12 @@ class Models(ABC, ConditionParser):
 
     def raw_columns_configuration(self):
         return self.model({}).all_columns()
+
+    def allowed_pagination_keys(self) -> List[str]:
+        return self._backend.allowed_pagination_keys()
+
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
+        return self._backend.validate_pagination_kwargs(kwargs, case_mapping)
+
+    def next_page_data(self):
+        return self._next_page_data

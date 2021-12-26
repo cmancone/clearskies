@@ -115,6 +115,7 @@ class CursorBackendTest(unittest.TestCase):
         )
 
     def test_iterate(self):
+        next_page_data = {}
         results = self.backend.records({
             'table_name': 'my_table',
             'pagination': {'start': 5},
@@ -127,7 +128,7 @@ class CursorBackendTest(unittest.TestCase):
                 {'values': [5], 'parsed': 'id=%s'},
                 {'values': ['2', '3'], 'parsed': 'status_id IN (%s,%s)'},
             ],
-        }, 'model')
+        }, 'model', next_page_data=next_page_data)
         self.cursor.execute.assert_called_with(
             'SELECT sup FROM `my_table` ' +
                 'LEFT JOIN dogs ON dogs.id=ages.id ' + \
@@ -139,3 +140,32 @@ class CursorBackendTest(unittest.TestCase):
             (5, '2', '3')
         )
         self.assertEquals([{'my': 'data'}], results)
+        self.assertEquals({}, next_page_data)
+
+    def test_iterate_with_next_page(self):
+        next_page_data = {}
+        results = self.backend.records({
+            'table_name': 'my_table',
+            'pagination': {'start': 5},
+            'limit': 1,
+            'group_by_column': 'age',
+            'sorts': [{'column': 'name', 'direction': 'ASC'}, {'column': 'first', 'direction': 'DESC'}],
+            'joins': [{'raw': 'LEFT JOIN dogs ON dogs.id=ages.id'}, {'raw': 'JOIN peeps AS peeps ON peeps.id=dogs.id'}],
+            'selects': 'sup',
+            'wheres': [
+                {'values': [5], 'parsed': 'id=%s'},
+                {'values': ['2', '3'], 'parsed': 'status_id IN (%s,%s)'},
+            ],
+        }, 'model', next_page_data=next_page_data)
+        self.cursor.execute.assert_called_with(
+            'SELECT sup FROM `my_table` ' +
+                'LEFT JOIN dogs ON dogs.id=ages.id ' + \
+                'JOIN peeps AS peeps ON peeps.id=dogs.id ' + \
+                'WHERE id=%s AND status_id IN (%s,%s) ' + \
+                'GROUP BY `age` ' + \
+                'ORDER BY `name` ASC, `first` DESC ' + \
+                'LIMIT 5, 1',
+            (5, '2', '3')
+        )
+        self.assertEquals([{'my': 'data'}], results)
+        self.assertEquals({'start': 6}, next_page_data)

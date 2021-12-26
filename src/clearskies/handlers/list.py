@@ -42,20 +42,30 @@ class List(Base):
             models = models.join(join)
         if self.configuration('group_by'):
             models = models.group_by(self.configuration('group_by'))
-        start = 0
         limit = self.configuration('default_limit')
-        models = models.limit(start, limit)
+        models = models.limit(limit)
         if self.configuration('debug'):
             print('Models config after adding default settings:')
             print(models.configuration)
 
         request_data = self.map_input_to_internal_names(input_output.request_data(False))
         query_parameters = self.map_input_to_internal_names(input_output.get_query_parameters())
-        if request_data or query_parameters:
-            error = self.check_request_data(request_data, query_parameters)
+        pagination_data = {}
+        for key in self._model.allowed_pagination_keys():
+            if key in request_data and key in query_parameters:
+                original_name = self.auto_case_internal_column_name(key)
+                return self.error(input_output, f"Ambiguous request: key '{original_name}' is present in both the JSON body and URL data")
+            if key in request_data:
+                pagination_data[key] = request_data[key]
+                del request_data[key]
+            if key in query_parameters:
+                pagination_data[key] = query_parameters[key]
+                del query_parameters[key]
+        if request_data or query_parameters or pagination_data:
+            error = self.check_request_data(request_data, query_parameters, pagination_data)
             if error:
                 return self.error(input_output, error, 400)
-            [models, start, limit] = self.configure_models_from_request_data(models, request_data, query_parameters)
+            [models, limit] = self.configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
         if not models.query_sorts:
             models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
 
@@ -67,32 +77,36 @@ class List(Base):
             input_output,
             [self._model_as_json(model) for model in models],
             number_results=len(models),
-            start=start,
             limit=limit,
+            next_page=models.next_page_data(),
         )
 
-    def configure_models_from_request_data(self, models, request_data, query_parameters):
-        start = int(query_parameters.get('start', 0))
+    def configure_models_from_request_data(self, models, request_data, query_parameters, pagination_data):
         limit = int(query_parameters.get('limit', self.configuration('default_limit')))
-        models = models.limit(start, limit)
+        models = models.limit(limit)
+        if pagination_data:
+            models = models.pagination(pagination_data)
         sort = query_parameters.get('sort')
         direction = query_parameters.get('direction')
         if sort and direction:
             models = models.sort_by(sort, direction)
 
-        return [models, start, limit]
+        return [models, limit]
 
     @property
     def allowed_request_keys(self):
-        return ['sort', 'direction', 'start', 'limit']
+        return ['sort', 'direction', 'limit']
 
     @property
     def internal_request_keys(self):
-        return ['sort', 'direction', 'start', 'limit']
+        return ['sort', 'direction', 'limit']
 
     def map_input_to_internal_names(self, input):
-        internal_request_keys = self.internal_request_keys
-        for key in self.internal_request_keys:
+        internal_request_keys = [
+            *self.internal_request_keys,
+            *self._model.allowed_pagination_keys()
+        ]
+        for key in internal_request_keys:
             mapped_key = self.auto_case_internal_column_name(key)
             if mapped_key != key and mapped_key in input:
                 input[key] = input[mapped_key]
@@ -104,28 +118,34 @@ class List(Base):
             if mapped_key != key and mapped_key in input:
                 input[key] = input[mapped_key]
                 del input[mapped_key]
+
+        # finally, if we have a sort key set then convert the value to the properly cased column name
+        if 'sort' in input:
+            # we can't just take the sort value and convert it to internal casing because camel/title case
+            # to snake_case can be ambiguous (while snake_case to camel/title is not)
+            sort_column_map = {}
+            for internal_name in self.configuration('sortable_columns'):
+                external_name = self.auto_case_column_name(internal_name, True)
+                sort_column_map[external_name] = internal_name
+            if input['sort'] in sort_column_map:
+                input['sort'] = sort_column_map[input['sort']]
+
         return input
 
-    def check_request_data(self, request_data, query_parameters):
-        # first, check that they didn't provide something unexpected
-        allowed_request_keys = self.allowed_request_keys
+    def check_request_data(self, request_data, query_parameters, pagination_data):
+        if pagination_data:
+            error = self._model.validate_pagination_kwargs(pagination_data, self.auto_case_internal_column_name)
+            if error:
+                return error
         for key in request_data.keys():
-            if key not in allowed_request_keys or key in ['sort', 'direction', 'start', 'limit']:
+            if key not in allowed_request_keys or key in ['sort', 'direction', 'limit']:
                 return f"Invalid request parameter found in request body: '{key}'"
         for key in query_parameters.keys():
             if key not in allowed_request_keys:
                 return f"Invalid request parameter found in URL data: '{key}'"
             if key in request_data:
                 return f"Ambiguous request: '{key}' was found in both the request body and URL data"
-        start = query_parameters.get('start')
         limit = query_parameters.get('limit')
-        if start is not None and type(start) != int and type(start) != float and type(start) != str:
-            return "Invalid request: 'start' should be an integer"
-        if start:
-            try:
-                start = int(start)
-            except ValueError:
-                return "Invalid request: 'start' should be an integer"
         if limit is not None and type(limit) != int and type(limit) != float and type(limit) != str:
             return "Invalid request: 'limit' should be an integer"
         if limit:
@@ -307,11 +327,13 @@ class List(Base):
         ]
 
     def documentation_models(self):
-        schema_model_name = string.camel_case_to_snake_case(self._model.__class__.__name__)
+        schema_model_name = self.auto_case_internal_column_name(
+            string.camel_case_to_snake_case(self._model.__class__.__name__)
+        )
 
         return {
             schema_model_name: autodoc.schema.Object(
-                'data',
+                self.auto_case_internal_column_name('data'),
                 children=self.documentation_data_schema(),
             ),
         }
@@ -321,7 +343,7 @@ class List(Base):
         if id_column_name in self._columns:
             id_column_schema = self._columns[id_column_name].documentation()
         else:
-            id_column_schema = autodoc.schema.Integer('id')
+            id_column_schema = autodoc.schema.Integer(self.auto_case_internal_column_name('id'))
         return autodoc.request.URLPath(
             id_column_schema,
             description='The id of the record to fetch',
@@ -329,13 +351,9 @@ class List(Base):
         )
 
     def documentation_url_pagination_parameters(self):
-        return [
+        url_parameters = [
             autodoc.request.URLParameter(
-                autodoc.schema.Integer('start'),
-                description='The index of the record to start listing results at (0-indexed)'
-            ),
-            autodoc.request.URLParameter(
-                autodoc.schema.Integer('limit'),
+                autodoc.schema.Integer(self.auto_case_internal_column_name('limit')),
                 description='The number of records to return'
             ),
         ]
@@ -343,16 +361,27 @@ class List(Base):
     def documentation_url_sort_parameters(self):
         sort_columns = self.configuration('sortable_columns')
         if not sort_columns:
-            sort_columns = list(self._columns.keys())
-        directions = ['asc', 'desc']
+            sort_columns = self._columns.keys()
+        sort_columns = [self.auto_case_column_name(internal_name, True) for internal_name in sort_columns]
+        directions = [self.auto_case_column_name(internal_name, True) for internal_name in ['asc', 'desc']]
 
         return [
             autodoc.request.URLParameter(
-                autodoc.schema.Enum('sort', sort_columns, autodoc.schema.String('sort'), example='name'),
+                autodoc.schema.Enum(
+                    self.auto_case_internal_column_name('sort'),
+                    sort_columns,
+                    autodoc.schema.String(self.auto_case_internal_column_name('sort')),
+                    example=self.auto_case_column_name('name', True)
+                ),
                 description=f'Column to sort by',
             ),
             autodoc.request.URLParameter(
-                autodoc.schema.Enum('direction', directions, autodoc.schema.String('direction'), example='asc'),
+                autodoc.schema.Enum(
+                    self.auto_case_internal_column_name('direction'),
+                    directions,
+                    autodoc.schema.String(self.auto_case_internal_column_name('direction')),
+                    example=self.auto_case_column_name('asc', True)
+                ),
                 description=f'Direction to sort',
             ),
         ]
@@ -360,11 +389,7 @@ class List(Base):
     def documentation_json_pagination_parameters(self):
         return [
             autodoc.request.JSONBody(
-                autodoc.schema.Integer('start'),
-                description='The index of the record to start listing results at (0-indexed)'
-            ),
-            autodoc.request.JSONBody(
-                autodoc.schema.Integer('limit'),
+                autodoc.schema.Integer(self.auto_case_internal_column_name('limit')),
                 description='The number of records to return'
             ),
         ]
@@ -372,16 +397,27 @@ class List(Base):
     def documentation_json_sort_parameters(self):
         sort_columns = self.configuration('sortable_columns')
         if not sort_columns:
-            sort_columns = list(self._columns.keys())
-        directions = ['asc', 'desc']
+            sort_columns = self._columns.keys()
+        sort_columns = [self.auto_case_column_name(internal_name, True) for internal_name in sort_columns]
+        directions = [self.auto_case_column_name(internal_name, True) for internal_name in ['asc', 'desc']]
 
         return [
             autodoc.request.JSONBody(
-                autodoc.schema.Enum('sort', sort_columns, autodoc.schema.String('sort'), example='name'),
+                autodoc.schema.Enum(
+                    self.auto_case_internal_column_name('sort'),
+                    sort_columns,
+                    autodoc.schema.String(self.auto_case_internal_column_name('sort')),
+                    example=self.auto_case_column_name('name', True)
+                ),
                 description=f'Column to sort by',
             ),
             autodoc.request.JSONBody(
-                autodoc.schema.Enum('direction', directions, autodoc.schema.String('direction'), example='asc'),
+                autodoc.schema.Enum(
+                    self.auto_case_internal_column_name('direction'),
+                    directions,
+                    autodoc.schema.String(self.auto_case_internal_column_name('direction')),
+                    example=self.auto_case_column_name('asc', True)
+                ),
                 description=f'Direction to sort',
             ),
         ]

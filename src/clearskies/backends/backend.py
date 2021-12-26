@@ -34,9 +34,13 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def records(self, configuration: Dict[str, Any], model: model.Model) -> List[Dict[str, Any]]:
+    def records(self, configuration: Dict[str, Any], model: model.Model, next_page_data: Dict[str, str]=None) -> List[Dict[str, Any]]:
         """
         Returns a list of records that match the given query configuration
+
+        next_page_data is used to return data to the caller.  Pass in an empty dictionary, and it will be populated
+        with the data needed to return the next page of results.  If it is still an empty dictionary when returned,
+        then there is no additional data.
         """
         pass
 
@@ -53,6 +57,9 @@ class Backend(ABC):
     def allowed_pagination_keys(self) -> List[str]:
         """
         Returns the list of allowed keys in the pagination kwargs for the backend
+
+        It must always return keys in snake_case so that the auto casing system can
+        adjust on the front-end for consistency.
         """
         pass
 

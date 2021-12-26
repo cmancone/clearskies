@@ -58,8 +58,8 @@ class ApiBackendTest(unittest.TestCase):
                 {'column': 'id', 'operator': '=', 'values': [123], 'parsed': ''},
             ],
             'sorts': [{'column': 'age', 'direction': 'desc'}],
-            'limit_start': 200,
-            'limit_length': 100,
+            'pagination': {'start': 200},
+            'limit': 100,
         }, 'model')
         self.assertEquals(10, count)
         self.requests.request.assert_called_with(
@@ -87,8 +87,8 @@ class ApiBackendTest(unittest.TestCase):
                 {'column': 'id', 'operator': '=', 'values': [123], 'parsed': ''},
             ],
             'sorts': [{'column': 'age', 'direction': 'desc'}],
-            'limit_start': 200,
-            'limit_length': 100,
+            'pagination': {'start': 200},
+            'limit': 100,
         }, 'model')
         self.requests.request.assert_called_with(
             'GET',
@@ -114,8 +114,8 @@ class ApiBackendTest(unittest.TestCase):
         records = self.backend.records({
             'wheres': [],
             'sorts': [],
-            'limit_start': 0,
-            'limit_length': 0,
+            'pagination': {'start': 0},
+            'limit': 0,
         }, 'model')
         self.requests.request.assert_called_with(
             'GET',

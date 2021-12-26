@@ -141,18 +141,18 @@ class Base(ABC):
     def error(self, input_output, message, status_code):
         return self.respond(input_output, {'status': 'client_error', 'error': message}, status_code)
 
-    def success(self, input_output, data, number_results=None, start=None, limit=None):
+    def success(self, input_output, data, number_results=None, limit=None, next_page=None):
         response_data = {'status': 'success', 'data': data, 'pagination': {}}
 
         if number_results is not None:
-            for value in [number_results, start, limit]:
+            for value in [number_results, limit]:
                 if value is not None and type(value) != int:
-                    raise ValueError("number_results, start, and limit must all be integers")
+                    raise ValueError("number_results and limit must all be integers")
 
             response_data['pagination'] = {
-                'numberResults': number_results,
-                'start': start,
-                'limit': limit
+                'number_results': number_results,
+                'limit': limit,
+                'next_page': next_page,
             }
 
         return self.respond(input_output, response_data, 200)
@@ -170,9 +170,23 @@ class Base(ABC):
             self.auto_case_internal_column_name('status'): self.auto_case_internal_column_name(response_data['status']),
             self.auto_case_internal_column_name('error'): response_data.get('error', ''),
             self.auto_case_internal_column_name('data'): response_data.get('data', []),
-            self.auto_case_internal_column_name('pagination'): response_data.get('pagination', {}),
+            self.auto_case_internal_column_name('pagination'): self._normalize_pagination(response_data.get('pagination', {})),
             self.auto_case_internal_column_name('input_errors'): response_data.get('input_errors', {})
         }
+
+    def _normalize_pagination(self, pagination):
+        # pagination isn't always relevant so if it is completely empty then leave it that way
+        if not pagination:
+            return pagination
+        return {
+            self.auto_case_internal_column_name('number_results'): pagination.get('number_results', 0),
+            self.auto_case_internal_column_name('limit'): pagination.get('limit', 0),
+            self.auto_case_internal_column_name('next_page'): {
+                self.auto_case_internal_column_name(key): value
+                for (key, value) in pagination.get('next_page', {}).items()
+            },
+        }
+
 
     def _model_as_json(self, model):
         if self.configuration('output_map'):

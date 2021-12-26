@@ -10,10 +10,11 @@ class AdvancedSearch(SimpleSearch):
     def allowed_request_keys(self):
         return ['sort', 'direction', 'where', 'start', 'limit']
 
-    def configure_models_from_request_data(self, models, request_data, query_parameters):
-        start = int(self._from_either(request_data, query_parameters, 'start', default=0))
+    def configure_models_from_request_data(self, models, request_data, query_parameters, pagination_data):
         limit = int(self._from_either(request_data, query_parameters, 'limit', default=self.configuration('default_limit')))
-        models = models.limit(start, limit)
+        models = models.limit(limit)
+        if pagination_data:
+            models = models.pagination(pagination_data)
         if 'sort' in request_data:
             primary_column = request_data['sort'][0]['column']
             primary_direction = request_data['sort'][0]['direction']
@@ -42,8 +43,13 @@ class AdvancedSearch(SimpleSearch):
 
         return [models, start, limit]
 
-    def check_request_data(self, request_data, query_parameters):
-        # first, check that they didn't provide something unexpected
+    def check_request_data(self, request_data, query_parameters, pagination_data):
+        # first, check the pagination data
+        if pagination_data:
+            error = self._model.validate_pagination_kwargs(pagination_data, self.auto_case_internal_column_name)
+            if error:
+                return error
+        # next, check that they didn't provide something unexpected in the rest of the request
         allowed_request_keys = self.allowed_request_keys
         for key in request_data.keys():
             if key not in allowed_request_keys:

@@ -26,8 +26,8 @@ class SimpleSearch(List):
                 if value_error:
                     return f"Invalid request. {value_error} for search column '{column_name}' in the {input_source_label}"
 
-    def configure_models_from_request_data(self, models, request_data, query_parameters):
-        [models, start, limit] = super().configure_models_from_request_data(models, request_data, query_parameters)
+    def configure_models_from_request_data(self, models, request_data, query_parameters, pagination_data):
+        [models, start, limit] = super().configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
         # we can play fast and loose with the possiblity of duplicate keys because our input checking already
         # disallows that
         for input_source in [request_data, query_parameters]:
