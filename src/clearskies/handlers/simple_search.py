@@ -3,7 +3,7 @@ from .. import autodoc
 
 
 class SimpleSearch(List):
-    search_control_columns = ['sort', 'direction', 'start', 'limit']
+    search_control_columns = ['sort', 'direction', 'limit']
 
     @property
     def allowed_request_keys(self):
@@ -27,7 +27,7 @@ class SimpleSearch(List):
                     return f"Invalid request. {value_error} for search column '{column_name}' in the {input_source_label}"
 
     def configure_models_from_request_data(self, models, request_data, query_parameters, pagination_data):
-        [models, start, limit] = super().configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
+        [models, limit] = super().configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
         # we can play fast and loose with the possiblity of duplicate keys because our input checking already
         # disallows that
         for input_source in [request_data, query_parameters]:
@@ -39,7 +39,7 @@ class SimpleSearch(List):
                 column = self._columns[column_name]
                 models = column.add_search(models, value)
 
-        return [models, start, limit]
+        return [models, limit]
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import inspect
 from .. import model
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Callable, Dict, List, Tuple, Type, Union
 
 
 class Backend(ABC):
@@ -60,6 +60,31 @@ class Backend(ABC):
 
         It must always return keys in snake_case so that the auto casing system can
         adjust on the front-end for consistency.
+        """
+        pass
+
+    @abstractmethod
+    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
+        """
+        Returns a list of autodoc schema objects describing the contents of the `next_page` dictionary
+        in the pagination section of the response
+        """
+        pass
+
+    @abstractmethod
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+        """
+        Returns a list of autodoc schema objects describing the allowed input keys to set pagination.  It should
+        return a list of tuples, with each tuple corresponding to an input key.  The first element in the
+        tuple should be the schema, and the second should be the description.
+        """
+        pass
+
+    @abstractmethod
+    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
+        """
+        Returns an example (as a simple dictionary) of what the next_page data in the pagination response
+        should look like
         """
         pass
 

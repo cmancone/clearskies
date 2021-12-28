@@ -73,7 +73,7 @@ class RestfulAPITest(unittest.TestCase):
             {'id': self.first_user.id, 'name': 'conor', 'email': 'cmancone1@example.com', 'age': 8},
             dict(result[0]['data'][0])
         )
-        self.assertEquals({'limit': 100, 'numberResults': 4, 'start': 0}, result[0]['pagination'])
+        self.assertEquals({'limit': 100, 'number_results': 4, 'next_page': {}}, result[0]['pagination'])
 
     def test_create(self):
         result = self.api(method='POST', body={'name': 'another', 'email': 'another@example.com', 'age': 123})
@@ -101,4 +101,4 @@ class RestfulAPITest(unittest.TestCase):
             {'id': model.id, 'name': 'conor', 'email': 'cmancone3@example.com', 'age': 15},
             dict(result[0]['data'][0])
         )
-        self.assertEquals({'limit': 100, 'numberResults': 1, 'start': 0}, result[0]['pagination'])
+        self.assertEquals({'limit': 100, 'number_results': 1, 'next_page': {}}, result[0]['pagination'])

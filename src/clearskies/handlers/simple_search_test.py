@@ -67,7 +67,7 @@ class SimpleSearchTest(unittest.TestCase):
         response_data = json_response['data']
         self.assertEquals(200, response[1])
         self.assertEquals('success', json_response['status'])
-        self.assertEquals({'numberResults': 5, 'start': 0, 'limit': 100}, json_response['pagination'])
+        self.assertEquals({'number_results': 5, 'next_page': {}, 'limit': 100}, json_response['pagination'])
         self.assertEquals({'id': '1', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': 6}, response_data[0])
         self.assertEquals({'id': '2', 'name': 'conor', 'email': 'cmancone2@example.com', 'age': 8}, response_data[1])
         self.assertEquals({'id': '5', 'name': 'conor', 'email': 'cmancone3@example.com', 'age': 15}, response_data[2])
@@ -85,7 +85,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals({'id': '11', 'name': 'ronoc', 'email': 'cmancone3@example.com', 'age': 7}, response_data[1])
         self.assertEquals({'id': '1', 'name': 'conor', 'email': 'cmancone1@example.com', 'age': 6}, response_data[2])
         self.assertEquals({'id': '12', 'name': 'conor', 'email': 'cmancone4@example.com', 'age': 9}, response_data[3])
-        self.assertEquals({'numberResults': 4, 'start': 0, 'limit': 100}, json_response['pagination'])
+        self.assertEquals({'number_results': 4, 'next_page': {}, 'limit': 100}, json_response['pagination'])
 
     def test_user_input(self):
         response = self.simple_search(query_parameters={
@@ -96,7 +96,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals(200, response[1])
         self.assertEquals('success', json_response['status'])
         self.assertEquals(1, len(response_data))
-        self.assertEquals({'numberResults': 1, 'start': 0, 'limit': 100}, json_response['pagination'])
+        self.assertEquals({'number_results': 1, 'next_page': {}, 'limit': 100}, json_response['pagination'])
         self.assertEquals({'id': '5', 'name': 'conor', 'email': 'cmancone3@example.com', 'age': 15}, response_data[0])
 
     def test_case_map(self):
@@ -125,7 +125,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals(200, response[1])
         self.assertEquals('Success', json_response['Status'])
         self.assertEquals(1, len(response_data))
-        self.assertEquals({'numberResults': 1, 'start': 0, 'limit': 100}, json_response['Pagination'])
+        self.assertEquals({'NumberResults': 1, 'NextPage': {}, 'Limit': 100}, json_response['Pagination'])
         self.assertEquals({'Id': '5', 'Name': 'conor', 'Email': 'cmancone3@example.com', 'Age': 15}, response_data[0])
 
     def test_user_input_with_config(self):
@@ -143,7 +143,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals(200, response[1])
         self.assertEquals('success', json_response['status'])
         self.assertEquals(2, len(response_data))
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, json_response['pagination'])
+        self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, json_response['pagination'])
         self.assertEquals({'id': '1', 'name': 'conor', 'email': 'cmancone1@example.com', 'age': 6}, response_data[0])
         self.assertEquals({'id': '2', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': 8}, response_data[1])
 
@@ -175,7 +175,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
         self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
         self.assertEquals(
-            ['start', 'limit', 'sort', 'direction', 'name', 'email', 'name', 'email'],
+            ['limit', 'start', 'sort', 'direction', 'name', 'email', 'name', 'email'],
             [param.definition.name for param in all_doc.parameters]
         )
         self.assertEquals(

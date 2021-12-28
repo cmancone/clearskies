@@ -85,7 +85,7 @@ class List(Base):
         limit = int(query_parameters.get('limit', self.configuration('default_limit')))
         models = models.limit(limit)
         if pagination_data:
-            models = models.pagination(pagination_data)
+            models = models.pagination(**pagination_data)
         sort = query_parameters.get('sort')
         direction = query_parameters.get('direction')
         if sort and direction:
@@ -138,10 +138,10 @@ class List(Base):
             if error:
                 return error
         for key in request_data.keys():
-            if key not in allowed_request_keys or key in ['sort', 'direction', 'limit']:
+            if key not in self.allowed_request_keys or key in ['sort', 'direction', 'limit']:
                 return f"Invalid request parameter found in request body: '{key}'"
         for key in query_parameters.keys():
-            if key not in allowed_request_keys:
+            if key not in self.allowed_request_keys:
                 return f"Invalid request parameter found in URL data: '{key}'"
             if key in request_data:
                 return f"Ambiguous request: '{key}' was found in both the request body and URL data"
@@ -358,6 +358,15 @@ class List(Base):
             ),
         ]
 
+        for parameter in self._model.documentation_pagination_parameters(self.auto_case_internal_column_name):
+            (schema, description) = parameter
+            url_parameters.append(autodoc.request.URLParameter(
+                    schema,
+                    description=description
+            ))
+
+        return url_parameters
+
     def documentation_url_sort_parameters(self):
         sort_columns = self.configuration('sortable_columns')
         if not sort_columns:
@@ -387,12 +396,21 @@ class List(Base):
         ]
 
     def documentation_json_pagination_parameters(self):
-        return [
+        json_parameters = [
             autodoc.request.JSONBody(
                 autodoc.schema.Integer(self.auto_case_internal_column_name('limit')),
                 description='The number of records to return'
             ),
         ]
+
+        for parameter in self._model.documentation_pagination_parameters(self.auto_case_internal_column_name):
+            (schema, description) = parameter
+            json_parameters.append(autodoc.request.JSONBody(
+                    schema,
+                    description=description
+            ))
+
+        return json_parameters
 
     def documentation_json_sort_parameters(self):
         sort_columns = self.configuration('sortable_columns')

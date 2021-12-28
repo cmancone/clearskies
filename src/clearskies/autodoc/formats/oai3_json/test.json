@@ -39,9 +39,9 @@
       "get": {
         "parameters": [
           {
-            "description": "The index of the record to start listing results at (0-indexed)",
+            "description": "The number of records to return",
             "in": "query",
-            "name": "start",
+            "name": "limit",
             "required": false,
             "schema": {
               "format": "int32",
@@ -49,11 +49,12 @@
             }
           },
           {
-            "description": "The number of records to return",
+            "description": "The zero-indexed record number to start listing results from",
             "in": "query",
-            "name": "limit",
+            "name": "start",
             "required": false,
             "schema": {
+              "example": 10,
               "format": "int32",
               "type": "integer"
             }
@@ -115,12 +116,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -162,12 +169,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -198,7 +211,6 @@
               "schema": {
                 "properties": {
                   "limit": {
-                    "example": 100,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -228,6 +240,7 @@
                     "type": "array"
                   },
                   "start": {
+                    "example": 10,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -306,12 +319,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -353,12 +372,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -450,12 +475,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -481,9 +512,9 @@
       "get": {
         "parameters": [
           {
-            "description": "The index of the record to start listing results at (0-indexed)",
+            "description": "The number of records to return",
             "in": "query",
-            "name": "start",
+            "name": "limit",
             "required": false,
             "schema": {
               "format": "int32",
@@ -491,11 +522,12 @@
             }
           },
           {
-            "description": "The number of records to return",
+            "description": "The zero-indexed record number to start listing results from",
             "in": "query",
-            "name": "limit",
+            "name": "start",
             "required": false,
             "schema": {
+              "example": 10,
               "format": "int32",
               "type": "integer"
             }
@@ -558,12 +590,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -605,12 +643,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -682,12 +726,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -729,12 +779,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -765,7 +821,6 @@
               "schema": {
                 "properties": {
                   "limit": {
-                    "example": 100,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -796,6 +851,7 @@
                     "type": "array"
                   },
                   "start": {
+                    "example": 10,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -874,12 +930,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -921,12 +983,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -1018,12 +1086,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -1113,12 +1187,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -1201,12 +1281,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -1248,12 +1334,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }

@@ -5,8 +5,9 @@ from clearskies.column_types.float import Float
 from clearskies.column_types.integer import Integer
 import json
 import base64
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
 from .. import model
+from ..autodoc.schema import String as AutoDocString
 
 
 class DynamoDBBackend(Backend):
@@ -530,3 +531,19 @@ class DynamoDBBackend(Backend):
 
     def serialize_next_token_for_response(self, last_evaluated_key):
         return base64.urlsafe_b64encode(json.dumps(last_evaluated_key).encode('utf-8')).decode('utf8')
+
+    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
+        return [
+            AutoDocString(case_mapping('next_token'), example='eyJpZCI6IHsiUyI6ICIzODM0MyJ9fQ==')
+        ]
+
+    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
+        return {case_mapping('next_token'): 'eyJpZCI6IHsiUyI6ICIzODM0MyJ9fQ=='}
+
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+        return [
+            (
+                AutoDocString(case_mapping('next_token'), example='eyJpZCI6IHsiUyI6ICIzODM0MyJ9fQ=='),
+                'A token to fetch the next page of results'
+            )
+        ]

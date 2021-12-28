@@ -8,13 +8,13 @@ class AdvancedSearch(SimpleSearch):
 
     @property
     def allowed_request_keys(self):
-        return ['sort', 'direction', 'where', 'start', 'limit']
+        return ['sort', 'direction', 'where', 'limit']
 
     def configure_models_from_request_data(self, models, request_data, query_parameters, pagination_data):
         limit = int(self._from_either(request_data, query_parameters, 'limit', default=self.configuration('default_limit')))
         models = models.limit(limit)
         if pagination_data:
-            models = models.pagination(pagination_data)
+            models = models.pagination(**pagination_data)
         if 'sort' in request_data:
             primary_column = request_data['sort'][0]['column']
             primary_direction = request_data['sort'][0]['direction']
@@ -41,7 +41,7 @@ class AdvancedSearch(SimpleSearch):
                     operator=where['operator'].lower() if 'operator' in where else None
                 )
 
-        return [models, start, limit]
+        return [models, limit]
 
     def check_request_data(self, request_data, query_parameters, pagination_data):
         # first, check the pagination data
@@ -60,15 +60,7 @@ class AdvancedSearch(SimpleSearch):
         for key in allowed_request_keys:
             if key in query_parameters:
                 return f"Invalid request: key '{key}' was found in a URL parameter but should only be in the JSON body"
-        start = request_data.get('start', None)
         limit = request_data.get('limit', None)
-        if start is not None and type(start) != int and type(start) != float and type(start) != str:
-            return "Invalid request: 'start' should be an integer"
-        if 'start' in request_data:
-            try:
-                start = int(start)
-            except ValueError:
-                return "Invalid request: 'start' should be an integer"
         if limit is not None and type(limit) != int and type(limit) != float and type(limit) != str:
             return "Invalid request: 'limit' should be an integer"
         if limit:
@@ -241,18 +233,5 @@ class AdvancedSearch(SimpleSearch):
                 ),
                 description='List of sort directives (max 2)'
             ),
-            autodoc.request.JSONBody(
-                autodoc.schema.Integer(
-                    self.auto_case_internal_column_name('start'),
-                    example=0
-                ),
-                description='The 0-indexed record to start results from'
-            ),
-            autodoc.request.JSONBody(
-                autodoc.schema.Integer(
-                    self.auto_case_internal_column_name('limit'),
-                    example=100
-                ),
-                description='The number of records to return'
-            ),
+            *self.documentation_json_pagination_parameters()
         ]

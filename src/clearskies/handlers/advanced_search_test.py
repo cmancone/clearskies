@@ -45,7 +45,7 @@ class AdvancedSearchTest(unittest.TestCase):
         response_data = json_response['data']
         self.assertEquals(200, response[1])
         self.assertEquals('success', json_response['status'])
-        self.assertEquals({'numberResults': 5, 'start': 0, 'limit': 100}, json_response['pagination'])
+        self.assertEquals({'number_results': 5, 'next_page': {}, 'limit': 100}, json_response['pagination'])
         self.assertEquals({'id': '1', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': 6}, response_data[0])
         self.assertEquals({'id': '2', 'name': 'conor', 'email': 'cmancone2@example.com', 'age': 8}, response_data[1])
         self.assertEquals({'id': '5', 'name': 'conor', 'email': 'cmancone3@example.com', 'age': 15}, response_data[2])
@@ -78,7 +78,7 @@ class AdvancedSearchTest(unittest.TestCase):
         json_response = response[0]
         response_data = json_response['Data']
         self.assertEquals('Success', json_response['Status'])
-        self.assertEquals({'numberResults': 1, 'start': 0, 'limit': 100}, json_response['Pagination'])
+        self.assertEquals({'NumberResults': 1, 'NextPage': {}, 'Limit': 100}, json_response['Pagination'])
         self.assertEquals({'Id': '1', 'Name': 'ronoc', 'Email': 'cmancone1@example.com', 'Age': 6}, response_data[0])
 
     def test_fancy_search(self):
@@ -91,7 +91,7 @@ class AdvancedSearchTest(unittest.TestCase):
         response_data = json_response['data']
         self.assertEquals(200, response[1])
         self.assertEquals('success', json_response['status'])
-        self.assertEquals({'numberResults': 3, 'start': 0, 'limit': 100}, json_response['pagination'])
+        self.assertEquals({'number_results': 3, 'next_page': {}, 'limit': 100}, json_response['pagination'])
         self.assertEquals({'id': '1', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': 6}, response_data[0])
         self.assertEquals({'id': '8', 'name': 'ronoc', 'email': 'cmancone4@example.com', 'age': 25}, response_data[1])
         self.assertEquals({'id': '12', 'name': 'ronoc', 'email': 'cmancone5@example.com', 'age': 35}, response_data[2])
@@ -136,7 +136,7 @@ class AdvancedSearchTest(unittest.TestCase):
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties.children])
         self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties.children])
         self.assertEquals(
-            ['where', 'sort', 'start', 'limit'],
+            ['where', 'sort', 'limit', 'start'],
             [param.definition.name for param in search_doc.parameters]
         )
         self.assertEquals(3, len(search_doc.parameters[0].definition.item_definition.children))
@@ -179,7 +179,7 @@ class AdvancedSearchTest(unittest.TestCase):
         self.assertEquals(['Id', 'Name', 'Email', 'Age'], [prop.name for prop in data_response_properties.children])
         self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties.children])
         self.assertEquals(
-            ['Where', 'Sort', 'Start', 'Limit'],
+            ['Where', 'Sort', 'Limit', 'Start'],
             [param.definition.name for param in search_doc.parameters]
         )
         self.assertEquals(3, len(search_doc.parameters[0].definition.item_definition.children))

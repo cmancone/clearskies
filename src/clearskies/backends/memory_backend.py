@@ -2,7 +2,8 @@ from .backend import Backend
 from collections import OrderedDict
 from functools import cmp_to_key
 import inspect
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
+from ..autodoc.schema import Integer as AutoDocInteger
 from .. import model
 
 
@@ -442,3 +443,19 @@ class MemoryBackend(Backend):
 
     def allowed_pagination_keys(self) -> List[str]:
         return ['start']
+
+    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
+        return [
+            AutoDocInteger(case_mapping('start'), example=10)
+        ]
+
+    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
+        return {case_mapping('start'): 10}
+
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+        return [
+            (
+                AutoDocInteger(case_mapping('start'), example=10),
+                'The zero-indexed record number to start listing results from'
+            )
+        ]

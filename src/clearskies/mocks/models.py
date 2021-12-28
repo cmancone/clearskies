@@ -119,7 +119,7 @@ class Models(ModelsBase):
         counted = self.search_responses.pop(0)
         return len(counted)
 
-    def records(self, configuration, model):
+    def records(self, configuration, model, next_page_data=None):
         if self.search_responses is None:
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
         if Models.iterated == None:

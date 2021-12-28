@@ -84,12 +84,12 @@ class BaseTest(unittest.TestCase):
     def test_pagination(self):
         handle = Handle(self.di)
         handle.configure({'authentication': public()})
-        (data, code) = handle.success(self.reflect_output, [1, 2, 3], number_results=3, limit=10, start=1)
+        (data, code) = handle.success(self.reflect_output, [1, 2, 3], number_results=3, limit=10, next_page={'start': 1})
         self.assertEquals({
             'status': 'success',
             'error': '',
             'data': [1, 2, 3],
-            'pagination': {'numberResults': 3, 'limit': 10, 'start': 1},
+            'pagination': {'number_results': 3, 'limit': 10, 'next_page':{'start': 1}},
             'input_errors': {},
         }, data)
         self.assertEquals(200, code)

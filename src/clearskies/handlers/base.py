@@ -269,9 +269,13 @@ class Base(ABC):
         return AutoDocObject(
             self.auto_case_internal_column_name('pagination'),
             [
-                AutoDocInteger('numberResults', example=10),
-                AutoDocInteger('start', example=0),
-                AutoDocInteger('limit', example=100),
+                AutoDocInteger(self.auto_case_internal_column_name('number_results'), example=10),
+                AutoDocInteger(self.auto_case_internal_column_name('limit'), example=100),
+                AutoDocObject(
+                    self.auto_case_internal_column_name('next_page'),
+                    self._model.documentation_pagination_next_page_response(self.auto_case_internal_column_name),
+                    self._model.documentation_pagination_next_page_example(self.auto_case_internal_column_name),
+                )
             ],
         )
 

@@ -127,8 +127,8 @@ class SimpleRoutingTest(unittest.TestCase):
                 ]),
             ],
             'pagination': {
-                'numberResults': 2,
-                'start': 0,
+                'number_results': 2,
+                'next_page': {},
                 'limit': 100,
             },
             'error': '',
@@ -154,8 +154,8 @@ class SimpleRoutingTest(unittest.TestCase):
                 ]),
             ],
             'pagination': {
-                'numberResults': 2,
-                'start': 0,
+                'number_results': 2,
+                'next_page': {},
                 'limit': 100,
             },
             'error': '',
@@ -183,8 +183,8 @@ class SimpleRoutingTest(unittest.TestCase):
                 ]),
             ],
             'pagination': {
-                'numberResults': 2,
-                'start': 0,
+                'number_results': 2,
+                'next_page': {},
                 'limit': 100,
             },
             'error': '',

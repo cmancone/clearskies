@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from .condition_parser import ConditionParser
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
 
 
 class Models(ABC, ConditionParser):
@@ -209,7 +209,7 @@ class Models(ABC, ConditionParser):
         return self
 
     def pagination(self, **kwargs):
-        self.clone().pagination_in_place(**kwargs)
+        return self.clone().pagination_in_place(**kwargs)
 
     def pagination_in_place(self, **kwargs):
         error = self._backend.validate_pagination_kwargs(kwargs, str)
@@ -218,7 +218,7 @@ class Models(ABC, ConditionParser):
                 f"Invalid pagination data for model {self.__class__.__name__} with backend " + \
                 f"{self._backend.__class__.__name__}. {error}"
             )
-        self.query_pagination_kwargs = kwargs
+        self.query_pagination = kwargs
         self.must_rexecute = True
         self._next_page_data = None
         return self
@@ -282,3 +282,12 @@ class Models(ABC, ConditionParser):
 
     def next_page_data(self):
         return self._next_page_data
+
+    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
+        return self._backend.documentation_pagination_next_page_response(case_mapping)
+
+    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
+        return self._backend.documentation_pagination_next_page_example(case_mapping)
+
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+        return self._backend.documentation_pagination_parameters(case_mapping)

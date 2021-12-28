@@ -56,7 +56,7 @@ class UsersApiTest(unittest.TestCase):
             ('created', self.api.now.isoformat()),
             ('updated', self.api.now.isoformat()),
         ]), response['data'][1])
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, response['pagination'])
+        self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
         self.assertEquals('success', response['status'])
 
     def test_list_statuses(self):
@@ -90,7 +90,7 @@ class UsersApiTest(unittest.TestCase):
                 ])
             ])
         ]), response['data'][1])
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, response['pagination'])
+        self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
         self.assertEquals('success', response['status'])
 
     def test_create(self):
@@ -159,4 +159,4 @@ class UsersApiTest(unittest.TestCase):
             ('created', self.api.now.isoformat()),
             ('updated', self.api.now.isoformat()),
         ]), response['data'][1])
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, response['pagination'])
+        self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
