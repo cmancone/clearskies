@@ -185,7 +185,7 @@ class Write(Base):
                 [
                     self.documentation_success_response(
                         autodoc.schema.Object(
-                            'data',
+                            self.auto_case_internal_column_name('data'),
                             children=data_schema,
                             model_name=schema_model_name,
                         ),
@@ -205,7 +205,7 @@ class Write(Base):
     def documentation_write_parameters(self, model_name):
         return [
             autodoc.request.JSONBody(
-                column.documentation(),
+                column.documentation(name=self.auto_case_column_name(column.name, True)),
                 description=f"Set '{column.name}' for the {model_name}",
                 required=column.is_required,
             )

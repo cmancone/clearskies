@@ -47,14 +47,14 @@ class UpdateTest(unittest.TestCase):
         self.users_less_columns = self.update_less_columns.build(User)
         self.users_less_columns.create({'id': '5', 'name': '', 'email': '', 'age': 0})
 
-    #def test_save_flow(self):
-        #response = self.update(body={'id': '5', 'name': 'Conor', 'email': 'c@example.com', 'age': 10})
-        #response_data = response[0]['data']
-        #self.assertEquals(200, response[1])
-        #self.assertEquals('5', response_data['id'])
-        #self.assertEquals(10, response_data['age'])
-        #self.assertEquals('Conor', response_data['name'])
-        #self.assertEquals('c@example.com', response_data['email'])
+    def test_save_flow(self):
+        response = self.update(body={'id': '5', 'name': 'Conor', 'email': 'c@example.com', 'age': 10})
+        response_data = response[0]['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('5', response_data['id'])
+        self.assertEquals(10, response_data['age'])
+        self.assertEquals('Conor', response_data['name'])
+        self.assertEquals('c@example.com', response_data['email'])
 
     def test_casing(self):
         update = test({
@@ -78,130 +78,130 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals('Conor', response_data['Name'])
         self.assertEquals('c@example.com', response_data['Email'])
 
-    #def test_input_checks(self):
-        #response = self.update(body={'id': 5, 'email': 'cmancone@example.com', 'age': 10})
-        #self.assertEquals(200, response[1])
-        #self.assertEquals(
-            #{
-                #'name': "'name' is required.",
-                #'email': "'email' must be at most 15 characters long."
-            #},
-            #response[0]['input_errors']
-        #)
+    def test_input_checks(self):
+        response = self.update(body={'id': 5, 'email': 'cmancone@example.com', 'age': 10})
+        self.assertEquals(200, response[1])
+        self.assertEquals(
+            {
+                'name': "'name' is required.",
+                'email': "'email' must be at most 15 characters long."
+            },
+            response[0]['input_errors']
+        )
 
-    #def test_columns(self):
-        #response = self.update_less_columns(body={'id': 5, 'name': 'Conor', 'age': 10})
-        #response_data = response[0]['data']
-        #self.assertEquals(200, response[1])
-        #self.assertEquals('5', response_data['id'])
-        #self.assertEquals(10, response_data['age'])
-        #self.assertTrue('email' not in response_data)
+    def test_columns(self):
+        response = self.update_less_columns(body={'id': 5, 'name': 'Conor', 'age': 10})
+        response_data = response[0]['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('5', response_data['id'])
+        self.assertEquals(10, response_data['age'])
+        self.assertTrue('email' not in response_data)
 
-    #def test_extra_columns(self):
-        #response = self.update_less_columns(body={'id': 5, 'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'})
-        #self.assertEquals(
-            #{
-                #'email': "Input column 'email' is not an allowed column",
-                #'yo': "Input column 'yo' is not an allowed column",
-            #},
-            #response[0]['input_errors']
-        #)
+    def test_extra_columns(self):
+        response = self.update_less_columns(body={'id': 5, 'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'})
+        self.assertEquals(
+            {
+                'email': "Input column 'email' is not an allowed column",
+                'yo': "Input column 'yo' is not an allowed column",
+            },
+            response[0]['input_errors']
+        )
 
-    #def test_readable_writeable(self):
-        #update = test({
-            #'handler_class': Update,
-            #'handler_config': {
-                #'model_class': User,
-                #'writeable_columns': ['name', 'age'],
-                #'readable_columns': ['name', 'age', 'email'],
-                #'authentication': Public(),
-            #}
-        #})
-        #users = update.build(User)
-        #users.create({'id': '5', 'name': 'Bob', 'email': 'default@email.com', 'age': 10})
+    def test_readable_writeable(self):
+        update = test({
+            'handler_class': Update,
+            'handler_config': {
+                'model_class': User,
+                'writeable_columns': ['name', 'age'],
+                'readable_columns': ['name', 'age', 'email'],
+                'authentication': Public(),
+            }
+        })
+        users = update.build(User)
+        users.create({'id': '5', 'name': 'Bob', 'email': 'default@email.com', 'age': 10})
 
-        #response = update(body={'id': 5, 'name': 'Conor', 'age': 10})
-        #response_data = response[0]['data']
-        #self.assertEquals(200, response[1])
-        #self.assertEquals('5', response_data['id'])
-        #self.assertEquals(10, response_data['age'])
-        #self.assertEquals('default@email.com', response_data['email'])
+        response = update(body={'id': 5, 'name': 'Conor', 'age': 10})
+        response_data = response[0]['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('5', response_data['id'])
+        self.assertEquals(10, response_data['age'])
+        self.assertEquals('default@email.com', response_data['email'])
 
-    #def test_auth_failure(self):
-        #secret_bearer = SecretBearer('environment')
-        #secret_bearer.configure(secret='asdfer')
-        #update = test({
-            #'handler_class': Update,
-            #'handler_config': {
-                #'model_class': User,
-                #'writeable_columns': ['name', 'age'],
-                #'readable_columns': ['name', 'age', 'email'],
-                #'authentication': secret_bearer,
-            #}
-        #})
+    def test_auth_failure(self):
+        secret_bearer = SecretBearer('environment')
+        secret_bearer.configure(secret='asdfer')
+        update = test({
+            'handler_class': Update,
+            'handler_config': {
+                'model_class': User,
+                'writeable_columns': ['name', 'age'],
+                'readable_columns': ['name', 'age', 'email'],
+                'authentication': secret_bearer,
+            }
+        })
 
-        #response = update(
-            #body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-            #headers={'Authorization': 'Bearer qwerty'},
-        #)
-        #self.assertEquals(401, response[1])
-        #self.assertEquals('client_error', response[0]['status'])
-        #self.assertEquals('Not Authenticated', response[0]['error'])
+        response = update(
+            body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            headers={'Authorization': 'Bearer qwerty'},
+        )
+        self.assertEquals(401, response[1])
+        self.assertEquals('client_error', response[0]['status'])
+        self.assertEquals('Not Authenticated', response[0]['error'])
 
-    #def test_auth_success(self):
-        #secret_bearer = SecretBearer('environment')
-        #secret_bearer.configure(secret='asdfer')
-        #update = test({
-            #'handler_class': Update,
-            #'handler_config': {
-                #'model_class': User,
-                #'writeable_columns': ['name', 'age'],
-                #'readable_columns': ['name', 'age', 'email'],
-                #'authentication': secret_bearer,
-            #}
-        #})
-        #users = update.build(User)
-        #users.create({'id': '5', 'name': 'Bob', 'email': 'default@email.com', 'age': 10})
+    def test_auth_success(self):
+        secret_bearer = SecretBearer('environment')
+        secret_bearer.configure(secret='asdfer')
+        update = test({
+            'handler_class': Update,
+            'handler_config': {
+                'model_class': User,
+                'writeable_columns': ['name', 'age'],
+                'readable_columns': ['name', 'age', 'email'],
+                'authentication': secret_bearer,
+            }
+        })
+        users = update.build(User)
+        users.create({'id': '5', 'name': 'Bob', 'email': 'default@email.com', 'age': 10})
 
-        #response = update(
-            #body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
-            #headers={'Authorization': 'Bearer asdfer'},
-        #)
-        #self.assertEquals(200, response[1])
+        response = update(
+            body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            headers={'Authorization': 'Bearer asdfer'},
+        )
+        self.assertEquals(200, response[1])
 
-    #def test_require_id_column(self):
-        #response = self.update(body={'name': 'Conor', 'email': 'c@example.com', 'age': 10})
-        #self.assertEquals(404, response[1])
-        #self.assertEquals("Missing 'id' in request body", response[0]['error'])
+    def test_require_id_column(self):
+        response = self.update(body={'name': 'Conor', 'email': 'c@example.com', 'age': 10})
+        self.assertEquals(404, response[1])
+        self.assertEquals("Missing 'id' in request body", response[0]['error'])
 
-    #def test_require_matching_id(self):
-        #response = self.update(body={'id': 10, 'name': 'Conor', 'email': 'c@example.com', 'age': 10})
-        #self.assertEquals(404, response[1])
-        #self.assertEquals("Not Found", response[0]['error'])
+    def test_require_matching_id(self):
+        response = self.update(body={'id': 10, 'name': 'Conor', 'email': 'c@example.com', 'age': 10})
+        self.assertEquals(404, response[1])
+        self.assertEquals("Not Found", response[0]['error'])
 
-    #def test_doc(self):
-        #update = Update(StandardDependencies())
-        #update.configure({
-            #'model': self.users,
-            #'columns': ['name', 'email', 'age'],
-            #'authentication': Public(),
-        #})
+    def test_doc(self):
+        update = Update(StandardDependencies())
+        update.configure({
+            'model': self.users,
+            'columns': ['name', 'email', 'age'],
+            'authentication': Public(),
+        })
 
-        #documentation = update.documentation()[0]
+        documentation = update.documentation()[0]
 
-        #self.assertEquals('{id}', documentation.relative_path)
+        self.assertEquals('{id}', documentation.relative_path)
 
-        #self.assertEquals(3, len(documentation.parameters))
-        #self.assertEquals(['name', 'email', 'age'], [param.definition.name for param in documentation.parameters])
-        #self.assertEquals([True, True, False], [param.required for param in documentation.parameters])
+        self.assertEquals(3, len(documentation.parameters))
+        self.assertEquals(['name', 'email', 'age'], [param.definition.name for param in documentation.parameters])
+        self.assertEquals([True, True, False], [param.required for param in documentation.parameters])
 
-        #self.assertEquals(3, len(documentation.responses))
-        #self.assertEquals([200, 200, 404], [response.status for response in documentation.responses])
-        #success_response = documentation.responses[0]
-        #self.assertEquals(
-            #['status', 'data', 'pagination', 'error', 'input_errors'],
-            #[schema.name for schema in success_response.schema.children]
-        #)
-        #data_response_properties = success_response.schema.children[1].children
-        #self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
-        #self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
+        self.assertEquals(3, len(documentation.responses))
+        self.assertEquals([200, 200, 404], [response.status for response in documentation.responses])
+        success_response = documentation.responses[0]
+        self.assertEquals(
+            ['status', 'data', 'pagination', 'error', 'input_errors'],
+            [schema.name for schema in success_response.schema.children]
+        )
+        data_response_properties = success_response.schema.children[1].children
+        self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
+        self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])

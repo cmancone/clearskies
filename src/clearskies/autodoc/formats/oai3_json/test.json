@@ -163,28 +163,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -366,28 +345,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -469,28 +427,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -637,28 +574,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -720,28 +636,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -773,28 +668,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -977,28 +851,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -1080,28 +933,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -1181,28 +1013,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -1275,28 +1086,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -1328,28 +1118,7 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {

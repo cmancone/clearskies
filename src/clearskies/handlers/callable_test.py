@@ -7,6 +7,7 @@ from ..model import Model
 from ..contexts import test
 from collections import OrderedDict
 from unittest.mock import MagicMock
+from ..di import StandardDependencies
 
 
 class User(Model):
@@ -107,3 +108,31 @@ class CallableTest(unittest.TestCase):
             'age': 10,
             'email': 'bob@bob.com',
         }, response[0]['Data'])
+
+    def test_doc(self):
+        callable_handler = Callable(StandardDependencies())
+        callable_handler.configure({
+            'callable': return_contstant,
+            'authentication': Public(),
+            'schema': User,
+            'internal_casing': 'snake_case',
+            'external_casing': 'TitleCase',
+            'writeable_columns': ['name', 'age']
+        })
+
+        documentation = callable_handler.documentation()[0]
+
+        self.assertEquals(2, len(documentation.parameters))
+        self.assertEquals(['Name', 'Age'], [param.definition.name for param in documentation.parameters])
+        self.assertEquals([True, False], [param.required for param in documentation.parameters])
+
+        self.assertEquals(2, len(documentation.responses))
+        self.assertEquals([200, 404], [response.status for response in documentation.responses])
+        success_response = documentation.responses[0]
+        self.assertEquals(
+            ['Status', 'Data', 'Pagination', 'Error', 'InputErrors'],
+            [schema.name for schema in success_response.schema.children]
+        )
+        data_response_properties = success_response.schema.children[1].children
+        self.assertEquals([], [prop.name for prop in data_response_properties])
+        self.assertEquals([], [prop._type for prop in data_response_properties])

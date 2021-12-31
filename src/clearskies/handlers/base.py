@@ -303,7 +303,7 @@ class Base(ABC):
                 [
                     AutoDocString(self.auto_case_internal_column_name('status'), value='error'),
                     AutoDocObject(self.auto_case_internal_column_name('data'), [], value={}),
-                    self.documentation_pagination_response(),
+                    self.documentation_pagination_response(include_pagination=False),
                     AutoDocString(self.auto_case_internal_column_name('error'), example='User readable error message'),
                     AutoDocObject(self.auto_case_internal_column_name('input_errors'), [], value={}),
                 ]
@@ -320,7 +320,7 @@ class Base(ABC):
                 [
                     AutoDocString(self.auto_case_internal_column_name('status'), value='input_errors'),
                     AutoDocObject(self.auto_case_internal_column_name('data'), [], value={}),
-                    self.documentation_pagination_response(),
+                    self.documentation_pagination_response(include_pagination=False),
                     AutoDocString(self.auto_case_internal_column_name('error'), value=''),
                     AutoDocObject(
                         self.auto_case_internal_column_name('input_errors'),
