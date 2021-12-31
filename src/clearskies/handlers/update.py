@@ -10,10 +10,10 @@ class Update(Write):
 
     def handle(self, input_output):
         input_data = self.request_data(input_output)
-        external_id_column_name = self.auto_case_column_name('id', False)
-        if external_id_column_name not in input_data:
+        external_id_column_name = self.auto_case_internal_column_name('id')
+        if 'id' not in input_data:
             return self.error(input_output, f"Missing '{external_id_column_name}' in request body", 404)
-        model_id = input_data[external_id_column_name]
+        model_id = input_data['id']
         id_column_name = self.id_column_name
         model = self._model.find(f'{id_column_name}={model_id}')
         if not model.exists:

@@ -235,7 +235,7 @@ class DI:
         """
         Calls a function, building any positional arguments and providing them.
 
-        Any kwargs passed to call_function will be passed along to the callable in question
+        Any kwargs passed to call_function will populate the equivalent dependencies
         """
         args_data = inspect.getfullargspec(callable_to_execute)
 
@@ -248,12 +248,14 @@ class DI:
             call_arguments = call_arguments[1:]
 
         args = [
-            self.build_from_name(call_argument, context=callable_to_execute.__name__, cache=True)
+            kwargs[call_argument]
+            if call_argument in kwargs
+            else self.build_from_name(call_argument, context=callable_to_execute.__name__, cache=True)
             for call_argument
             in call_arguments
         ]
 
-        return callable_to_execute(*args, **kwargs)
+        return callable_to_execute(*args)
 
     def _disallow_kwargs(self, action):
         """

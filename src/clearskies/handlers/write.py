@@ -130,11 +130,21 @@ class Write(Base):
         return input_errors
 
     def request_data(self, input_output, required=True):
+        # we have to map from internal names to external names, because case mapping
+        # isn't always one-to-one, so we want to do it exactly the same way that the documentation
+        # is built.
+        key_map = {
+            self.auto_case_column_name(key, True): key for key in self._get_writeable_columns().keys()
+        }
+        # in case the id comes up in the request body
+        key_map[self.auto_case_internal_column_name('id')] = 'id'
+
+        # and make sure we don't drop any data along the way, because the input validation
+        # needs to return an error for unexpected data.
         request_data = {
-            self.auto_case_to_internal_column_name(key): value
+            key_map.get(key, key): value
             for (key, value) in input_output.request_data(required=required).items()
         }
-        external_id_column_name = self.auto_case_internal_column_name('id')
         # the parent handler should provide our resource id (we don't do any routing ourselves)
         # However, our update/etc handlers need to find the id easily, so I'm going to be lazy and
         # just dump it into the request.  I'll probably regret that.
@@ -142,7 +152,7 @@ class Write(Base):
         # we don't have to worry about casing on the 'id' in routing_data because it doesn't come in from the
         # route with a name.  Rather, it is populated by clearskies, so will always just be 'id'
         if 'id' in routing_data:
-            request_data[external_id_column_name] = routing_data['id']
+            request_data['id'] = routing_data['id']
         return request_data
 
     def documentation_models(self):

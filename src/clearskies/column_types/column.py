@@ -122,7 +122,7 @@ class Column(ABC):
         return {}
 
     def check_input(self, model, data):
-        if not self.name in data or not data[self.name]:
+        if self.name not in data or not data[self.name]:
             return ''
         return self.input_error_for_value(data[self.name])
 
