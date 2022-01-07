@@ -22,7 +22,7 @@ For usage examples see:
 
 clearskies is really just a set of loosely coupled classes that play nicely with eachother and coordinate via dependency injection.  The primary goals of this framework include:
 
- - [Truly Reusable business logic (by killing controllers)](#die-controllers-die)
+ - [Truly Reusable business logic](#reusable-business-logic)
  - [Context neutral: your applications run them same whether they are in a lambda, queue listener, behind a WSGI server, or run locally via the CLI](#context-neutral)
  - [Extreme flexibility: all apsects of the framework can be easily replaced via sideloading](#sideloading)
  - [Creating backend APIs via declarative principles, rather than "direct" programming](#declarative-apis)
