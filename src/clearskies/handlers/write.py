@@ -5,8 +5,6 @@ from abc import abstractmethod
 from .. import autodoc
 from ..functional import string
 import inspect
-
-
 class Write(Base):
     _di = None
     _model = None
@@ -40,7 +38,9 @@ class Write(Base):
         if has_model and has_model_class:
             raise KeyError(f"{error_prefix} you specified both 'model' and 'model_class', but can only provide one")
         if has_model and inspect.isclass(configuration['model']):
-            raise ValueError("{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead")
+            raise ValueError(
+                "{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead"
+            )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
         self._columns = self._model.columns(overrides=configuration.get('overrides'))
         has_columns = 'columns' in configuration and configuration['columns'] is not None
@@ -133,9 +133,7 @@ class Write(Base):
         # we have to map from internal names to external names, because case mapping
         # isn't always one-to-one, so we want to do it exactly the same way that the documentation
         # is built.
-        key_map = {
-            self.auto_case_column_name(key, True): key for key in self._get_writeable_columns().keys()
-        }
+        key_map = {self.auto_case_column_name(key, True): key for key in self._get_writeable_columns().keys()}
         # in case the id comes up in the request body
         key_map[self.auto_case_internal_column_name('id')] = 'id'
 
@@ -208,6 +206,5 @@ class Write(Base):
                 column.documentation(name=self.auto_case_column_name(column.name, True)),
                 description=f"Set '{column.name}' for the {model_name}",
                 required=column.is_required,
-            )
-            for column in self._get_writeable_columns().values()
+            ) for column in self._get_writeable_columns().values()
         ]

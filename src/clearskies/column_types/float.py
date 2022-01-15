@@ -1,7 +1,5 @@
 from .column import Column
 from ..autodoc.schema import Number as AutoDocNumber
-
-
 class Float(Column):
     _auto_doc_class = AutoDocNumber
 
@@ -24,4 +22,6 @@ class Float(Column):
         return operator in ['=', '<', '>', '<=', '>=']
 
     def input_error_for_value(self, value, operator=None):
-        return 'value should be an integer or float' if (type(value) != int and type(value) != float and value is not None) else ''
+        return 'value should be an integer or float' if (
+            type(value) != int and type(value) != float and value is not None
+        ) else ''

@@ -1,6 +1,4 @@
 from .string import String
-
-
 class UUID(String):
     def __init__(self, uuid):
         self.uuid = uuid
@@ -21,7 +19,4 @@ class UUID(String):
     def pre_save(self, data, model):
         if model.exists:
             return data
-        return {
-            **data,
-            self.name: str(self.uuid.uuid4())
-        }
+        return {**data, self.name: str(self.uuid.uuid4())}

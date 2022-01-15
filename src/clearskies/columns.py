@@ -1,8 +1,6 @@
 from collections import OrderedDict, Sequence
 import inspect
 from .binding_config import BindingConfig
-
-
 class Columns:
     def __init__(self, di):
         self.di = di
@@ -18,8 +16,8 @@ class Columns:
             column_overrides = overrides[name] if (overrides is not None and name in overrides) else {}
             configuration = {
                 **configuration,
-                **column_overrides,
-                'input_requirements': self._resolve_input_requirements(
+                **column_overrides, 'input_requirements':
+                self._resolve_input_requirements(
                     self._merge_input_requirements(
                         configuration.get('input_requirements'),
                         column_overrides.get('input_requirements'),

@@ -1,6 +1,4 @@
 from .string import String
-
-
 class Base64(String):
     _format = 'byte'
 

@@ -6,11 +6,8 @@ from .get import Get
 from .list import List
 from .advanced_search import AdvancedSearch
 from .. import autodoc
-
-
 class InvalidUrl(Exception):
     pass
-
 class RestfulAPI(Routing):
     _cached_handlers = None
 
@@ -51,7 +48,10 @@ class RestfulAPI(Routing):
             handler_key = f'{action}_handler'
             if allow_key in configuration and not configuration[allow_key]:
                 continue
-            classes.append(configuration[handler_key] if handler_key in configuration else self._configuration_defaults[handler_key])
+            classes.append(
+                configuration[handler_key] if handler_key in
+                configuration else self._configuration_defaults[handler_key]
+            )
         return classes
 
     def configure(self, configuration):
@@ -94,9 +94,15 @@ class RestfulAPI(Routing):
             return [resource_id, self.configuration('search_handler') if self.configuration('allow_search') else None]
         if resource_id:
             if request_method == self.configuration('update_request_method'):
-                return [resource_id, self.configuration('update_handler') if self.configuration('allow_update') else None]
+                return [
+                    resource_id,
+                    self.configuration('update_handler') if self.configuration('allow_update') else None
+                ]
             elif request_method == self.configuration('delete_request_method'):
-                return [resource_id, self.configuration('delete_handler') if self.configuration('allow_delete') else None]
+                return [
+                    resource_id,
+                    self.configuration('delete_handler') if self.configuration('allow_delete') else None
+                ]
             if request_method != self.configuration('get_request_method'):
                 return [None, None]
             return [resource_id, self.configuration('get_handler') if self.configuration('allow_get') else None]

@@ -8,19 +8,22 @@ from ..contexts import test
 from ..column_types import String, Integer
 from collections import OrderedDict
 from ..di import StandardDependencies
-
-
 class User(Model):
     def __init__(self, memory_backend, columns):
         super().__init__(memory_backend, columns)
 
     def columns_configuration(self):
         return OrderedDict([
-            ('name', {'class': String}),
-            ('email', {'class': String}),
-            ('age', {'class': Integer}),
+            ('name', {
+                'class': String
+            }),
+            ('email', {
+                'class': String
+            }),
+            ('age', {
+                'class': Integer
+            }),
         ])
-
 class RestfulAPITest(unittest.TestCase):
     def setUp(self):
         self.api = test({
@@ -47,10 +50,12 @@ class RestfulAPITest(unittest.TestCase):
     def test_get_record(self):
         result = self.api(url=f'/{self.first_user.id}')
         self.assertEquals(200, result[1])
-        self.assertEquals(
-            {'id': self.first_user.id, 'name': 'conor', 'email': 'cmancone1@example.com', 'age': 8},
-            dict(result[0]['data'])
-        )
+        self.assertEquals({
+            'id': self.first_user.id,
+            'name': 'conor',
+            'email': 'cmancone1@example.com',
+            'age': 8
+        }, dict(result[0]['data']))
         self.assertEquals({}, result[0]['pagination'])
 
     def test_get_record_not_found(self):
@@ -60,19 +65,23 @@ class RestfulAPITest(unittest.TestCase):
     def test_update_record(self):
         result = self.api(url=f'/{self.first_user.id}', method='PUT', body={'name': 'jane'})
         self.assertEquals(200, result[1])
-        self.assertEquals(
-            {'id': self.first_user.id, 'name': 'jane', 'email': 'cmancone1@example.com', 'age': 8},
-            dict(result[0]['data'])
-        )
+        self.assertEquals({
+            'id': self.first_user.id,
+            'name': 'jane',
+            'email': 'cmancone1@example.com',
+            'age': 8
+        }, dict(result[0]['data']))
         self.assertEquals({}, result[0]['pagination'])
 
     def test_list(self):
         result = self.api()
         self.assertEquals(200, result[1])
-        self.assertEquals(
-            {'id': self.first_user.id, 'name': 'conor', 'email': 'cmancone1@example.com', 'age': 8},
-            dict(result[0]['data'][0])
-        )
+        self.assertEquals({
+            'id': self.first_user.id,
+            'name': 'conor',
+            'email': 'cmancone1@example.com',
+            'age': 8
+        }, dict(result[0]['data'][0]))
         self.assertEquals({'limit': 100, 'number_results': 4, 'next_page': {}}, result[0]['pagination'])
 
     def test_create(self):
@@ -80,10 +89,12 @@ class RestfulAPITest(unittest.TestCase):
         self.assertEquals(200, result[1])
         new_user = self.users.find('age=123')
         self.assertTrue(new_user.exists)
-        self.assertEquals(
-            {'id': new_user.id, 'name': 'another', 'email': 'another@example.com', 'age': 123},
-            dict(result[0]['data'])
-        )
+        self.assertEquals({
+            'id': new_user.id,
+            'name': 'another',
+            'email': 'another@example.com',
+            'age': 123
+        }, dict(result[0]['data']))
         self.assertEquals({}, result[0]['pagination'])
 
     def test_get_record(self):
@@ -95,10 +106,18 @@ class RestfulAPITest(unittest.TestCase):
 
     def test_search(self):
         model = self.users.find('age=15')
-        result = self.api(body={'where': [{'column': 'age', 'operator': '=', 'value': 15}]}, url='/search', method='POST')
-        self.assertEquals(200, result[1])
-        self.assertEquals(
-            {'id': model.id, 'name': 'conor', 'email': 'cmancone3@example.com', 'age': 15},
-            dict(result[0]['data'][0])
+        result = self.api(
+            body={'where': [{
+                'column': 'age',
+                'operator': '=',
+                'value': 15
+            }]}, url='/search', method='POST'
         )
+        self.assertEquals(200, result[1])
+        self.assertEquals({
+            'id': model.id,
+            'name': 'conor',
+            'email': 'cmancone3@example.com',
+            'age': 15
+        }, dict(result[0]['data'][0]))
         self.assertEquals({'limit': 100, 'number_results': 1, 'next_page': {}}, result[0]['pagination'])

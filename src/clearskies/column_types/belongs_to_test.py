@@ -3,13 +3,13 @@ from unittest.mock import MagicMock, call
 from .belongs_to import BelongsTo
 from ..mocks.models import Models
 from .string import String
-
-
 class BelongsToTest(unittest.TestCase):
     def setUp(self):
         Models.reset()
         self.models = Models({
-            'name': {'class': String},
+            'name': {
+                'class': String
+            },
         })
 
         self.di = type('', (), {'build': MagicMock(return_value=self.models)})()
@@ -37,10 +37,13 @@ class BelongsToTest(unittest.TestCase):
         error = self.belongs_to.input_errors('model', {'user_id': '5'})
         self.assertEquals({'user_id': 'Invalid selection for user_id: record does not exist'}, error)
         self.assertEquals(1, len(Models.counted))
-        self.assertEquals(
-            [{'table': '', 'column': 'id', 'operator': '=', 'values': ['5'], 'parsed': 'id=%s'}],
-            Models.counted[0]['wheres']
-        )
+        self.assertEquals([{
+            'table': '',
+            'column': 'id',
+            'operator': '=',
+            'values': ['5'],
+            'parsed': '`id`=%s'
+        }], Models.counted[0]['wheres'])
 
     def test_check_input_match(self):
         self.models.add_search_response([{'id': 1}])
@@ -48,10 +51,13 @@ class BelongsToTest(unittest.TestCase):
         error = self.belongs_to.input_errors('model', {'user_id': '10'})
         self.assertEquals({}, error)
         self.assertEquals(1, len(Models.counted))
-        self.assertEquals(
-            [{'table': '', 'column': 'id', 'operator': '=', 'values': ['10'], 'parsed': 'id=%s'}],
-            Models.counted[0]['wheres']
-        )
+        self.assertEquals([{
+            'table': '',
+            'column': 'id',
+            'operator': '=',
+            'values': ['10'],
+            'parsed': '`id`=%s'
+        }], Models.counted[0]['wheres'])
 
     def test_check_input_null(self):
         self.models.add_search_response([{'id': 1}])
@@ -70,7 +76,10 @@ class BelongsToTest(unittest.TestCase):
         self.assertEquals(2, user.id)
         self.assertEquals('hey', user.name)
         self.assertEquals(1, len(Models.iterated))
-        self.assertEquals(
-            [{'table': '', 'column': 'id', 'operator': '=', 'values': ['2'], 'parsed': 'id=%s'}],
-            Models.iterated[0]['wheres']
-        )
+        self.assertEquals([{
+            'table': '',
+            'column': 'id',
+            'operator': '=',
+            'values': ['2'],
+            'parsed': '`id`=%s'
+        }], Models.iterated[0]['wheres'])

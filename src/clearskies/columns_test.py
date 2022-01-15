@@ -5,8 +5,6 @@ from .columns import Columns
 from .column_types import String, Integer
 from .input_requirements import Required, MinimumLength, MaximumLength, maximum_length
 from .di import StandardDependencies
-
-
 class ColumnsTest(unittest.TestCase):
     def setUp(self):
         self.di = StandardDependencies()
@@ -51,7 +49,8 @@ class ColumnsTest(unittest.TestCase):
             {
                 'first_name': {
                     'class': String,
-                    'input_requirements': [Required, (MinimumLength, 2), maximum_length(15)],
+                    'input_requirements': [Required,
+                                           (MinimumLength, 2), maximum_length(15)],
                 },
                 'last_name': {
                     'class': String,

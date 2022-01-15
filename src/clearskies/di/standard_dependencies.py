@@ -5,8 +5,6 @@ from ..backends import CursorBackend, MemoryBackend, DynamoDBBackend
 from .. import autodoc
 import os
 import uuid
-
-
 class StandardDependencies(DI):
     def provide_requests(self):
         # by importing the requests library when requested, instead of in the top of the file,
@@ -59,7 +57,7 @@ class StandardDependencies(DI):
 
     def provide_memory_backend(self):
         return MemoryBackend()
-    
+
     def provide_dynamo_db_backend(self, boto3, environment):
         return DynamoDBBackend(boto3, environment)
 

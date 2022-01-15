@@ -1,6 +1,4 @@
 import datetime
-
-
 class AKeyless:
     _akeyless = None
     _access_id = None
@@ -30,9 +28,7 @@ class AKeyless:
     def get(self, path):
         self._configure_guard()
 
-        res = self._api.get_secret_value(
-            self._akeyless.GetSecretValue(names=[path], token=self._get_token())
-        )
+        res = self._api.get_secret_value(self._akeyless.GetSecretValue(names=[path], token=self._get_token()))
         return res[path]
 
     def get_dynamic_secret(self, path):
@@ -66,7 +62,7 @@ class AKeyless:
 
     def _get_token(self):
         # AKeyless tokens live for an hour
-        if self._token is not None and (self._token_refresh-datetime.datetime.now()).total_seconds() < 10:
+        if self._token is not None and (self._token_refresh - datetime.datetime.now()).total_seconds() < 10:
             return self._token
 
         auth_method_name = f'auth_{self._access_type}'
@@ -93,17 +89,24 @@ class AKeyless:
             credentials = creds_file.read()
 
         # and now we can turn that into a token
-        response = self._requests.post('https://rest.akeyless.io/', data={
-            'cmd': 'static-creds-auth',
-            'access-id': self._access_id,
-            'creds': credentials.strip(),
-        })
+        response = self._requests.post(
+            'https://rest.akeyless.io/',
+            data={
+                'cmd': 'static-creds-auth',
+                'access-id': self._access_id,
+                'creds': credentials.strip(),
+            }
+        )
         return response.json()['token']
 
     def auth_jwt(self):
         if not self._jwt_env_key:
-            raise ValueError("To user AKeyless JWT Auth, you must specify the name of the ENV key to load the JWT from when configuring AKeyless")
+            raise ValueError(
+                "To user AKeyless JWT Auth, you must specify the name of the ENV key to load the JWT from when configuring AKeyless"
+            )
         res = self._api.auth(
-            self._akeyless.Auth(access_id=self._access_id, access_type='jwt', jwt=self._environment.get(self._jwt_env_key))
+            self._akeyless.Auth(
+                access_id=self._access_id, access_type='jwt', jwt=self._environment.get(self._jwt_env_key)
+            )
         )
         return res.token

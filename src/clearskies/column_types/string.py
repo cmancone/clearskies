@@ -1,6 +1,4 @@
 from .column import Column
-
-
 class String(Column):
     def build_condition(self, value, operator=None):
         if operator and operator.lower() == 'like':

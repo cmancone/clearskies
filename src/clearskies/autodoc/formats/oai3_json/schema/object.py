@@ -12,7 +12,8 @@ class Object:
             schema['$ref'] = f"#/components/schemas/{self.schema.model_name}"
         else:
             schema['properties'] = {
-                schematic.name: self.oai3_schema_resolver(schematic).convert() for schematic in self.schema.children
+                schematic.name: self.oai3_schema_resolver(schematic).convert()
+                for schematic in self.schema.children
             }
 
         if include_required:

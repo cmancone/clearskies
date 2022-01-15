@@ -1,7 +1,5 @@
 import unittest
 from . import string
-
-
 class StringTest(unittest.TestCase):
     def test_camel_case_to_snake_case(self):
         self.assertEquals('dynamo_db_backend', string.camel_case_to_snake_case('DynamoDBBackend'))

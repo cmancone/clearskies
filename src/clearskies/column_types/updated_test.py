@@ -1,8 +1,6 @@
 import unittest
 from .updated import Updated
 import datetime
-
-
 class UpdatedTest(unittest.TestCase):
     def setUp(self):
         self.now = datetime.datetime.strptime('2021-01-07 22:45:13', '%Y-%m-%d %H:%M:%S')

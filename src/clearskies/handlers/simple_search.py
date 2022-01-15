@@ -1,7 +1,5 @@
 from .list import List
 from .. import autodoc
-
-
 class SimpleSearch(List):
     search_control_columns = ['sort', 'direction', 'limit']
 
@@ -9,9 +7,9 @@ class SimpleSearch(List):
     def allowed_request_keys(self):
         return [
             *self.search_control_columns,
-            # the list comprehension seems unnecessary, but that is because we require searchable
-            # columns to be an iterable, but that doesn't guarantee that it converts automatically
-            # into a list.
+        # the list comprehension seems unnecessary, but that is because we require searchable
+        # columns to be an iterable, but that doesn't guarantee that it converts automatically
+        # into a list.
             *[key for key in self.configuration('searchable_columns')],
         ]
 
@@ -27,7 +25,8 @@ class SimpleSearch(List):
                     return f"Invalid request. {value_error} for search column '{column_name}' in the {input_source_label}"
 
     def configure_models_from_request_data(self, models, request_data, query_parameters, pagination_data):
-        [models, limit] = super().configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
+        [models,
+         limit] = super().configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
         # we can play fast and loose with the possiblity of duplicate keys because our input checking already
         # disallows that
         for input_source in [request_data, query_parameters]:
@@ -47,10 +46,8 @@ class SimpleSearch(List):
 
     def documentation_request_parameters(self):
         return [
-            *self.documentation_url_pagination_parameters(),
-            *self.documentation_url_sort_parameters(),
-            *self.documentation_url_search_parameters(),
-            *self.documentation_json_search_parameters(),
+            *self.documentation_url_pagination_parameters(), *self.documentation_url_sort_parameters(),
+            *self.documentation_url_search_parameters(), *self.documentation_json_search_parameters(),
             *self.configuration('authentication').documentation_request_parameters()
         ]
 

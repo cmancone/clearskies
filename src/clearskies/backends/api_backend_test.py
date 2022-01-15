@@ -2,8 +2,6 @@ import unittest
 from unittest.mock import MagicMock, call
 from .api_backend import ApiBackend
 from types import SimpleNamespace
-
-
 class ApiBackendTest(unittest.TestCase):
     def setUp(self):
         self.api_response = {"status": "success", "data": {"id": 5}}
@@ -50,16 +48,32 @@ class ApiBackendTest(unittest.TestCase):
         self.assertEquals(True, response)
 
     def test_count(self):
-        response = type('', (), {'ok': True, 'json': lambda: {"total_matches":10}})
+        response = type('', (), {'ok': True, 'json': lambda: {"total_matches": 10}})
         self.requests.request = MagicMock(return_value=response)
         count = self.backend.count({
             'wheres': [
-                {'column': 'age', 'operator': '<=', 'values': [10], 'parsed': ''},
-                {'column': 'id', 'operator': '=', 'values': [123], 'parsed': ''},
+                {
+                    'column': 'age',
+                    'operator': '<=',
+                    'values': [10],
+                    'parsed': ''
+                },
+                {
+                    'column': 'id',
+                    'operator': '=',
+                    'values': [123],
+                    'parsed': ''
+                },
             ],
-            'sorts': [{'column': 'age', 'direction': 'desc'}],
-            'pagination': {'start': 200},
-            'limit': 100,
+            'sorts': [{
+                'column': 'age',
+                'direction': 'desc'
+            }],
+            'pagination': {
+                'start': 200
+            },
+            'limit':
+            100,
         }, 'model')
         self.assertEquals(10, count)
         self.requests.request.assert_called_with(
@@ -67,28 +81,58 @@ class ApiBackendTest(unittest.TestCase):
             'https://example.com',
             headers={'Authorization': 'Bearer: asdfer'},
             json={
-                'count_only': True,
+                'count_only':
+                True,
                 'where': [
-                    {'column': 'age', 'operator': '<=', 'values': [10]},
-                    {'column': 'id', 'operator': '=', 'values': [123]},
+                    {
+                        'column': 'age',
+                        'operator': '<=',
+                        'values': [10]
+                    },
+                    {
+                        'column': 'id',
+                        'operator': '=',
+                        'values': [123]
+                    },
                 ],
-                'sort': [{'column': 'age', 'direction': 'desc'}],
-                'start': 200,
-                'limit': 100,
+                'sort': [{
+                    'column': 'age',
+                    'direction': 'desc'
+                }],
+                'start':
+                200,
+                'limit':
+                100,
             }
         )
 
     def test_query(self):
-        response = type('', (), {'ok': True, 'json': lambda: {"data":[{"id": 5}, {"id": 10}]}})
+        response = type('', (), {'ok': True, 'json': lambda: {"data": [{"id": 5}, {"id": 10}]}})
         self.requests.request = MagicMock(return_value=response)
         records = self.backend.records({
             'wheres': [
-                {'column': 'age', 'operator': '<=', 'values': [10], 'parsed': ''},
-                {'column': 'id', 'operator': '=', 'values': [123], 'parsed': ''},
+                {
+                    'column': 'age',
+                    'operator': '<=',
+                    'values': [10],
+                    'parsed': ''
+                },
+                {
+                    'column': 'id',
+                    'operator': '=',
+                    'values': [123],
+                    'parsed': ''
+                },
             ],
-            'sorts': [{'column': 'age', 'direction': 'desc'}],
-            'pagination': {'start': 200},
-            'limit': 100,
+            'sorts': [{
+                'column': 'age',
+                'direction': 'desc'
+            }],
+            'pagination': {
+                'start': 200
+            },
+            'limit':
+            100,
         }, 'model')
         self.requests.request.assert_called_with(
             'GET',
@@ -96,12 +140,25 @@ class ApiBackendTest(unittest.TestCase):
             headers={'Authorization': 'Bearer: asdfer'},
             json={
                 'where': [
-                    {'column': 'age', 'operator': '<=', 'values': [10]},
-                    {'column': 'id', 'operator': '=', 'values': [123]},
+                    {
+                        'column': 'age',
+                        'operator': '<=',
+                        'values': [10]
+                    },
+                    {
+                        'column': 'id',
+                        'operator': '=',
+                        'values': [123]
+                    },
                 ],
-                'sort': [{'column': 'age', 'direction': 'desc'}],
-                'start': 200,
-                'limit': 100,
+                'sort': [{
+                    'column': 'age',
+                    'direction': 'desc'
+                }],
+                'start':
+                200,
+                'limit':
+                100,
             }
         )
 
@@ -109,12 +166,14 @@ class ApiBackendTest(unittest.TestCase):
         self.assertEquals({"id": 10}, records[1])
 
     def test_query_empty(self):
-        response = type('', (), {'ok': True, 'json': lambda: {"data":[{"id": 5}, {"id": 10}]}})
+        response = type('', (), {'ok': True, 'json': lambda: {"data": [{"id": 5}, {"id": 10}]}})
         self.requests.request = MagicMock(return_value=response)
         records = self.backend.records({
             'wheres': [],
             'sorts': [],
-            'pagination': {'start': 0},
+            'pagination': {
+                'start': 0
+            },
             'limit': 0,
         }, 'model')
         self.requests.request.assert_called_with(

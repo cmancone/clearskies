@@ -2,8 +2,6 @@ from .input_output import InputOutput
 import json
 import base64
 import urllib
-
-
 class AWSLambdaAPIGateway(InputOutput):
     _event = None
     _context = None

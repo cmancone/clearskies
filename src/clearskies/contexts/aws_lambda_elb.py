@@ -2,8 +2,6 @@ from ..input_outputs import AWSLambdaELB as AWSLambdaELBInputOutput
 import clearskies
 from .build_context import build_context
 from .context import Context
-
-
 class AWSLambdaELB(Context):
     def __init__(self, di):
         super().__init__(di)
@@ -13,7 +11,6 @@ class AWSLambdaELB(Context):
             raise ValueError("Cannot execute AWSLambdaELB context without first configuring it")
 
         return self.handler(AWSLambdaELBInputOutput(event, context))
-
 def aws_lambda_elb(
     application,
     di_class=None,

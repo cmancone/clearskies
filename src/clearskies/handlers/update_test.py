@@ -7,20 +7,27 @@ from ..di import StandardDependencies
 from .. import Model
 from collections import OrderedDict
 from ..contexts import test
-
-
 class User(Model):
     def __init__(self, memory_backend, columns):
         super().__init__(memory_backend, columns)
 
     def columns_configuration(self):
         return OrderedDict([
-            ('id', {'class': String}), # otherwise we'll use a UUID for the id, so I can't predict it
-            ('name', {'class': String, 'input_requirements': [Required]}),
-            ('email', {'class': String, 'input_requirements': [Required, (MaximumLength, 15)]}),
-            ('age', {'class': Integer}),
+            ('id', {
+                'class': String
+            }),    # otherwise we'll use a UUID for the id, so I can't predict it
+            ('name', {
+                'class': String,
+                'input_requirements': [Required]
+            }),
+            ('email', {
+                'class': String,
+                'input_requirements': [Required, (MaximumLength, 15)]
+            }),
+            ('age', {
+                'class': Integer
+            }),
         ])
-
 class UpdateTest(unittest.TestCase):
     def setUp(self):
         self.update = test({
@@ -81,13 +88,10 @@ class UpdateTest(unittest.TestCase):
     def test_input_checks(self):
         response = self.update(body={'id': 5, 'email': 'cmancone@example.com', 'age': 10})
         self.assertEquals(200, response[1])
-        self.assertEquals(
-            {
-                'name': "'name' is required.",
-                'email': "'email' must be at most 15 characters long."
-            },
-            response[0]['input_errors']
-        )
+        self.assertEquals({
+            'name': "'name' is required.",
+            'email': "'email' must be at most 15 characters long."
+        }, response[0]['input_errors'])
 
     def test_columns(self):
         response = self.update_less_columns(body={'id': 5, 'name': 'Conor', 'age': 10})
@@ -99,13 +103,10 @@ class UpdateTest(unittest.TestCase):
 
     def test_extra_columns(self):
         response = self.update_less_columns(body={'id': 5, 'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'})
-        self.assertEquals(
-            {
-                'email': "Input column 'email' is not an allowed column",
-                'yo': "Input column 'yo' is not an allowed column",
-            },
-            response[0]['input_errors']
-        )
+        self.assertEquals({
+            'email': "Input column 'email' is not an allowed column",
+            'yo': "Input column 'yo' is not an allowed column",
+        }, response[0]['input_errors'])
 
     def test_readable_writeable(self):
         update = test({
@@ -141,7 +142,12 @@ class UpdateTest(unittest.TestCase):
         })
 
         response = update(
-            body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            body={
+                'id': 5,
+                'name': 'Conor',
+                'email': 'c@example.com',
+                'age': 10
+            },
             headers={'Authorization': 'Bearer qwerty'},
         )
         self.assertEquals(401, response[1])
@@ -164,7 +170,12 @@ class UpdateTest(unittest.TestCase):
         users.create({'id': '5', 'name': 'Bob', 'email': 'default@email.com', 'age': 10})
 
         response = update(
-            body={'id': 5, 'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            body={
+                'id': 5,
+                'name': 'Conor',
+                'email': 'c@example.com',
+                'age': 10
+            },
             headers={'Authorization': 'Bearer asdfer'},
         )
         self.assertEquals(200, response[1])
@@ -198,10 +209,8 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals(3, len(documentation.responses))
         self.assertEquals([200, 200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]
-        self.assertEquals(
-            ['status', 'data', 'pagination', 'error', 'input_errors'],
-            [schema.name for schema in success_response.schema.children]
-        )
+        self.assertEquals(['status', 'data', 'pagination', 'error', 'input_errors'],
+                          [schema.name for schema in success_response.schema.children])
         data_response_properties = success_response.schema.children[1].children
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
         self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])

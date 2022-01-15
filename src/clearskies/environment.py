@@ -1,6 +1,4 @@
 import os.path
-
-
 class Environment:
     """
     This loads up the environment configuration for the application.
@@ -61,7 +59,7 @@ class Environment:
             raise ValueError(f"Parse error in environment line #{line_number}: should be 'key=value'")
 
         equal_index = line.index('=')
-        return (line[:equal_index].strip(), line[equal_index+1:].strip())
+        return (line[:equal_index].strip(), line[equal_index + 1:].strip())
 
     def resolve_value(self, value):
         if value[:9] != 'secret://':

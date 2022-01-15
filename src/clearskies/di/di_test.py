@@ -3,47 +3,37 @@ from unittest.mock import MagicMock, call
 from .di import DI
 from .. import BindingConfig
 from . import test_module, AdditionalConfig
-
 class HasProvides(DI):
     def provide_blahblah(self, some_class):
         return [2, SomeClass]
-
 class MoreStuff:
     def __init__(self, some_class, blahblah):
         self.some_class = some_class
         self.blahblah = blahblah
 
     def configure(self, age=None):
-        self.age=age
-
+        self.age = age
 class SomeClass:
     pass
-
 class RequiresSubModule:
     def __init__(self, another_module_class):
         self.another_module_class = another_module_class
-
 class Circular:
     def __init__(self, will_be_circular):
         pass
-
 class WillBeCircular:
     def __init__(self, circular):
         pass
-
 class more_classes:
     def __init__(self, arbitrarily_defined):
         self.arbitrarily_defined = arbitrarily_defined
-
 class AnotherClass:
     def __init__(self, some_class, more_classes):
         self.some_class = some_class
         self.more_classes = more_classes
-
 class MoreAdditionalConfig(AdditionalConfig):
     def provide_really_awesome_stuff(self, some_class):
         return MoreStuff(some_class, 'hey')
-
 class ModelTest(unittest.TestCase):
     def setUp(self):
         self.di = HasProvides(classes=[SomeClass, more_classes, AnotherClass])

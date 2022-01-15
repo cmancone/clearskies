@@ -1,8 +1,6 @@
 from .simple_search import SimpleSearch
 from .. import autodoc
 from .. import condition_parser
-
-
 class AdvancedSearch(SimpleSearch):
     expected_request_methods = 'POST'
 
@@ -11,7 +9,9 @@ class AdvancedSearch(SimpleSearch):
         return ['sort', 'direction', 'where', 'limit']
 
     def configure_models_from_request_data(self, models, request_data, query_parameters, pagination_data):
-        limit = int(self._from_either(request_data, query_parameters, 'limit', default=self.configuration('default_limit')))
+        limit = int(
+            self._from_either(request_data, query_parameters, 'limit', default=self.configuration('default_limit'))
+        )
         models = models.limit(limit)
         if pagination_data:
             models = models.pagination(**pagination_data)
@@ -36,9 +36,7 @@ class AdvancedSearch(SimpleSearch):
                     column_name = self.id_column_name
                 column = self._columns[column_name]
                 models = column.add_search(
-                    models,
-                    where['value'],
-                    operator=where['operator'].lower() if 'operator' in where else None
+                    models, where['value'], operator=where['operator'].lower() if 'operator' in where else None
                 )
 
         return [models, limit]
@@ -182,7 +180,10 @@ class AdvancedSearch(SimpleSearch):
             [
                 autodoc.schema.Enum(
                     self.auto_case_internal_column_name('column'),
-                    [self.auto_case_column_name(column.name, True) for column in self._get_searchable_columns().values()],
+                    [
+                        self.auto_case_column_name(column.name, True)
+                        for column in self._get_searchable_columns().values()
+                    ],
                     autodoc.schema.String(self.auto_case_column_name('column_name', True)),
                     example='name',
                 ),
@@ -201,8 +202,7 @@ class AdvancedSearch(SimpleSearch):
             allowed_sort_columns = [self.auto_case_column_name(key, True) for key in self._columns.keys()]
 
         sort_item = autodoc.schema.Object(
-            self.auto_case_internal_column_name('sort'),
-            [
+            self.auto_case_internal_column_name('sort'), [
                 autodoc.schema.Enum(
                     self.auto_case_internal_column_name('column'),
                     allowed_sort_columns,
@@ -220,18 +220,11 @@ class AdvancedSearch(SimpleSearch):
 
         return [
             autodoc.request.JSONBody(
-                autodoc.schema.Array(
-                    self.auto_case_internal_column_name('where'),
-                    where_condition
-                ),
+                autodoc.schema.Array(self.auto_case_internal_column_name('where'), where_condition),
                 description='List of search conditions'
             ),
             autodoc.request.JSONBody(
-                autodoc.schema.Array(
-                    self.auto_case_internal_column_name('sort'),
-                    sort_item
-                ),
+                autodoc.schema.Array(self.auto_case_internal_column_name('sort'), sort_item),
                 description='List of sort directives (max 2)'
-            ),
-            *self.documentation_json_pagination_parameters()
+            ), *self.documentation_json_pagination_parameters()
         ]

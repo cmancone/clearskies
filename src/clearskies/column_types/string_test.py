@@ -1,7 +1,5 @@
 import unittest
 from .string import String
-
-
 class StringTest(unittest.TestCase):
     def test_is_allowed_operator(self):
         string = String()

@@ -4,8 +4,6 @@ import re
 import sys
 import os
 from ..functional import string
-
-
 class DI:
     _bindings = None
     _building = None
@@ -37,12 +35,12 @@ class DI:
         for add_class in classes:
             name = string.camel_case_to_snake_case(add_class.__name__)
             #if name in self._classes:
-                ## if we're re-adding the same class twice then just ignore it.
-                #if id(add_class) == self._classes[name]['id']:
-                    #continue
+            ## if we're re-adding the same class twice then just ignore it.
+            #if id(add_class) == self._classes[name]['id']:
+            #continue
 
-                ## otherwise throw an exception
-                #raise ValueError(f"More than one class with a name of '{name}' was added")
+            ## otherwise throw an exception
+            #raise ValueError(f"More than one class with a name of '{name}' was added")
 
             self._classes[name] = {'id': id(add_class), 'class': add_class}
 
@@ -156,7 +154,7 @@ class DI:
 
         # additional configs are meant to override ones that come before, with most recent ones
         # taking precedence.  Therefore, start at the end (e.g. FILO instead of FIFO, except nothing actually leaves)
-        for index in range(len(self._additional_configs)-1, -1, -1):
+        for index in range(len(self._additional_configs) - 1, -1, -1):
             additional_config = self._additional_configs[index]
             if not additional_config.can_build(name):
                 continue
@@ -176,7 +174,6 @@ class DI:
             f"I was asked to build {name}{context_note} but there is no added class, configured binding, " + \
             f"or a corresponding 'provide_{name}' method for this name."
         )
-
 
     def build_class(self, class_to_build, context=None, name=None, cache=False):
         """
@@ -221,8 +218,7 @@ class DI:
         # Turn on caching when building the automatic dependencies that get injected into a class constructor
         args = [
             self.build_from_name(build_argument, context=class_to_build.__name__, cache=True)
-            for build_argument
-            in build_arguments
+            for build_argument in build_arguments
         ]
         del self._building[class_id]
 
@@ -248,11 +244,9 @@ class DI:
             call_arguments = call_arguments[1:]
 
         args = [
-            kwargs[call_argument]
-            if call_argument in kwargs
-            else self.build_from_name(call_argument, context=callable_to_execute.__name__, cache=True)
-            for call_argument
-            in call_arguments
+            kwargs[call_argument] if call_argument in kwargs else
+            self.build_from_name(call_argument, context=callable_to_execute.__name__, cache=True)
+            for call_argument in call_arguments
         ]
 
         return callable_to_execute(*args)

@@ -1,7 +1,5 @@
 from .request import Request
 import json
-
-
 class OAI3JSON:
     requests = None
     formatted = None
@@ -60,9 +58,9 @@ class OAI3JSON:
 
         if self.models:
             data['components'] = {
-                'schemas': {
-                    model_name: self.oai3_schema_resolver(model).convert() for (model_name, model) in self.models.items()
-                }
+                'schemas':
+                {model_name: self.oai3_schema_resolver(model).convert()
+                 for (model_name, model) in self.models.items()}
             }
 
         return data

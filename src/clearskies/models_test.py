@@ -5,8 +5,6 @@ from .model import Model
 from .di import StandardDependencies
 from . import column_types
 from collections import OrderedDict
-
-
 class User(Model):
     def __init__(self, cursor, column):
         super().__init__(cursor, column)
@@ -17,8 +15,6 @@ class User(Model):
             column_types.integer('age'),
             column_types.created('created'),
         ])
-
-
 class Users(Models):
     _empty_model = None
 
@@ -32,15 +28,18 @@ class Users(Models):
         if self._empty_model is None:
             self._empty_model = User(self._backend, self._columns)
         return self._empty_model
-
-
 class TestModels(unittest.TestCase):
     def setUp(self):
-        self.backend = type('', (), {
-            'count': MagicMock(return_value=10),
-            'records': MagicMock(return_value=[{'id': 5, 'my': 'data'}]),
-            'validate_pagination_kwargs': MagicMock(return_value=''),
-        })()
+        self.backend = type(
+            '', (), {
+                'count': MagicMock(return_value=10),
+                'records': MagicMock(return_value=[{
+                    'id': 5,
+                    'my': 'data'
+                }]),
+                'validate_pagination_kwargs': MagicMock(return_value=''),
+            }
+        )()
         self.di = StandardDependencies()
         self.columns = self.di.build('columns')
 
@@ -53,26 +52,20 @@ class TestModels(unittest.TestCase):
             .join('LEFT JOIN posts ON posts.user_id=users.id') \
             .limit(10) \
             .select('*')
-        self.assertEquals(
-            {
-                'table': '',
-                'column': 'age',
-                'operator': '>',
-                'values': ['5'],
-                'parsed': 'age>%s',
-            },
-            users.query_configuration['wheres'][0]
-        )
-        self.assertEquals(
-            {
-                'table': '',
-                'column': 'age',
-                'operator': '<',
-                'values': ['10'],
-                'parsed': 'age<%s',
-            },
-            users.query_configuration['wheres'][1]
-        )
+        self.assertEquals({
+            'table': '',
+            'column': 'age',
+            'operator': '>',
+            'values': ['5'],
+            'parsed': '`age`>%s',
+        }, users.query_configuration['wheres'][0])
+        self.assertEquals({
+            'table': '',
+            'column': 'age',
+            'operator': '<',
+            'values': ['10'],
+            'parsed': '`age`<%s',
+        }, users.query_configuration['wheres'][1])
         self.assertEquals({'column': 'created', 'direction': 'desc'}, users.query_configuration['sorts'][0])
         self.assertEquals('last_name', users.query_configuration['group_by_column'])
         self.assertEquals('LEFT JOIN posts ON posts.user_id=users.id', users.query_configuration['joins'][0]['raw'])
@@ -100,31 +93,46 @@ class TestModels(unittest.TestCase):
         self.backend.records.assert_has_calls([
             call(
                 {
-                    'wheres': [
-                        {'table': '', 'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>%s'},
-                        {'table': '', 'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<%s'}
-                    ],
-                    'sorts': [
-                        {'column': 'created', 'direction': 'desc'}
-                    ],
-                    'group_by_column': 'last_name',
-                    'joins': [
-                        {
-                            'alias': '',
-                            'type': 'LEFT',
-                            'table': 'posts',
-                            'left_table': 'users',
-                            'left_column': 'id',
-                            'right_table': 'posts',
-                            'right_column': 'user_id',
-                            'raw': 'LEFT JOIN posts ON posts.user_id=users.id',
-                        }
-                    ],
-                    'pagination': {'start': 5},
-                    'limit': 10,
-                    'selects': '*',
-                    'table_name': 'users',
-                    'model_columns': users.model_columns,
+                    'wheres': [{
+                        'table': '',
+                        'column': 'age',
+                        'operator': '>',
+                        'values': ['5'],
+                        'parsed': '`age`>%s'
+                    }, {
+                        'table': '',
+                        'column': 'age',
+                        'operator': '<',
+                        'values': ['10'],
+                        'parsed': '`age`<%s'
+                    }],
+                    'sorts': [{
+                        'column': 'created',
+                        'direction': 'desc'
+                    }],
+                    'group_by_column':
+                    'last_name',
+                    'joins': [{
+                        'alias': '',
+                        'type': 'LEFT',
+                        'table': 'posts',
+                        'left_table': 'users',
+                        'left_column': 'id',
+                        'right_table': 'posts',
+                        'right_column': 'user_id',
+                        'raw': 'LEFT JOIN posts ON posts.user_id=users.id',
+                    }],
+                    'pagination': {
+                        'start': 5
+                    },
+                    'limit':
+                    10,
+                    'selects':
+                    '*',
+                    'table_name':
+                    'users',
+                    'model_columns':
+                    users.model_columns,
                 },
                 users.empty_model(),
                 next_page_data={},
@@ -170,14 +178,25 @@ class TestModels(unittest.TestCase):
         self.backend.count.assert_has_calls([
             call(
                 {
-                    'wheres': [
-                        {'table': '', 'column': 'age', 'operator': '>', 'values': ['5'], 'parsed': 'age>%s'},
-                        {'table': '', 'column': 'age', 'operator': '<', 'values': ['10'], 'parsed': 'age<%s'}
-                    ],
-                    'sorts': [
-                        {'column': 'created', 'direction': 'desc'}
-                    ],
-                    'group_by_column': None,
+                    'wheres': [{
+                        'table': '',
+                        'column': 'age',
+                        'operator': '>',
+                        'values': ['5'],
+                        'parsed': '`age`>%s'
+                    }, {
+                        'table': '',
+                        'column': 'age',
+                        'operator': '<',
+                        'values': ['10'],
+                        'parsed': '`age`<%s'
+                    }],
+                    'sorts': [{
+                        'column': 'created',
+                        'direction': 'desc'
+                    }],
+                    'group_by_column':
+                    None,
                     'joins': [
                         {
                             'alias': '',
@@ -200,13 +219,18 @@ class TestModels(unittest.TestCase):
                             'raw': 'LEFT JOIN more_posts ON more_posts.user_id=users.id',
                         },
                     ],
-                    'pagination': {'start': 5},
-                    'limit': 10,
-                    'selects': '*',
-                    'table_name': 'users',
-                    'model_columns': users.model_columns,
+                    'pagination': {
+                        'start': 5
+                    },
+                    'limit':
+                    10,
+                    'selects':
+                    '*',
+                    'table_name':
+                    'users',
+                    'model_columns':
+                    users.model_columns,
                 },
                 users.empty_model(),
-
             )
         ])

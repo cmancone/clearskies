@@ -1,7 +1,5 @@
 import unittest
 from .select import Select
-
-
 class SelectTest(unittest.TestCase):
     def test_check_input_bad(self):
         select = Select()

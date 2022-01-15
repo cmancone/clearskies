@@ -3,8 +3,6 @@ import re
 from ..autodoc.schema import String as AutoDocString
 from .. import input_requirements
 import inspect
-
-
 class Column(ABC):
     _auto_doc_class = AutoDocString
     configuration = None
@@ -43,7 +41,7 @@ class Column(ABC):
 
     def model_column_configurations(self):
         nargs = len(inspect.getfullargspec(self.model_class.__init__).args) - 1
-        fake_model = self.model_class(*(['']*nargs))
+        fake_model = self.model_class(*([''] * nargs))
         return fake_model.all_columns()
 
     def configure(self, name, configuration, model_class):
@@ -80,9 +78,7 @@ class Column(ABC):
         if not key in self.configuration:
             if silent:
                 return None
-            raise KeyError(
-                f"column '{self.__class__.__name__}' does not have a configuration named '{key}'"
-            )
+            raise KeyError(f"column '{self.__class__.__name__}' does not have a configuration named '{key}'")
 
         return self.configuration[key]
 
@@ -231,8 +227,4 @@ class Column(ABC):
         return string
 
     def documentation(self, name=None, example=None, value=None):
-        return self._auto_doc_class(
-            name if name is not None else self.name,
-            example=example,
-            value=value
-        )
+        return self._auto_doc_class(name if name is not None else self.name, example=example, value=value)

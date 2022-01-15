@@ -1,22 +1,6 @@
 import re
-
-
 class ConditionParser:
-    operators = [
-        '<=>',
-        '!=',
-        '<=',
-        '>=',
-        '>',
-        '<',
-        '=',
-        'in',
-        'is not null',
-        'is null',
-        'is not',
-        'is',
-        'like'
-    ]
+    operators = ['<=>', '!=', '<=', '>=', '>', '<', '=', 'in', 'is not null', 'is null', 'is not', 'is', 'like']
 
     operator_lengths = {
         '<=>': 3,
@@ -79,7 +63,7 @@ class ConditionParser:
             raise ValueError(f'No supported operators found in condition {condition}')
 
         column = condition[:matching_index].strip().replace('`', '')
-        value = condition[matching_index+self.operator_lengths[matching_operator]:].strip()
+        value = condition[matching_index + self.operator_lengths[matching_operator]:].strip()
         if value and (value[0] == "'" and value[-1] == "'"):
             value = value.strip("'")
         values = self._parse_condition_list(value) if matching_operator == 'in' else [value]
@@ -102,23 +86,23 @@ class ConditionParser:
         return list(map(lambda value: value.strip().strip("'"), value[1:-1].split(',')))
 
     def _with_placeholders(self, column, operator, values):
+        column = column.replace('`', '')
         upper_case_operator = operator.upper()
         if operator in self.operators_with_simple_placeholders:
-            return f'{column}{upper_case_operator}%s'
+            return f'`{column}`{upper_case_operator}%s'
         if operator in self.operators_without_placeholders:
-            return f'{column} {upper_case_operator}'
+            return f'`{column}` {upper_case_operator}'
         if operator == 'is' or operator == 'is not' or operator == 'like':
-            return f'{column} {upper_case_operator} %s'
+            return f'`{column}` {upper_case_operator} %s'
 
         # the only thing left is "in" which has a variable number of placeholders
-        return f'{column} IN (' + ', '.join(['%s' for i in range(len(values))]) + ')'
+        return f'`{column}` IN (' + ', '.join(['%s' for i in range(len(values))]) + ')'
 
     def parse_join(self, join):
         # doing this the simple and stupid way, until that doesn't work.  Yes, it is ugly.
         # Splitting this into two regexps for simplicity: this one does not check for an alias
         matches = re.match(
-            '(\w+\s+)?join\s+`?([^\s`]+)`?\s+on\s+`?([^`]+)`?\.`?([^`]+)`?\s*=\s*`?([^`]+)`?\.`?([^`]+)`?',
-            join,
+            '(\w+\s+)?join\s+`?([^\s`]+)`?\s+on\s+`?([^`]+)`?\.`?([^`]+)`?\s*=\s*`?([^`]+)`?\.`?([^`]+)`?', join,
             re.IGNORECASE
         )
         if matches:
@@ -133,8 +117,7 @@ class ConditionParser:
         else:
             matches = re.match(
                 '(\w+\s+)?join\s+`?([^\s`]+)`?\s+(as\s+)?(\S+)\s+on\s+`?([^`]+)`?\.`?([^`]+)`?\s*=\s*`?([^`]+)`?\.`?([^`]+)`?',
-                join,
-                re.IGNORECASE
+                join, re.IGNORECASE
             )
             if not matches:
                 raise ValueError(f"Specified join condition, '{join}' does not appear to be a valid join statement")

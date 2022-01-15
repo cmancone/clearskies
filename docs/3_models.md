@@ -4,8 +4,8 @@
     1. [Overview](#model-overview)
     2. [Example and Usage](#example-and-usage)
     3. [Lifecycle Hooks](#lifecycle-hooks)
-2. [Models Classes](#models-classes)
-    1. [Overview](#models-overview)
+2. [Query Builder](#query-builder)
+    1. [Overview](#query-builder-overview)
 
 ## Model Classes
 
@@ -175,27 +175,14 @@ Name is changing to awesome!
 sending email to user!
 {'name': 'awesome!', 'id': 5, 'updated': <datetime.datetime object>}
 ```
-## Models Classes
+## Query Builder
 
-The model**s** classes in clearskies serves as a query builder and factory for the model class.  Building off of the example User model class above, a Users class would look like:
-
-```
-from clearskies import Models
-
-
-class Users(Models):
-    def __init__(self, cursor_backend, columns):
-        super().__init__(cursor_backend, columns)
-
-    def model_class(self):
-        return User
-```
-
-The models and model classes then work together like so:
+The model classes in clearskies also serve as a query builder, which looks a little like this:
 
 ```
 start = 0
 limit = 100
+users = User(backend, cursor)
 for user in users.where("age>20").sort_by('name', 'desc').limit(start, limit):
     print(user.email)
 
@@ -220,7 +207,7 @@ else:
 matching_users = users.where("age>20").where("age<50").where("name LIKE '%greg%'")
 ```
 
-The `where` method is worth a mention.  Despite appearances, you aren't actually building SQL, and you can safely inject raw user input here.  `where` accepts a string with the format `[COLUMN_NAME] [OPERATOR] [VALUE]`.  The list of allowed operators is defined [at the top of this class](../src/clearskies/condition_parser.py).  This is just intended as a convenient way to specify conditions without having to remember the name of the method for each operator (e.g. clearskies does not have methods like `models.where_equals()`, `models.where_gt()`, `models.where_lt()`, etc...).
+The `where` method is worth a mention.  Despite appearances, you aren't actually building SQL.  Indeed, clearskies is designed so that backends are completely flexible - a model may be attached to an im-memory store, an API, a DynamoDB Table, etc...  The clearskies query builder uses SQL-like input because this is often more intuitive then having to learn yet-another SDK interface.  Most importantly, you can safely inject raw user input here.  Therefore, `where` accepts a string with the format `[COLUMN_NAME] [OPERATOR] [VALUE]`.  The list of allowed operators is defined [at the top of this class](../src/clearskies/condition_parser.py).
 
 The models class also has methods for `join` and `group_by`.  Note that these methods may not work in all backends.
 

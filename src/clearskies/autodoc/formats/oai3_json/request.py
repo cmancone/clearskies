@@ -1,8 +1,6 @@
 from .response import Response
 from .parameter import Parameter
 from ...schema import Object, Array
-
-
 class Request:
     formatted_responses = None
     request = None
@@ -17,9 +15,7 @@ class Request:
         self.formatted_parameters = [
             self.format_parameter(parameter) for parameter in self.request.parameters if not parameter.in_body
         ]
-        self.json_body_parameters = [
-            parameter for parameter in self.request.parameters if parameter.in_body
-        ]
+        self.json_body_parameters = [parameter for parameter in self.request.parameters if parameter.in_body]
         self.relative_path = self.request.relative_path
 
     def format_response(self, response):
@@ -38,7 +34,8 @@ class Request:
             data[request_method.lower()] = {
                 'summary': self.request.description,
                 'parameters': [parameter.convert() for parameter in self.formatted_parameters],
-                'responses': {str(response.status_code): response.convert() for response in self.formatted_responses},
+                'responses': {str(response.status_code): response.convert()
+                              for response in self.formatted_responses},
             }
 
             if self.json_body_parameters:

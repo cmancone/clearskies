@@ -9,8 +9,6 @@ from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.response import Response as AutoDocResponse
 from ..functional import string
 from typing import List, Dict
-
-
 class Base(ABC):
     _configuration = None
     _configuration_defaults = {}
@@ -167,11 +165,16 @@ class Base(ABC):
         if not 'status' in response_data:
             raise ValueError("Huh, status got left out somehow")
         return {
-            self.auto_case_internal_column_name('status'): self.auto_case_internal_column_name(response_data['status']),
-            self.auto_case_internal_column_name('error'): response_data.get('error', ''),
-            self.auto_case_internal_column_name('data'): response_data.get('data', []),
-            self.auto_case_internal_column_name('pagination'): self._normalize_pagination(response_data.get('pagination', {})),
-            self.auto_case_internal_column_name('input_errors'): response_data.get('input_errors', {})
+            self.auto_case_internal_column_name('status'):
+            self.auto_case_internal_column_name(response_data['status']),
+            self.auto_case_internal_column_name('error'):
+            response_data.get('error', ''),
+            self.auto_case_internal_column_name('data'):
+            response_data.get('data', []),
+            self.auto_case_internal_column_name('pagination'):
+            self._normalize_pagination(response_data.get('pagination', {})),
+            self.auto_case_internal_column_name('input_errors'):
+            response_data.get('input_errors', {})
         }
 
     def _normalize_pagination(self, pagination):
@@ -186,7 +189,6 @@ class Base(ABC):
                 for (key, value) in pagination.get('next_page', {}).items()
             },
         }
-
 
     def _model_as_json(self, model):
         if self.configuration('output_map'):
@@ -283,8 +285,7 @@ class Base(ABC):
         return AutoDocResponse(
             200,
             AutoDocObject(
-                'body',
-                [
+                'body', [
                     AutoDocString(self.auto_case_internal_column_name('status'), value='success'),
                     data_schema,
                     self.documentation_pagination_response(include_pagination=include_pagination),
@@ -299,8 +300,7 @@ class Base(ABC):
         return AutoDocResponse(
             status,
             AutoDocObject(
-                'body',
-                [
+                'body', [
                     AutoDocString(self.auto_case_internal_column_name('status'), value='error'),
                     AutoDocObject(self.auto_case_internal_column_name('data'), [], value={}),
                     self.documentation_pagination_response(include_pagination=False),
@@ -316,17 +316,14 @@ class Base(ABC):
         return AutoDocResponse(
             200,
             AutoDocObject(
-                'body',
-                [
+                'body', [
                     AutoDocString(self.auto_case_internal_column_name('status'), value='input_errors'),
                     AutoDocObject(self.auto_case_internal_column_name('data'), [], value={}),
                     self.documentation_pagination_response(include_pagination=False),
                     AutoDocString(self.auto_case_internal_column_name('error'), value=''),
                     AutoDocObject(
                         self.auto_case_internal_column_name('input_errors'),
-                        [
-                            AutoDocString('[COLUMN_NAME]', example='User friendly error message')
-                        ],
+                        [AutoDocString('[COLUMN_NAME]', example='User friendly error message')],
                         example={email_example: f'{email_example} was not a valid email address'}
                     ),
                 ]
@@ -346,10 +343,8 @@ class Base(ABC):
     def documentation_data_schema(self):
         id_column_name = self.id_column_name
         properties = [
-            self._columns[id_column_name].documentation(
-                name=self.auto_case_internal_column_name('id')
-            ) if id_column_name in self._columns
-            else AutoDocString(self.auto_case_internal_column_name('id'))
+            self._columns[id_column_name].documentation(name=self.auto_case_internal_column_name('id'))
+            if id_column_name in self._columns else AutoDocString(self.auto_case_internal_column_name('id'))
         ]
 
         for column in self._get_readable_columns().values():

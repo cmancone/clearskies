@@ -1,7 +1,5 @@
 from .base import Base
 from abc import abstractmethod
-
-
 class Routing(Base):
     def __init__(self, di):
         super().__init__(di)

@@ -1,7 +1,5 @@
 import unittest
 from .integer import Integer
-
-
 class IntegerTest(unittest.TestCase):
     def test_from_backend(self):
         integer = Integer()
@@ -31,10 +29,7 @@ class IntegerTest(unittest.TestCase):
         integer = Integer()
         integer.configure('fraction', {}, int)
         self.assertEquals('fraction=0.2', integer.build_condition(0.2))
-        self.assertEquals(
-            'fraction<10',
-            integer.build_condition(10, operator='<')
-        )
+        self.assertEquals('fraction<10', integer.build_condition(10, operator='<'))
 
     def test_check_search_value(self):
         integer = Integer()

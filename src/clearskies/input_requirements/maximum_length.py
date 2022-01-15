@@ -1,6 +1,4 @@
 from .requirement import Requirement
-
-
 class MaximumLength(Requirement):
     maximum_length = None
 

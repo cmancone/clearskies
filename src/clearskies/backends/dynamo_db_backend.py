@@ -8,8 +8,6 @@ import base64
 from typing import Any, Callable, Dict, List, Tuple
 from .. import model
 from ..autodoc.schema import String as AutoDocString
-
-
 class DynamoDBBackend(Backend):
     """
     DynamoDB is complicated.
@@ -111,7 +109,7 @@ class DynamoDBBackend(Backend):
         'IS NULL': 'not_exists',
         'IS NOT': 'ne',
         'IS': 'eq',
-        'LIKE': '', # requires special handling
+        'LIKE': '',    # requires special handling
     }
 
     def __init__(self, boto3, environment):
@@ -133,7 +131,8 @@ class DynamoDBBackend(Backend):
             Key={model.id_column_name: model.__getattr__(model.id_column_name)},
             UpdateExpression=','.join([f"set {column_name} = :{column_name}" for column_name in data.keys()]),
             ExpressionAttributeValues={
-                **{f':{column_name}' : value for (column_name, value) in data.items()},
+                **{f':{column_name}': value
+                   for (column_name, value) in data.items()},
             },
             ReturnValues="ALL_NEW",
         )
@@ -153,19 +152,18 @@ class DynamoDBBackend(Backend):
         response = self._dynamodb_query(configuration, model, 'COUNT')
         return response['Count']
 
-    def records(self, configuration: Dict[str, Any], model: model.Model, next_page_data: Dict[str, str]=None) -> List[Dict[str, Any]]:
+    def records(self,
+                configuration: Dict[str, Any],
+                model: model.Model,
+                next_page_data: Dict[str, str] = None) -> List[Dict[str, Any]]:
         response = self._dynamodb_query(configuration, model, 'ALL_ATTRIBUTES')
         if 'LastEvaluatedKey' in response and response['LastEvaluatedKey'] is not None and type(next_page_data) == dict:
             next_page_data['next_token'] = self.serialize_next_token_for_response(response['LastEvaluatedKey'])
         return [self._map_from_boto3(item) for item in response['Items']]
 
     def _dynamodb_query(self, configuration, model, select_type):
-        [
-            filter_expression,
-            key_condition_expression,
-            index_name,
-            scan_index_forward
-        ] = self._create_dynamodb_query_parameters(configuration, model)
+        [filter_expression, key_condition_expression, index_name,
+         scan_index_forward] = self._create_dynamodb_query_parameters(configuration, model)
         table = self._dynamodb.Table(model.table_name())
 
         # so we want to put together the kwargs for scan/query:
@@ -217,7 +215,7 @@ class DynamoDBBackend(Backend):
         return [
             self._as_attr_filter_expressions(remaining_conditions, model),
             key_condition_expression,
-            index_name, # we don't need to specify the name of the primary index
+            index_name,    # we don't need to specify the name of the primary index
             sort_direction.lower() == 'asc',
         ]
 
@@ -245,7 +243,7 @@ class DynamoDBBackend(Backend):
         id_conditions = []
         indexable_conditions = []
         secondary_conditions = []
-        for (index,condition) in enumerate(conditions):
+        for (index, condition) in enumerate(conditions):
             column_name = condition['column']
             # if the column isn't a hash index and isn't an equals search, then this condition "anchor" an index search.
             if column_name not in indexes or condition['operator'] != '=':
@@ -292,14 +290,14 @@ class DynamoDBBackend(Backend):
         return [None, None, conditions]
 
     def _finalize_key_condition_expression(
-            self,
-            conditions,
-            primary_condition_index,
-            secondary_condition_indexes,
-            sort_column,
-            indexes,
-            model,
-        ):
+        self,
+        conditions,
+        primary_condition_index,
+        secondary_condition_indexes,
+        sort_column,
+        indexes,
+        model,
+    ):
         """
         Our job is to figure out exactly which index to use, and build the key expression.
 
@@ -363,7 +361,8 @@ class DynamoDBBackend(Backend):
             dynamodb_operator_method = self._index_operators[condition['operator']]
             raw_search_value = condition['values'][0] if condition['values'] else None
             value = self._value_for_condition_expression(raw_search_value, condition['column'], model)
-            condition_expression = getattr(dynamodb_conditions.Key(condition['column']), dynamodb_operator_method)(value)
+            condition_expression = getattr(dynamodb_conditions.Key(condition['column']),
+                                           dynamodb_operator_method)(value)
             # add to our key condition expression
             if key_condition_expression is None:
                 key_condition_expression = condition_expression
@@ -386,7 +385,9 @@ class DynamoDBBackend(Backend):
             value = condition['values'][0] if condition['values'] else None
             column_name = condition['column']
             if operator not in self._attribute_operators:
-                raise ValueError(f"I was asked to filter by operator '{operator}' but this operator is not supported by DynamoDB")
+                raise ValueError(
+                    f"I was asked to filter by operator '{operator}' but this operator is not supported by DynamoDB"
+                )
 
             # a couple of our operators require special handling
             if operator == 'LIKE':
@@ -478,7 +479,7 @@ class DynamoDBBackend(Backend):
         return table_indexes
 
     def _map_from_boto3(self, record):
-        return { key: self._map_from_boto3_value(value) for (key, value) in record.items() }
+        return {key: self._map_from_boto3_value(value) for (key, value) in record.items()}
 
     def _map_from_boto3_value(self, value):
         if isinstance(value, Decimal):
@@ -488,9 +489,7 @@ class DynamoDBBackend(Backend):
     def _check_query_configuration(self, configuration, model):
         for key in configuration.keys():
             if key not in self._allowed_configs:
-                raise KeyError(
-                    f"DynamoDBBackend does not support config '{key}'. You may be using the wrong backend"
-                )
+                raise KeyError(f"DynamoDBBackend does not support config '{key}'. You may be using the wrong backend")
 
         for key in self._required_configs:
             if key not in configuration:
@@ -533,17 +532,13 @@ class DynamoDBBackend(Backend):
         return base64.urlsafe_b64encode(json.dumps(last_evaluated_key).encode('utf-8')).decode('utf8')
 
     def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
-        return [
-            AutoDocString(case_mapping('next_token'), example='eyJpZCI6IHsiUyI6ICIzODM0MyJ9fQ==')
-        ]
+        return [AutoDocString(case_mapping('next_token'), example='eyJpZCI6IHsiUyI6ICIzODM0MyJ9fQ==')]
 
     def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
         return {case_mapping('next_token'): 'eyJpZCI6IHsiUyI6ICIzODM0MyJ9fQ=='}
 
     def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
-        return [
-            (
-                AutoDocString(case_mapping('next_token'), example='eyJpZCI6IHsiUyI6ICIzODM0MyJ9fQ=='),
-                'A token to fetch the next page of results'
-            )
-        ]
+        return [(
+            AutoDocString(case_mapping('next_token'),
+                          example='eyJpZCI6IHsiUyI6ICIzODM0MyJ9fQ=='), 'A token to fetch the next page of results'
+        )]

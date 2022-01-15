@@ -1,8 +1,6 @@
 from ..input_outputs import AWSLambdaAPIGateway as AWSInputOutput
 from .build_context import build_context
 from .context import Context
-
-
 class AWSLambdaAPIGateway(Context):
     def __init__(self, di):
         super().__init__(di)
@@ -12,7 +10,6 @@ class AWSLambdaAPIGateway(Context):
             raise ValueError("Cannot execute AWSLambda context without first configuring it")
 
         return self.handler(AWSInputOutput(event, context))
-
 def aws_lambda_api_gateway(
     application,
     di_class=None,

@@ -3,8 +3,6 @@ from ..input_outputs import CLI as CLIInputOutput
 from ..input_outputs import exceptions
 from .build_context import build_context
 from .context import Context
-
-
 class CLI(Context):
     def __init__(self, di):
         super().__init__(di)
@@ -23,7 +21,6 @@ class CLI(Context):
             return self.handler(self.di.build(CLIInputOutput))
         except exceptions.CLINotFound:
             print('help (aka 404 not found)!')
-
 def cli(
     application,
     di_class=None,

@@ -6,20 +6,25 @@ from ..authentication import Public, SecretBearer
 from ..model import Model
 from ..contexts import test
 from collections import OrderedDict
-
-
 class User(Model):
     def __init__(self, memory_backend, columns):
         super().__init__(memory_backend, columns)
 
     def columns_configuration(self):
         return OrderedDict([
-            ('id', {'class': String}),
-            ('name', {'class': String}),
-            ('email', {'class': String}),
-            ('age', {'class': Integer}),
+            ('id', {
+                'class': String
+            }),
+            ('name', {
+                'class': String
+            }),
+            ('email', {
+                'class': String
+            }),
+            ('age', {
+                'class': Integer
+            }),
         ])
-
 class ListTest(unittest.TestCase):
     def setUp(self):
         self.list = test({
@@ -108,7 +113,10 @@ class ListTest(unittest.TestCase):
                 'searchable_columns': ['name'],
                 'default_sort_column': 'email',
                 'authentication': Public(),
-                'output_map': lambda model: {'id': model.id, 'awesome': model.name},
+                'output_map': lambda model: {
+                    'id': model.id,
+                    'awesome': model.name
+                },
             }
         })
         users = list.build(User)
@@ -144,18 +152,12 @@ class ListTest(unittest.TestCase):
         # Check our 'all' endpoint which returns all records
         self.assertEquals(2, len(all_doc.responses))
         self.assertEquals([200, 400], [response.status for response in all_doc.responses])
-        self.assertEquals(
-            ['status', 'data', 'pagination', 'error', 'input_errors'],
-            [schema.name for schema in all_doc.responses[0].schema.children]
-        )
+        self.assertEquals(['status', 'data', 'pagination', 'error', 'input_errors'],
+                          [schema.name for schema in all_doc.responses[0].schema.children])
         data_response_properties = all_doc.responses[0].schema.children[1].item_definition.children
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
         self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
-        self.assertEquals(
-            ['limit', 'start', 'sort', 'direction'],
-            [param.definition.name for param in all_doc.parameters]
-        )
-        self.assertEquals(
-            ['url_parameter', 'url_parameter', 'url_parameter', 'url_parameter'],
-            [param.location for param in all_doc.parameters]
-        )
+        self.assertEquals(['limit', 'start', 'sort', 'direction'],
+                          [param.definition.name for param in all_doc.parameters])
+        self.assertEquals(['url_parameter', 'url_parameter', 'url_parameter', 'url_parameter'],
+                          [param.location for param in all_doc.parameters])

@@ -6,7 +6,6 @@ from decimal import Decimal
 from .dynamo_db_backend import DynamoDBBackend
 import clearskies
 from boto3.dynamodb import conditions as dynamodb_conditions
-
 class User(clearskies.Model):
     def __init__(self, dynamo_db_backend, columns):
         super().__init__(dynamo_db_backend, columns)
@@ -17,56 +16,72 @@ class User(clearskies.Model):
             clearskies.column_types.string('category_id'),
             clearskies.column_types.integer('age'),
         ])
-
 class Users(clearskies.Models):
     def __init__(self, dynamo_db_backend, columns):
         super().__init__(dynamo_db_backend, columns)
 
     def model_class(self):
         return User
-
 class DynamoDBBackendTest(unittest.TestCase):
     def setUp(self):
         self.di = clearskies.di.StandardDependencies()
         self.di.bind('environment', {'AWS_REGION': 'us-east-2'})
         self.dynamo_db_table = SimpleNamespace(
-            key_schema=[{'KeyType': 'HASH', 'AttributeName': 'id'}],
+            key_schema=[{
+                'KeyType': 'HASH',
+                'AttributeName': 'id'
+            }],
             global_secondary_indexes=[
                 {
-                    'IndexName': 'category_id-name-index',
+                    'IndexName':
+                    'category_id-name-index',
                     'KeySchema': [
-                        {'KeyType': 'HASH', 'AttributeName': 'category_id'},
-                        {'KeyType': 'RANGE', 'AttributeName': 'name'},
+                        {
+                            'KeyType': 'HASH',
+                            'AttributeName': 'category_id'
+                        },
+                        {
+                            'KeyType': 'RANGE',
+                            'AttributeName': 'name'
+                        },
                     ]
                 },
                 {
-                    'IndexName': 'category_id-age-index',
+                    'IndexName':
+                    'category_id-age-index',
                     'KeySchema': [
-                        {'KeyType': 'RANGE', 'AttributeName': 'age'},
-                        {'KeyType': 'HASH', 'AttributeName': 'category_id'},
+                        {
+                            'KeyType': 'RANGE',
+                            'AttributeName': 'age'
+                        },
+                        {
+                            'KeyType': 'HASH',
+                            'AttributeName': 'category_id'
+                        },
                     ]
                 },
             ],
-            local_secondary_indexes=[
-                {
-                    'IndexName': 'id-category_id-index',
-                    'KeySchema': [
-                        {'KeyType': 'RANGE', 'AttributeName': 'category_id'},
-                        {'KeyType': 'HASH', 'AttributeName': 'id'},
-                    ]
-                }
-            ],
+            local_secondary_indexes=[{
+                'IndexName':
+                'id-category_id-index',
+                'KeySchema': [
+                    {
+                        'KeyType': 'RANGE',
+                        'AttributeName': 'category_id'
+                    },
+                    {
+                        'KeyType': 'HASH',
+                        'AttributeName': 'id'
+                    },
+                ]
+            }],
         )
-        self.dynamo_db = SimpleNamespace(
-            Table=MagicMock(return_value=self.dynamo_db_table),
-        )
-        self.boto3 = SimpleNamespace(
-            resource=MagicMock(return_value=self.dynamo_db),
-        )
+        self.dynamo_db = SimpleNamespace(Table=MagicMock(return_value=self.dynamo_db_table), )
+        self.boto3 = SimpleNamespace(resource=MagicMock(return_value=self.dynamo_db), )
         self.di.bind('boto3', self.boto3)
 
     def test_create(self):
-        self.dynamo_db_table.put_item=MagicMock()
+        self.dynamo_db_table.put_item = MagicMock()
         user = self.di.build(User)
         user.save({'name': 'sup', 'age': 5, 'category_id': '1-2-3-4'})
         self.boto3.resource.assert_called_with('dynamodb', region_name='us-east-2')
@@ -91,14 +106,16 @@ class DynamoDBBackendTest(unittest.TestCase):
         self.assertEquals('sup', user.name)
 
     def test_update(self):
-        self.dynamo_db_table.update_item = MagicMock(return_value={
-            'Attributes': {
-                'id': '1-2-3-4',
-                'name': 'hello',
-                'age': Decimal('10'),
-                'category_id': '1-2-3-5',
+        self.dynamo_db_table.update_item = MagicMock(
+            return_value={
+                'Attributes': {
+                    'id': '1-2-3-4',
+                    'name': 'hello',
+                    'age': Decimal('10'),
+                    'category_id': '1-2-3-5',
+                }
             }
-        })
+        )
         user = self.di.build(User)
         user.data = {'id': '1-2-3-4', 'name': 'sup', 'age': 5, 'category_id': '1-2-3-5'}
         user.save({'name': 'hello', 'age': 10})
@@ -107,7 +124,10 @@ class DynamoDBBackendTest(unittest.TestCase):
         self.dynamo_db_table.update_item.assert_called_with(
             Key={'id': '1-2-3-4'},
             UpdateExpression='set name = :name,set age = :age',
-            ExpressionAttributeValues={':name': 'hello', ':age': 10},
+            ExpressionAttributeValues={
+                ':name': 'hello',
+                ':age': 10
+            },
             ReturnValues="ALL_NEW",
         )
         self.assertEquals('1-2-3-4', user.id)
@@ -120,14 +140,16 @@ class DynamoDBBackendTest(unittest.TestCase):
         user = self.di.build(User)
         user.data = {'id': '1-2-3-4', 'name': 'sup', 'age': 5, 'category_id': '1-2-3-5'}
         user.delete()
-        self.dynamo_db_table.delete_item.assert_called_with(
-            Key={'id': '1-2-3-4'},
-        )
+        self.dynamo_db_table.delete_item.assert_called_with(Key={'id': '1-2-3-4'}, )
 
     def test_fetch_by_id(self):
-        self.dynamo_db_table.query = MagicMock(return_value={
-            'Items': [{'id': '1-2-3-4', 'age': Decimal(10), 'category_id': '4-5-6'}]
-        })
+        self.dynamo_db_table.query = MagicMock(
+            return_value={'Items': [{
+                'id': '1-2-3-4',
+                'age': Decimal(10),
+                'category_id': '4-5-6'
+            }]}
+        )
         users = self.di.build(Users)
         user = users.where('id=1-2-3-4').first()
         self.assertTrue(user.exists)
@@ -151,9 +173,13 @@ class DynamoDBBackendTest(unittest.TestCase):
         self.assertEquals('1-2-3-4', key_condition.get_expression()['values'][1])
 
     def test_fetch_by_id_with_sort(self):
-        self.dynamo_db_table.query = MagicMock(return_value={
-            'Items': [{'id': '1-2-3-4', 'age': Decimal(10), 'category_id': '4-5-6'}]
-        })
+        self.dynamo_db_table.query = MagicMock(
+            return_value={'Items': [{
+                'id': '1-2-3-4',
+                'age': Decimal(10),
+                'category_id': '4-5-6'
+            }]}
+        )
         users = self.di.build(Users)
         users = users.where('id=1-2-3-4').sort_by('category_id', 'desc').__iter__()
         self.assertEquals(1, len(self.dynamo_db_table.query.call_args_list))
@@ -174,9 +200,13 @@ class DynamoDBBackendTest(unittest.TestCase):
         self.assertEquals('1-2-3-4', key_condition.get_expression()['values'][1])
 
     def test_fetch_by_secondary_index_twice(self):
-        self.dynamo_db_table.query = MagicMock(return_value={
-            'Items': [{'id': '1-2-3-4', 'age': Decimal(10), 'category_id': '4-5-6'}]
-        })
+        self.dynamo_db_table.query = MagicMock(
+            return_value={'Items': [{
+                'id': '1-2-3-4',
+                'age': Decimal(10),
+                'category_id': '4-5-6'
+            }]}
+        )
         users = self.di.build(Users)
         users = users.where('category_id=1-2-3-4').where('age>10').__iter__()
         self.assertEquals(1, len(self.dynamo_db_table.query.call_args_list))
@@ -205,9 +235,13 @@ class DynamoDBBackendTest(unittest.TestCase):
         self.assertEquals(Decimal('10'), gt_condition.get_expression()['values'][1])
 
     def test_index_and_scan(self):
-        self.dynamo_db_table.query = MagicMock(return_value={
-            'Items': [{'id': '1-2-3-4', 'age': Decimal(10), 'category_id': '4-5-6'}]
-        })
+        self.dynamo_db_table.query = MagicMock(
+            return_value={'Items': [{
+                'id': '1-2-3-4',
+                'age': Decimal(10),
+                'category_id': '4-5-6'
+            }]}
+        )
         users = self.di.build(Users)
         users = users.where('category_id=1-2-3-4').where('age is not null').__iter__()
         self.assertEquals(1, len(self.dynamo_db_table.query.call_args_list))
@@ -233,9 +267,13 @@ class DynamoDBBackendTest(unittest.TestCase):
         self.assertEquals('attribute_not_exists', filter_condition.expression_operator)
 
     def test_scan_only(self):
-        self.dynamo_db_table.scan = MagicMock(return_value={
-            'Items': [{'id': '1-2-3-4', 'age': Decimal(10), 'category_id': '4-5-6'}]
-        })
+        self.dynamo_db_table.scan = MagicMock(
+            return_value={'Items': [{
+                'id': '1-2-3-4',
+                'age': Decimal(10),
+                'category_id': '4-5-6'
+            }]}
+        )
         users = self.di.build(Users)
         users = users.where('category_id>1-2-3-4').__iter__()
         self.assertEquals(1, len(self.dynamo_db_table.scan.call_args_list))

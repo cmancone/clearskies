@@ -8,25 +8,28 @@ from ..contexts import test
 from collections import OrderedDict
 from unittest.mock import MagicMock
 from ..di import StandardDependencies
-
-
 class User(Model):
     def __init__(self, memory_backend, columns):
         super().__init__(memory_backend, columns)
 
     def columns_configuration(self):
         return OrderedDict([
-            ('name', {'class': String, 'input_requirements': [Required]}),
-            ('email', {'class': String, 'input_requirements': [Required, (MaximumLength, 15)]}),
-            ('age', {'class': Integer}),
+            ('name', {
+                'class': String,
+                'input_requirements': [Required]
+            }),
+            ('email', {
+                'class': String,
+                'input_requirements': [Required, (MaximumLength, 15)]
+            }),
+            ('age', {
+                'class': Integer
+            }),
         ])
-
 def return_request_data(request_data=None):
     return request_data
-
 def return_contstant():
     return 'CONSTANT!'
-
 class CallableTest(unittest.TestCase):
     def test_without_schema(self):
         callable_handler = test({
@@ -129,10 +132,8 @@ class CallableTest(unittest.TestCase):
         self.assertEquals(2, len(documentation.responses))
         self.assertEquals([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]
-        self.assertEquals(
-            ['Status', 'Data', 'Pagination', 'Error', 'InputErrors'],
-            [schema.name for schema in success_response.schema.children]
-        )
+        self.assertEquals(['Status', 'Data', 'Pagination', 'Error', 'InputErrors'],
+                          [schema.name for schema in success_response.schema.children])
         data_response_properties = success_response.schema.children[1].children
         self.assertEquals([], [prop.name for prop in data_response_properties])
         self.assertEquals([], [prop._type for prop in data_response_properties])

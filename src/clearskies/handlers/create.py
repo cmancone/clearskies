@@ -2,8 +2,6 @@ from .write import Write
 from .exceptions import InputError
 from collections import OrderedDict
 from ..functional import string
-
-
 class Create(Write):
     def __init__(self, di):
         super().__init__(di)

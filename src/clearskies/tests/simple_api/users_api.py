@@ -4,7 +4,8 @@ from . import models
 users_api = clearskies.Application(
     clearskies.handlers.SimpleRouting,
     {
-        'authentication': clearskies.authentication.public(),
+        'authentication':
+        clearskies.authentication.public(),
         'routes': [
             {
                 'path': 'users',

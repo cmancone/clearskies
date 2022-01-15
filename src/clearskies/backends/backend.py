@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 import inspect
 from .. import model
 from typing import Any, Callable, Dict, List, Tuple, Type, Union
-
-
 class Backend(ABC):
     @abstractmethod
     def update(self, id: str, data: Dict[str, Any], model: model.Model) -> Dict[str, Any]:
@@ -34,7 +32,10 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def records(self, configuration: Dict[str, Any], model: model.Model, next_page_data: Dict[str, str]=None) -> List[Dict[str, Any]]:
+    def records(self,
+                configuration: Dict[str, Any],
+                model: model.Model,
+                next_page_data: Dict[str, str] = None) -> List[Dict[str, Any]]:
         """
         Returns a list of records that match the given query configuration
 
@@ -88,7 +89,8 @@ class Backend(ABC):
         """
         pass
 
-    def create_record_with_class(self, model_or_class: Union[model.Model, Type[model.Model]], data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_record_with_class(self, model_or_class: Union[model.Model, Type[model.Model]],
+                                 data: Dict[str, Any]) -> Dict[str, Any]:
         """
         This creates a record but, unlike with self.create, does not require a model - just the model class
 
@@ -126,7 +128,7 @@ class Backend(ABC):
                 # the list of args will include 'self' which we don't have to provide, so subtract 1
                 nargs = len(inspect.getfullargspec(model_or_class.__init__).args) - 1
                 # generate a list of empty strings with a size of nargs and pass that into the constructor
-                return model_or_class(*(['']*nargs))
+                return model_or_class(*([''] * nargs))
             except AttributeError:
                 # if we get here there is no __init__ defined so we don't need to pass arguments
                 return model_or_class()

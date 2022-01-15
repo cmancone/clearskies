@@ -4,8 +4,6 @@ from .. import autodoc
 from .. import condition_parser
 from ..functional import string
 import inspect
-
-
 class Get(Base):
     _model = None
 
@@ -44,7 +42,9 @@ class Get(Base):
         if has_model and has_model_class:
             raise KeyError(f"{error_prefix} you specified both 'model' and 'model_class', but can only provide one")
         if has_model and inspect.isclass(configuration['model']):
-            raise ValueError("{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead")
+            raise ValueError(
+                "{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead"
+            )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
         self._columns = self._model.columns(overrides=configuration.get('overrides'))
 

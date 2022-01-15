@@ -2,8 +2,6 @@ import unittest
 from unittest.mock import MagicMock, call
 from .wsgi import WSGI
 from io import BytesIO
-
-
 class WSGITest(unittest.TestCase):
     def test_respond(self):
         start_response = MagicMock()
@@ -14,8 +12,7 @@ class WSGITest(unittest.TestCase):
         response = wsgi.respond('okay!', 200)
         self.assertEquals(['okay!'.encode('utf8')], response)
         start_response.assert_called_with(
-            '200 Ok',
-            [('JANE', 'kay'), ('HEY', 'sup'), ('CONTENT-TYPE', 'application/json; charset=UTF-8')]
+            '200 Ok', [('JANE', 'kay'), ('HEY', 'sup'), ('CONTENT-TYPE', 'application/json; charset=UTF-8')]
         )
 
     def test_environment(self):

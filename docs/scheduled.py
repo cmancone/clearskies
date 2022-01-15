@@ -1,7 +1,5 @@
 import clearskies
 import datetime
-
-
 class Scheduled(clearskies.column_types.DateTime):
     # if we specify some config names here, the base `_check_configuration` method will
     # raise exceptions if the developer doesn't set them.
@@ -52,12 +50,12 @@ class Scheduled(clearskies.column_types.DateTime):
             return data
 
         return {
-            # always return the previous data first
+        # always return the previous data first
             **data,
 
-            # and then add on any new data
-            self.name: data[source_column_name] + datetime.timedelta(**self.config('timedelta'))
+        # and then add on any new data
+            self.name:
+            data[source_column_name] + datetime.timedelta(**self.config('timedelta'))
         }
-
 def scheduled(name, **kwargs):
     return clearskies.column_types.build_column_config(name, Scheduled, **kwargs)

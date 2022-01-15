@@ -5,12 +5,9 @@ import inspect
 import json
 from ..functional import validations, string
 from .. import autodoc
-
-
 class FakeModel:
     def __getattr__(self, key):
         return None
-
 class Callable(Base):
     _columns = None
 
@@ -69,8 +66,7 @@ class Callable(Base):
             elif validations.is_model_class(configuration['schema']):
                 configuration['documentation_model_name'] = configuration['schema'].__name__
             configuration['schema'] = self._schema_to_columns(
-                configuration['schema'],
-                columns_to_keep=configuration.get('writeable_columns')
+                configuration['schema'], columns_to_keep=configuration.get('writeable_columns')
             )
         return configuration
 
@@ -96,9 +92,7 @@ class Callable(Base):
         # we have to map from internal names to external names, because case mapping
         # isn't always one-to-one, so we want to do it exactly the same way that the documentation
         # is built.
-        key_map = {
-            self.auto_case_column_name(key, True): key for key in self.configuration('schema').keys()
-        }
+        key_map = {self.auto_case_column_name(key, True): key for key in self.configuration('schema').keys()}
         # in case the id comes up in the request body
         key_map[self.auto_case_internal_column_name('id')] = 'id'
 
@@ -143,9 +137,10 @@ class Callable(Base):
         if validations.is_model_or_class(schema):
             is_valid_schema = True
         else:
-            if not hasattr(schema, '__iter__') or type(schema) ==  str:
+            if not hasattr(schema, '__iter__') or type(schema) == str:
                 raise ValueError(
-                    f"{error_prefix} 'schema' should be a list of column definitions, but was instead a " + type(schema)
+                    f"{error_prefix} 'schema' should be a list of column definitions, but was instead a " +
+                    type(schema)
                 )
             for column in schema:
                 if type(column) != tuple:
@@ -154,15 +149,21 @@ class Callable(Base):
                     )
             is_valid_schema = True
         if not is_valid_schema:
-            raise ValueError(f"{error_prefix} 'schema' should be a model, model class, or list of column definitions, but was instead a " + type(schema))
+            raise ValueError(
+                f"{error_prefix} 'schema' should be a model, model class, or list of column definitions, but was instead a "
+                + type(schema)
+            )
 
         if not writeable_columns and writeable_columns is not None:
-            raise ValueError(f"{error_prefix} 'writeable_columns' can't be an empty list.  It can be 'None', but otherwise I don't know how to handle empty values")
+            raise ValueError(
+                f"{error_prefix} 'writeable_columns' can't be an empty list.  It can be 'None', but otherwise I don't know how to handle empty values"
+            )
 
         if writeable_columns:
             if not hasattr(writeable_columns, '__iter__') or type(writeable_columns) == str:
                 raise ValueError(
-                    f"{error_prefix} 'writeable_columns' should be a list of column names, but was instead a " + type(writeable_columns)
+                    f"{error_prefix} 'writeable_columns' should be a list of column names, but was instead a " +
+                    type(writeable_columns)
                 )
             columns = self._schema_to_columns(schema)
             for column in writeable_columns:
@@ -171,7 +172,9 @@ class Callable(Base):
                         f"{error_prefix} 'writeable_columns' should be a list of column names, but one of the entries was not a string"
                     )
                 if column not in columns:
-                    raise ValueError(f"{error_prefix} 'writeable_columns' references a column named '{column}' but this column does not exist in the schema")
+                    raise ValueError(
+                        f"{error_prefix} 'writeable_columns' references a column named '{column}' but this column does not exist in the schema"
+                    )
 
     def _schema_to_columns(self, schema, columns_to_keep=None):
         """
@@ -204,8 +207,7 @@ class Callable(Base):
                 column.documentation(name=self.auto_case_column_name(column.name, True)),
                 description=f"Set '{column.name}'",
                 required=column.is_required,
-            )
-            for column in schema.values()
+            ) for column in schema.values()
         ]
 
         authentication = self.configuration('authentication')

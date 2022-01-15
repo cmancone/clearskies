@@ -4,8 +4,6 @@ from collections import OrderedDict
 from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.schema import String as AutoDocString
-
-
 class HasMany(Column):
     """
     Controls a has-many relationship.
@@ -53,11 +51,8 @@ class HasMany(Column):
         # if readable_child_columns is set then load up the child models/columns now, because we'll need it in the
         # _check_configuration step, but we don't want to load it there because we can't save it back into the config
         if 'foreign_column_name' not in configuration:
-            configuration['foreign_column_name'] = re.sub(
-                r'(?<!^)(?=[A-Z])',
-                '_',
-                model_class.__name__.replace('_', '')
-            ).lower() + '_id'
+            configuration['foreign_column_name'
+                          ] = re.sub(r'(?<!^)(?=[A-Z])', '_', model_class.__name__.replace('_', '')).lower() + '_id'
 
         # continue normally now...
         super().configure(name, configuration, model_class)
@@ -128,8 +123,4 @@ class HasMany(Column):
             self.camel_to_nice(self.child_models.model_class().__name__),
             child_properties,
         )
-        return AutoDocArray(
-            name if name is not None else self.name,
-            child_object,
-            value=value
-        )
+        return AutoDocArray(name if name is not None else self.name, child_object, value=value)

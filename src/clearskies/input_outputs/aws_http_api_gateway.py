@@ -1,6 +1,4 @@
 from .aws_lambda_api_gateway import AWSLambdaAPIGateway
-
-
 class AWSHttpAPIGateway(AWSLambdaAPIGateway):
     def __init__(self, event, context):
         self._event = event

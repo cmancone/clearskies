@@ -1,7 +1,5 @@
 from .column import Column
 from ..autodoc.schema import Integer as AutoDocInteger
-
-
 class Integer(Column):
     _auto_doc_class = AutoDocInteger
 

@@ -3,8 +3,6 @@ from .string import String
 from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.schema import String as AutoDocString
-
-
 class BelongsTo(String):
     """
     Controls a belongs to relationship.
@@ -66,10 +64,7 @@ class BelongsTo(String):
                     )
 
     def _finalize_configuration(self, configuration):
-        return {
-            **super()._finalize_configuration(configuration),
-            **{'model_column_name': self.name[:-3]}
-        }
+        return {**super()._finalize_configuration(configuration), **{'model_column_name': self.name[:-3]}}
 
     def input_error_for_value(self, value, operator=None):
         integer_check = super().input_error_for_value(value)
@@ -116,9 +111,7 @@ class BelongsTo(String):
     def documentation(self, name=None, example=None, value=None):
         columns = self.parent_columns
         parent_id_column_name = self.parent_models.get_id_column_name()
-        parent_properties = [
-            columns[parent_id_column_name].documentation()
-        ]
+        parent_properties = [columns[parent_id_column_name].documentation()]
 
         parent_columns = self.config('readable_parent_columns', silent=True)
         if not parent_columns:

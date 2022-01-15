@@ -4,8 +4,6 @@ from .column_types import UUID
 from .functional import string
 import re
 from .models import Models
-
-
 class Model(Models):
     _configured_columns = None
     _data = None

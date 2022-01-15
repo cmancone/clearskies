@@ -1,6 +1,4 @@
 from .. import autodoc
-
-
 class SecretBearer:
     is_public = False
     can_authorize = False
@@ -22,9 +20,7 @@ class SecretBearer:
 
     def headers(self, retry_auth=False):
         self._configured_guard()
-        return {
-            'Authorization': f'Bearer {self._secret}'
-        }
+        return {'Authorization': f'Bearer {self._secret}'}
 
     def authenticate(self, input_output):
         self._configured_guard()

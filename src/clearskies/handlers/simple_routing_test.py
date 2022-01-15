@@ -10,8 +10,6 @@ from .list import List
 from .simple_routing import SimpleRouting
 from ..authentication import public
 from ..di import StandardDependencies
-
-
 class User(Model):
     def __init__(self, cursor_backend, columns):
         super().__init__(cursor_backend, columns)
@@ -21,7 +19,6 @@ class User(Model):
             string('name'),
             integer('age'),
         ])
-
 class Status(Model):
     def __init__(self, cursor_backend, columns):
         super().__init__(cursor_backend, columns)
@@ -31,8 +28,6 @@ class Status(Model):
             string('name'),
             integer('order'),
         ])
-
-
 class SimpleRoutingTest(unittest.TestCase):
     def setUp(self):
         self.input_output = InputOutput()
@@ -68,7 +63,8 @@ class SimpleRoutingTest(unittest.TestCase):
 
         self.handler = SimpleRouting(self.di)
         self.handler.configure({
-            'authentication': public(),
+            'authentication':
+            public(),
             'routes': [
                 {
                     'methods': 'SECRET',
@@ -113,7 +109,8 @@ class SimpleRoutingTest(unittest.TestCase):
 
         self.assertEquals(200, result[1])
         self.assertEquals({
-            'status': 'success',
+            'status':
+            'success',
             'data': [
                 OrderedDict([
                     ('id', '1-2-3-4'),
@@ -131,7 +128,8 @@ class SimpleRoutingTest(unittest.TestCase):
                 'next_page': {},
                 'limit': 100,
             },
-            'error': '',
+            'error':
+            '',
             'input_errors': {},
         }, result[0])
 
@@ -142,7 +140,8 @@ class SimpleRoutingTest(unittest.TestCase):
 
         self.assertEquals(200, result[1])
         self.assertEquals({
-            'status': 'success',
+            'status':
+            'success',
             'data': [
                 OrderedDict([
                     ('id', '1-2-3-6'),
@@ -158,7 +157,8 @@ class SimpleRoutingTest(unittest.TestCase):
                 'next_page': {},
                 'limit': 100,
             },
-            'error': '',
+            'error':
+            '',
             'input_errors': {},
         }, result[0])
 
@@ -169,7 +169,8 @@ class SimpleRoutingTest(unittest.TestCase):
 
         self.assertEquals(200, result[1])
         self.assertEquals({
-            'status': 'success',
+            'status':
+            'success',
             'data': [
                 OrderedDict([
                     ('id', '1-2-3-6'),
@@ -187,17 +188,12 @@ class SimpleRoutingTest(unittest.TestCase):
                 'next_page': {},
                 'limit': 100,
             },
-            'error': '',
+            'error':
+            '',
             'input_errors': {},
         }, result[0])
 
     def test_documentation(self):
         docs = self.handler.documentation()
-        self.assertEquals(
-            ['', '/users/', '/statuses/'],
-            [doc.relative_path for doc in docs]
-        )
-        self.assertEquals(
-            ['SECRET', 'GET', 'GET'],
-            [doc.request_methods[0] for doc in docs]
-        )
+        self.assertEquals(['', '/users/', '/statuses/'], [doc.relative_path for doc in docs])
+        self.assertEquals(['SECRET', 'GET', 'GET'], [doc.request_methods[0] for doc in docs])

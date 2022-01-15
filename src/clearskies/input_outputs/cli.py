@@ -1,7 +1,5 @@
 import json
 from . import exceptions
-
-
 class CLI:
     _sys = None
     _args = None
@@ -40,7 +38,7 @@ class CLI:
                 arg = arg.lstrip('-')
                 if '=' in arg:
                     name = arg[:arg.index('=')]
-                    value = arg[arg.index('=')+1:]
+                    value = arg[arg.index('=') + 1:]
                 else:
                     name = arg
                     value = True

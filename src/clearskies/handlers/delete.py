@@ -3,8 +3,6 @@ from .base import Base
 from .. import autodoc
 from ..functional import string
 from .get import Get
-
-
 class Delete(Get):
     _configuration_defaults = {
         'model': None,

@@ -1,6 +1,4 @@
 import inspect
-
-
 class BindingConfig:
     object_class = None
     args = None

@@ -5,8 +5,6 @@ from types import SimpleNamespace
 from . import models
 from .users_api import users_api
 from collections import OrderedDict
-
-
 class UsersApiTest(unittest.TestCase):
     def setUp(self):
         self.api = test(users_api)
@@ -40,22 +38,26 @@ class UsersApiTest(unittest.TestCase):
         self.assertEquals(200, status_code)
         self.assertEquals(2, len(response['data']))
 
-        self.assertEquals(OrderedDict([
-            ('id', self.conor_active.id),
-            ('status_id', self.active_status.id),
-            ('name', 'Conor Active'),
-            ('email', 'cmancone_active@example.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'][0])
-        self.assertEquals(OrderedDict([
-            ('id', self.conor_pending.id),
-            ('status_id', self.pending_status.id),
-            ('name', 'Conor Pending'),
-            ('email', 'cmancone_pending@example.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'][1])
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_active.id),
+                ('status_id', self.active_status.id),
+                ('name', 'Conor Active'),
+                ('email', 'cmancone_active@example.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data'][0]
+        )
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_pending.id),
+                ('status_id', self.pending_status.id),
+                ('name', 'Conor Pending'),
+                ('email', 'cmancone_pending@example.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data'][1]
+        )
         self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
         self.assertEquals('success', response['status'])
 
@@ -66,30 +68,32 @@ class UsersApiTest(unittest.TestCase):
         self.assertEquals(200, status_code)
         self.assertEquals(2, len(response['data']))
 
-        self.assertEquals(OrderedDict([
-            ('id', self.active_status.id),
-            ('name', 'Active'),
-            ('users', [
-                OrderedDict([
-                    ('id', self.conor_active.id),
-                    ('status_id', self.active_status.id),
-                    ('name', 'Conor Active'),
-                    ('email', 'cmancone_active@example.com'),
-                ])
-            ])
-        ]), response['data'][0])
-        self.assertEquals(OrderedDict([
-            ('id', self.pending_status.id),
-            ('name', 'Pending'),
-            ('users', [
-                OrderedDict([
-                    ('id', self.conor_pending.id),
-                    ('status_id', self.pending_status.id),
-                    ('name', 'Conor Pending'),
-                    ('email', 'cmancone_pending@example.com'),
-                ])
-            ])
-        ]), response['data'][1])
+        self.assertEquals(
+            OrderedDict([('id', self.active_status.id), ('name', 'Active'),
+                         (
+                             'users', [
+                                 OrderedDict([
+                                     ('id', self.conor_active.id),
+                                     ('status_id', self.active_status.id),
+                                     ('name', 'Conor Active'),
+                                     ('email', 'cmancone_active@example.com'),
+                                 ])
+                             ]
+                         )]), response['data'][0]
+        )
+        self.assertEquals(
+            OrderedDict([('id', self.pending_status.id), ('name', 'Pending'),
+                         (
+                             'users', [
+                                 OrderedDict([
+                                     ('id', self.conor_pending.id),
+                                     ('status_id', self.pending_status.id),
+                                     ('name', 'Conor Pending'),
+                                     ('email', 'cmancone_pending@example.com'),
+                                 ])
+                             ]
+                         )]), response['data'][1]
+        )
         self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
         self.assertEquals('success', response['status'])
 
@@ -129,34 +133,40 @@ class UsersApiTest(unittest.TestCase):
         status_code = result[1]
         response = result[0]
         self.assertEquals(200, status_code)
-        self.assertEquals(OrderedDict([
-            ('id', self.conor_active.id),
-            ('status_id', self.active_status.id),
-            ('name', 'CMan'),
-            ('email', 'cman@example2.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'])
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_active.id),
+                ('status_id', self.active_status.id),
+                ('name', 'CMan'),
+                ('email', 'cman@example2.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data']
+        )
         self.assertEquals('success', response['status'])
 
         result = self.api(url='/users')
         self.assertEquals(200, result[1])
         response = result[0]
 
-        self.assertEquals(OrderedDict([
-            ('id', self.conor_active.id),
-            ('status_id', self.active_status.id),
-            ('name', 'CMan'),
-            ('email', 'cman@example2.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'][0])
-        self.assertEquals(OrderedDict([
-            ('id', self.conor_pending.id),
-            ('status_id', self.pending_status.id),
-            ('name', 'Conor Pending'),
-            ('email', 'cmancone_pending@example.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'][1])
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_active.id),
+                ('status_id', self.active_status.id),
+                ('name', 'CMan'),
+                ('email', 'cman@example2.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data'][0]
+        )
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_pending.id),
+                ('status_id', self.pending_status.id),
+                ('name', 'Conor Pending'),
+                ('email', 'cmancone_pending@example.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data'][1]
+        )
         self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])

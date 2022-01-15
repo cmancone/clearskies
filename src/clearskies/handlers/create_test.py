@@ -6,19 +6,24 @@ from ..authentication import Public, SecretBearer
 from ..model import Model
 from ..contexts import test
 from collections import OrderedDict
-
-
 class User(Model):
     def __init__(self, memory_backend, columns):
         super().__init__(memory_backend, columns)
 
     def columns_configuration(self):
         return OrderedDict([
-            ('name', {'class': String, 'input_requirements': [Required]}),
-            ('email', {'class': String, 'input_requirements': [Required, (MaximumLength, 15)]}),
-            ('age', {'class': Integer}),
+            ('name', {
+                'class': String,
+                'input_requirements': [Required]
+            }),
+            ('email', {
+                'class': String,
+                'input_requirements': [Required, (MaximumLength, 15)]
+            }),
+            ('age', {
+                'class': Integer
+            }),
         ])
-
 class CreateTest(unittest.TestCase):
     def setUp(self):
         self.create = test({
@@ -90,13 +95,10 @@ class CreateTest(unittest.TestCase):
     def test_input_checks(self):
         response = self.create(body={'email': 'cmancone@example.com', 'age': 10})
         self.assertEquals(200, response[1])
-        self.assertEquals(
-            {
-                'name': "'name' is required.",
-                'email': "'email' must be at most 15 characters long."
-            },
-            response[0]['input_errors']
-        )
+        self.assertEquals({
+            'name': "'name' is required.",
+            'email': "'email' must be at most 15 characters long."
+        }, response[0]['input_errors'])
 
     def test_columns(self):
         response = self.create_no_email(body={'name': 'Conor', 'age': 10})
@@ -108,13 +110,10 @@ class CreateTest(unittest.TestCase):
 
     def test_extra_columns(self):
         response = self.create_no_email(body={'name': 'Conor', 'age': 10, 'email': 'hey', 'yo': 'sup'})
-        self.assertEquals(
-            {
-                'email': "Input column 'email' is not an allowed column",
-                'yo': "Input column 'yo' is not an allowed column",
-            },
-            response[0]['input_errors']
-        )
+        self.assertEquals({
+            'email': "Input column 'email' is not an allowed column",
+            'yo': "Input column 'yo' is not an allowed column",
+        }, response[0]['input_errors'])
 
     def test_readable_writeable(self):
         create = test({
@@ -136,7 +135,11 @@ class CreateTest(unittest.TestCase):
 
     def test_auth_failure(self):
         response = self.create_secret_bearer(
-            body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            body={
+                'name': 'Conor',
+                'email': 'c@example.com',
+                'age': 10
+            },
             headers={'Authorization': 'Bearer qwerty'},
         )
         self.assertEquals(401, response[1])
@@ -145,7 +148,11 @@ class CreateTest(unittest.TestCase):
 
     def test_auth_success(self):
         response = self.create_secret_bearer(
-            body={'name': 'Conor', 'email': 'c@example.com', 'age': 10},
+            body={
+                'name': 'Conor',
+                'email': 'c@example.com',
+                'age': 10
+            },
             headers={'Authorization': 'Bearer asdfer'},
         )
         self.assertEquals(200, response[1])

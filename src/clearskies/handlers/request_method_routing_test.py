@@ -6,8 +6,6 @@ from .exceptions import ClientError, InputError
 from ..mocks import InputOutput
 from ..authentication import Public
 from ..di import StandardDependencies
-
-
 class Handle(Base):
     _configuration_defaults = {
         'age': 5,
@@ -15,7 +13,6 @@ class Handle(Base):
 
     def handle(self, input_output):
         return self.success(input_output, self.configuration('age'))
-
 class Router(RequestMethodRouting):
     def __init__(self, di):
         super().__init__(di)
@@ -25,7 +22,6 @@ class Router(RequestMethodRouting):
             'GET': Handle,
             'POST': Handle,
         }
-
 class RequestMethodRoutingTest(unittest.TestCase):
     _input_output = None
     di = None
@@ -61,6 +57,5 @@ class RequestMethodRoutingTest(unittest.TestCase):
         with self.assertRaises(KeyError) as context:
             handle.configure({'bob': 'sup', 'authentication': Public()})
         self.assertEquals(
-            "\"Attempt to set unkown configuration setting 'bob' for handler 'Router'\"",
-            str(context.exception)
+            "\"Attempt to set unkown configuration setting 'bob' for handler 'Router'\"", str(context.exception)
         )

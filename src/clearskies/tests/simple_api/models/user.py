@@ -3,8 +3,6 @@ from clearskies import Model
 from clearskies.column_types import belongs_to, email, string, integer, created, updated
 from clearskies.input_requirements import required, maximum_length
 from . import status
-
-
 class User(Model):
     def __init__(self, cursor_backend, columns):
         super().__init__(cursor_backend, columns)

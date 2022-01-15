@@ -7,20 +7,27 @@ from ..di import StandardDependencies
 from ..model import Model
 from ..contexts import test
 from collections import OrderedDict
-
-
 class User(Model):
     def __init__(self, memory_backend, columns):
         super().__init__(memory_backend, columns)
 
     def columns_configuration(self):
         return OrderedDict([
-            ('id', {'class': String}), # otherwise we'll use a UUID for the id, so I can't predict it
-            ('name', {'class': String, 'input_requirements': [Required]}),
-            ('email', {'class': String, 'input_requirements': [Required, (MaximumLength, 15)]}),
-            ('age', {'class': Integer}),
+            ('id', {
+                'class': String
+            }),    # otherwise we'll use a UUID for the id, so I can't predict it
+            ('name', {
+                'class': String,
+                'input_requirements': [Required]
+            }),
+            ('email', {
+                'class': String,
+                'input_requirements': [Required, (MaximumLength, 15)]
+            }),
+            ('age', {
+                'class': Integer
+            }),
         ])
-
 class DeleteTest(unittest.TestCase):
     def setUp(self):
         self.delete = test({
@@ -99,7 +106,5 @@ class DeleteTest(unittest.TestCase):
         self.assertEquals(2, len(documentation.responses))
         self.assertEquals([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]
-        self.assertEquals(
-            ['status', 'data', 'pagination', 'error', 'input_errors'],
-            [schema.name for schema in success_response.schema.children]
-        )
+        self.assertEquals(['status', 'data', 'pagination', 'error', 'input_errors'],
+                          [schema.name for schema in success_response.schema.children])

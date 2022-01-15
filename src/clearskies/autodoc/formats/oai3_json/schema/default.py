@@ -3,9 +3,7 @@ class Default:
         self.schema = schema
 
     def convert(self):
-        schema = {
-            'type': self.schema._type
-        }
+        schema = {'type': self.schema._type}
         if self.schema._format:
             schema['format'] = self.schema._format
         if hasattr(self.schema, 'example') and self.schema.example:

@@ -3,8 +3,6 @@ import re
 from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.schema import String as AutoDocString
-
-
 class ManyToMany(String):
     """
     Controls a many-to-many relationship.
@@ -91,7 +89,8 @@ class ManyToMany(String):
             )
 
         if configuration.get('is_readable'):
-            related_columns = self.di.build(configuration['related_models_class'], cache=True).raw_columns_configuration()
+            related_columns = self.di.build(configuration['related_models_class'],
+                                            cache=True).raw_columns_configuration()
             error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             if not 'readable_related_columns' in configuration:
                 raise ValueError(f"{error_prefix} must provide 'readable_related_columns' if is_readable is set")
@@ -124,7 +123,8 @@ class ManyToMany(String):
             foreign_column_name = configuration['foreign_column_name_in_pivot']
 
         if not configuration.get('own_column_name_in_pivot'):
-            own_column_name = re.sub(r'(?<!^)(?=[A-Z])', '_', self.model_class.__name__.replace('_', '')).lower() + '_id'
+            own_column_name = re.sub(r'(?<!^)(?=[A-Z])', '_', self.model_class.__name__.replace('_',
+                                                                                                '')).lower() + '_id'
         else:
             own_column_name = configuration['own_column_name_in_pivot']
 
@@ -187,18 +187,20 @@ class ManyToMany(String):
             old_ids = set(getattr(model, f"{self.name}_ids"))
 
         new_ids = set(data[self.name])
-        to_delete = old_ids-new_ids
-        to_create = new_ids-old_ids
+        to_delete = old_ids - new_ids
+        to_create = new_ids - old_ids
         if to_delete:
             pivot_models = self.pivot_models
             foreign_column_name = self.config('foreign_column_name_in_pivot')
-            for model_to_delete in pivot_models.where(f"{foreign_column_name} IN (" + ','.join(map(str, to_delete)) + ")"):
+            for model_to_delete in pivot_models.where(
+                f"{foreign_column_name} IN (" + ','.join(map(str, to_delete)) + ")"
+            ):
                 model_to_delete.delete()
         if to_create:
             pivot_models = self.pivot_models
             foreign_column_name = self.config('foreign_column_name_in_pivot')
             own_column_name = self.config('own_column_name_in_pivot')
-            for to_insert in new_ids-old_ids:
+            for to_insert in new_ids - old_ids:
                 pivot_models.empty_model().save({
                     foreign_column_name: to_insert,
                     own_column_name: id,
@@ -256,8 +258,4 @@ class ManyToMany(String):
             self.camel_to_nice(self.related_models.model_class().__name__),
             related_properties,
         )
-        return AutoDocArray(
-            name if name is not None else self.name,
-            related_object,
-            value=value
-        )
+        return AutoDocArray(name if name is not None else self.name, related_object, value=value)

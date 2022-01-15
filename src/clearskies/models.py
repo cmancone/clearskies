@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from .condition_parser import ConditionParser
 from typing import Any, Callable, Dict, List, Tuple
-
-
 class Models(ABC, ConditionParser):
     # The database connection
     _backend = None
@@ -147,8 +145,14 @@ class Models(ABC, ConditionParser):
 
     def sort_by_in_place(self, primary_column, primary_direction, secondary_column=None, secondary_direction=None):
         sorts = [
-            { 'column': primary_column, 'direction': primary_direction },
-            { 'column': secondary_column, 'direction': secondary_direction },
+            {
+                'column': primary_column,
+                'direction': primary_direction
+            },
+            {
+                'column': secondary_column,
+                'direction': secondary_direction
+            },
         ]
         sorts = filter(lambda sort: sort['column'] is not None and sort['direction'] is not None, sorts)
         self.query_sorts = list(map(lambda sort: self._normalize_and_validate_sort(sort), sorts))
@@ -169,7 +173,7 @@ class Models(ABC, ConditionParser):
         self._validate_column(sort['column'], 'sort')
 
         # down the line we may ask the model class what columns we can sort on, but we're good for now
-        return { 'column': sort['column'], 'direction': sort['direction'] }
+        return {'column': sort['column'], 'direction': sort['direction']}
 
     def _validate_column(self, column_name, action, table=None):
         """

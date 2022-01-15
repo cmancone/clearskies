@@ -1,6 +1,4 @@
 from .requirement import Requirement
-
-
 class Required(Requirement):
     def check(self, model, data):
         # you'd think that "required" is straight forward and we want an input error if it isn't found.

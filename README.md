@@ -80,21 +80,6 @@ class Product(Model):
         ])
 ```
 
-You would also create a query builder/model factory:
-
-```
-from clearskies import Models
-from . import product
-
-
-class Products(Models):
-    def __init__(self, cursor_backend, columns):
-        super().__init__(cursor_backend, columns)
-
-    def model_class(self):
-        return product.Product
-```
-
 You then need to create your application.  This includes a handler+configuration (which tells clearskies what *kind* of behavior to execute) and, optionally, some basic configuration for the dependency injection container:
 
 ```
@@ -106,7 +91,7 @@ products_api = clearskies.Application(
     clearskies.handlers.RestfulAPI,
     {
         'authentication': clearskies.authentication.public(),
-        'models_class': models.Products,
+        'model_class': models.Product,
         'readable_columns': ['name', 'description', 'price', 'created', 'updated'],
         'writeable_columns': ['name', 'description', 'price'],
         'searchable_columns': ['name', 'description', 'price'],
@@ -163,21 +148,22 @@ For more details and a working example that you can spin up via docker-compose, 
  - Fairly standard models and query builder
  - Support for MySQL-like backends
  - Ability to use external APIs as a backend
+ - In-memory backend
  - Automatic generation of API endpoints via declarative coding conventions
  - Built-in conventions for proper secret storage in environment and/or secret manager
  - Simple routing
  - Extensive validation of configuration provided by developer and easy-to-understand error messages
  - Extensive user input validation and easy-to-understand error messages
- - Explicit Authentication for API Endpoints
+ - Explicit Authentication
  - Easy lifecycle hooks for full customization
  - Absolutely everything can be customized and modified - no part of clearskies is required
+ - Stateless database migrations via [mygrations](https://github.com/cmancone/mygrations)
+ - Auto generated swagger documentation
+ - Easy Authorization
 
 # Upcoming features
 
- - Stateless database migrations via [mygrations](https://github.com/cmancone/mygrations)
  - User-configurable rules engine
- - Auto generated swagger documentation
- - Easy Authorization
 
 # Not Included
 

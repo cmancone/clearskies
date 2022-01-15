@@ -1,7 +1,5 @@
 from ..application import Application
 from ..handlers.callable import Callable
-
-
 def convert_to_application(application):
     # this is very similar to .context.Context.extract_handler: we definitely have some overlap.
     # however, things are a bit simpler here, and this doesn't have as much "context" to work

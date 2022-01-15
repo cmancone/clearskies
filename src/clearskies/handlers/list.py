@@ -3,8 +3,6 @@ from collections import OrderedDict
 from .. import autodoc
 from ..functional import string
 import inspect
-
-
 class List(Base):
     _model = None
     _columns = None
@@ -54,7 +52,10 @@ class List(Base):
         for key in self._model.allowed_pagination_keys():
             if key in request_data and key in query_parameters:
                 original_name = self.auto_case_internal_column_name(key)
-                return self.error(input_output, f"Ambiguous request: key '{original_name}' is present in both the JSON body and URL data")
+                return self.error(
+                    input_output,
+                    f"Ambiguous request: key '{original_name}' is present in both the JSON body and URL data"
+                )
             if key in request_data:
                 pagination_data[key] = request_data[key]
                 del request_data[key]
@@ -65,9 +66,12 @@ class List(Base):
             error = self.check_request_data(request_data, query_parameters, pagination_data)
             if error:
                 return self.error(input_output, error, 400)
-            [models, limit] = self.configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
+            [models,
+             limit] = self.configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
         if not models.query_sorts:
-            models = models.sort_by(self.configuration('default_sort_column'), self.configuration('default_sort_direction'))
+            models = models.sort_by(
+                self.configuration('default_sort_column'), self.configuration('default_sort_direction')
+            )
 
         if self.configuration('debug'):
             print('Models config after adding user input:')
@@ -102,10 +106,7 @@ class List(Base):
         return ['sort', 'direction', 'limit']
 
     def map_input_to_internal_names(self, input):
-        internal_request_keys = [
-            *self.internal_request_keys,
-            *self._model.allowed_pagination_keys()
-        ]
+        internal_request_keys = [*self.internal_request_keys, *self._model.allowed_pagination_keys()]
         for key in internal_request_keys:
             mapped_key = self.auto_case_internal_column_name(key)
             if mapped_key != key and mapped_key in input:
@@ -186,7 +187,9 @@ class List(Base):
         if has_model and has_model_class:
             raise KeyError(f"{error_prefix} you specified both 'model' and 'model_class', but can only provide one")
         if has_model and inspect.isclass(configuration['model']):
-            raise ValueError("{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead")
+            raise ValueError(
+                "{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead"
+            )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
         self._columns = self._model.columns(overrides=configuration.get('overrides'))
         model_class_name = self._model.__class__.__name__
@@ -197,7 +200,11 @@ class List(Base):
             raise ValueError(f"{error_prefix} missing required configuration 'default_sort_column'")
 
         # sortable_columns, wheres, and joins should all be iterables
-        for (config_name, contents) in {'sortable_columns': 'column names', 'where': 'conditions', 'join': 'joins'}.items():
+        for (config_name, contents) in {
+            'sortable_columns': 'column names',
+            'where': 'conditions',
+            'join': 'joins'
+        }.items():
             if config_name not in configuration:
                 continue
             if not hasattr(configuration[config_name], '__iter__') or type(configuration[config_name]) == str:
@@ -217,7 +224,8 @@ class List(Base):
 
         # common checks for group_by and default_sort_column
         for config_name in ['group_by', 'default_sort_column']:
-            if config_name in configuration and configuration[config_name] and configuration[config_name] not in self._columns:
+            if config_name in configuration and configuration[config_name] and configuration[config_name
+                                                                                             ] not in self._columns:
                 raise ValueError(
                     f"{error_prefix} '{config_name}' references column named {column_name} " +
                     f"but this column does not exist for model '{model_class_name}'"
@@ -303,11 +311,10 @@ class List(Base):
                 f'Fetch the list of current {nice_model} records',
                 [
                     self.documentation_success_response(
-                        autodoc.schema.Array(self.auto_case_internal_column_name('data'), autodoc.schema.Object(
-                            nice_model,
-                            children=data_schema,
-                            model_name=schema_model_name
-                        )),
+                        autodoc.schema.Array(
+                            self.auto_case_internal_column_name('data'),
+                            autodoc.schema.Object(nice_model, children=data_schema, model_name=schema_model_name)
+                        ),
                         description=f'The matching {nice_model} records',
                         include_pagination=True,
                     ),
@@ -321,8 +328,7 @@ class List(Base):
 
     def documentation_request_parameters(self):
         return [
-            *self.documentation_url_pagination_parameters(),
-            *self.documentation_url_sort_parameters(),
+            *self.documentation_url_pagination_parameters(), *self.documentation_url_sort_parameters(),
             *self.configuration('authentication').documentation_request_parameters()
         ]
 
@@ -332,7 +338,8 @@ class List(Base):
         )
 
         return {
-            schema_model_name: autodoc.schema.Object(
+            schema_model_name:
+            autodoc.schema.Object(
                 self.auto_case_internal_column_name('data'),
                 children=self.documentation_data_schema(),
             ),
@@ -360,10 +367,7 @@ class List(Base):
 
         for parameter in self._model.documentation_pagination_parameters(self.auto_case_internal_column_name):
             (schema, description) = parameter
-            url_parameters.append(autodoc.request.URLParameter(
-                    schema,
-                    description=description
-            ))
+            url_parameters.append(autodoc.request.URLParameter(schema, description=description))
 
         return url_parameters
 
@@ -405,10 +409,7 @@ class List(Base):
 
         for parameter in self._model.documentation_pagination_parameters(self.auto_case_internal_column_name):
             (schema, description) = parameter
-            json_parameters.append(autodoc.request.JSONBody(
-                    schema,
-                    description=description
-            ))
+            json_parameters.append(autodoc.request.JSONBody(schema, description=description))
 
         return json_parameters
 

@@ -1,6 +1,4 @@
 from .aws_lambda_api_gateway import AWSLambdaAPIGateway
-
-
 class AWSLambdaELB(AWSLambdaAPIGateway):
     _event = None
     _context = None

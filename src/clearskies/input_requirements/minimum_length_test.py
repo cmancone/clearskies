@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
 from .minimum_length import MinimumLength
-
-
 class MinimumLengthTest(unittest.TestCase):
     def setUp(self):
         self.minimum_length = MinimumLength()
@@ -26,6 +24,5 @@ class MinimumLengthTest(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             self.minimum_length.configure('asdf')
         self.assertEquals(
-            "Minimum length must be an int to use the MinimumLength class for column 'name'",
-            str(context.exception)
+            "Minimum length must be an int to use the MinimumLength class for column 'name'", str(context.exception)
         )

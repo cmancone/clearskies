@@ -1,6 +1,4 @@
 from .string import String
-
-
 class DateTime(String):
     _format = 'date-time'
 

@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
 from .maximum_length import MaximumLength
-
-
 class MaximumLengthTest(unittest.TestCase):
     def setUp(self):
         self.maximum_length = MaximumLength()
@@ -26,6 +24,5 @@ class MaximumLengthTest(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             self.maximum_length.configure('asdf')
         self.assertEquals(
-            "Maximum length must be an int to use the MaximumLength class for column 'name'",
-            str(context.exception)
+            "Maximum length must be an int to use the MaximumLength class for column 'name'", str(context.exception)
         )

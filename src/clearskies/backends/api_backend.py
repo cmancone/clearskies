@@ -2,8 +2,6 @@ from .backend import Backend
 from typing import Any, Callable, Dict, List, Tuple
 from ..autodoc.schema import Integer as AutoDocInteger
 from .. import model
-
-
 class ApiBackend(Backend):
     url = None
     _requests = None
@@ -80,12 +78,7 @@ class ApiBackend(Backend):
         return self._map_count_response(response.json())
 
     def _build_count_request(self, configuration):
-        return [
-            self.url,
-            'GET',
-            {**{'count_only': True}, **self._as_post_data(configuration)},
-            {}
-        ]
+        return [self.url, 'GET', {**{'count_only': True}, **self._as_post_data(configuration)}, {}]
 
     def _map_count_response(self, json):
         if not 'total_matches' in json:
@@ -145,9 +138,7 @@ class ApiBackend(Backend):
     def _check_query_configuration(self, configuration):
         for key in configuration.keys():
             if key not in self._allowed_configs and configuration[key]:
-                raise KeyError(
-                    f"ApiBackend does not support config '{key}'. You may be using the wrong backend"
-                )
+                raise KeyError(f"ApiBackend does not support config '{key}'. You may be using the wrong backend")
 
         for key in self._allowed_configs:
             if not key in configuration:
@@ -190,17 +181,13 @@ class ApiBackend(Backend):
         return ['start']
 
     def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
-        return [
-            AutoDocInteger(case_mapping('start'), example=10)
-        ]
+        return [AutoDocInteger(case_mapping('start'), example=10)]
 
     def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
         return {case_mapping('start'): 10}
 
     def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
-        return [
-            (
-                AutoDocInteger(case_mapping('start'), example=10),
-                'The zero-indexed record number to start listing results from'
-            )
-        ]
+        return [(
+            AutoDocInteger(case_mapping('start'),
+                           example=10), 'The zero-indexed record number to start listing results from'
+        )]

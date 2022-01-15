@@ -3,8 +3,6 @@ from .create import Create
 from .update import Update
 from .delete import Delete
 from .get import Get
-
-
 class CRUDByMethod(RequestMethodRouting):
     def __init__(self, di):
         super().__init__(di)

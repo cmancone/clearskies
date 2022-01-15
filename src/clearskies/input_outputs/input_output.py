@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from ..handlers.exceptions import ClientError
 import json
-
-
 class InputOutput(ABC):
     _response_headers = None
     _body_as_json = None

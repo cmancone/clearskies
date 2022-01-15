@@ -24,7 +24,7 @@ Most importantly though, this makes it substantially easier to reuse business lo
 
 # New Forms of Automation
 
-One side effect of this is, in essence, automating many controllers.  When each column already knows how to validate user input, apply business logic, and update external systems, large chunks of an application can be automated away.  Therefore, setting up and endpoint in clearskies is really just a matter of setting which columns are available for reading and writing.  Clearskies does the rest.
+One side effect of this is, in essence, automating many controllers.  When each column already knows how to validate user input, apply business logic, and update external systems, large chunks of an application can be automated away.  Therefore, setting up and endpoint in clearskies is really just a matter of setting which columns are available for reading and writing, attaching your business logic to columns, and leaving the rest up to clearskies.
 
 Really, what this comes down to is centralizing your schema in one place, and using it to automate some of the drudgery of application development.
 

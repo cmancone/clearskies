@@ -2,8 +2,6 @@ from .backend import Backend
 from typing import Any, Callable, Dict, List, Tuple
 from ..autodoc.schema import Integer as AutoDocInteger
 from .. import model
-
-
 class CursorBackend(Backend):
     _cursor = None
 
@@ -40,10 +38,7 @@ class CursorBackend(Backend):
         table_name = model.table_name()
         self._cursor.execute(f'UPDATE `{table_name}` SET {updates} WHERE id=%s', tuple([*parameters, id]))
 
-        results = self.records({
-            'table_name': table_name,
-            'wheres': [{'parsed': 'id=%s', 'values': [id]}]
-        }, model)
+        results = self.records({'table_name': table_name, 'wheres': [{'parsed': 'id=%s', 'values': [id]}]}, model)
         return results[0]
 
     def create(self, data, model):
@@ -51,23 +46,20 @@ class CursorBackend(Backend):
         placeholders = ', '.join(['%s' for i in range(len(data))])
 
         table_name = model.table_name()
-        self._cursor.execute(
-            f'INSERT INTO `{table_name}` ({columns}) VALUES ({placeholders})',
-            tuple(data.values())
-        )
+        self._cursor.execute(f'INSERT INTO `{table_name}` ({columns}) VALUES ({placeholders})', tuple(data.values()))
 
         results = self.records({
             'table_name': table_name,
-            'wheres': [{'parsed': 'id=%s', 'values': [self._cursor.lastrowid]}]
+            'wheres': [{
+                'parsed': 'id=%s',
+                'values': [self._cursor.lastrowid]
+            }]
         }, model)
         return results[0]
 
     def delete(self, id, model):
         table_name = model.table_name()
-        self._cursor.execute(
-            f'DELETE FROM `{table_name}` WHERE id=%s',
-            (id,)
-        )
+        self._cursor.execute(f'DELETE FROM `{table_name}` WHERE id=%s', (id, ))
         return True
 
     def count(self, configuration, model):
@@ -78,7 +70,10 @@ class CursorBackend(Backend):
             return row[0] if type(row) == tuple else row['count']
         return 0
 
-    def records(self, configuration: Dict[str, Any], model: model.Model, next_page_data: Dict[str, str]=None) -> List[Dict[str, Any]]:
+    def records(self,
+                configuration: Dict[str, Any],
+                model: model.Model,
+                next_page_data: Dict[str, str] = None) -> List[Dict[str, Any]]:
         # I was going to get fancy and have this return an iterator, but since I'm going to load up
         # everything into a list anyway, I may as well just return the list, right?
         configuration = self._check_query_configuration(configuration)
@@ -100,7 +95,9 @@ class CursorBackend(Backend):
         else:
             joins = ''
         if configuration['sorts']:
-            order_by = ' ORDER BY ' + ', '.join(map(lambda sort: '`%s` %s' % (sort['column'], sort['direction']), configuration['sorts']))
+            order_by = ' ORDER BY ' + ', '.join(
+                map(lambda sort: '`%s` %s' % (sort['column'], sort['direction']), configuration['sorts'])
+            )
         else:
             order_by = ''
         group_by = ' GROUP BY `' + configuration['group_by_column'] + '`' if configuration['group_by_column'] else ''
@@ -146,9 +143,7 @@ class CursorBackend(Backend):
     def _check_query_configuration(self, configuration):
         for key in configuration.keys():
             if key not in self._allowed_configs:
-                raise KeyError(
-                    f"CursorBackend does not support config '{key}'. You may be using the wrong backend"
-                )
+                raise KeyError(f"CursorBackend does not support config '{key}'. You may be using the wrong backend")
 
         for key in self._required_configs:
             if key not in configuration:
@@ -181,17 +176,13 @@ class CursorBackend(Backend):
         return ['start']
 
     def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
-        return [
-            AutoDocInteger(case_mapping('start'), example=10)
-        ]
+        return [AutoDocInteger(case_mapping('start'), example=10)]
 
     def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
         return {case_mapping('start'): 10}
 
     def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
-        return [
-            (
-                AutoDocInteger(case_mapping('start'), example=10),
-                'The zero-indexed record number to start listing results from'
-            )
-        ]
+        return [(
+            AutoDocInteger(case_mapping('start'),
+                           example=10), 'The zero-indexed record number to start listing results from'
+        )]

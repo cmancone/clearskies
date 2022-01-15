@@ -1,7 +1,5 @@
 import unittest
 from .float import Float
-
-
 class FloatTest(unittest.TestCase):
     def test_from_backend(self):
         float_column = Float()
@@ -32,10 +30,7 @@ class FloatTest(unittest.TestCase):
         float_column = Float()
         float_column.configure('fraction', {}, int)
         self.assertEquals('fraction=0.2', float_column.build_condition(0.2))
-        self.assertEquals(
-            'fraction<10',
-            float_column.build_condition(10, operator='<')
-        )
+        self.assertEquals('fraction<10', float_column.build_condition(10, operator='<'))
 
     def test_check_search_value(self):
         float_column = Float()
