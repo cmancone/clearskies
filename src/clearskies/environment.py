@@ -59,7 +59,28 @@ class Environment:
             raise ValueError(f"Parse error in environment line #{line_number}: should be 'key=value'")
 
         equal_index = line.index('=')
-        return (line[:equal_index].strip(), line[equal_index + 1:].strip())
+        key = line[:equal_index].strip()
+        value = line[equal_index + 1:].strip()
+        lc_value = value.lower()
+        if lc_value == 'true':
+            return (key, True)
+        if lc_value == 'false':
+            return (key, False)
+        if lc_value[0] == '"' and lc_value[-1] == '"':
+            return (key, value.strip('"'))
+        if lc_value[0] == "'" and lc_value[-1] == "'":
+            return (key, value.strip("'"))
+        try:
+            as_int = int(value)
+            return (key, as_int)
+        except:
+            pass
+        try:
+            as_float = float(value)
+            return (key, as_float)
+        except:
+            pass
+        return (key, value)
 
     def resolve_value(self, value):
         if value[:9] != 'secret://':

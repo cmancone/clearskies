@@ -1,5 +1,6 @@
 import json
 from . import exceptions
+from ..handlers.exceptions import ClientError
 class CLI:
     _sys = None
     _args = None
@@ -44,7 +45,7 @@ class CLI:
                     value = True
                 if name in self._kwargs:
                     raise exceptions.CLIInputError(f"Received multiple flags for '{name}'")
-                self._kwargs[arg] = value
+                self._kwargs[name] = value
             else:
                 self._args.append(arg)
 
@@ -67,11 +68,11 @@ class CLI:
                 self._input_type = 'atty'
             # or if the user set 'data' or 'd' keys
             elif 'data' in self._kwargs or 'd' in self._kwargs:
-                self.has_body = True
+                self._has_body = True
                 self._input_type = 'data' if 'data' in self._kwargs else 'd'
             # or finally if we have kwargs in general
             elif len(self._kwargs):
-                self.has_body = True
+                self._has_body = True
                 self._input_type = 'kwargs'
         return self._has_body
 
@@ -91,7 +92,21 @@ class CLI:
             # in the _get_json_body method
         return self._cached_body
 
+    def json_body(self, required=True):
+        json = self._get_json_body()
+        # if we get None then either the body was not JSON or was empty.
+        # If it is required then we have an exception either way.  If it is not required
+        # then we have an exception if a body was provided but it was not JSON.  We can check for this
+        # if json is None and there is an actual request body.  If json is none, the body is empty,
+        # and it was not required, then we can just return None
+        if json is None:
+            if required or self.has_body():
+                raise ClientError("Request body was not valid JSON")
+        return json
+
     def _get_json_body(self):
+        if not self.has_body():
+            return None
         if not self._body_loaded_as_json:
             if self._input_type == 'kwargs':
                 self._body_loaded_as_json = True
