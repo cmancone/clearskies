@@ -1,7 +1,5 @@
 import json
 from .column import Column
-
-
 class JSON(Column):
     def from_backend(self, value):
         if type(value) == list or type(value) == dict:

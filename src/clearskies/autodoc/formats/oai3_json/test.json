@@ -4,8 +4,7 @@
       "status": {
         "properties": {
           "id": {
-            "format": "int32",
-            "type": "integer"
+            "type": "string"
           },
           "name": {
             "type": "string"
@@ -20,8 +19,7 @@
             "type": "integer"
           },
           "id": {
-            "format": "int32",
-            "type": "integer"
+            "type": "string"
           },
           "name": {
             "type": "string"
@@ -41,18 +39,9 @@
       "get": {
         "parameters": [
           {
-            "description": "Search by name (via exact match)",
+            "description": "The number of records to return",
             "in": "query",
-            "name": "name",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "The index of the record to start listing results at (0-indexed)",
-            "in": "query",
-            "name": "start",
+            "name": "limit",
             "required": false,
             "schema": {
               "format": "int32",
@@ -60,11 +49,12 @@
             }
           },
           {
-            "description": "The number of records to return",
+            "description": "The zero-indexed record number to start listing results from",
             "in": "query",
-            "name": "limit",
+            "name": "start",
             "required": false,
             "schema": {
+              "example": 10,
               "format": "int32",
               "type": "integer"
             }
@@ -115,7 +105,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -126,12 +116,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -147,7 +143,7 @@
                 }
               }
             },
-            "description": "The matching statuses"
+            "description": "The matching status records"
           },
           "400": {
             "content": {
@@ -162,27 +158,12 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -197,14 +178,196 @@
             "description": "Invalid Call"
           }
         },
-        "summary": "Fetch the list of current statuses"
+        "summary": "Fetch the list of current status records"
+      }
+    },
+    "/statuses/search/": {
+      "post": {
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "limit": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "sort": {
+                    "items": {
+                      "properties": {
+                        "column": {
+                          "enum": [
+                            "name",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "direction": {
+                          "enum": [
+                            "asc",
+                            "desc",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "start": {
+                    "example": 10,
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "where": {
+                    "items": {
+                      "properties": {
+                        "column": {
+                          "enum": [
+                            "name",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "operator": {
+                          "enum": [
+                            "<=>",
+                            "!=",
+                            "<=",
+                            ">=",
+                            ">",
+                            "<",
+                            "=",
+                            "in",
+                            "is not null",
+                            "is null",
+                            "is not",
+                            "is",
+                            "like",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "value": {
+                          "example": "Jane",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "description": "Fetch the list of current status records",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/status",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {
+                        "limit": {
+                          "example": 100,
+                          "format": "int32",
+                          "type": "integer"
+                        },
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "number_results": {
+                          "example": 10,
+                          "format": "int32",
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "success",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The matching status records"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid Call"
+          }
+        },
+        "summary": "Fetch the list of current status records"
       }
     },
     "/statuses/{id}": {
       "get": {
         "parameters": [
           {
-            "description": "The id of the record to fetch",
+            "description": "The id of the record to get",
             "in": "path",
             "name": "id",
             "required": true,
@@ -227,7 +390,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -244,7 +407,7 @@
                 }
               }
             },
-            "description": "The matching status"
+            "description": "The status record"
           },
           "404": {
             "content": {
@@ -259,27 +422,12 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -294,25 +442,16 @@
             "description": "Not Found"
           }
         },
-        "summary": "Fetch the details of the status with an id of {id}"
+        "summary": "Fetch the status with an id of {id}"
       }
     },
     "/users/": {
       "get": {
         "parameters": [
           {
-            "description": "Search by name (via exact match)",
+            "description": "The number of records to return",
             "in": "query",
-            "name": "name",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "The index of the record to start listing results at (0-indexed)",
-            "in": "query",
-            "name": "start",
+            "name": "limit",
             "required": false,
             "schema": {
               "format": "int32",
@@ -320,11 +459,12 @@
             }
           },
           {
-            "description": "The number of records to return",
+            "description": "The zero-indexed record number to start listing results from",
             "in": "query",
-            "name": "limit",
+            "name": "start",
             "required": false,
             "schema": {
+              "example": 10,
               "format": "int32",
               "type": "integer"
             }
@@ -376,7 +516,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -387,12 +527,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -408,7 +554,7 @@
                 }
               }
             },
-            "description": "The matching users"
+            "description": "The matching user records"
           },
           "400": {
             "content": {
@@ -423,27 +569,12 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -458,7 +589,7 @@
             "description": "Invalid Call"
           }
         },
-        "summary": "Fetch the list of current users"
+        "summary": "Fetch the list of current user records"
       },
       "post": {
         "parameters": [],
@@ -480,7 +611,7 @@
             }
           },
           "description": "Create a new user",
-          "required": 0
+          "required": false
         },
         "responses": {
           "200": {
@@ -495,7 +626,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {
                         "[COLUMN_NAME]": {
                           "example": "User friendly error message",
@@ -505,26 +636,11 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
-                      "example": "inputErrors",
+                      "example": "input_errors",
                       "type": "string"
                     }
                   },
@@ -547,27 +663,12 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -585,7 +686,7 @@
         "summary": "Create a new user"
       }
     },
-    "/users/search": {
+    "/users/search/": {
       "post": {
         "parameters": [],
         "requestBody": {
@@ -594,7 +695,6 @@
               "schema": {
                 "properties": {
                   "limit": {
-                    "example": 100,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -625,6 +725,7 @@
                     "type": "array"
                   },
                   "start": {
+                    "example": 10,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -673,8 +774,8 @@
               }
             }
           },
-          "description": "Advanced options for searching users",
-          "required": 0
+          "description": "Fetch the list of current user records",
+          "required": false
         },
         "responses": {
           "200": {
@@ -692,7 +793,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -703,12 +804,18 @@
                           "format": "int32",
                           "type": "integer"
                         },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "start": {
+                        "number_results": {
+                          "example": 10,
                           "format": "int32",
                           "type": "integer"
                         }
@@ -724,7 +831,7 @@
                 }
               }
             },
-            "description": "The matching users"
+            "description": "The matching user records"
           },
           "400": {
             "content": {
@@ -739,27 +846,12 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -774,7 +866,7 @@
             "description": "Invalid Call"
           }
         },
-        "summary": "Advanced options for searching users"
+        "summary": "Fetch the list of current user records"
       }
     },
     "/users/{id}": {
@@ -804,7 +896,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -836,27 +928,12 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -876,7 +953,7 @@
       "get": {
         "parameters": [
           {
-            "description": "The id of the record to fetch",
+            "description": "The id of the record to get",
             "in": "path",
             "name": "id",
             "required": true,
@@ -899,7 +976,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
@@ -916,7 +993,7 @@
                 }
               }
             },
-            "description": "The matching user"
+            "description": "The user record"
           },
           "404": {
             "content": {
@@ -931,27 +1008,12 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
@@ -966,7 +1028,7 @@
             "description": "Not Found"
           }
         },
-        "summary": "Fetch the details of the user with an id of {id}"
+        "summary": "Fetch the user with an id of {id}"
       },
       "put": {
         "parameters": [
@@ -999,7 +1061,7 @@
             }
           },
           "description": "Update the user with an id of {id}",
-          "required": 0
+          "required": false
         },
         "responses": {
           "200": {
@@ -1014,7 +1076,7 @@
                     "error": {
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {
                         "[COLUMN_NAME]": {
                           "example": "User friendly error message",
@@ -1024,26 +1086,11 @@
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {
-                      "example": "inputErrors",
+                      "example": "input_errors",
                       "type": "string"
                     }
                   },
@@ -1066,27 +1113,12 @@
                       "example": "User readable error message",
                       "type": "string"
                     },
-                    "inputErrors": {
+                    "input_errors": {
                       "properties": {},
                       "type": "object"
                     },
                     "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "numberResults": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "start": {
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
+                      "properties": {},
                       "type": "object"
                     },
                     "status": {

@@ -4,8 +4,7 @@ from ..environment import Environment
 from ..backends import CursorBackend, MemoryBackend
 from .. import autodoc
 import os
-
-
+import uuid
 class StandardDependencies(DI):
     def provide_requests(self):
         # by importing the requests library when requested, instead of in the top of the file,
@@ -40,9 +39,23 @@ class StandardDependencies(DI):
     def provide_environment(self):
         return Environment(os.getcwd() + '/.env', os.environ, {})
 
-    def provide_cursor(self, environment):
+    def provide_connection_no_autocommit(self, environment):
+        # I should probably just switch things so that autocommit is *off* by default
+        # and only have one of these, but for now I'm being lazy.
         import pymysql
-        connection = pymysql.connect(
+        return pymysql.connect(
+            user=environment.get('db_username'),
+            password=environment.get('db_password'),
+            host=environment.get('db_host'),
+            database=environment.get('db_database'),
+            autocommit=False,
+            connect_timeout=2,
+            cursorclass=pymysql.cursors.DictCursor
+        )
+
+    def provide_connection(self, environment):
+        import pymysql
+        return pymysql.connect(
             user=environment.get('db_username'),
             password=environment.get('db_password'),
             host=environment.get('db_host'),
@@ -51,6 +64,8 @@ class StandardDependencies(DI):
             connect_timeout=2,
             cursorclass=pymysql.cursors.DictCursor
         )
+
+    def provide_cursor(self, connection):
         return connection.cursor()
 
     def provide_cursor_backend(self, cursor):
@@ -75,3 +90,6 @@ class StandardDependencies(DI):
 
     def provide_oai3_schema_resolver(self):
         return autodoc.formats.oai3_json.OAI3SchemaResolver()
+
+    def provide_uuid(self):
+        return uuid

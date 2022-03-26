@@ -1,7 +1,5 @@
 from .routing import Routing
 from abc import abstractmethod
-
-
 class RequestMethodRouting(Routing):
     def __init__(self, di):
         super().__init__(di)

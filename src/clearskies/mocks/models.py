@@ -2,8 +2,6 @@ from ..models import Models as ModelsBase
 from ..model import Model as ModelBase
 from ..columns import Columns
 from ..di import StandardDependencies
-
-
 class Model(ModelBase):
     _columns_configuration = None
 
@@ -12,7 +10,6 @@ class Model(ModelBase):
 
     def columns_configuration(self):
         return self._columns_configuration
-
 class Models(ModelsBase):
     _model_configuration = None
     updated = None
@@ -36,10 +33,7 @@ class Models(ModelsBase):
 
     def __init__(self, model_configuration):
         self._model_configuration = model_configuration
-        super().__init__(
-            self,
-            Columns(StandardDependencies())
-        )
+        super().__init__(self, Columns(StandardDependencies()))
 
     def model(self, data):
         model_class = self.model_class()
@@ -57,7 +51,6 @@ class Models(ModelsBase):
         blank.update_responses = self.update_responses
         blank.search_responses = self.search_responses
         return blank
-
 
     def add_update_response(self, data):
         if self.update_responses is None:
@@ -119,7 +112,7 @@ class Models(ModelsBase):
         counted = self.search_responses.pop(0)
         return len(counted)
 
-    def records(self, configuration, model):
+    def records(self, configuration, model, next_page_data=None):
         if self.search_responses is None:
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
         if Models.iterated == None:

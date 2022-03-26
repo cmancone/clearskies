@@ -5,8 +5,6 @@ from datetime import datetime, timezone
 from .build_context import build_context
 from .context import Context
 from .convert_to_application import convert_to_application
-
-
 class Test(Context):
     application = None
     input_output = None
@@ -28,7 +26,16 @@ class Test(Context):
         if cursor_backend_to_memory_backend:
             self.di.bind('cursor_backend', self.memory_backend)
 
-    def __call__(self, method=None, body=None, headers=None, url=None, input_output=None):
+    def __call__(
+        self,
+        method=None,
+        body=None,
+        headers=None,
+        url=None,
+        routing_data=None,
+        input_output=None,
+        query_parameters=None
+    ):
         if self.application is None:
             raise ValueError("Cannot call the test context without an application")
 
@@ -42,14 +49,19 @@ class Test(Context):
             input_output.set_request_method(method)
         if url is not None:
             input_output.set_request_url(url)
+        if routing_data is not None:
+            input_output.set_routing_data(routing_data)
+        if query_parameters is not None:
+            input_output.set_query_parameters(query_parameters)
 
         self.handler = self.di.build(self.application.handler_class, cache=False)
         self.handler.configure({
-            **{'authentication': public()},
+            **{
+                'authentication': public()
+            },
             **self.application.handler_config,
         })
         return self.handler(input_output)
-
 def test(
     application,
     di_class=None,

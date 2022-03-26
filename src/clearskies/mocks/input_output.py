@@ -1,7 +1,5 @@
 import json
 from .. import input_outputs
-
-
 class InputOutput(input_outputs.InputOutput):
     _body = None
     _request_method = None
@@ -18,13 +16,13 @@ class InputOutput(input_outputs.InputOutput):
         request_headers=None,
         body=None,
         request_method='GET',
-        request_url = '',
-        script_name = '',
-        path_info = '',
-        query_string = '',
-        content_type = '',
-        protocol = '',
-        query_parameters = None
+        request_url='',
+        script_name='',
+        path_info='',
+        query_string='',
+        content_type='',
+        protocol='',
+        query_parameters=None
     ):
         self.set_request_method(request_method)
         self.set_body(body)
@@ -37,11 +35,7 @@ class InputOutput(input_outputs.InputOutput):
         self._query_parameters = query_parameters if query_parameters is not None else {}
 
     def respond(self, body, status_code=200):
-        self.response = {
-            'body': body,
-            'status_code': status_code,
-            'headers': self._response_headers
-        }
+        self.response = {'body': body, 'status_code': status_code, 'headers': self._response_headers}
         return (body, status_code)
 
     def get_body(self):
@@ -72,6 +66,12 @@ class InputOutput(input_outputs.InputOutput):
             request_headers = {}
         for (key, value) in request_headers.items():
             self._request_headers[key.lower()] = value
+
+    def set_query_parameters(self, query_parameters):
+        if query_parameters is None:
+            self._query_parameters = {}
+        else:
+            self._query_parameters = query_parameters
 
     def get_script_name(self):
         return self._script_name

@@ -1,8 +1,6 @@
 from .input_output import InputOutput
 import urllib, urllib.parse
 import json
-
-
 class WSGI(InputOutput):
     _environment = None
     _start_response = None
@@ -25,10 +23,7 @@ class WSGI(InputOutput):
         if not self.has_header('content-type'):
             self.set_header('content-type', 'application/json; charset=UTF-8')
 
-        self._start_response(
-            f'{status_code} Ok',
-            [header for header in self._response_headers.items()]
-        )
+        self._start_response(f'{status_code} Ok', [header for header in self._response_headers.items()])
         if type(body) == bytes:
             final_body = body
         elif type(body) == str:
@@ -77,8 +72,7 @@ class WSGI(InputOutput):
         if self._query_parameters is None:
             self._query_parameters = {
                 key: val[0] if len(val) == 1 else val
-                for (key, val)
-                in urllib.parse.parse_qs(self.get_query_string()).items()
+                for (key, val) in urllib.parse.parse_qs(self.get_query_string()).items()
             }
 
     def get_query_parameter(self, key):

@@ -4,11 +4,8 @@ from .base import Base
 from .exceptions import ClientError, InputError
 from ..di import StandardDependencies
 from ..authentication import public
-
-
 def raise_exception(exception):
     raise exception
-
 class Handle(Base):
     _global_configuration_defaults = {
         'age': 10,
@@ -20,6 +17,8 @@ class Handle(Base):
         'age': 5,
         'is_awesome': True,
         'test': 'value',
+        'internal_casing': '',
+        'external_casing': '',
     }
 
     def _finalize_configuration(self, configuration):
@@ -35,7 +34,6 @@ class Handle(Base):
 
     def handle(self, input_output):
         return self.success(input_output, [1, 2, 3])
-
 class BaseTest(unittest.TestCase):
     def setUp(self):
         self.di = StandardDependencies()
@@ -62,8 +60,7 @@ class BaseTest(unittest.TestCase):
         with self.assertRaises(KeyError) as context:
             handle.configure({'whatev': 'hey', 'authentication': public()})
         self.assertEquals(
-            "\"Attempt to set unkown configuration setting 'whatev' for handler 'Handle'\"",
-            str(context.exception)
+            "\"Attempt to set unkown configuration setting 'whatev' for handler 'Handle'\"", str(context.exception)
         )
 
     def test_success(self):
@@ -75,20 +72,27 @@ class BaseTest(unittest.TestCase):
             'error': '',
             'data': [1, 2, 3],
             'pagination': {},
-            'inputErrors': {},
+            'input_errors': {},
         }, data)
         self.assertEquals(200, code)
 
     def test_pagination(self):
         handle = Handle(self.di)
         handle.configure({'authentication': public()})
-        (data, code) = handle.success(self.reflect_output, [1, 2, 3], number_results=3, limit=10, start=1)
+        (data,
+         code) = handle.success(self.reflect_output, [1, 2, 3], number_results=3, limit=10, next_page={'start': 1})
         self.assertEquals({
             'status': 'success',
             'error': '',
             'data': [1, 2, 3],
-            'pagination': {'numberResults': 3, 'limit': 10, 'start': 1},
-            'inputErrors': {},
+            'pagination': {
+                'number_results': 3,
+                'limit': 10,
+                'next_page': {
+                    'start': 1
+                }
+            },
+            'input_errors': {},
         }, data)
         self.assertEquals(200, code)
 
@@ -97,11 +101,11 @@ class BaseTest(unittest.TestCase):
         handle.configure({'authentication': public()})
         (data, code) = handle.error(self.reflect_output, 'bah', 400)
         self.assertEquals({
-            'status': 'clientError',
+            'status': 'client_error',
             'error': 'bah',
             'data': [],
             'pagination': {},
-            'inputErrors': {},
+            'input_errors': {},
         }, data)
         self.assertEquals(400, code)
 
@@ -110,11 +114,11 @@ class BaseTest(unittest.TestCase):
         handle.configure({'authentication': public()})
         (data, code) = handle.input_errors(self.reflect_output, {'age': 'required', 'date': 'tomorrow'})
         self.assertEquals({
-            'status': 'inputErrors',
+            'status': 'input_errors',
             'error': '',
             'data': [],
             'pagination': {},
-            'inputErrors': {
+            'input_errors': {
                 'age': 'required',
                 'date': 'tomorrow',
             },
@@ -133,7 +137,7 @@ class BaseTest(unittest.TestCase):
             'error': '',
             'data': [1, 2, 3],
             'pagination': {},
-            'inputErrors': {},
+            'input_errors': {},
         }, data)
         self.assertEquals(200, code)
         authentication.authenticate.assert_called_with(self.reflect_output)
@@ -147,11 +151,11 @@ class BaseTest(unittest.TestCase):
         handle.handle = lambda input_output: raise_exception(ClientError('sup'))
         (data, code) = handle(self.reflect_output)
         self.assertEquals({
-            'status': 'clientError',
+            'status': 'client_error',
             'error': 'sup',
             'data': [],
             'pagination': {},
-            'inputErrors': {},
+            'input_errors': {},
         }, data)
         self.assertEquals(400, code)
 
@@ -164,10 +168,12 @@ class BaseTest(unittest.TestCase):
         handle.handle = lambda input_output: raise_exception(InputError({'id': 'required'}))
         (data, code) = handle(self.reflect_output)
         self.assertEquals({
-            'status': 'inputErrors',
+            'status': 'input_errors',
             'error': '',
             'data': [],
             'pagination': {},
-            'inputErrors': {'id': 'required'},
+            'input_errors': {
+                'id': 'required'
+            },
         }, data)
         self.assertEquals(200, code)

@@ -2,8 +2,6 @@ from .column import Column
 from datetime import datetime, timezone
 import dateparser
 from ..autodoc.schema import DateTime as AutoDocDateTime
-
-
 class DateTime(Column):
     _auto_doc_class = AutoDocDateTime
 
@@ -11,7 +9,8 @@ class DateTime(Column):
         if value == None:
             date = datetime.strptime('1970-01-01', '%Y-%m-%d')
         elif type(value) == str:
-            date = datetime.strptime(value, '%Y-%m-%d %H:%M:%S') if value else datetime.strptime('1970-01-01', '%Y-%m-%d')
+            date = datetime.strptime(value,
+                                     '%Y-%m-%d %H:%M:%S') if value else datetime.strptime('1970-01-01', '%Y-%m-%d')
         else:
             date = value
         return date.replace(tzinfo=timezone.utc)
@@ -21,10 +20,7 @@ class DateTime(Column):
             return data
 
         # hopefully this is a Python datetime object in UTC timezone...
-        return {
-            **data,
-            **{self.name: data[self.name].strftime('%Y-%m-%d %H:%M:%S')}
-        }
+        return {**data, **{self.name: data[self.name].strftime('%Y-%m-%d %H:%M:%S')}}
 
     def to_json(self, model):
         return model.__getattr__(self.name).isoformat()

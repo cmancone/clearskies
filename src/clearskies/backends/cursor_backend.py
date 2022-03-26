@@ -1,6 +1,7 @@
 from .backend import Backend
-
-
+from typing import Any, Callable, Dict, List, Tuple
+from ..autodoc.schema import Integer as AutoDocInteger
+from .. import model
 class CursorBackend(Backend):
     _cursor = None
 
@@ -9,8 +10,8 @@ class CursorBackend(Backend):
         'wheres',
         'sorts',
         'group_by_column',
-        'limit_start',
-        'limit_length',
+        'limit',
+        'pagination',
         'selects',
         'joins',
         'model_columns',
@@ -34,34 +35,31 @@ class CursorBackend(Backend):
             parameters.append(val)
         updates = ', '.join(query_parts)
 
-        self._cursor.execute(f'UPDATE `{model.table_name}` SET {updates} WHERE id=%s', tuple([*parameters, id]))
+        table_name = model.table_name()
+        self._cursor.execute(f'UPDATE `{table_name}` SET {updates} WHERE id=%s', tuple([*parameters, id]))
 
-        results = self.records({
-            'table_name': model.table_name,
-            'wheres': [{'parsed': 'id=%s', 'values': [id]}]
-        }, model)
+        results = self.records({'table_name': table_name, 'wheres': [{'parsed': 'id=%s', 'values': [id]}]}, model)
         return results[0]
 
     def create(self, data, model):
         columns = '`' + '`, `'.join(data.keys()) + '`'
         placeholders = ', '.join(['%s' for i in range(len(data))])
 
-        self._cursor.execute(
-            f'INSERT INTO `{model.table_name}` ({columns}) VALUES ({placeholders})',
-            tuple(data.values())
-        )
+        table_name = model.table_name()
+        self._cursor.execute(f'INSERT INTO `{table_name}` ({columns}) VALUES ({placeholders})', tuple(data.values()))
 
         results = self.records({
-            'table_name': model.table_name,
-            'wheres': [{'parsed': 'id=%s', 'values': [self._cursor.lastrowid]}]
+            'table_name': table_name,
+            'wheres': [{
+                'parsed': 'id=%s',
+                'values': [self._cursor.lastrowid]
+            }]
         }, model)
         return results[0]
 
     def delete(self, id, model):
-        self._cursor.execute(
-            f'DELETE FROM `{model.table_name}` WHERE id=%s',
-            (id,)
-        )
+        table_name = model.table_name()
+        self._cursor.execute(f'DELETE FROM `{table_name}` WHERE id=%s', (id, ))
         return True
 
     def count(self, configuration, model):
@@ -72,13 +70,22 @@ class CursorBackend(Backend):
             return row[0] if type(row) == tuple else row['count']
         return 0
 
-    def records(self, configuration, model):
+    def records(self,
+                configuration: Dict[str, Any],
+                model: model.Model,
+                next_page_data: Dict[str, str] = None) -> List[Dict[str, Any]]:
         # I was going to get fancy and have this return an iterator, but since I'm going to load up
         # everything into a list anyway, I may as well just return the list, right?
         configuration = self._check_query_configuration(configuration)
         [query, parameters] = self.as_sql(configuration)
         self._cursor.execute(query, tuple(parameters))
-        return [row for row in self._cursor]
+        records = [row for row in self._cursor]
+        if type(next_page_data) == dict:
+            limit = configuration.get('limit', None)
+            start = configuration.get('pagination', {}).get('start', 0)
+            if limit and len(records) == limit:
+                next_page_data['start'] = start + limit
+        return records
 
     def as_sql(self, configuration):
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration['wheres'])
@@ -88,11 +95,19 @@ class CursorBackend(Backend):
         else:
             joins = ''
         if configuration['sorts']:
-            order_by = ' ORDER BY ' + ', '.join(map(lambda sort: '`%s` %s' % (sort['column'], sort['direction']), configuration['sorts']))
+            order_by = ' ORDER BY ' + ', '.join(
+                map(lambda sort: '`%s` %s' % (sort['column'], sort['direction']), configuration['sorts'])
+            )
         else:
             order_by = ''
         group_by = ' GROUP BY `' + configuration['group_by_column'] + '`' if configuration['group_by_column'] else ''
-        limit = f' LIMIT {configuration["limit_start"]}, {configuration["limit_length"]}' if configuration['limit_length'] else ''
+        limit = ''
+        if configuration['limit']:
+            start = 0
+            if configuration['pagination'].get('start'):
+                start = int(configuration['pagination']['start'])
+            limit = f' LIMIT {start}, {configuration["limit"]}'
+
         return [
             f'SELECT {select} FROM `{configuration["table_name"]}`{joins}{wheres}{group_by}{order_by}{limit}'.strip(),
             parameters
@@ -128,15 +143,46 @@ class CursorBackend(Backend):
     def _check_query_configuration(self, configuration):
         for key in configuration.keys():
             if key not in self._allowed_configs:
-                raise KeyError(
-                    f"CursorBackend does not support config '{key}'. You may be using the wrong backend"
-                )
+                raise KeyError(f"CursorBackend does not support config '{key}'. You may be using the wrong backend")
 
         for key in self._required_configs:
             if key not in configuration:
                 raise KeyError(f'Missing required configuration key {key}')
 
+        if 'pagination' not in configuration:
+            configuration['pagination'] = {'start': 0}
         for key in self._allowed_configs:
             if not key in configuration:
                 configuration[key] = [] if key[-1] == 's' else ''
         return configuration
+
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
+        extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
+        if len(extra_keys):
+            key_name = case_mapping('start')
+            return "Invalid pagination key(s): '" + "','".join(extra_keys) + f"'.  Only '{key_name}' is allowed"
+        if 'start' not in kwargs:
+            key_name = case_mapping('start')
+            return f"You must specify '{key_name}' when setting pagination"
+        start = kwargs['start']
+        try:
+            start = int(start)
+        except:
+            key_name = case_mapping('start')
+            return f"Invalid pagination data: '{key_name}' must be a number"
+        return ''
+
+    def allowed_pagination_keys(self) -> List[str]:
+        return ['start']
+
+    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
+        return [AutoDocInteger(case_mapping('start'), example=10)]
+
+    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
+        return {case_mapping('start'): 10}
+
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+        return [(
+            AutoDocInteger(case_mapping('start'),
+                           example=10), 'The zero-indexed record number to start listing results from'
+        )]

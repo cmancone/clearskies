@@ -3,8 +3,6 @@ from ..di import StandardDependencies
 from ..handlers.callable import Callable
 from .convert_to_application import convert_to_application
 import sys
-
-
 def build_context(
     context_class,
     application,

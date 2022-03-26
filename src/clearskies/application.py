@@ -8,15 +8,15 @@ class Application:
     additional_configs = None
 
     def __init__(
-            self,
-            handler_class,
-            handler_config,
-            di_class=None,
-            bindings=None,
-            binding_classes=None,
-            binding_modules=None,
-            additional_configs = None,
-        ):
+        self,
+        handler_class,
+        handler_config,
+        di_class=None,
+        bindings=None,
+        binding_classes=None,
+        binding_modules=None,
+        additional_configs=None,
+    ):
         """
         This will probably need to do more eventually, but right now this will do it
         """

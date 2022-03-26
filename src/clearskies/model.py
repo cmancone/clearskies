@@ -1,34 +1,34 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from .column_types import Integer
+from .column_types import UUID
+from .functional import string
 import re
-
-
-class Model(ABC):
-    _columns = None
+from .models import Models
+class Model(Models):
     _configured_columns = None
-    _backend = None
     _data = None
     _previous_data = None
     _transformed = None
+    id_column_name = 'id'
 
     def __init__(self, backend, columns):
-        self._backend = backend
-        self._columns = columns
+        super().__init__(backend, columns)
         self._transformed = {}
         self._data = {}
         self._previous_data = None
 
-    def _camel_case_to_snake_case(self, string):
-        return re.sub(
-            '([a-z0-9])([A-Z])', r'\1_\2',
-            re.sub('(.)([A-Z][a-z]+)', r'\1_\2', string)
-        ).lower()
+    def model_class(self):
+        """
+        Return the model class that this models object will find/return instances of
 
-    @property
-    def table_name(self):
+        This is needed by the models class
+        """
+        return self.__class__
+
+    @classmethod
+    def table_name(cls):
         """ Return the name of the table that the model uses for data storage """
-        singular = self._camel_case_to_snake_case(self.__class__.__name__)
+        singular = string.camel_case_to_snake_case(cls.__name__)
         if singular[-1] == 'y':
             return singular[:-1] + 'ies'
         if singular[-1] == 's':
@@ -41,7 +41,7 @@ class Model(ABC):
         pass
 
     def all_columns(self):
-        default = OrderedDict([('id', {'class': Integer})])
+        default = OrderedDict([(self.id_column_name, {'class': UUID})])
         default.update(self.columns_configuration())
         return default
 
@@ -97,7 +97,7 @@ class Model(ABC):
 
     @property
     def exists(self):
-        return True if ('id' in self._data and self._data['id']) else False
+        return True if (self.id_column_name in self._data and self._data[self.id_column_name]) else False
 
     @property
     def data(self):
@@ -129,7 +129,7 @@ class Model(ABC):
             new_data = self._backend.update(self.id, to_save, self)
         else:
             new_data = self._backend.create(to_save, self)
-        id = columns['id'].from_backend(new_data['id'])
+        id = columns[self.id_column_name].from_backend(new_data[self.id_column_name])
 
         data = self.columns_post_save(data, id, columns)
         self.post_save(data, id)

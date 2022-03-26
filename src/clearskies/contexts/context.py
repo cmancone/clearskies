@@ -1,6 +1,4 @@
 from ..handlers import callable as callable_module
-
-
 class Context:
     di = None
     handler = None

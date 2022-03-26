@@ -1,6 +1,4 @@
 from abc import ABC, abstractmethod
-
-
 class Requirement(ABC):
     _column_name = None
 

@@ -1,6 +1,7 @@
 from .backend import Backend
-
-
+from typing import Any, Callable, Dict, List, Tuple
+from ..autodoc.schema import Integer as AutoDocInteger
+from .. import model
 class ApiBackend(Backend):
     url = None
     _requests = None
@@ -10,8 +11,8 @@ class ApiBackend(Backend):
     _allowed_configs = [
         'wheres',
         'sorts',
-        'limit_start',
-        'limit_length',
+        'limit',
+        'pagination',
         'table_name',
         'model_columns',
     ]
@@ -63,7 +64,7 @@ class ApiBackend(Backend):
         return self._validate_delete_response(response.json())
 
     def _build_delete_request(self, id, model):
-        return [self.url, 'DELETE', {'id': id}, {}]
+        return [self.url, 'DELETE', {model.id_column_name: id}, {}]
 
     def _validate_delete_response(self, json):
         if 'status' not in json:
@@ -77,23 +78,24 @@ class ApiBackend(Backend):
         return self._map_count_response(response.json())
 
     def _build_count_request(self, configuration):
-        return [
-            self.url,
-            'GET',
-            {**{'count_only': True}, **self._as_post_data(configuration)},
-            {}
-        ]
+        return [self.url, 'GET', {**{'count_only': True}, **self._as_post_data(configuration)}, {}]
 
     def _map_count_response(self, json):
         if not 'total_matches' in json:
             raise ValueError("Unexpected API response when executing count request")
         return json['total_matches']
 
-    def records(self, configuration, model):
+    def records(self, configuration, model, next_page_data=None):
         configuration = self._check_query_configuration(configuration)
         [url, method, json_data, headers] = self._build_records_request(configuration)
         response = self._execute_request(url, method, json=json_data, headers=headers, retry_auth=True)
-        return self._map_records_response(response.json())
+        records = self._map_records_response(response.json())
+        if type(next_page_data) == dict:
+            limit = configuration.get('limit', None)
+            start = configuration.get('pagination', {}).get('start', 0)
+            if limit and len(records) == limit:
+                next_page_data['start'] = start + limit
+        return records
 
     def _build_records_request(self, configuration):
         return [self.url, 'GET', self._as_post_data(configuration), {}]
@@ -136,9 +138,7 @@ class ApiBackend(Backend):
     def _check_query_configuration(self, configuration):
         for key in configuration.keys():
             if key not in self._allowed_configs and configuration[key]:
-                raise KeyError(
-                    f"ApiBackend does not support config '{key}'. You may be using the wrong backend"
-                )
+                raise KeyError(f"ApiBackend does not support config '{key}'. You may be using the wrong backend")
 
         for key in self._allowed_configs:
             if not key in configuration:
@@ -149,8 +149,8 @@ class ApiBackend(Backend):
         data = {
             'where': list(map(lambda where: self._where_for_post(where), configuration['wheres'])),
             'sort': configuration['sorts'],
-            'start': configuration['limit_start'],
-            'limit': configuration['limit_length'],
+            'start': configuration['pagination']['start'],
+            'limit': configuration['limit'],
         }
         return {key: value for (key, value) in data.items() if value}
 
@@ -160,3 +160,34 @@ class ApiBackend(Backend):
             'operator': where['operator'],
             'values': where['values'],
         }
+
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
+        extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
+        if len(extra_keys):
+            key_name = case_mapping('start')
+            return "Invalid pagination key(s): '" + "','".join(extra_keys) + f"'.  Only '{key_name}' is allowed"
+        if 'start' not in kwargs:
+            key_name = case_mapping('start')
+            return f"You must specify '{key_name}' when setting pagination"
+        start = kwargs['start']
+        try:
+            start = int(start)
+        except:
+            key_name = case_mapping('start')
+            return f"Invalid pagination data: '{key_name}' must be a number"
+        return ''
+
+    def allowed_pagination_keys(self) -> List[str]:
+        return ['start']
+
+    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
+        return [AutoDocInteger(case_mapping('start'), example=10)]
+
+    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
+        return {case_mapping('start'): 10}
+
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+        return [(
+            AutoDocInteger(case_mapping('start'),
+                           example=10), 'The zero-indexed record number to start listing results from'
+        )]

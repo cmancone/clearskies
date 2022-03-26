@@ -2,13 +2,10 @@ import unittest
 from .column import Column
 from ..input_requirements import MinimumLength
 from ..autodoc.schema import String as AutoDocString
-
-
 class RealColumn(Column):
     def check_input(self, model, data):
         if 'name' in data and data['name'] == 'me':
             return 'You are not allowed'
-
 class ColumnTest(unittest.TestCase):
     def setUp(self):
         self.column = RealColumn()
@@ -17,11 +14,7 @@ class ColumnTest(unittest.TestCase):
         self.minimum_length.configure(10)
 
     def test_input_errors_requirements(self):
-        self.column.configure(
-            'name',
-            {'input_requirements': [self.minimum_length]},
-            RealColumn
-        )
+        self.column.configure('name', {'input_requirements': [self.minimum_length]}, RealColumn)
         errors = self.column.input_errors('model', {'name': 'a'})
         self.assertEquals({'name': "'name' must be at least 10 characters long."}, errors)
         errors = self.column.input_errors('model', {'name': 'me'})
@@ -32,11 +25,7 @@ class ColumnTest(unittest.TestCase):
         self.assertEquals({}, errors)
 
     def test_documentation(self):
-        self.column.configure(
-            'my_name',
-            {'input_requirements': [self.minimum_length]},
-            RealColumn
-        )
+        self.column.configure('my_name', {'input_requirements': [self.minimum_length]}, RealColumn)
         doc = self.column.documentation()
 
         self.assertEquals(AutoDocString, doc.__class__)

@@ -2,15 +2,14 @@ import unittest
 from unittest.mock import MagicMock, call
 from .environment import Environment
 import os
-
-
 class EnvironmentTest(unittest.TestCase):
     def setUp(self):
         self.secrets = type('', (), {'get': MagicMock(return_value='my_secret')})
         self.environment = Environment(
-           '%s/environment_test_file' % os.getcwd(),
-           {'env_in_environment': 'yup', 'also': 'secret:///another/secret/path'},
-           self.secrets
+            '%s/environment_test_file' % os.getcwd(), {
+                'env_in_environment': 'yup',
+                'also': 'secret:///another/secret/path'
+            }, self.secrets
         )
 
     def test_get_from_env(self):

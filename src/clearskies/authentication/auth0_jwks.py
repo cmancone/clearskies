@@ -1,8 +1,6 @@
 from ..handlers.exceptions import ClientError
 import datetime
 from .. import autodoc
-
-
 class Auth0JWKS:
     is_public = False
     can_authorize = True

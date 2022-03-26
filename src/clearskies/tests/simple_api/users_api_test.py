@@ -5,16 +5,14 @@ from types import SimpleNamespace
 from . import models
 from .users_api import users_api
 from collections import OrderedDict
-
-
 class UsersApiTest(unittest.TestCase):
     def setUp(self):
         self.api = test(users_api)
 
         # we're also going to switch our cursor backend for an in-memory backend, create a table, and add a record
         self.memory_backend = self.api.memory_backend
-        self.users = self.api.build(models.Users)
-        self.statuses = self.api.build(models.Statuses)
+        self.users = self.api.build(models.User)
+        self.statuses = self.api.build(models.Status)
         self.active_status = self.statuses.create({
             'name': 'Active',
         })
@@ -22,12 +20,12 @@ class UsersApiTest(unittest.TestCase):
             'name': 'Pending',
         })
 
-        self.users.create({
+        self.conor_active = self.users.create({
             'status_id': self.active_status.id,
             'name': 'Conor Active',
             'email': 'cmancone_active@example.com',
         })
-        self.users.create({
+        self.conor_pending = self.users.create({
             'status_id': self.pending_status.id,
             'name': 'Conor Pending',
             'email': 'cmancone_pending@example.com',
@@ -40,23 +38,27 @@ class UsersApiTest(unittest.TestCase):
         self.assertEquals(200, status_code)
         self.assertEquals(2, len(response['data']))
 
-        self.assertEquals(OrderedDict([
-            ('id', 1),
-            ('status_id', self.active_status.id),
-            ('name', 'Conor Active'),
-            ('email', 'cmancone_active@example.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'][0])
-        self.assertEquals(OrderedDict([
-            ('id', 2),
-            ('status_id', self.pending_status.id),
-            ('name', 'Conor Pending'),
-            ('email', 'cmancone_pending@example.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'][1])
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, response['pagination'])
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_active.id),
+                ('status_id', self.active_status.id),
+                ('name', 'Conor Active'),
+                ('email', 'cmancone_active@example.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data'][0]
+        )
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_pending.id),
+                ('status_id', self.pending_status.id),
+                ('name', 'Conor Pending'),
+                ('email', 'cmancone_pending@example.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data'][1]
+        )
+        self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
         self.assertEquals('success', response['status'])
 
     def test_list_statuses(self):
@@ -66,31 +68,33 @@ class UsersApiTest(unittest.TestCase):
         self.assertEquals(200, status_code)
         self.assertEquals(2, len(response['data']))
 
-        self.assertEquals(OrderedDict([
-            ('id', 1),
-            ('name', 'Active'),
-            ('users', [
-                OrderedDict([
-                    ('id', 1),
-                    ('status_id', self.active_status.id),
-                    ('name', 'Conor Active'),
-                    ('email', 'cmancone_active@example.com'),
-                ])
-            ])
-        ]), response['data'][0])
-        self.assertEquals(OrderedDict([
-            ('id', 2),
-            ('name', 'Pending'),
-            ('users', [
-                OrderedDict([
-                    ('id', 2),
-                    ('status_id', self.pending_status.id),
-                    ('name', 'Conor Pending'),
-                    ('email', 'cmancone_pending@example.com'),
-                ])
-            ])
-        ]), response['data'][1])
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, response['pagination'])
+        self.assertEquals(
+            OrderedDict([('id', self.active_status.id), ('name', 'Active'),
+                         (
+                             'users', [
+                                 OrderedDict([
+                                     ('id', self.conor_active.id),
+                                     ('status_id', self.active_status.id),
+                                     ('name', 'Conor Active'),
+                                     ('email', 'cmancone_active@example.com'),
+                                 ])
+                             ]
+                         )]), response['data'][0]
+        )
+        self.assertEquals(
+            OrderedDict([('id', self.pending_status.id), ('name', 'Pending'),
+                         (
+                             'users', [
+                                 OrderedDict([
+                                     ('id', self.conor_pending.id),
+                                     ('status_id', self.pending_status.id),
+                                     ('name', 'Conor Pending'),
+                                     ('email', 'cmancone_pending@example.com'),
+                                 ])
+                             ]
+                         )]), response['data'][1]
+        )
+        self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
         self.assertEquals('success', response['status'])
 
     def test_create(self):
@@ -107,20 +111,19 @@ class UsersApiTest(unittest.TestCase):
         status_code = result[1]
         response = result[0]
         self.assertEquals(200, status_code)
-        self.assertEquals(OrderedDict([
-            ('id', 3),
-            ('status_id', self.pending_status.id),
-            ('name', 'Ronoc'),
-            ('email', 'ronoc@example2.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'])
+        self.assertEquals(6, len(response['data']))
+        self.assertEquals(36, len(response['data']['id']))
+        self.assertEquals(self.pending_status.id, response['data']['status_id'])
+        self.assertEquals('Ronoc', response['data']['name'])
+        self.assertEquals('ronoc@example2.com', response['data']['email'])
+        self.assertEquals(self.api.now.isoformat(), response['data']['created'])
+        self.assertEquals(self.api.now.isoformat(), response['data']['updated'])
         self.assertEquals('success', response['status'])
 
     def test_update(self):
         result = self.api(
             method='PUT',
-            url='/users/1',
+            url='/users/' + self.conor_active.id,
             body={
                 'status_id': self.active_status.id,
                 'name': 'CMan',
@@ -130,34 +133,40 @@ class UsersApiTest(unittest.TestCase):
         status_code = result[1]
         response = result[0]
         self.assertEquals(200, status_code)
-        self.assertEquals(OrderedDict([
-            ('id', 1),
-            ('status_id', self.active_status.id),
-            ('name', 'CMan'),
-            ('email', 'cman@example2.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'])
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_active.id),
+                ('status_id', self.active_status.id),
+                ('name', 'CMan'),
+                ('email', 'cman@example2.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data']
+        )
         self.assertEquals('success', response['status'])
 
         result = self.api(url='/users')
         self.assertEquals(200, result[1])
         response = result[0]
 
-        self.assertEquals(OrderedDict([
-            ('id', 1),
-            ('status_id', self.active_status.id),
-            ('name', 'CMan'),
-            ('email', 'cman@example2.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'][0])
-        self.assertEquals(OrderedDict([
-            ('id', 2),
-            ('status_id', self.pending_status.id),
-            ('name', 'Conor Pending'),
-            ('email', 'cmancone_pending@example.com'),
-            ('created', self.api.now.isoformat()),
-            ('updated', self.api.now.isoformat()),
-        ]), response['data'][1])
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, response['pagination'])
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_active.id),
+                ('status_id', self.active_status.id),
+                ('name', 'CMan'),
+                ('email', 'cman@example2.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data'][0]
+        )
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_pending.id),
+                ('status_id', self.pending_status.id),
+                ('name', 'Conor Pending'),
+                ('email', 'cmancone_pending@example.com'),
+                ('created', self.api.now.isoformat()),
+                ('updated', self.api.now.isoformat()),
+            ]), response['data'][1]
+        )
+        self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])

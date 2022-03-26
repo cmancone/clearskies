@@ -1,8 +1,6 @@
 from .secret_bearer import SecretBearer
 import unittest
 from unittest.mock import MagicMock
-
-
 class SecretBearerTest(unittest.TestCase):
     def test_headers_secret(self):
         secret_bearer = SecretBearer('environment')

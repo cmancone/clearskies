@@ -1,7 +1,5 @@
 from ..application import Application
 from ..handlers.callable import Callable
-
-
 def convert_to_application(application):
     # this is very similar to .context.Context.extract_handler: we definitely have some overlap.
     # however, things are a bit simpler here, and this doesn't have as much "context" to work
@@ -21,7 +19,7 @@ def convert_to_application(application):
                 "build_context was passed a dictionary-like object with 'handler_class', but not " + \
                 "'handler_config'.  Both are required to build an application"
             )
-        return Application(application['handler_class'], applicaton['handler_config'])
+        return Application(application['handler_class'], application['handler_config'])
 
     # if we get a callable, then use the callable handler class
     if callable(application):

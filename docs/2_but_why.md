@@ -18,16 +18,14 @@ In many frameworks all these pieces of logic get scattered across countless file
 
 Really, this is all about looking at the [SRP](https://en.wikipedia.org/wiki/Single-responsibility_principle) from a different perspective.  Applying the SRP to an application often results in it being devided along _functional_ lines: input validation here, user notifications here, etc...  This ends up dividing up business logic.
 
-Clearskies applies the SRP to business logic: everything related to the email address goes here, password logic goes there, etc (although it's obviously possible to share data between columns when required).  This makes it much easier to get a clear picture of the lifecycle of your data, and also helps identify logic bugs that might otherwise get missed.
+Clearskies applies the SRP to business logic: everything related to the email address goes here, password logic goes there, etc.  This makes it much easier to get a clear picture of the lifecycle of your data, and also helps identify logic bugs that might otherwise get missed.
 
 Most importantly though, this makes it substantially easier to reuse business logic.  When the logic for a particular column all lives in one place, it doesn't matter if that column is updated by an end user, or an admin, or even an automated background process: the business rules are applied the same by default regardless of where a change originates!
 
-# Death to controllers (or models depending on your mood)!
+# New Forms of Automation
 
-One side effect of this is the death of controllers.  Not that controllers are bad guys - they just aren't necessary.  After all, when each column already knows how to validate user input, apply business logic, and update external systems, you don't really need a controller anyway.  Therefore, setting up and endpoint in clearskies is really just a matter of setting which columns are available for reading and writing.  Clearskies does the rest.
+One side effect of this is, in essence, automating many controllers.  When each column already knows how to validate user input, apply business logic, and update external systems, large chunks of an application can be automated away.  Therefore, setting up and endpoint in clearskies is really just a matter of setting which columns are available for reading and writing, attaching your business logic to columns, and leaving the rest up to clearskies.
 
-This might make it seem like clearskies takes a "model-first" approach to development, but even this isn't true.  Even models are optional!  A model mainly provides a convenient way to define your schema and manage your backend connection.  If you wanted to though, you could attach a schema directly to an endpoint, let clearskies deal with user input validation and documentation generation, and then your function can handle the validated input however it wants.
-
-Really, what this comes down to is using the schema you probably already have to generate in your application anyway, and using it to automate some of the drudgery of application development.
+Really, what this comes down to is centralizing your schema in one place, and using it to automate some of the drudgery of application development.
 
 Next: [Models](./3_models.md)

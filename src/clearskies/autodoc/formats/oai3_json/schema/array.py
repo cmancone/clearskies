@@ -4,9 +4,6 @@ class Array:
         self.oai3_schema_resolver = oai3_schema_resolver
 
     def convert(self):
-        schema = {
-            'type': 'array',
-            'items': self.oai3_schema_resolver(self.schema.item_definition).convert()
-        }
+        schema = {'type': 'array', 'items': self.oai3_schema_resolver(self.schema.item_definition).convert()}
 
         return schema

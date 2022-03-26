@@ -1,7 +1,5 @@
 import unittest
 from .string import String
-
-
 class StringTest(unittest.TestCase):
     def test_is_allowed_operator(self):
         string = String()
@@ -15,7 +13,7 @@ class StringTest(unittest.TestCase):
         string.configure('name', {}, int)
         self.assertEquals('name=sup', string.build_condition('sup', operator='='))
         self.assertEquals("name LIKE '%asdf%'", string.build_condition('asdf', operator='like'))
-        self.assertEquals("name LIKE '%asdf%'", string.build_condition('asdf'))
+        self.assertEquals("name=asdf", string.build_condition('asdf'))
 
     def test_check_search_value(self):
         string = String()

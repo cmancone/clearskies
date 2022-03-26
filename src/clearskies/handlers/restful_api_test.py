@@ -1,162 +1,123 @@
 import unittest
 from unittest.mock import MagicMock, call
 from .restful_api import RestfulAPI
-from ..mocks import InputOutput, Models
+from ..column_types import String, Integer
 from ..authentication import Public
+from ..model import Model
+from ..contexts import test
 from ..column_types import String, Integer
 from collections import OrderedDict
 from ..di import StandardDependencies
+class User(Model):
+    def __init__(self, memory_backend, columns):
+        super().__init__(memory_backend, columns)
 
-
+    def columns_configuration(self):
+        return OrderedDict([
+            ('name', {
+                'class': String
+            }),
+            ('email', {
+                'class': String
+            }),
+            ('age', {
+                'class': Integer
+            }),
+        ])
 class RestfulAPITest(unittest.TestCase):
-    models = None
-
     def setUp(self):
-        Models.reset()
-        self.models = Models({
-            'name': {'class': String},
-            'age': {'class': Integer},
+        self.api = test({
+            'handler_class': RestfulAPI,
+            'handler_config': {
+                'model_class': User,
+                'readable_columns': ['name', 'age', 'email'],
+                'writeable_columns': ['name', 'age', 'email'],
+                'searchable_columns': ['name', 'age'],
+                'sortable_columns': ['name'],
+                'default_sort_column': 'name',
+                'where': ['age>5'],
+                'authentication': Public()
+            }
         })
-        self.di = StandardDependencies()
-
-    def build_api(self, *args, **kwargs):
-        input_output = InputOutput(*args, **kwargs)
-        di = StandardDependencies(bindings={
-            'input_output': input_output,
-            'models': self.models,
-        })
-        return [di.build(RestfulAPI), input_output]
+        self.users = self.api.build(User)
+        self.users.create({'name': 'conor', 'email': 'cmancone1@example.com', 'age': '8'})
+        self.users.create({'name': 'conor', 'email': 'cmancone2@example.com', 'age': '3'})
+        self.users.create({'name': 'conor', 'email': 'cmancone3@example.com', 'age': '15'})
+        self.users.create({'name': 'ronoc', 'email': 'cmancone4@example.com', 'age': '25'})
+        self.users.create({'name': 'ronoc', 'email': 'cmancone5@example.com', 'age': '35'})
+        self.first_user = self.users.find('age=8')
 
     def test_get_record(self):
-        self.models.add_search_response([{'id': '134', 'name': 'sup'}])
-        self.models.add_search_response([{'id': '134', 'name': 'sup'}])
-        [api, input_output] = self.build_api(path_info='/134')
-        api.configure({
-            'models': self.models,
-            'readable_columns': ['name'],
-            'writeable_columns': ['name'],
-            'searchable_columns': ['name'],
-            'sortable_columns': ['name'],
-            'default_sort_column': 'name',
-            'where': ['age=5'],
-            'authentication': Public(),
-        })
-        result = api(input_output)
+        result = self.api(url=f'/{self.first_user.id}')
         self.assertEquals(200, result[1])
-        self.assertEquals(OrderedDict([('id', 134), ('name', 'sup')]), result[0]['data'])
+        self.assertEquals({
+            'id': self.first_user.id,
+            'name': 'conor',
+            'email': 'cmancone1@example.com',
+            'age': 8
+        }, dict(result[0]['data']))
         self.assertEquals({}, result[0]['pagination'])
 
-
-    def test_get_records(self):
-        self.models.add_search_response([{'id': '134', 'name': 'sup'}, {'id': '234', 'name': 'hey'}])
-        self.models.add_search_response([{'id': '134', 'name': 'sup'}, {'id': '234', 'name': 'hey'}])
-        [api, input_output] = self.build_api()
-        api.configure({
-            'models': self.models,
-            'readable_columns': ['name'],
-            'writeable_columns': ['name'],
-            'searchable_columns': ['name'],
-            'sortable_columns': ['name'],
-            'default_sort_column': 'name',
-            'authentication': Public(),
-        })
-        result = api(input_output)
-        self.assertEquals(200, result[1])
-        self.assertEquals(OrderedDict([('id', 134), ('name', 'sup')]), result[0]['data'][0])
-        self.assertEquals(OrderedDict([('id', 234), ('name', 'hey')]), result[0]['data'][1])
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, result[0]['pagination'])
-
-    def test_create_record(self):
-        self.models.add_create_response({'id': 1, 'name': 'Conor'})
-        [api, input_output] = self.build_api(request_method='POST', body={'name': 'Conor'})
-        api.configure({
-            'models': self.models,
-            'readable_columns': ['name'],
-            'writeable_columns': ['name'],
-            'searchable_columns': ['name'],
-            'sortable_columns': ['name'],
-            'default_sort_column': 'name',
-            'authentication': Public(),
-        })
-        result = api(input_output)
-        self.assertEquals(200, result[1])
-        self.assertEquals(OrderedDict([('id', 1), ('name', 'Conor')]), result[0]['data'])
-        self.assertEquals({}, result[0]['pagination'])
-        self.assertEquals({'name': 'Conor'}, Models.created[0]['data'])
+    def test_get_record_not_found(self):
+        result = self.api(url='/343433433')
+        self.assertEquals(404, result[1])
 
     def test_update_record(self):
-        self.models.add_search_response([{'id': 125, 'name': 'Ronoc'}])
-        self.models.add_update_response({'id': 125, 'name': 'Conor'})
-        [api, input_output] = self.build_api(
-            request_method='PUT',
-            path_info='/125',
-            body={'name': 'Conor'},
-        )
-        api.configure({
-            'models': self.models,
-            'readable_columns': ['name'],
-            'writeable_columns': ['name'],
-            'searchable_columns': ['name'],
-            'sortable_columns': ['name'],
-            'default_sort_column': 'name',
-            'authentication': Public(),
-        })
-        result = api(input_output)
+        result = self.api(url=f'/{self.first_user.id}', method='PUT', body={'name': 'jane'})
         self.assertEquals(200, result[1])
-        self.assertEquals(OrderedDict([('id', 125), ('name', 'Conor')]), result[0]['data'])
+        self.assertEquals({
+            'id': self.first_user.id,
+            'name': 'jane',
+            'email': 'cmancone1@example.com',
+            'age': 8
+        }, dict(result[0]['data']))
         self.assertEquals({}, result[0]['pagination'])
-        self.assertEquals(125, Models.updated[0]['id'])
-        self.assertEquals({'name': 'Conor'}, Models.updated[0]['data'])
-        self.assertEquals([
-            {'table': '', 'column': 'id', 'operator': '=', 'values': ['125'], 'parsed': 'id=%s'},
-        ], Models.iterated[0]['wheres'])
 
-    def test_delete_record(self):
-        self.models.add_search_response([{'id': 125, 'name': 'Ronoc'}])
-        [api, input_output] = self.build_api(
-            request_method='DELETE',
-            path_info='/125',
-        )
-        api.configure({
-            'models': self.models,
-            'readable_columns': ['name'],
-            'writeable_columns': ['name'],
-            'searchable_columns': ['name'],
-            'sortable_columns': ['name'],
-            'default_sort_column': 'name',
-            'authentication': Public(),
-        })
-        result = api(input_output)
+    def test_list(self):
+        result = self.api()
         self.assertEquals(200, result[1])
-        self.assertEquals({}, result[0]['data'])
+        self.assertEquals({
+            'id': self.first_user.id,
+            'name': 'conor',
+            'email': 'cmancone1@example.com',
+            'age': 8
+        }, dict(result[0]['data'][0]))
+        self.assertEquals({'limit': 100, 'number_results': 4, 'next_page': {}}, result[0]['pagination'])
+
+    def test_create(self):
+        result = self.api(method='POST', body={'name': 'another', 'email': 'another@example.com', 'age': 123})
+        self.assertEquals(200, result[1])
+        new_user = self.users.find('age=123')
+        self.assertTrue(new_user.exists)
+        self.assertEquals({
+            'id': new_user.id,
+            'name': 'another',
+            'email': 'another@example.com',
+            'age': 123
+        }, dict(result[0]['data']))
         self.assertEquals({}, result[0]['pagination'])
-        self.assertEquals(125, Models.deleted[0]['id'])
-        self.assertEquals([
-            {'table': '', 'column': 'id', 'operator': '=', 'values': ['125'], 'parsed': 'id=%s'},
-        ], Models.iterated[0]['wheres'])
+
+    def test_get_record(self):
+        result = self.api(url=f'/{self.first_user.id}', method='DELETE')
+        self.assertEquals(200, result[1])
+        self.assertEquals({}, dict(result[0]['data']))
+        self.assertEquals({}, result[0]['pagination'])
+        self.assertEquals(0, len(self.users.where(f'id={self.first_user.id}')))
 
     def test_search(self):
-        self.models.add_search_response([{'id': '134', 'name': 'sup'}, {'id': '234', 'name': 'hey'}])
-        self.models.add_search_response([{'id': '134', 'name': 'sup'}, {'id': '234', 'name': 'hey'}])
-        [api, input_output] = self.build_api(
-            path_info='/search',
-            body={'where': [{'column': 'name', 'value': 'hey'}]}
+        model = self.users.find('age=15')
+        result = self.api(
+            body={'where': [{
+                'column': 'age',
+                'operator': '=',
+                'value': 15
+            }]}, url='/search', method='POST'
         )
-        api.configure({
-            'models': self.models,
-            'readable_columns': ['name'],
-            'writeable_columns': ['name'],
-            'searchable_columns': ['name'],
-            'sortable_columns': ['name'],
-            'default_sort_column': 'name',
-            'authentication': Public(),
-        })
-        result = api(input_output)
         self.assertEquals(200, result[1])
-        self.assertEquals(OrderedDict([('id', 134), ('name', 'sup')]), result[0]['data'][0])
-        self.assertEquals(OrderedDict([('id', 234), ('name', 'hey')]), result[0]['data'][1])
-        self.assertEquals({'numberResults': 2, 'start': 0, 'limit': 100}, result[0]['pagination'])
-        self.assertEquals(
-            [{'table': '', 'column': 'name', 'operator': 'LIKE', 'values': ['%hey%'], 'parsed': 'name LIKE %s'}],
-            Models.iterated[0]['wheres']
-        )
+        self.assertEquals({
+            'id': model.id,
+            'name': 'conor',
+            'email': 'cmancone3@example.com',
+            'age': 15
+        }, dict(result[0]['data'][0]))
+        self.assertEquals({'limit': 100, 'number_results': 1, 'next_page': {}}, result[0]['pagination'])

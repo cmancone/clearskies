@@ -1,11 +1,9 @@
 import re
-from .integer import Integer
+from .string import String
 from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
-from ..autodoc.schema import Integer as AutoDocInteger
-
-
-class BelongsTo(Integer):
+from ..autodoc.schema import String as AutoDocString
+class BelongsTo(String):
     """
     Controls a belongs to relationship.
 
@@ -45,7 +43,7 @@ class BelongsTo(Integer):
             )
 
         if configuration.get('readable_parent_columns'):
-            parent_columns = self.di.build(configuration['parent_models_class'], cache=False).raw_columns_configuration()
+            parent_columns = self.di.build(configuration['parent_models_class'], cache=True).raw_columns_configuration()
             error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             readable_parent_columns = configuration['readable_parent_columns']
             if not hasattr(readable_parent_columns, '__iter__'):
@@ -66,16 +64,15 @@ class BelongsTo(Integer):
                     )
 
     def _finalize_configuration(self, configuration):
-        return {
-            **super()._finalize_configuration(configuration),
-            **{'model_column_name': self.name[:-3]}
-        }
+        return {**super()._finalize_configuration(configuration), **{'model_column_name': self.name[:-3]}}
 
     def input_error_for_value(self, value, operator=None):
         integer_check = super().input_error_for_value(value)
         if integer_check:
             return integer_check
-        if not len(self.parent_models.where(f"id={value}")):
+        parent_models = self.parent_models
+        id_column_name = parent_models.get_id_column_name()
+        if not len(parent_models.where(f"{id_column_name}={value}")):
             return f'Invalid selection for {self.name}: record does not exist'
         return ''
 
@@ -90,7 +87,7 @@ class BelongsTo(Integer):
 
     @property
     def parent_models(self):
-        return self.di.build(self.config('parent_models_class'), cache=False)
+        return self.di.build(self.config('parent_models_class'), cache=True)
 
     @property
     def parent_columns(self):
@@ -105,24 +102,23 @@ class BelongsTo(Integer):
         columns = self.parent_columns
         parent = model.__getattr__(self.name)
         json = OrderedDict()
-        if 'id' not in self.config('readable_parent_columns'):
-            json['id'] = int(parent.id) if 'id' not in columns else columns['id'].to_json(parent)
+        if parent.id_column_name not in self.config('readable_parent_columns'):
+            json[parent.id_column_name] = columns[parent.id_column_name].to_json(parent)
         for column_name in self.config('readable_parent_columns'):
             json[column_name] = columns[column_name].to_json(parent)
         return json
 
     def documentation(self, name=None, example=None, value=None):
         columns = self.parent_columns
-        parent_properties = [
-            columns['id'].documentation() if ('id' in columns) else AutoDocInteger('id')
-        ]
+        parent_id_column_name = self.parent_models.get_id_column_name()
+        parent_properties = [columns[parent_id_column_name].documentation()]
 
         parent_columns = self.config('readable_parent_columns', silent=True)
         if not parent_columns:
             return AutoDocInteger(name if name is not None else self.name)
 
         for column_name in self.config('readable_parent_columns'):
-            if column_name == 'id':
+            if column_name == parent_id_column_name:
                 continue
             parent_properties.append(columns[column_name].documentation())
 

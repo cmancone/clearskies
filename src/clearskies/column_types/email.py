@@ -1,7 +1,5 @@
 from .string import String
 import re
-
-
 class Email(String):
     def input_error_for_value(self, value, operator=None):
         if type(value) != str:

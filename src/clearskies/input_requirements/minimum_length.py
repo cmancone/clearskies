@@ -1,6 +1,4 @@
 from .requirement import Requirement
-
-
 class MinimumLength(Requirement):
     minimum_length = None
 

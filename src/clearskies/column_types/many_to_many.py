@@ -1,11 +1,9 @@
-from .integer import Integer
+from .string import String
 import re
 from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
-from ..autodoc.schema import Integer as AutoDocInteger
-
-
-class ManyToMany(Integer):
+from ..autodoc.schema import String as AutoDocString
+class ManyToMany(String):
     """
     Controls a many-to-many relationship.
 
@@ -91,7 +89,8 @@ class ManyToMany(Integer):
             )
 
         if configuration.get('is_readable'):
-            related_columns = self.di.build(configuration['related_models_class'], cache=False).raw_columns_configuration()
+            related_columns = self.di.build(configuration['related_models_class'],
+                                            cache=True).raw_columns_configuration()
             error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             if not 'readable_related_columns' in configuration:
                 raise ValueError(f"{error_prefix} must provide 'readable_related_columns' if is_readable is set")
@@ -114,8 +113,8 @@ class ManyToMany(Integer):
                     )
 
     def _finalize_configuration(self, configuration):
-        pivot_models = self.di.build(configuration['pivot_models_class'], cache=False)
-        related_models = self.di.build(configuration['related_models_class'], cache=False)
+        pivot_models = self.di.build(configuration['pivot_models_class'], cache=True)
+        related_models = self.di.build(configuration['related_models_class'], cache=True)
 
         if not configuration.get('foreign_column_name_in_pivot'):
             model_class = related_models.model_class()
@@ -124,7 +123,8 @@ class ManyToMany(Integer):
             foreign_column_name = configuration['foreign_column_name_in_pivot']
 
         if not configuration.get('own_column_name_in_pivot'):
-            own_column_name = re.sub(r'(?<!^)(?=[A-Z])', '_', self.model_class.__name__.replace('_', '')).lower() + '_id'
+            own_column_name = re.sub(r'(?<!^)(?=[A-Z])', '_', self.model_class.__name__.replace('_',
+                                                                                                '')).lower() + '_id'
         else:
             own_column_name = configuration['own_column_name_in_pivot']
 
@@ -134,6 +134,8 @@ class ManyToMany(Integer):
                 'foreign_column_name_in_pivot': foreign_column_name,
                 'own_column_name_in_pivot': own_column_name,
                 'pivot_table': pivot_models.get_table_name(),
+                'own_id_column_name': self.model_class.id_column_name,
+                'related_id_column_name': related_models.get_id_column_name(),
             }
         }
 
@@ -141,11 +143,11 @@ class ManyToMany(Integer):
         if type(value) != list:
             return f'{self.name} should be a list of ids'
         related_models = self.related_models
+        related_id_column_name = self.config('related_id_column_name')
         for id_to_check in value:
-            integer_check = super().input_error_for_value(id_to_check)
-            if integer_check:
-                return integer_check
-            if not len(related_models.where(f"id={id_to_check}")):
+            if type(id_to_check) != str:
+                return f'Invalid selection for {self.name}: all values must be strings'
+            if not len(related_models.where(f"{related_id_column_name}={id_to_check}")):
                 return f"Invalid selection for {self.name}: record {id_to_check} does not exist"
         return ''
 
@@ -155,13 +157,15 @@ class ManyToMany(Integer):
     def provide(self, data, column_name):
         foreign_column_name_in_pivot = self.config('foreign_column_name_in_pivot')
         own_column_name_in_pivot = self.config('own_column_name_in_pivot')
+        own_id_column_name = self.config('own_id_column_name')
         pivot_table = self.config('pivot_table')
+        related_id_column_name = self.config('related_id_column_name')
         models = self.related_models
-        join = f"JOIN {pivot_table} ON {pivot_table}.{foreign_column_name_in_pivot}={models.get_table_name()}.id"
-        related_models = models.join(join).where(f"{pivot_table}.{own_column_name_in_pivot}={data['id']}")
+        join = f"JOIN {pivot_table} ON {pivot_table}.{foreign_column_name_in_pivot}={models.get_table_name()}.{related_id_column_name}"
+        related_models = models.join(join).where(f"{pivot_table}.{own_column_name_in_pivot}={data[own_id_column_name]}")
         if column_name == self.name:
             return [model for model in related_models]
-        return [model.id for model in related_models]
+        return [model.__getattr__(related_id_column_name) for model in related_models]
 
     def to_backend(self, data):
         # we can't persist our mapping data to the database directly, so remove anything here
@@ -183,17 +187,20 @@ class ManyToMany(Integer):
             old_ids = set(getattr(model, f"{self.name}_ids"))
 
         new_ids = set(data[self.name])
-        to_delete = old_ids-new_ids
-        to_create = new_ids-old_ids
+        to_delete = old_ids - new_ids
+        to_create = new_ids - old_ids
         if to_delete:
-            related_models = self.related_models
-            for model_to_delete in related_models.where("id IN (" + ','.join(map(str, to_delete)) + ")"):
+            pivot_models = self.pivot_models
+            foreign_column_name = self.config('foreign_column_name_in_pivot')
+            for model_to_delete in pivot_models.where(
+                f"{foreign_column_name} IN (" + ','.join(map(str, to_delete)) + ")"
+            ):
                 model_to_delete.delete()
         if to_create:
             pivot_models = self.pivot_models
             foreign_column_name = self.config('foreign_column_name_in_pivot')
             own_column_name = self.config('own_column_name_in_pivot')
-            for to_insert in new_ids-old_ids:
+            for to_insert in new_ids - old_ids:
                 pivot_models.empty_model().save({
                     foreign_column_name: to_insert,
                     own_column_name: id,
@@ -203,38 +210,37 @@ class ManyToMany(Integer):
 
     @property
     def pivot_models(self):
-        return self.di.build(self.config('pivot_models_class'), cache=False)
+        return self.di.build(self.config('pivot_models_class'), cache=True)
 
     @property
     def related_models(self):
-        return self.di.build(self.config('related_models_class'), cache=False)
+        return self.di.build(self.config('related_models_class'), cache=True)
 
     @property
     def related_columns(self):
         self.related_models.model_columns
 
-    def input_error_for_value(self, value):
-        return f'{self.name} must be an integer' if type(value) != int else ''
-
     def add_search(self, models, value, operator=None):
         foreign_column_name_in_pivot = self.config('foreign_column_name_in_pivot')
         own_column_name_in_pivot = self.config('own_column_name_in_pivot')
+        own_id_column_name = self.config('own_id_column_name')
         pivot_table = self.config('pivot_table')
-        my_table_name = self.di.build(self.model_class).table_name
+        my_table_name = self.model_class.table_name()
         related_table_name = self.related_models.get_table_name()
-        join_pivot = f"JOIN {pivot_table} ON {pivot_table}.{own_column_name_in_pivot}={my_table_name}.id"
+        join_pivot = f"JOIN {pivot_table} ON {pivot_table}.{own_column_name_in_pivot}={my_table_name}.{own_id_column_name}"
         # no reason we can't support searching by both an id or a list of ids
         values = value if type(value) == list else [value]
-        search = ' IN (' + ', '.join([str(int(val)) for val in value]) + ')'
+        search = ' IN (' + ', '.join([str(val) for val in value]) + ')'
         return models.join(join_pivot).where(f"{pivot_table}.{foreign_column_name_in_pivot}{search}")
 
     def to_json(self, model):
         records = []
         columns = self.related_columns
+        related_id_column_name = self.config('related_id_column_name')
         for related in model.__getattr__(self.name):
             json = OrderedDict()
-            if 'id' not in self.config('readable_related_columns'):
-                json['id'] = int(related.id) if 'id' not in columns else columns['id'].to_json(related)
+            if related_id_column_name not in self.config('readable_related_columns'):
+                json[related_id_column_name] = columns[related_id_column_name].to_json(related)
             for column_name in self.config('readable_related_columns'):
                 json[column_name] = columns[column_name].to_json(related)
             records.append(json)
@@ -242,9 +248,8 @@ class ManyToMany(Integer):
 
     def documentation(self, name=None, example=None, value=None):
         columns = self.related_columns
-        related_properties = [
-            columns['id'].documentation() if 'id' in columns else AutoDocInteger('id')
-        ]
+        related_id_column_name = self.config('related_id_column_name')
+        related_properties = [columns[related_id_column_name].documentation()]
 
         for column_name in self.config('readable_related_columns'):
             related_properties.append(columns[column_name].documentation())
@@ -253,8 +258,4 @@ class ManyToMany(Integer):
             self.camel_to_nice(self.related_models.model_class().__name__),
             related_properties,
         )
-        return AutoDocArray(
-            name if name is not None else self.name,
-            related_object,
-            value=value
-        )
+        return AutoDocArray(name if name is not None else self.name, related_object, value=value)

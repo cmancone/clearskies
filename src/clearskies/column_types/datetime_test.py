@@ -2,8 +2,6 @@ import unittest
 from .datetime import DateTime
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
-
-
 class DateTimeTest(unittest.TestCase):
     def test_from_backend(self):
         date = DateTime().from_backend('2020-11-28 12:30:45')
@@ -42,8 +40,7 @@ class DateTimeTest(unittest.TestCase):
         date.configure('created', {}, int)
         self.assertEquals('created=2021-01-07 22:45:13', date.build_condition('2021-01-07 22:45:13 UTC'))
         self.assertEquals(
-            'created<2021-01-07 21:45:13',
-            date.build_condition('2021-01-07 22:45:13 UTC+1', operator='<')
+            'created<2021-01-07 21:45:13', date.build_condition('2021-01-07 22:45:13 UTC+1', operator='<')
         )
 
     def test_check_search_value(self):

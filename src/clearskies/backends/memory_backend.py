@@ -2,8 +2,9 @@ from .backend import Backend
 from collections import OrderedDict
 from functools import cmp_to_key
 import inspect
-
-
+from typing import Any, Callable, Dict, List, Tuple
+from ..autodoc.schema import Integer as AutoDocInteger
+from .. import model
 class Null:
     def __lt__(self, other):
         return True
@@ -13,7 +14,6 @@ class Null:
 
     def __eq__(self, other):
         return isinstance(other, Null) or other is None
-
 def _sort(row_a, row_b, sorts):
     for sort in sorts:
         reverse = 1 if sort['direction'].lower() == 'asc' else -1
@@ -22,17 +22,18 @@ def _sort(row_a, row_b, sorts):
         if value_a == value_b:
             continue
         if value_a is None:
-            return -1*reverse
+            return -1 * reverse
         if value_b is None:
-            return 1*reverse
-        return reverse*(1 if value_a > value_b else -1)
+            return 1 * reverse
+        return reverse * (1 if value_a > value_b else -1)
     return 0
-
 class MemoryTable:
     _table_name = None
     _column_names = None
     _rows = None
     null = None
+    _id_index = None
+    id_column_name = None
 
     # here be dragons.  This is not a 100% drop-in replacement for the equivalent SQL operators
     # https://codereview.stackexchange.com/questions/259198/in-memory-table-filtering-in-python
@@ -52,22 +53,27 @@ class MemoryTable:
         'in': lambda column, values, null: lambda row: row.get(column, null) in values,
     }
 
-    def __init__(self, model=None):
+    def __init__(self, model):
         self.null = Null()
         self._column_names = []
         self._rows = []
+        self._id_index = {}
+        self.id_column_name = model.id_column_name
 
-        if model is not None:
-            self._table_name = model.table_name
-            self._column_names.extend(model.columns_configuration().keys())
+        self._table_name = model.table_name()
+        self._column_names.extend(model.columns_configuration().keys())
+        if self.id_column_name not in self._column_names:
+            self._column_names.append(self.id_column_name)
 
     def update(self, id, data):
-        if id > len(self._rows) or id < 1:
-            raise ValueError(f"Cannot update non existent record with id of '{id}'")
-        index = id-1
+        if id not in self._id_index:
+            raise ValueError(f"Attempt to update non-existent record with '{self.id_column_name}' of '{id}'")
+        index = self._id_index[id]
         row = self._rows[index]
         if row is None:
-            raise ValueError(f"Cannot update record with id of '{id}' because it was already deleted")
+            raise ValueError(
+                f"Cannot update record with '{self.id_column_name}' of '{id}' because it was already deleted"
+            )
         for column_name in data.keys():
             if column_name not in self._column_names:
                 raise ValueError(
@@ -85,19 +91,25 @@ class MemoryTable:
                 raise ValueError(
                     f"Cannot create record: column '{column_name}' does not exist in table '{self._table_name}'"
                 )
-        if 'id' not in data:
-            new_id = len(self._rows) + 1
-            data['id'] = new_id
+        if self.id_column_name not in data:
+            raise ValueError(
+                "An '{self.id_column_name}' key with a unique value is required when working with the memory backend, " + \
+                "but I was asked to create a record without one"
+            )
+        if data[self.id_column_name] in self._id_index and self._rows[self._id_index[data[self.id_column_name]]
+                                                                      ] is not None:
+            return self.update(data[self.id_column_name], data)
         for column_name in self._column_names:
             if column_name not in data:
                 data[column_name] = None
         self._rows.append({**data})
+        self._id_index[data[self.id_column_name]] = len(self._rows) - 1
         return data
 
     def delete(self, id):
-        if id > len(self._rows) or id < 1:
-            raise ValueError(f"Cannot delete non existent record with id of '{id}'")
-        index = id-1
+        if id not in self._id_index:
+            return True
+        index = self._id_index[id]
         if self._rows[index] is None:
             return True
         # we set the row to None because if we remove it we'll change the indexes of the rest
@@ -117,22 +129,23 @@ class MemoryTable:
             return rows
         if 'sorts' in configuration and configuration['sorts']:
             rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration['sorts'])))
-        if 'limit_start' in configuration or 'limit_length' in configuration:
+        if 'length' in configuration or ('pagination' in configuration and configuration['pagination'].get('start')):
             number_rows = len(rows)
-            start = configuration['limit_start'] if 'limit_start' in configuration and configuration['limit_start'] else 0
+            start = configuration['pagination'].get('start') if 'pagination' in configuration else 0
+            if not start:
+                start = 0
             if start >= number_rows:
-                start = number_rows-1
+                start = number_rows - 1
             end = len(rows)
-            if 'limit_length' in configuration and configuration['limit_length'] and start + configuration['limit_length'] <= number_rows:
-                end = start + configuration['limit_length']
+            if configuration.get('limit') and start + configuration['limit'] <= number_rows:
+                end = start + configuration['limit']
             rows = rows[start:end]
         return rows
 
     def _where_as_filter(self, where):
         column = where['column']
         values = where['values']
-        return self._operator_lambda_builders[where['operator']](column, values, self.null)
-
+        return self._operator_lambda_builders[where['operator'].lower()](column, values, self.null)
 class MemoryBackend(Backend):
     _tables = None
     _silent_on_missing_tables = False
@@ -142,8 +155,8 @@ class MemoryBackend(Backend):
         'wheres',
         'joins',
         'sorts',
-        'limit_start',
-        'limit_length',
+        'pagination',
+        'length',
         'selects',
         'model_columns',
     ]
@@ -167,21 +180,21 @@ class MemoryBackend(Backend):
         Accepts either a model or a model class and creates a "table" for it
         """
         model = self.cheez_model(model)
-        if model.table_name in self._tables:
+        if model.table_name() in self._tables:
             return
-        self._tables[model.table_name] = MemoryTable(model=model)
+        self._tables[model.table_name()] = MemoryTable(model)
 
     def update(self, id, data, model):
         self.create_table(model)
-        return self._tables[model.table_name].update(id, data)
+        return self._tables[model.table_name()].update(id, data)
 
     def create(self, data, model):
         self.create_table(model)
-        return self._tables[model.table_name].create(data)
+        return self._tables[model.table_name()].create(data)
 
     def delete(self, id, model):
         self.create_table(model)
-        return self._tables[model.table_name].delete(id)
+        return self._tables[model.table_name()].delete(id)
 
     def count(self, configuration, model):
         if configuration['table_name'] not in self._tables:
@@ -202,7 +215,7 @@ class MemoryBackend(Backend):
         configuration['joins'] = [join for join in configuration['joins'] if join['type'] != 'LEFT']
         return len(self.rows_with_joins(configuration))
 
-    def records(self, configuration, model):
+    def records(self, configuration, model, next_page_data=None):
         table_name = configuration['table_name']
         if table_name not in self._tables:
             if self._silent_on_missing_tables:
@@ -225,15 +238,17 @@ class MemoryBackend(Backend):
 
         if 'sorts' in configuration and configuration['sorts']:
             rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration['sorts'])))
-        if 'limit_start' in configuration or 'limit_length' in configuration:
+        if 'start' in configuration.get('pagination', {}) or 'limit' in configuration:
             number_rows = len(rows)
-            start = configuration['limit_start'] if 'limit_start' in configuration and configuration['limit_start'] else 0
+            start = configuration.get('pagination', {}).get('start', 0)
             if start >= number_rows:
-                start = number_rows-1
+                start = number_rows - 1
             end = len(rows)
-            if 'limit_length' in configuration and configuration['limit_length'] and start + configuration['limit_length'] <= number_rows:
-                end = start + configuration['limit_length']
+            if configuration.get('limit') and start + configuration.get('limit') <= number_rows:
+                end = start + configuration.get('limit')
             rows = rows[start:end]
+            if end < number_rows and type(next_page_data) == dict:
+                next_page_data['start'] = start + configuration['limit']
         return rows
 
     def rows_with_joins(self, configuration):
@@ -249,9 +264,7 @@ class MemoryBackend(Backend):
         # start with the matches in the main table
         left_table = configuration['table_name']
         main_rows = self._tables[left_table].rows(
-            configuration,
-            self._wheres_for_table(left_table, wheres, is_left=True),
-            filter_only=True
+            configuration, self._wheres_for_table(left_table, wheres, is_left=True), filter_only=True
         )
         # and now adjust the way data is stored in our rows list to support the joining process.
         # we're going to go from something like: `[{row_1}, {row_2}]` to something like:
@@ -275,9 +288,7 @@ class MemoryBackend(Backend):
                     continue
 
                 join_rows = self._tables[right_table].rows(
-                    configuration,
-                    self._wheres_for_table(table_name_for_join, wheres, joined_tables),
-                    filter_only=True
+                    configuration, self._wheres_for_table(table_name_for_join, wheres, joined_tables), filter_only=True
                 )
 
                 rows = self.join_rows(rows, join_rows, join, joined_tables)
@@ -310,9 +321,7 @@ class MemoryBackend(Backend):
     def _check_query_configuration(self, configuration):
         for key in configuration.keys():
             if key not in self._allowed_configs:
-                raise KeyError(
-                    f"MemoryBackend does not support config '{key}'. You may be using the wrong backend"
-                )
+                raise KeyError(f"MemoryBackend does not support config '{key}'. You may be using the wrong backend")
         for key in self._required_configs:
             if key not in configuration:
                 raise KeyError(f'Missing required configuration key {key}')
@@ -320,6 +329,8 @@ class MemoryBackend(Backend):
         for key in self._allowed_configs:
             if not key in configuration:
                 configuration[key] = [] if key[-1] == 's' else ''
+        if 'pagination' not in configuration or 'start' not in configuration['pagination']:
+            configuration['pagination'] = {'start': 0}
         return configuration
 
     def _wheres_for_table(self, table_name, wheres, is_left=False):
@@ -368,7 +379,9 @@ class MemoryBackend(Backend):
             matching_row = None
             if left_table not in row:
                 raise ValueError("Attempted to check join data from unjoined table, which should not happen...")
-            left_value = row[left_table][left_column] if (row[left_table] is not None and left_column in row[left_table]) else None
+            left_value = row[left_table][left_column] if (
+                row[left_table] is not None and left_column in row[left_table]
+            ) else None
             for (join_index, join) in enumerate(join_rows):
                 right_value = join[join_config['right_column']] if join_config['right_column'] in join else None
                 # for now we are assuming the operator for the matching is `=`.  This is mainly because
@@ -398,10 +411,42 @@ class MemoryBackend(Backend):
 
         # now for outer/right rows we add on any unmatched rows
         if (join_type == 'OUTER' or join_type == 'RIGHT') and len(matched_right_row_indexes) < len(join_rows):
-            for join_index in set(enumerate(join_rows))-set(matched_right_row_indexes):
+            for join_index in set(enumerate(join_rows)) - set(matched_right_row_indexes):
                 rows.append({
                     join_table_name: join_rows[join_index],
-                    **{table_name: None for table_name in joined_tables},
+                    **{table_name: None
+                       for table_name in joined_tables},
                 })
 
         return rows
+
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
+        extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
+        if len(extra_keys):
+            key_name = case_mapping('start')
+            return "Invalid pagination key(s): '" + "','".join(extra_keys) + f"'.  Only '{key_name}' is allowed"
+        if 'start' not in kwargs:
+            key_name = case_mapping('start')
+            return f"You must specify '{key_name}' when setting pagination"
+        start = kwargs['start']
+        try:
+            start = int(start)
+        except:
+            key_name = case_mapping('start')
+            return f"Invalid pagination data: '{key_name}' must be a number"
+        return ''
+
+    def allowed_pagination_keys(self) -> List[str]:
+        return ['start']
+
+    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
+        return [AutoDocInteger(case_mapping('start'), example=10)]
+
+    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
+        return {case_mapping('start'): 10}
+
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+        return [(
+            AutoDocInteger(case_mapping('start'),
+                           example=10), 'The zero-indexed record number to start listing results from'
+        )]

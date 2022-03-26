@@ -1,8 +1,6 @@
 from ..input_outputs import WSGI as WSGIInputOutput
 from .build_context import build_context
 from .context import Context
-
-
 class WSGI(Context):
     def __init__(self, di):
         super().__init__(di)
@@ -12,7 +10,6 @@ class WSGI(Context):
             raise ValueError("Cannot execute WSGI context without first configuring it")
 
         return self.handler(WSGIInputOutput(env, start_response))
-
 def wsgi(
     application,
     di_class=None,

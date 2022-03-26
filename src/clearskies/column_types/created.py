@@ -1,6 +1,4 @@
 from .datetime import DateTime
-
-
 class Created(DateTime):
     def __init__(self, now):
         self.now = now
@@ -12,7 +10,4 @@ class Created(DateTime):
     def pre_save(self, data, model):
         if model.exists:
             return data
-        return {
-            **data,
-            self.name: self.now
-        }
+        return {**data, self.name: self.now}

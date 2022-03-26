@@ -2,15 +2,16 @@ import unittest
 from unittest.mock import MagicMock, call
 from .simple_routing_route import SimpleRoutingRoute
 from ..di import StandardDependencies
-
 class SimpleRoutingRouteTest(unittest.TestCase):
     def setUp(self):
         self.di = StandardDependencies()
         self.handler_config = MagicMock()
-        self.handler_class = type('', (), {
-            'configure': self.handler_config,
-            '__call__': MagicMock(return_value='5'),
-        })
+        self.handler_class = type(
+            '', (), {
+                'configure': self.handler_config,
+                '__call__': MagicMock(return_value='5'),
+            }
+        )
 
     def test_configure(self):
         route = self.di.build(SimpleRoutingRoute)
@@ -19,7 +20,12 @@ class SimpleRoutingRouteTest(unittest.TestCase):
 
     def test_configure_no_override_for_authentication(self):
         route = self.di.build(SimpleRoutingRoute)
-        route.configure(self.handler_class, {'my': 'config', 'authentication': 'sup'}, path='users', authentication='blah')
+        route.configure(
+            self.handler_class, {
+                'my': 'config',
+                'authentication': 'sup'
+            }, path='users', authentication='blah'
+        )
         self.handler_config.assert_called_with({'my': 'config', 'base_url': '/users', 'authentication': 'sup'})
 
     def test_match_route(self):
