@@ -1,8 +1,53 @@
 import datetime
+from clearskies.di import AdditionalConfig
+class AKeylessAdditionalConfig(AdditionalConfig):
+    _allowed_auth_methods = ['aws_iam', 'saml', 'jwt']
+    _auth_method = None
+    _kwargs = None
+
+    _auth_method_allowed_kwargs = {
+        'aws_iam': [],
+        'saml': [],
+        'jwt': ['jwt_env_key'],
+    }
+
+    _validate_kwargs = {
+        'aws_iam':
+        lambda kwargs: '',
+        'saml':
+        lambda kwargs: '',
+        'jwt':
+        lambda kwargs: '' if 'jwt_env_key' in kwargs else
+        "Must provide 'jwt_env_key' with the name of the environment variable that contains the JWT when using akeyless_jwt_auth()",
+    }
+
+    def __init__(self, auth_method, **kwargs):
+        if auth_method not in self._allowed_auth_methods:
+            raise ValueError(
+                f"Internal clearskies error: attempt to use unsupported akeyless auth method, {auth_method}"
+            )
+        self._auth_method = auth_method
+        allowed_kwargs = set(['access_id', 'api_host', *self._auth_method_allowed_kwargs[auth_method]])
+        error = self._validate_kwargs[auth_method](kwargs)
+        if error:
+            raise ValueError(error)
+        extra_keys = set(kwargs.keys()) - allowed_kwargs
+        if len(extra_keys):
+            raise ValueError(
+                f"Unexpected keys were passed into akeyless_{auth_method}: " + ', '.join(extra_keys) +
+                ". The expected keys are: " + ', '.join(allowed_kwargs)
+            )
+        self._kwargs = kwargs
+
+    def provide_secrets(self, requests, environment):
+        secrets = AKeyless(requests, environment)
+        secrets.configure(access_type=self._auth_method, **self._kwargs)
+        return secrets
 class AKeyless:
     _akeyless = None
     _access_id = None
     _access_type = None
+    _api_host = None
     _token_refresh = None
     _token = None
     _environment = None
@@ -16,12 +61,15 @@ class AKeyless:
         import akeyless
         self._akeyless = akeyless
 
-    def configure(self, access_id=None, access_type=None, jwt_env_key=None):
-        self._access_id = access_id
-        self._access_type = access_type
+    def configure(self, access_id=None, access_type=None, jwt_env_key=None, api_host=None):
+        self._access_id = access_id if access_id is not None else self._environment.get('akeyless_access_id')
+        self._access_type = access_type if access_type is not None else self._environment.get('akeyless_access_type')
         self._jwt_env_key = jwt_env_key
+        self._api_host = api_host if api_host is not None else self._environment.get('akeyless_api_host', silent=True)
+        if not self._api_host:
+            self._api_host = 'https://api.akeyless.io'
 
-        configuration = self._akeyless.Configuration(host="https://api.akeyless.io")
+        configuration = self._akeyless.Configuration(host=self._api_host)
         api_client = self._akeyless.ApiClient(configuration)
         self._api = self._akeyless.V2Api(api_client)
 
@@ -102,7 +150,7 @@ class AKeyless:
     def auth_jwt(self):
         if not self._jwt_env_key:
             raise ValueError(
-                "To user AKeyless JWT Auth, you must specify the name of the ENV key to load the JWT from when configuring AKeyless"
+                "To use AKeyless JWT Auth, you must specify the name of the ENV key to load the JWT from when configuring AKeyless"
             )
         res = self._api.auth(
             self._akeyless.Auth(
