@@ -1,9 +1,9 @@
-from clearskies.di import AdditionalConfig
+import clearskies.di
 from pathlib import Path
 import socket
 import subprocess
 import os
-class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(AdditionalConfig):
+class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies.di.additional_config.AdditionalConfig):
     _config = None
 
     def __init__(

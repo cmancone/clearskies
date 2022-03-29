@@ -1,4 +1,5 @@
 from .akeyless import AKeyless, AKeylessAdditionalConfig
+from . import additional_configs
 from ..binding_config import BindingConfig
 def akeyless(*args, **kwargs):
     return BindingConfig(AKeyless, *args, **kwargs)

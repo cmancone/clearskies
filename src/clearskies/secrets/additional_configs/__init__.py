@@ -16,7 +16,7 @@ def mysql_connection_dynamic_producer_via_ssh_cert_bastion(
     database_name=None,
     local_proxy_port=None
 ):
-    return MySQLConnectionDynamicProducerAdditionalConfig(
+    return MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(
         producer_name=producer_name,
         bastion_ip=bastion_ip,
         bastion_username=bastion_username,
