@@ -1,13 +1,14 @@
 import datetime
 from clearskies.di import AdditionalConfig
 class AKeylessAdditionalConfig(AdditionalConfig):
-    _allowed_auth_methods = ['aws_iam', 'saml', 'jwt']
+    _allowed_auth_methods = ['aws_iam', 'saml', 'jwt', 'access_key']
     _auth_method = None
     _kwargs = None
 
     _auth_method_allowed_kwargs = {
         'aws_iam': [],
         'saml': [],
+        'access_key': [],
         'jwt': ['jwt_env_key'],
     }
 
@@ -15,6 +16,8 @@ class AKeylessAdditionalConfig(AdditionalConfig):
         'aws_iam':
         lambda kwargs: '',
         'saml':
+        lambda kwargs: '',
+        'access_key':
         lambda kwargs: '',
         'jwt':
         lambda kwargs: '' if 'jwt_env_key' in kwargs else
@@ -157,4 +160,13 @@ class AKeyless:
                 access_id=self._access_id, access_type='jwt', jwt=self._environment.get(self._jwt_env_key)
             )
         )
+        return res.token
+
+    def auth_access_key(self):
+        access_key = self._environment.get('akeyless_access_key', silent=True)
+        if not access_key:
+            print(
+                "To use AKeyless access key auth, you must specify your AKeyless access key in the 'akeyless_access_key' environment variable"
+            )
+        res = self._api.auth(self._akeyless.Auth(access_id=self._access_id, access_key=access_key))
         return res.token

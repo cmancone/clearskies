@@ -35,7 +35,7 @@ class MySQLConnectionDynamicProducerAdditionalConfig(clearskies.di.additional_co
             raise ValueError(
                 "I was asked to connect to a database via an AKeyless dynamic producer, but I wasn't told the name of the database.  This can be set in an environment variable named 'db_database' or it can be set in the configuration via the database_name kwarg."
             )
-        database_host = self._database_host if self.database_host is not None else environment.get(
+        database_host = self._database_host if self._database_host is not None else environment.get(
             'db_host', silent=True
         )
         if not database_host:
@@ -46,7 +46,7 @@ class MySQLConnectionDynamicProducerAdditionalConfig(clearskies.di.additional_co
 
         import pymysql
         return pymysql.connect(
-            user=credentials['username'],
+            user=credentials['user'],
             password=credentials['password'],
             host=database_host,
             database=database_name,

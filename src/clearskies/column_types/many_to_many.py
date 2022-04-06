@@ -3,6 +3,7 @@ import re
 from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.schema import String as AutoDocString
+from collections import OrderedDict
 class ManyToMany(String):
     """
     Controls a many-to-many relationship.
@@ -218,7 +219,7 @@ class ManyToMany(String):
 
     @property
     def related_columns(self):
-        self.related_models.model_columns
+        return self.related_models.model_columns
 
     def add_search(self, models, value, operator=None):
         foreign_column_name_in_pivot = self.config('foreign_column_name_in_pivot')

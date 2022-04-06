@@ -54,9 +54,8 @@ class Mygrations(Base):
                 400
             )
 
-        with Capturing(self._sys) as capture:
-            execute(command, {'connection': self._connection, 'sql_files': sql})
-        return self.success(input_output, list(filter(None, capture.output)))
+        output = execute(command, {'connection': self._connection, 'sql_files': sql}, print_results=False)
+        return self.success(input_output, output)
 
     def _from_input_or_config(self, key, input_output):
         if self.configuration('allow_input'):

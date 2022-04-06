@@ -3,6 +3,7 @@ from pathlib import Path
 import socket
 import subprocess
 import os
+import time
 class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies.di.additional_config.AdditionalConfig):
     _config = None
 
@@ -44,22 +45,27 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
         home = str(Path.home())
         default_public_key_file_path = f'{home}/.ssh/id_rsa.pub'
 
-        producer_name = self._fetch_config('producer_name', 'akeyless_mysql_dynamic_producer')
-        bastion_ip = self._fetch_config('bastion_ip', 'akeyless_mysql_bastion_ip')
-        bastion_username = self._fetch_config('bastion_username', 'akeyless_mysql_bastion_username')
+        producer_name = self._fetch_config(environment, 'producer_name', 'akeyless_mysql_dynamic_producer')
+        bastion_ip = self._fetch_config(environment, 'bastion_ip', 'akeyless_mysql_bastion_ip')
+        bastion_username = self._fetch_config(environment, 'bastion_username', 'akeyless_mysql_bastion_username')
         public_key_file_path = self._fetch_config(
-            'public_key_file_path', 'akeyless_mysql_bastion_public_key_file_path', default=default_public_key_file_path
+            environment,
+            'public_key_file_path',
+            'akeyless_mysql_bastion_public_key_file_path',
+            default=default_public_key_file_path
         )
-        cert_issuer_name = self._fetch_config('cert_issuer_name', 'akeyless_mysql_bastion_cert_issuer_name')
+        cert_issuer_name = self._fetch_config(
+            environment, 'cert_issuer_name', 'akeyless_mysql_bastion_cert_issuer_name'
+        )
         local_proxy_port = self._fetch_config(
-            'local_proxy_port', 'akeyless_mysql_bastion_local_proxy_port', default=8888
+            environment, 'local_proxy_port', 'akeyless_mysql_bastion_local_proxy_port', default=8888
         )
-        database_host = self._fetch_config('database_host', 'db_host')
-        database_name = self._fetch_config('database_name', 'db_database')
+        database_host = self._fetch_config(environment, 'database_host', 'db_host')
+        database_name = self._fetch_config(environment, 'database_name', 'db_database')
 
         # Create the SSH tunnel (yeah, it's obnoxious)
         self._create_tunnel(
-            self, secrets, bastion_ip, bastion_username, local_proxy_port, cert_issuer_name, public_key_file_path,
+            secrets, bastion_ip, bastion_username, local_proxy_port, cert_issuer_name, public_key_file_path,
             database_host
         )
 
@@ -69,7 +75,7 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
         # and then connect on our local port
         import pymysql
         return pymysql.connect(
-            user=credentials['username'],
+            user=credentials['user'],
             password=credentials['password'],
             host='127.0.0.1',
             port=local_proxy_port,
@@ -79,9 +85,9 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
             cursorclass=pymysql.cursors.DictCursor
         )
 
-    def _fetch_config(self, config_key_name, environment_key_name, default=None):
-        if self._config[config_key_name]:
-            return self._config[config_key_name]
+    def _fetch_config(self, environment, config_key_name, environment_key_name, default=None):
+        if self.config[config_key_name]:
+            return self.config[config_key_name]
         from_environment = environment.get(environment_key_name, silent=True)
         if from_environment:
             return from_environment

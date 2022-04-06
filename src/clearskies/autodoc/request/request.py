@@ -8,7 +8,7 @@ class Request:
     def __init__(self, description, responses, relative_path='', request_methods='GET', parameters=None):
         self.description = description
         self.responses = responses
-        self.relative_path = relative_path
+        self.relative_path = relative_path.lstrip('/')
         self.request_methods = [request_methods] if type(request_methods) == str else request_methods
         self.set_parameters(parameters)
 

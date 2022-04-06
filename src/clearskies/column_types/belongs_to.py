@@ -115,7 +115,7 @@ class BelongsTo(String):
 
         parent_columns = self.config('readable_parent_columns', silent=True)
         if not parent_columns:
-            return AutoDocInteger(name if name is not None else self.name)
+            return AutoDocString(name if name is not None else self.name)
 
         for column_name in self.config('readable_parent_columns'):
             if column_name == parent_id_column_name:
