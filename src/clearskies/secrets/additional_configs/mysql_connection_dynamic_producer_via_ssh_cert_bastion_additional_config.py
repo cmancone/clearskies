@@ -10,7 +10,7 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
     def __init__(
         self,
         producer_name=None,
-        bastion_ip=None,
+        bastion_host=None,
         bastion_username=None,
         public_key_file_path=None,
         local_proxy_port=None,
@@ -21,7 +21,7 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
         # not using kwargs because I want the argument list to be explicit
         self.config = {
             'producer_name': producer_name,
-            'bastion_ip': bastion_ip,
+            'bastion_host': bastion_host,
             'bastion_username': bastion_username,
             'public_key_file_path': public_key_file_path,
             'local_proxy_port': local_proxy_port,
@@ -30,13 +30,7 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
             'database_name': database_name,
         }
 
-    def provide_connection_no_autocommit(self, environment, secrets):
-        return self.create_connection(environment, secrets, False)
-
-    def provide_connection(self, environment, secrets):
-        return self.create_connection(environment, secrets, True)
-
-    def create_connection(self, environment, secrets, autocommit):
+    def provide_connection_details(self, environment, secrets):
         if not secrets:
             raise ValueError(
                 "I was asked to connect to a database via an AKeyless dynamic producer but AKeyless itself wasn't configured.  Try setting the AKeyless auth method via clearskies.secrets.akeyless_[jwt|saml|aws_iam]_auth()"
@@ -46,7 +40,7 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
         default_public_key_file_path = f'{home}/.ssh/id_rsa.pub'
 
         producer_name = self._fetch_config(environment, 'producer_name', 'akeyless_mysql_dynamic_producer')
-        bastion_ip = self._fetch_config(environment, 'bastion_ip', 'akeyless_mysql_bastion_ip')
+        bastion_host = self._get_bastion_host(environment)
         bastion_username = self._fetch_config(environment, 'bastion_username', 'akeyless_mysql_bastion_username')
         public_key_file_path = self._fetch_config(
             environment,
@@ -65,25 +59,23 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
 
         # Create the SSH tunnel (yeah, it's obnoxious)
         self._create_tunnel(
-            secrets, bastion_ip, bastion_username, local_proxy_port, cert_issuer_name, public_key_file_path,
+            secrets, bastion_host, bastion_username, local_proxy_port, cert_issuer_name, public_key_file_path,
             database_host
         )
 
         # and now we can fetch credentials
         credentials = secrets.get_dynamic_secret(producer_name)
 
-        # and then connect on our local port
-        import pymysql
-        return pymysql.connect(
-            user=credentials['user'],
-            password=credentials['password'],
-            host='127.0.0.1',
-            port=local_proxy_port,
-            database=database_name,
-            autocommit=autocommit,
-            connect_timeout=2,
-            cursorclass=pymysql.cursors.DictCursor
-        )
+        return {
+            'username': credentials['user'],
+            'password': credentials['password'],
+            'host': '127.0.0.1',
+            'database': database_name,
+            'port': local_proxy_port,
+        }
+
+    def _get_bastion_host(self, environment):
+        return self._fetch_config(environment, 'bastion_host', 'akeyless_mysql_bastion_host')
 
     def _fetch_config(self, environment, config_key_name, environment_key_name, default=None):
         if self.config[config_key_name]:
@@ -98,7 +90,7 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
         )
 
     def _create_tunnel(
-        self, secrets, bastion_ip, bastion_username, local_proxy_port, cert_issuer_name, public_key_file_path,
+        self, secrets, bastion_host, bastion_username, local_proxy_port, cert_issuer_name, public_key_file_path,
         database_host
     ):
         # first see if the socket is already open, since we don't close it.
@@ -124,7 +116,7 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
         # and now we can do this thing.
         tunnel_command = [
             'ssh', '-o', 'ConnectTimeout=2', '-N', '-L', f'{local_proxy_port}:{database_host}:3306', '-p', '22',
-            f'{bastion_username}@{bastion_ip}'
+            f'{bastion_username}@{bastion_host}'
         ]
         subprocess.Popen(tunnel_command)
         connected = False
@@ -137,4 +129,6 @@ class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies
             if result == 0:
                 connected = True
         if not connected:
-            raise ValueError('Failed to open SSH tunnel.  The following command was used: ' + ' '.join(tunnel_command))
+            raise ValueError(
+                'Failed to open SSH tunnel.  The following command was used: \n' + ' '.join(tunnel_command)
+            )

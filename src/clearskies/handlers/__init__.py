@@ -2,6 +2,7 @@ from .advanced_search import AdvancedSearch
 from .callable import Callable
 from .create import Create
 from .crud_by_method import CRUDByMethod
+from .database_connector import DatabaseConnector
 from .delete import Delete
 from .get import Get
 from .list import List

@@ -44,26 +44,36 @@ class StandardDependencies(DI):
         # and only have one of these, but for now I'm being lazy.
         import pymysql
         return pymysql.connect(
-            user=environment.get('db_username'),
-            password=environment.get('db_password'),
-            host=environment.get('db_host'),
-            database=environment.get('db_database'),
+            user=connection_details['username'],
+            password=connection_details['password'],
+            host=connection_details['host'],
+            database=connection_details['database'],
+            port=connection_details.get('port', 3306),
             autocommit=False,
             connect_timeout=2,
             cursorclass=pymysql.cursors.DictCursor
         )
 
-    def provide_connection(self, environment):
+    def provide_connection(self, connection_details):
         import pymysql
         return pymysql.connect(
-            user=environment.get('db_username'),
-            password=environment.get('db_password'),
-            host=environment.get('db_host'),
-            database=environment.get('db_database'),
+            user=connection_details['username'],
+            password=connection_details['password'],
+            host=connection_details['host'],
+            database=connection_details['database'],
+            port=connection_details.get('port', 3306),
             autocommit=True,
             connect_timeout=2,
             cursorclass=pymysql.cursors.DictCursor
         )
+
+    def provide_connection_details(self, environment):
+        return {
+            'username': environment.get('db_username'),
+            'password': environment.get('db_password'),
+            'host': environment.get('db_host'),
+            'database': environment.get('db_database'),
+        }
 
     def provide_cursor(self, connection):
         return connection.cursor()

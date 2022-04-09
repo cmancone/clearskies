@@ -9,13 +9,7 @@ class MySQLConnectionDynamicProducerAdditionalConfig(clearskies.di.additional_co
         self._database_host = database_host
         self._database_name = database_name
 
-    def provide_connection_no_autocommit(self, environment, secrets):
-        return self.create_connection(environment, secrets, False)
-
-    def provide_connection(self, environment, secrets):
-        return self.create_connection(environment, secrets, True)
-
-    def create_connection(self, environment, secrets, autocommit):
+    def provide_connection_details(self, environment, secrets):
         if not secrets:
             raise ValueError(
                 "I was asked to connect to a database via an AKeyless dynamic producer but AKeyless itself wasn't configured.  Try setting the AKeyless auth method via clearskies.secrets.akeyless_[jwt|saml|aws_iam]_auth()"
@@ -44,13 +38,9 @@ class MySQLConnectionDynamicProducerAdditionalConfig(clearskies.di.additional_co
             )
         credentials = secrets.get_dynamic_secret(producer_name)
 
-        import pymysql
-        return pymysql.connect(
-            user=credentials['user'],
-            password=credentials['password'],
-            host=database_host,
-            database=database_name,
-            autocommit=autocommit,
-            connect_timeout=2,
-            cursorclass=pymysql.cursors.DictCursor
-        )
+        return {
+            'username': credentials['user'],
+            'password': credentials['password'],
+            'host': database_host,
+            'database': database_name,
+        }

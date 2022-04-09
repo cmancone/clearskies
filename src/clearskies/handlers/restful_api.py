@@ -74,6 +74,8 @@ class RestfulAPI(Routing):
         handler = self.fetch_cached_handler(handler_class)
         if resource_id is not None:
             input_output.set_routing_data({'id': resource_id})
+        else:
+            input_output.set_routing_data({})
         return handler(input_output)
 
     def fetch_cached_handler(self, handler_class):

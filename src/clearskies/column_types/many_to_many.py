@@ -202,7 +202,7 @@ class ManyToMany(String):
             foreign_column_name = self.config('foreign_column_name_in_pivot')
             own_column_name = self.config('own_column_name_in_pivot')
             for to_insert in new_ids - old_ids:
-                pivot_models.empty_model().save({
+                pivot_models.create({
                     foreign_column_name: to_insert,
                     own_column_name: id,
                 })

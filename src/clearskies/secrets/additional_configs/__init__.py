@@ -8,7 +8,7 @@ def mysql_connection_dynamic_producer(producer_name=None, database_host=None, da
     )
 def mysql_connection_dynamic_producer_via_ssh_cert_bastion(
     producer_name=None,
-    bastion_ip=None,
+    bastion_host=None,
     bastion_username=None,
     public_key_file_path=None,
     cert_issuer_name=None,
@@ -18,7 +18,7 @@ def mysql_connection_dynamic_producer_via_ssh_cert_bastion(
 ):
     return MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(
         producer_name=producer_name,
-        bastion_ip=bastion_ip,
+        bastion_host=bastion_host,
         bastion_username=bastion_username,
         cert_issuer_name=cert_issuer_name,
         public_key_file_path=public_key_file_path,

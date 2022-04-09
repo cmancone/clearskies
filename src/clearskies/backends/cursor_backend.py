@@ -36,9 +36,17 @@ class CursorBackend(Backend):
         updates = ', '.join(query_parts)
 
         table_name = model.table_name()
-        self._cursor.execute(f'UPDATE `{table_name}` SET {updates} WHERE id=%s', tuple([*parameters, id]))
+        self._cursor.execute(
+            f'UPDATE `{table_name}` SET {updates} WHERE {model.id_column_name}=%s', tuple([*parameters, id])
+        )
 
-        results = self.records({'table_name': table_name, 'wheres': [{'parsed': 'id=%s', 'values': [id]}]}, model)
+        results = self.records({
+            'table_name': table_name,
+            'wheres': [{
+                'parsed': f'{model.id_column_name}=%s',
+                'values': [id]
+            }]
+        }, model)
         return results[0]
 
     def create(self, data, model):
@@ -47,19 +55,24 @@ class CursorBackend(Backend):
 
         table_name = model.table_name()
         self._cursor.execute(f'INSERT INTO `{table_name}` ({columns}) VALUES ({placeholders})', tuple(data.values()))
+        new_id = data.get(model.id_column_name)
+        if not new_id:
+            new_id = self._cursor.lastrowid
+        if not new_id:
+            raise ValueError("I can't figure out what the id is for a newly created record :(")
 
         results = self.records({
             'table_name': table_name,
             'wheres': [{
-                'parsed': 'id=%s',
-                'values': [self._cursor.lastrowid]
+                'parsed': f'{model.id_column_name}=%s',
+                'values': [new_id]
             }]
         }, model)
         return results[0]
 
     def delete(self, id, model):
         table_name = model.table_name()
-        self._cursor.execute(f'DELETE FROM `{table_name}` WHERE id=%s', (id, ))
+        self._cursor.execute(f'DELETE FROM `{table_name}` WHERE {model.id_column_name}=%s', (id, ))
         return True
 
     def count(self, configuration, model):
