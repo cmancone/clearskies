@@ -54,8 +54,11 @@ class Mygrations(Base):
                 400
             )
 
-        output = execute(command, {'connection': self._connection, 'sql_files': sql}, print_results=False)
-        return self.success(input_output, output)
+        [output, success] = execute(command, {'connection': self._connection, 'sql_files': sql}, print_results=False)
+        if success:
+            return self.success(input_output, output)
+        else:
+            return self.error(input_output, "\n".join(output), 400)
 
     def _from_input_or_config(self, key, input_output):
         if self.configuration('allow_input'):
