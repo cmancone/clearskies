@@ -4,7 +4,7 @@ from .cursor_backend import CursorBackend
 from collections import OrderedDict, namedtuple
 class CursorBackendTest(unittest.TestCase):
     def setUp(self):
-        self.model = type('', (), {'table_name': lambda: 'my_table'})
+        self.model = type('', (), {'table_name': lambda: 'my_table', 'id_column_name': 'id'})
         self.cursor = type(
             '', (), {
                 'execute': MagicMock(),
