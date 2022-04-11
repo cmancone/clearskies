@@ -39,7 +39,7 @@ class StandardDependencies(DI):
     def provide_environment(self):
         return Environment(os.getcwd() + '/.env', os.environ, {})
 
-    def provide_connection_no_autocommit(self, environment):
+    def provide_connection_no_autocommit(self, connection_details):
         # I should probably just switch things so that autocommit is *off* by default
         # and only have one of these, but for now I'm being lazy.
         import pymysql
