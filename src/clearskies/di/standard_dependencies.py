@@ -49,6 +49,7 @@ class StandardDependencies(DI):
             host=connection_details['host'],
             database=connection_details['database'],
             port=connection_details.get('port', 3306),
+            ssl_ca=connection_details.get('ssl_ca', None),
             autocommit=False,
             connect_timeout=2,
             cursorclass=pymysql.cursors.DictCursor
@@ -62,6 +63,7 @@ class StandardDependencies(DI):
             host=connection_details['host'],
             database=connection_details['database'],
             port=connection_details.get('port', 3306),
+            ssl_ca=connection_details.get('ssl_ca', None),
             autocommit=True,
             connect_timeout=2,
             cursorclass=pymysql.cursors.DictCursor

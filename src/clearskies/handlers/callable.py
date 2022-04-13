@@ -60,6 +60,7 @@ class Callable(Base):
             self._check_schema(configuration['schema'], configuration.get('writeable_columns'), error_prefix)
 
     def _finalize_configuration(self, configuration):
+        configuration = super()._finalize_configuration(configuration)
         if configuration.get('schema') is not None:
             if validations.is_model(configuration['schema']):
                 configuration['documentation_model_name'] = configuration['schema'].__class__.__name__

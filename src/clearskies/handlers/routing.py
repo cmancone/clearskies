@@ -51,7 +51,7 @@ class Routing(Base):
         for key in configuration.keys():
             if key not in used_configs and key not in self._global_configuration_defaults:
                 class_name = self.__class__.__name__
-                raise KeyError(f"Attempt to set unkown configuration setting '{key}' for handler '{class_name}'")
+                raise KeyError(f"Attempt to set unknown configuration setting '{key}' for handler '{class_name}'")
 
         self._check_configuration(configuration)
         self._configuration = self._finalize_configuration(self.apply_default_configuation(configuration))

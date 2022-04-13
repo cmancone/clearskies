@@ -4,7 +4,7 @@ import socket
 import subprocess
 import os
 import time
-class MySQLConnectionDynamicProducerViaSSHCertBastionAdditionalConfig(clearskies.di.additional_config.AdditionalConfig):
+class MySQLConnectionDynamicProducerViaSSHCertBastion(clearskies.di.additional_config.AdditionalConfig):
     _config = None
 
     def __init__(

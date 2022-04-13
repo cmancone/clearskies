@@ -57,5 +57,5 @@ class RequestMethodRoutingTest(unittest.TestCase):
         with self.assertRaises(KeyError) as context:
             handle.configure({'bob': 'sup', 'authentication': Public()})
         self.assertEquals(
-            "\"Attempt to set unkown configuration setting 'bob' for handler 'Router'\"", str(context.exception)
+            "\"Attempt to set unknown configuration setting 'bob' for handler 'Router'\"", str(context.exception)
         )

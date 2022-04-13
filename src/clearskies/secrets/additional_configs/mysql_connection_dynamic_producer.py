@@ -1,5 +1,5 @@
 import clearskies.di
-class MySQLConnectionDynamicProducerAdditionalConfig(clearskies.di.additional_config.AdditionalConfig):
+class MySQLConnectionDynamicProducer(clearskies.di.additional_config.AdditionalConfig):
     _producer_name = None
     _database_host = None
     _database_name = None

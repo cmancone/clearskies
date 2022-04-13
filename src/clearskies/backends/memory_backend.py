@@ -93,7 +93,7 @@ class MemoryTable:
                 )
         if self.id_column_name not in data:
             raise ValueError(
-                "An '{self.id_column_name}' key with a unique value is required when working with the memory backend, " + \
+                f"An '{self.id_column_name}' key with a unique value is required when working with the memory backend, " + \
                 "but I was asked to create a record without one"
             )
         if data[self.id_column_name] in self._id_index and self._rows[self._id_index[data[self.id_column_name]]

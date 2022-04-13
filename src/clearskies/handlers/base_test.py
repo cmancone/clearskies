@@ -60,7 +60,7 @@ class BaseTest(unittest.TestCase):
         with self.assertRaises(KeyError) as context:
             handle.configure({'whatev': 'hey', 'authentication': public()})
         self.assertEquals(
-            "\"Attempt to set unkown configuration setting 'whatev' for handler 'Handle'\"", str(context.exception)
+            "\"Attempt to set unknown configuration setting 'whatev' for handler 'Handle'\"", str(context.exception)
         )
 
     def test_success(self):
