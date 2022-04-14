@@ -34,6 +34,7 @@ class MemoryTable:
     null = None
     _id_index = None
     id_column_name = None
+    _next_id = None
 
     # here be dragons.  This is not a 100% drop-in replacement for the equivalent SQL operators
     # https://codereview.stackexchange.com/questions/259198/in-memory-table-filtering-in-python
@@ -59,6 +60,7 @@ class MemoryTable:
         self._rows = []
         self._id_index = {}
         self.id_column_name = model.id_column_name
+        self._next_id = 1
 
         self._table_name = model.table_name()
         self._column_names.extend(model.columns_configuration().keys())
@@ -91,13 +93,18 @@ class MemoryTable:
                 raise ValueError(
                     f"Cannot create record: column '{column_name}' does not exist in table '{self._table_name}'"
                 )
-        if self.id_column_name not in data:
-            raise ValueError(
-                f"An '{self.id_column_name}' key with a unique value is required when working with the memory backend, " + \
-                "but I was asked to create a record without one"
-            )
-        if data[self.id_column_name] in self._id_index and self._rows[self._id_index[data[self.id_column_name]]
-                                                                      ] is not None:
+        incoming_id = data.get(self.id_column_name)
+        if not incoming_id:
+            incoming_id = self._next_id
+            data[self.id_column_name] = incoming_id
+            self._next_id += 1
+        try:
+            incoming_as_int = int(incoming_as_int)
+            if incoming_as_int >= self._next_id:
+                self._next_id = incoming_as_int + 1
+        except:
+            pass
+        if incoming_id in self._id_index and self._rows[self._id_index[data[self.id_column_name]]] is not None:
             return self.update(data[self.id_column_name], data)
         for column_name in self._column_names:
             if column_name not in data:
