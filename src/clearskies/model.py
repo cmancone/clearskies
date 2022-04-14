@@ -126,7 +126,7 @@ class Model(Models):
         to_save = self.columns_to_backend(data, columns)
         to_save = self.to_backend(to_save, columns)
         if self.exists:
-            new_data = self._backend.update(self.id, to_save, self)
+            new_data = self._backend.update(self._data[self.id_column_name], to_save, self)
         else:
             new_data = self._backend.create(to_save, self)
         id = columns[self.id_column_name].from_backend(new_data[self.id_column_name])
@@ -188,7 +188,7 @@ class Model(Models):
         self.columns_pre_delete(columns)
         self.pre_delete()
 
-        self._backend.delete(self.id, self)
+        self._backend.delete(self._data[self.id_column_name], self)
 
         self.columns_post_delete(columns)
         self.post_delete()
