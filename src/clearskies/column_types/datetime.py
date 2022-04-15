@@ -9,14 +9,13 @@ class DateTime(Column):
         if value == None:
             date = datetime.strptime('1970-01-01', '%Y-%m-%d')
         elif type(value) == str:
-            date = datetime.strptime(value,
-                                     '%Y-%m-%d %H:%M:%S') if value else datetime.strptime('1970-01-01', '%Y-%m-%d')
+            date = dateparser.parse(value) if value else datetime.strptime('1970-01-01', '%Y-%m-%d')
         else:
             date = value
         return date.replace(tzinfo=timezone.utc)
 
     def to_backend(self, data):
-        if not self.name in data or type(data[self.name]) == str:
+        if not self.name in data or type(data[self.name]) == str or data[self.name] == None:
             return data
 
         # hopefully this is a Python datetime object in UTC timezone...
