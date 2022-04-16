@@ -86,6 +86,9 @@ class StandardDependencies(DI):
     def provide_memory_backend(self):
         return MemoryBackend()
 
+    def provide_secrets_backend(self, secrets):
+        return SecretsBackend(secrets)
+
     def provide_now(self):
         import datetime
         return datetime.datetime.now()
