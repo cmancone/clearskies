@@ -1,7 +1,7 @@
 from .di import DI
 from ..columns import Columns
 from ..environment import Environment
-from ..backends import CursorBackend, MemoryBackend
+from ..backends import CursorBackend, MemoryBackend, SecretsBackend
 from .. import autodoc
 import os
 import uuid
