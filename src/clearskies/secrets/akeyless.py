@@ -90,6 +90,21 @@ class AKeyless:
         )
         return res
 
+    def list_secrets(self, path):
+        self._configure_guard()
+        res = self._api.list_items(self._akeyless.ListItems(path=path, token=self._get_token()))
+        if not res.items:
+            return []
+
+        return [item.item_name for item in res.items]
+
+    def update(self, path, value):
+        self._configure_guard()
+        res = self._api.update_secret_val(
+            self._akeyless.UpdateSecretVal(name=path, value=str(value), token=self._get_token())
+        )
+        return True
+
     def get_ssh_certificate(self, cert_issuer, cert_username, path_to_public_file):
         self._configure_guard()
 
