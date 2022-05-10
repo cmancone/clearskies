@@ -83,7 +83,7 @@ class Environment:
         return (key, value)
 
     def resolve_value(self, value):
-        if value[:9] != 'secret://':
+        if type(value) != str or value[:9] != 'secret://':
             return value
 
         secret_path = value[9:]

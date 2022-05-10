@@ -8,7 +8,8 @@ class EnvironmentTest(unittest.TestCase):
         self.environment = Environment(
             '%s/environment_test_file' % os.getcwd(), {
                 'env_in_environment': 'yup',
-                'also': 'secret:///another/secret/path'
+                'also': 'secret:///another/secret/path',
+                'an_integer': 5,
             }, self.secrets
         )
 
@@ -25,3 +26,6 @@ class EnvironmentTest(unittest.TestCase):
     def test_get_from_file_resolve_secret(self):
         self.assertEquals('my_secret', self.environment.get('to_secrets'))
         self.secrets.get.assert_called_with('/path/to/secret')
+
+    def test_no_crash_for_ints(self):
+        self.assertEquals(5, self.environment.get('an_integer'))
