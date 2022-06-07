@@ -149,7 +149,7 @@ class ApiBackend(Backend):
         data = {
             'where': list(map(lambda where: self._where_for_post(where), configuration['wheres'])),
             'sort': configuration['sorts'],
-            'start': configuration['pagination']['start'],
+            'start': configuration['pagination'].get('start', 0),
             'limit': configuration['limit'],
         }
         return {key: value for (key, value) in data.items() if value}
