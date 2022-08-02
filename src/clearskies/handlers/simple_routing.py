@@ -66,8 +66,10 @@ class SimpleRouting(Base):
 
     def _finalize_configuration(self, configuration):
         configuration = super()._finalize_configuration(configuration)
-        if 'schema_route' in configuration:
-            configuration['schema_route'] = configuration['schema_route'].strip('/')
+        if configuration.get('schema_route'):
+            base_url = configuration.get('base_url')
+            configuration['schema_route'] = (base_url.strip('/') + '/' +
+                                             configuration['schema_route'].strip('/')).strip('/')
         if configuration.get('schema_authentication') is not None:
             configuration['schema_authentication'] = self._di.build(configuration['schema_authentication'])
         return configuration
