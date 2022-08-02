@@ -5,6 +5,7 @@ from .crud_by_method import CRUDByMethod
 from .database_connector import DatabaseConnector
 from .delete import Delete
 from .get import Get
+from .health_check import HealthCheck
 from .list import List
 from .mygrations import Mygrations
 from .request_method_routing import RequestMethodRouting
