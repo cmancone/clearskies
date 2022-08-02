@@ -170,3 +170,27 @@ class UsersApiTest(unittest.TestCase):
             ]), response['data'][1]
         )
         self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
+
+    def test_list_users_v1(self):
+        result = self.api(url='/v1/users')
+        status_code = result[1]
+        response = result[0]
+        self.assertEquals(200, status_code)
+        self.assertEquals(2, len(response['data']))
+
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_active.id),
+                ('status_id', self.active_status.id),
+                ('name', 'Conor Active'),
+            ]), response['data'][0]
+        )
+        self.assertEquals(
+            OrderedDict([
+                ('id', self.conor_pending.id),
+                ('status_id', self.pending_status.id),
+                ('name', 'Conor Pending'),
+            ]), response['data'][1]
+        )
+        self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
+        self.assertEquals('success', response['status'])

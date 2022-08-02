@@ -8,7 +8,7 @@ from ..models import Models
 from ..column_types import string, integer
 from .list import List
 from .simple_routing import SimpleRouting
-from ..authentication import public
+from ..authentication import public, secret_bearer
 from ..di import StandardDependencies
 class User(Model):
     def __init__(self, cursor_backend, columns):
@@ -65,6 +65,10 @@ class SimpleRoutingTest(unittest.TestCase):
         self.handler.configure({
             'authentication':
             public(),
+            'schema_route':
+            'schema',
+            'schema_authentication':
+            secret_bearer(secret='asdfer'),
             'routes': [
                 {
                     'methods': 'SECRET',
@@ -163,7 +167,7 @@ class SimpleRoutingTest(unittest.TestCase):
         }, result[0])
 
     def test_routing_secret(self):
-        self.input_output.set_request_url('/users/')
+        self.input_output.set_request_url('')
         self.input_output.set_request_method('secret')
         result = self.handler(self.input_output)
 
@@ -193,7 +197,20 @@ class SimpleRoutingTest(unittest.TestCase):
             'input_errors': {},
         }, result[0])
 
+    def test_schema_authentication(self):
+        self.input_output.set_request_url('schema')
+        result = self.handler(self.input_output)
+
+        self.assertEquals(401, result[1])
+        self.assertEquals({
+            'status': 'client_error',
+            'data': [],
+            'pagination': {},
+            'error': 'Not Authenticated',
+            'input_errors': {},
+        }, result[0])
+
     def test_documentation(self):
         docs = self.handler.documentation()
-        self.assertEquals(['', '/users/', '/statuses/'], [doc.relative_path for doc in docs])
+        self.assertEquals(['/', '/users/', '/statuses/'], [doc.relative_path for doc in docs])
         self.assertEquals(['SECRET', 'GET', 'GET'], [doc.request_methods[0] for doc in docs])

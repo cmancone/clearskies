@@ -42,15 +42,13 @@ class SimpleRoutingRoute:
     def __call__(self, input_output):
         return self._handler(input_output)
 
-    def documentation(self, base_url):
+    def documentation(self):
         docs = []
         for doc in self._handler.documentation():
             if self._path is not None:
                 doc.prepend_relative_path(self._path)
             if self._methods is not None:
                 doc.set_request_methods(self._methods)
-            if base_url:
-                doc.prepend_relative_path(base_url)
             docs.append(doc)
         return docs
 

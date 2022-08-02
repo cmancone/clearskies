@@ -1,0 +1,2 @@
+class Authorization(Exception):
+    pass

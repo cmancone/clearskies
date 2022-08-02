@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from .exceptions import ClientError, InputError
+from . import exceptions
 from collections import OrderedDict
 import inspect
 import re
@@ -86,6 +86,10 @@ class Base(ABC):
                 f"Configuration error for handler '{self.__class__.__name__}': external_casing and internal_casing" + \
                 " must be specified together, but only one was found"
             )
+        if 'base_url' in configuration and configuration['base_url'] != None and type(configuration['base_url']) != str:
+            raise ValueError(
+                f"Configuration error for handler '{self.__class__.__name__}': if provided, base_url must be a string"
+            )
 
     def apply_default_configuation(self, configuration):
         return {
@@ -104,31 +108,43 @@ class Base(ABC):
 
     def _finalize_configuration(self, configuration):
         configuration['authentication'] = self._di.build(configuration['authentication'])
+        if configuration.get('base_url') is None:
+            configuration['base_url'] = ''
         return configuration
+
+    def top_level_authentication_and_authorization(self, input_output, authentication=None):
+        if authentication is None:
+            authentication = self._configuration.get('authentication')
+        if not authentication:
+            return
+        try:
+            if not authentication.authenticate(input_output):
+                raise exceptions.Authentication('Not Authenticated')
+        except exceptions.ClientError as client_error:
+            raise exceptions.Authentication(str(client_error))
+        authorization = self._configuration.get('authorization')
+        if authorization:
+            try:
+                if not authentication.authorize(authorization):
+                    raise exceptions.Authorization('Not Authorized')
+            except exceptions.ClientError as client_error:
+                raise exception.Authorization(str(client_error))
 
     def __call__(self, input_output):
         if self._configuration is None:
             raise ValueError("Must configure handler before calling")
-        authentication = self._configuration.get('authentication')
-        if authentication:
-            try:
-                if not authentication.authenticate(input_output):
-                    return self.error(input_output, 'Not Authenticated', 401)
-            except ClientError as client_error:
-                return self.error(input_output, str(client_error), 401)
-            authorization = self._configuration.get('authorization')
-            if authorization:
-                try:
-                    if not authentication.authorize(authorization):
-                        return self.error(input_output, 'Not Authorized', 403)
-                except ClientError as client_error:
-                    return self.error(input_output, str(client_error), 403)
+        try:
+            self.top_level_authentication_and_authorization(input_output)
+        except exceptions.Authentication as auth_error:
+            return self.error(input_output, str(auth_error), 401)
+        except exceptions.Authorization as auth_error:
+            return self.error(input_output, str(auth_error), 403)
 
         try:
             response = self.handle(input_output)
-        except ClientError as client_error:
+        except exceptions.ClientError as client_error:
             return self.error(input_output, str(client_error), 400)
-        except InputError as input_error:
+        except exceptions.InputError as input_error:
             return self.input_errors(input_output, input_error.errors)
 
         return response

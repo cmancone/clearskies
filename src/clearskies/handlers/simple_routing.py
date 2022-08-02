@@ -12,10 +12,21 @@ class SimpleRouting(Base):
         'schema_route': '',
         'schema_configuration': {},
         'schema_format': autodoc.formats.oai3_json.OAI3JSON,
+        'schema_authentication': None
     }
 
     def __init__(self, di):
         super().__init__(di)
+
+    def top_level_authentication_and_authorization(self, input_output, authentication=None):
+        # Check for separate authentication on the schema route
+        schema_authentication = self.configuration('schema_authentication')
+        if schema_authentication:
+            request_method = input_output.get_request_method()
+            full_path = input_output.get_full_path().strip('/')
+            if self.configuration('schema_route') and self.configuration('schema_route') == full_path:
+                return super().top_level_authentication_and_authorization(input_output, schema_authentication)
+        return super().top_level_authentication_and_authorization(input_output)
 
     def handle(self, input_output):
         request_method = input_output.get_request_method()
@@ -46,8 +57,10 @@ class SimpleRouting(Base):
             )
 
         # we're actually going to build our routes, which will implicitly check the configuration too
+        base_url = configuration.get('base_url')
         self._build_routes(
             configuration['routes'],
+            base_url if base_url else '/',
             authentication=configuration.get('authentication'),
         )
 
@@ -55,11 +68,18 @@ class SimpleRouting(Base):
         configuration = super()._finalize_configuration(configuration)
         if 'schema_route' in configuration:
             configuration['schema_route'] = configuration['schema_route'].strip('/')
+        if configuration.get('schema_authentication') is not None:
+            configuration['schema_authentication'] = self._di.build(configuration['schema_authentication'])
         return configuration
 
-    def _build_routes(self, routes, authentication=None):
+    def _build_routes(self, routes, base_url, authentication=None):
         self._routes = []
+        if base_url is None:
+            base_url = ''
         for (i, route_config) in enumerate(routes):
+            path = route_config.get('path')
+            if path is None:
+                path = ''
             if route_config.get('application'):
                 application = route_config.get('application')
                 if not hasattr(application, 'handler_config') or not hasattr(application, 'handler_class'):
@@ -80,7 +100,7 @@ class SimpleRouting(Base):
             route.configure(
                 route_config['handler_class'],
                 route_config['handler_config'],
-                path=route_config.get('path'),
+                path=base_url.rstrip('/') + '/' + path.lstrip('/'),
                 methods=route_config.get('methods'),
                 authentication=authentication,
             )
@@ -90,7 +110,7 @@ class SimpleRouting(Base):
         base_url = self.configuration('base_url')
         docs = []
         for route in self._routes:
-            docs.extend(route.documentation(base_url))
+            docs.extend(route.documentation())
         return docs
 
     def documentation_models(self):
