@@ -177,6 +177,10 @@ class Write(Base):
             if getattr(authentication, 'can_authorize', False):
                 standard_error_responses.append(self.documentation_unauthorized_response())
 
+        url = self.configuration('base_url')
+        if include_id_in_path:
+            url = url.rstrip('/') + '/{id}'
+
         return [
             autodoc.request.Request(
                 description,
@@ -192,11 +196,12 @@ class Write(Base):
                     *standard_error_responses,
                     self.documentation_not_found(),
                 ],
-                relative_path='{id}' if include_id_in_path else '',
+                relative_path=url,
                 parameters=[
-                    *self.configuration('authentication').documentation_request_parameters(),
+                    *authentication.documentation_request_parameters(),
                     *self.documentation_write_parameters(nice_model),
                 ],
+                root_properties=authentication.documentation_request_root_properites(),
             )
         ]
 

@@ -4,13 +4,17 @@ class Request:
     request_methods = None
     parameters = None
     responses = None
+    root_properties = None
 
-    def __init__(self, description, responses, relative_path='', request_methods='GET', parameters=None):
+    def __init__(
+        self, description, responses, relative_path='', request_methods='GET', parameters=None, root_properties=None
+    ):
         self.description = description
         self.responses = responses
         self.relative_path = relative_path.lstrip('/')
         self.request_methods = [request_methods] if type(request_methods) == str else request_methods
         self.set_parameters(parameters)
+        self.root_properties = root_properties if root_properties is not None else {}
 
     def set_request_methods(self, request_methods):
         self.request_methods = [request_methods] if type(request_methods) == str else request_methods

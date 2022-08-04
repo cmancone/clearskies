@@ -92,10 +92,17 @@ class Auth0JWKS:
         return True
 
     def documentation_request_parameters(self):
-        return [
-            autodoc.request.Header(
-                autodoc.schema.String('Authorization', example='Bearer [JWT_HERE]'),
-                description="The Auth0 JWT provided via a standard 'Authorization: Bearer [JWT]' header",
-                required=True,
-            )
-        ]
+        return []
+
+    def documentation_request_root_properites(self):
+        return {
+            "securityDefinitions": {
+                "auth0": {
+                    "authorizationUrl": f"https://{self._auth0_domain}/authorize",
+                    "description": "Authentication with Auth0",
+                    "flow": "implicit",
+                    "scopes": {},
+                    "type": "oauth2"
+                }
+            }
+        }

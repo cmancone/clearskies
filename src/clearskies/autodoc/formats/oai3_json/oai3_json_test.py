@@ -36,32 +36,48 @@ class SimpleRoutingTest(unittest.TestCase):
         self.handler.configure({
             'authentication':
             public(),
-            'routes': [
-                {
-                    'path': '/users/',
-                    'handler_class': RestfulAPI,
-                    'handler_config': {
-                        'model_class': User,
-                        'readable_columns': ['name', 'age'],
-                        'writeable_columns': ['name', 'age'],
-                        'searchable_columns': ['name'],
-                        'sortable_columns': ['name', 'age'],
-                        'default_sort_column': 'name',
-                    },
+            'routes': [{
+                'path': '/users/',
+                'handler_class': RestfulAPI,
+                'handler_config': {
+                    'model_class': User,
+                    'readable_columns': ['name', 'age'],
+                    'writeable_columns': ['name', 'age'],
+                    'searchable_columns': ['name'],
+                    'sortable_columns': ['name', 'age'],
+                    'default_sort_column': 'name',
                 },
-                {
-                    'path': '/statuses/',
-                    'handler_class': RestfulAPI,
-                    'handler_config': {
-                        'read_only': True,
-                        'model_class': Status,
-                        'readable_columns': ['name'],
-                        'searchable_columns': ['name'],
-                        'sortable_columns': ['name'],
-                        'default_sort_column': 'name',
-                    },
+            }, {
+                'path': '/statuses/',
+                'handler_class': RestfulAPI,
+                'handler_config': {
+                    'read_only': True,
+                    'model_class': Status,
+                    'readable_columns': ['name'],
+                    'searchable_columns': ['name'],
+                    'sortable_columns': ['name'],
+                    'default_sort_column': 'name',
                 },
-            ],
+            }, {
+                'path': '/v1/',
+                'handler_class': SimpleRouting,
+                'handler_config': {
+                    'routes': [
+                        {
+                            'path': 'statuses',
+                            'handler_class': RestfulAPI,
+                            'handler_config': {
+                                'read_only': True,
+                                'model_class': Status,
+                                'readable_columns': ['name'],
+                                'searchable_columns': ['name'],
+                                'sortable_columns': ['name'],
+                                'default_sort_column': 'name',
+                            },
+                        },
+                    ]
+                }
+            }],
         })
 
     def test_full_json_conversion(self):

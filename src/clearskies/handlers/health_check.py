@@ -51,5 +51,6 @@ class HealthCheck(Base):
                 [
                     self.documentation_success_response(autodoc.schema.Object('data', children=[]), ),
                 ],
+                relative_path=self.configuration('base_url'),
             )
         ]

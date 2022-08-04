@@ -17,7 +17,7 @@ class SimpleRoutingRoute:
         self._handler.configure({
             **handler_config,
             **{
-                'base_url': ('/' + path.strip('/')) if path is not None else '',
+                'base_url': ('/' + path.strip('/')) if path is not None else '/',
             },
         })
 
@@ -45,8 +45,6 @@ class SimpleRoutingRoute:
     def documentation(self):
         docs = []
         for doc in self._handler.documentation():
-            if self._path is not None:
-                doc.prepend_relative_path(self._path)
             if self._methods is not None:
                 doc.set_request_methods(self._methods)
             docs.append(doc)

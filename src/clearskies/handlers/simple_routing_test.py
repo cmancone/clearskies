@@ -212,5 +212,5 @@ class SimpleRoutingTest(unittest.TestCase):
 
     def test_documentation(self):
         docs = self.handler.documentation()
-        self.assertEquals(['/', '/users/', '/statuses/'], [doc.relative_path for doc in docs])
+        self.assertEquals(['', 'users', 'statuses'], [doc.relative_path for doc in docs])
         self.assertEquals(['SECRET', 'GET', 'GET'], [doc.request_methods[0] for doc in docs])

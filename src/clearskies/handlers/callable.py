@@ -237,9 +237,11 @@ class Callable(Base):
                     *standard_error_responses,
                     self.documentation_not_found(),
                 ],
+                relative_path=self.configuration('base_url'),
                 parameters=[
-                    *self.configuration('authentication').documentation_request_parameters(),
+                    *authentication.documentation_request_parameters(),
                     *parameters,
                 ],
+                root_properties=authentication.documentation_request_root_properites(),
             )
         ]

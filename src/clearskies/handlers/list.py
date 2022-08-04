@@ -321,8 +321,10 @@ class List(Base):
                     *standard_error_responses,
                     self.documentation_generic_error_response(),
                 ],
+                relative_path=self.configuration('base_url'),
                 request_methods=self.expected_request_methods,
                 parameters=self.documentation_request_parameters(),
+                root_properties=authentication.documentation_request_root_properites(),
             )
         ]
 

@@ -109,7 +109,6 @@ class SimpleRouting(Base):
             self._routes.append(route)
 
     def documentation(self):
-        base_url = self.configuration('base_url')
         docs = []
         for route in self._routes:
             docs.extend(route.documentation())

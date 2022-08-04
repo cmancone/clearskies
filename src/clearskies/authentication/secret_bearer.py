@@ -44,3 +44,6 @@ class SecretBearer:
                 required=True
             )
         ]
+
+    def documentation_request_root_properites(self):
+        return {}

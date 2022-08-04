@@ -109,7 +109,9 @@ class Base(ABC):
     def _finalize_configuration(self, configuration):
         configuration['authentication'] = self._di.build(configuration['authentication'])
         if configuration.get('base_url') is None:
-            configuration['base_url'] = ''
+            configuration['base_url'] = '/'
+        if not configuration['base_url'] or configuration['base_url'][0] != '/':
+            configuration['base_url'] = '/' + configuration['base_url']
         return configuration
 
     def top_level_authentication_and_authorization(self, input_output, authentication=None):

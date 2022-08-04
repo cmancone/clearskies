@@ -40,16 +40,15 @@ class OAI3JSON:
     def convert(self):
         paths = {}
         for request in self.formatted:
-            if request.relative_path not in paths:
-                paths[request.relative_path] = {}
+            absolute_path = '/' + request.relative_path.lstrip('/')
+            if absolute_path not in paths:
+                paths[absolute_path] = {}
 
             path_data = request.convert()
             for (request_method, path_doc) in path_data.items():
-                if request_method in paths[request.relative_path]:
-                    raise ValueError(
-                        f"Two routes had the same path and method: {request.relative_path} - {request_method}"
-                    )
-                paths[request.relative_path][request_method] = path_doc
+                if request_method in paths[absolute_path]:
+                    raise ValueError(f"Two routes had the same path and method: {absolute_path} - {request_method}")
+                paths[absolute_path][request_method] = path_doc
 
         data = {
             'openapi': '3.0.0',

@@ -17,3 +17,6 @@ class Public:
 
     def documentation_request_parameters(self):
         return []
+
+    def documentation_request_root_properites(self):
+        return {}
