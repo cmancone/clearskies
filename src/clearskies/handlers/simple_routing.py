@@ -1,4 +1,4 @@
-from .routing import Base
+from .base import Base
 from abc import abstractmethod
 from .simple_routing_route import SimpleRoutingRoute
 from .. import autodoc
