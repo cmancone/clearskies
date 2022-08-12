@@ -24,6 +24,10 @@ class Request:
         self.relative_path = path.rstrip('/') + '/' + self.relative_path.lstrip('/')
         return self
 
+    def append_relative_path(self, path):
+        self.relative_path = self.relative_path.rstrip('/') + '/' + path.lstrip('/')
+        return self
+
     def set_parameters(self, parameters=None):
         self.parameters = parameters if parameters else []
 

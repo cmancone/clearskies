@@ -35,553 +35,6 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/search/statuses": {
-      "post": {
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "limit": {
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  "sort": {
-                    "items": {
-                      "properties": {
-                        "column": {
-                          "enum": [
-                            "name",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "direction": {
-                          "enum": [
-                            "asc",
-                            "desc",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "start": {
-                    "example": 10,
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  "where": {
-                    "items": {
-                      "properties": {
-                        "column": {
-                          "enum": [
-                            "name",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "operator": {
-                          "enum": [
-                            "<=>",
-                            "!=",
-                            "<=",
-                            ">=",
-                            ">",
-                            "<",
-                            "=",
-                            "in",
-                            "is not null",
-                            "is null",
-                            "is not",
-                            "is",
-                            "like",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "value": {
-                          "example": "Jane",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          "description": "Fetch the list of current status records",
-          "required": false
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/status",
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "error": {
-                      "type": "string"
-                    },
-                    "input_errors": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "status": {
-                      "example": "success",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "The matching status records"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "error": {
-                      "example": "User readable error message",
-                      "type": "string"
-                    },
-                    "input_errors": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "pagination": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "status": {
-                      "example": "error",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Invalid Call"
-          }
-        },
-        "summary": "Fetch the list of current status records"
-      }
-    },
-    "/search/users": {
-      "post": {
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "limit": {
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  "sort": {
-                    "items": {
-                      "properties": {
-                        "column": {
-                          "enum": [
-                            "name",
-                            "age",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "direction": {
-                          "enum": [
-                            "asc",
-                            "desc",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "start": {
-                    "example": 10,
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  "where": {
-                    "items": {
-                      "properties": {
-                        "column": {
-                          "enum": [
-                            "name",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "operator": {
-                          "enum": [
-                            "<=>",
-                            "!=",
-                            "<=",
-                            ">=",
-                            ">",
-                            "<",
-                            "=",
-                            "in",
-                            "is not null",
-                            "is null",
-                            "is not",
-                            "is",
-                            "like",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "value": {
-                          "example": "Jane",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          "description": "Fetch the list of current user records",
-          "required": false
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/user",
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "error": {
-                      "type": "string"
-                    },
-                    "input_errors": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "status": {
-                      "example": "success",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "The matching user records"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "error": {
-                      "example": "User readable error message",
-                      "type": "string"
-                    },
-                    "input_errors": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "pagination": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "status": {
-                      "example": "error",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Invalid Call"
-          }
-        },
-        "summary": "Fetch the list of current user records"
-      }
-    },
-    "/search/v1/statuses": {
-      "post": {
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "limit": {
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  "sort": {
-                    "items": {
-                      "properties": {
-                        "column": {
-                          "enum": [
-                            "name",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "direction": {
-                          "enum": [
-                            "asc",
-                            "desc",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  "start": {
-                    "example": 10,
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  "where": {
-                    "items": {
-                      "properties": {
-                        "column": {
-                          "enum": [
-                            "name",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "operator": {
-                          "enum": [
-                            "<=>",
-                            "!=",
-                            "<=",
-                            ">=",
-                            ">",
-                            "<",
-                            "=",
-                            "in",
-                            "is not null",
-                            "is null",
-                            "is not",
-                            "is",
-                            "like",
-                            null
-                          ],
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "value": {
-                          "example": "Jane",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          "description": "Fetch the list of current status records",
-          "required": false
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/status",
-                        "type": "object"
-                      },
-                      "type": "array"
-                    },
-                    "error": {
-                      "type": "string"
-                    },
-                    "input_errors": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "pagination": {
-                      "properties": {
-                        "limit": {
-                          "example": 100,
-                          "format": "int32",
-                          "type": "integer"
-                        },
-                        "next_page": {
-                          "properties": {
-                            "start": {
-                              "example": 10,
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          },
-                          "type": "object"
-                        },
-                        "number_results": {
-                          "example": 10,
-                          "format": "int32",
-                          "type": "integer"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "status": {
-                      "example": "success",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "The matching status records"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "error": {
-                      "example": "User readable error message",
-                      "type": "string"
-                    },
-                    "input_errors": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "pagination": {
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "status": {
-                      "example": "error",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Invalid Call"
-          }
-        },
-        "summary": "Fetch the list of current status records"
-      }
-    },
     "/statuses": {
       "get": {
         "parameters": [
@@ -636,6 +89,188 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/status",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {
+                        "limit": {
+                          "example": 100,
+                          "format": "int32",
+                          "type": "integer"
+                        },
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "number_results": {
+                          "example": 10,
+                          "format": "int32",
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "success",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The matching status records"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid Call"
+          }
+        },
+        "summary": "Fetch the list of current status records"
+      }
+    },
+    "/statuses/search": {
+      "post": {
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "limit": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "sort": {
+                    "items": {
+                      "properties": {
+                        "column": {
+                          "enum": [
+                            "name",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "direction": {
+                          "enum": [
+                            "asc",
+                            "desc",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "start": {
+                    "example": 10,
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "where": {
+                    "items": {
+                      "properties": {
+                        "column": {
+                          "enum": [
+                            "name",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "operator": {
+                          "enum": [
+                            "<=>",
+                            "!=",
+                            "<=",
+                            ">=",
+                            ">",
+                            "<",
+                            "=",
+                            "in",
+                            "is not null",
+                            "is null",
+                            "is not",
+                            "is",
+                            "like",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "value": {
+                          "example": "Jane",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "description": "Fetch the list of current status records",
+          "required": false
+        },
         "responses": {
           "200": {
             "content": {
@@ -1051,6 +686,189 @@
         "summary": "Create a new user"
       }
     },
+    "/users/search": {
+      "post": {
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "limit": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "sort": {
+                    "items": {
+                      "properties": {
+                        "column": {
+                          "enum": [
+                            "name",
+                            "age",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "direction": {
+                          "enum": [
+                            "asc",
+                            "desc",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "start": {
+                    "example": 10,
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "where": {
+                    "items": {
+                      "properties": {
+                        "column": {
+                          "enum": [
+                            "name",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "operator": {
+                          "enum": [
+                            "<=>",
+                            "!=",
+                            "<=",
+                            ">=",
+                            ">",
+                            "<",
+                            "=",
+                            "in",
+                            "is not null",
+                            "is null",
+                            "is not",
+                            "is",
+                            "like",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "value": {
+                          "example": "Jane",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "description": "Fetch the list of current user records",
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/user",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {
+                        "limit": {
+                          "example": 100,
+                          "format": "int32",
+                          "type": "integer"
+                        },
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "number_results": {
+                          "example": 10,
+                          "format": "int32",
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "success",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The matching user records"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid Call"
+          }
+        },
+        "summary": "Fetch the list of current user records"
+      }
+    },
     "/users/{id}": {
       "delete": {
         "parameters": [
@@ -1372,6 +1190,188 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/status",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {
+                        "limit": {
+                          "example": 100,
+                          "format": "int32",
+                          "type": "integer"
+                        },
+                        "next_page": {
+                          "properties": {
+                            "start": {
+                              "example": 10,
+                              "format": "int32",
+                              "type": "integer"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "number_results": {
+                          "example": 10,
+                          "format": "int32",
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "success",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The matching status records"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Invalid Call"
+          }
+        },
+        "summary": "Fetch the list of current status records"
+      }
+    },
+    "/v1/statuses/search": {
+      "post": {
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "limit": {
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "sort": {
+                    "items": {
+                      "properties": {
+                        "column": {
+                          "enum": [
+                            "name",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "direction": {
+                          "enum": [
+                            "asc",
+                            "desc",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "start": {
+                    "example": 10,
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  "where": {
+                    "items": {
+                      "properties": {
+                        "column": {
+                          "enum": [
+                            "name",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "operator": {
+                          "enum": [
+                            "<=>",
+                            "!=",
+                            "<=",
+                            ">=",
+                            ">",
+                            "<",
+                            "=",
+                            "in",
+                            "is not null",
+                            "is null",
+                            "is not",
+                            "is",
+                            "like",
+                            null
+                          ],
+                          "nullable": true,
+                          "type": "string"
+                        },
+                        "value": {
+                          "example": "Jane",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "description": "Fetch the list of current status records",
+          "required": false
+        },
         "responses": {
           "200": {
             "content": {

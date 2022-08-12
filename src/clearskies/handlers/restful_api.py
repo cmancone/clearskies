@@ -140,7 +140,7 @@ class RestfulAPI(Routing):
                 doc.set_request_methods([self.configuration(f'{name}_request_method')])
 
                 if name == 'search':
-                    doc.prepend_relative_path('search')
+                    doc.append_relative_path('search')
 
                 # the restful API adjusts the routing behavior of delete and update, so we want to clobber
                 # the parameters
