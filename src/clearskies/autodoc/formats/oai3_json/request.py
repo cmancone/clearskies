@@ -38,6 +38,9 @@ class Request:
                               for response in self.formatted_responses},
             }
 
+            if self.request.root_properties:
+                data[request_method.lower()] = {**data[request_method.lower()], **self.request.root_properties}
+
             if self.json_body_parameters:
                 # For OAI3, there should only be one JSON body root parameter, so it should either be an
                 # object or an array.  If we have more than one JSON body parameter then wrap it in an object
