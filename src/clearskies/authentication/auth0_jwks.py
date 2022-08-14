@@ -14,18 +14,20 @@ class Auth0JWKS:
     _algorithms = None
     _audience = None
     _jwt_claims = None
+    _documentation_security_name = None
 
     def __init__(self, environment, requests, jose_jwt):
         self._environment = environment
         self._requests = requests
         self._jose_jwt = jose_jwt
 
-    def configure(self, audience=None, auth0_domain=None, algorithms=None):
+    def configure(self, audience=None, auth0_domain=None, algorithms=None, documentation_security_name=None):
         if auth0_domain:
             self._auth0_domain = auth0_domain
         if audience:
             self._audience = audience
         self._algorithms = ["RS256"] if algorithms is None else algorithms
+        self._documentation_security_name = documentation_security_name
 
     def headers(self, retry_auth=False):
         raise NotImplemented()
@@ -91,18 +93,23 @@ class Auth0JWKS:
                 return False
         return True
 
-    def documentation_request_parameters(self):
-        return []
-
-    def documentation_request_root_properites(self):
+    def documentation_security_scheme(self):
         return {
-            "securityDefinitions": {
-                "auth0": {
+            "type": "oauth2",
+            "description": "Authentication with Auth0",
+            "name": "authorization",
+            "in": "header",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "flows": {
+                "implicit": {
                     "authorizationUrl": f"https://{self._auth0_domain}/authorize",
-                    "description": "Authentication with Auth0",
-                    "flow": "implicit",
-                    "scopes": {},
-                    "type": "oauth2"
+                    "scopes": {}
                 }
             }
         }
+
+    def documentation_security_scheme_name(self):
+        return self._documentation_security_name if self._documentation_security_name is not None else self._auth0_domain.split(
+            '.'
+        )[0]

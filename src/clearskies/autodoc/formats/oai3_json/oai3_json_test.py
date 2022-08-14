@@ -4,7 +4,7 @@ from ....model import Model
 from ....models import Models
 from ....column_types import string, integer
 from ....handlers import SimpleRouting, RestfulAPI
-from ....authentication import public
+from ....authentication import secret_bearer
 from ....di import StandardDependencies
 from ....backends import MemoryBackend
 from .oai3_json import OAI3JSON
@@ -35,7 +35,7 @@ class SimpleRoutingTest(unittest.TestCase):
         self.handler = SimpleRouting(self.di)
         self.handler.configure({
             'authentication':
-            public(),
+            secret_bearer(secret='asdfer'),
             'routes': [{
                 'path': '/users/',
                 'handler_class': RestfulAPI,
@@ -83,7 +83,7 @@ class SimpleRoutingTest(unittest.TestCase):
     def test_full_json_conversion(self):
         oai3_json = self.di.build(OAI3JSON)
         oai3_json.set_requests(self.handler.documentation())
-        oai3_json.set_models(self.handler.documentation_models())
+        oai3_json.set_components(self.handler.documentation_components())
         doc = oai3_json.pretty(
             root_properties={
                 "info": {

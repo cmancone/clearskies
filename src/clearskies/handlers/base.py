@@ -280,6 +280,21 @@ class Base(ABC):
     def documentation(self):
         return []
 
+    def documentation_components(self):
+        return {
+            'models': self.documentation_models(),
+            'securitySchemes': self.documentation_security_schemes(),
+        }
+
+    def documentation_security_schemes(self):
+        authentication = self._configuration.get('authentication')
+        if not authentication:
+            return {}
+
+        return {
+            authentication.documentation_security_scheme_name(): authentication.documentation_security_scheme(),
+        }
+
     def documentation_models(self):
         return {}
 
@@ -357,6 +372,11 @@ class Base(ABC):
 
     def documentation_not_found(self):
         return self.documentation_generic_error_response(description='Not Found', status=404)
+
+    def documentation_request_security(self):
+        authentication = self.configuration('authentication')
+        name = authentication.documentation_security_scheme_name()
+        return [{name: []}] if name else []
 
     def documentation_data_schema(self):
         id_column_name = self.id_column_name

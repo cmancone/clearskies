@@ -5,18 +5,20 @@ class SecretBearer:
     has_dynamic_credentials = False
     _environment = None
     _secret = None
+    _documentation_security_name = None
 
     def __init__(self, environment):
         self._environment = environment
         self._secret = None
 
-    def configure(self, secret=None, environment_key=None):
+    def configure(self, secret=None, environment_key=None, documentation_security_name=None):
         if environment_key:
             self._secret = self._environment.get(environment_key)
         elif secret:
             self._secret = secret
         else:
             raise ValueError("Must set either 'secret' or 'environment_key' when configuring the SecretBearer")
+        self._documentation_security_name = documentation_security_name
 
     def headers(self, retry_auth=False):
         self._configured_guard()
@@ -37,13 +39,14 @@ class SecretBearer:
             raise ValueError("Attempted to use SecretBearer authentication class without providing the configuration")
 
     def documentation_request_parameters(self):
-        return [
-            autodoc.request.Header(
-                autodoc.schema.String('Authorization', example='Bearer [AUTH_TOKEN_HERE]'),
-                description="Auth token provided via 'Authorization: Bearer [TOKEN]' header",
-                required=True
-            )
-        ]
+        return []
 
-    def documentation_request_root_properites(self):
-        return {}
+    def documentation_security_scheme(self):
+        return {
+            "type": "apiKey",
+            "name": "authorization",
+            "in": "header",
+        }
+
+    def documentation_security_scheme_name(self):
+        return self._documentation_security_name if self._documentation_security_name is not None else 'ApiKey'

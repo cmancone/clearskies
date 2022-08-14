@@ -242,6 +242,8 @@ class Callable(Base):
                     *authentication.documentation_request_parameters(),
                     *parameters,
                 ],
-                root_properties=authentication.documentation_request_root_properites(),
+                root_properties={
+                    'security': self.documentation_request_security(),
+                },
             )
         ]

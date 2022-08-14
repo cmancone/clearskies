@@ -18,5 +18,8 @@ class Public:
     def documentation_request_parameters(self):
         return []
 
-    def documentation_request_root_properites(self):
+    def documentation_security_scheme(self):
         return {}
+
+    def documentation_security_scheme_name(self):
+        return ''

@@ -4,6 +4,7 @@ class OAI3JSON:
     requests = None
     formatted = None
     models = None
+    security_schemes = None
 
     def __init__(self, oai3_schema_resolver):
         self.oai3_schema_resolver = oai3_schema_resolver
@@ -15,8 +16,23 @@ class OAI3JSON:
         self.requests = requests
         self.formatted = [self.format_request(request) for request in self.requests]
 
+    def set_components(self, components):
+        supported = ['models', 'securitySchemes']
+        for key in components.keys():
+            if key not in supported:
+                raise ValueError(
+                    f"Attempt to set unsupported OpenAPI3.0 component which is not currently supported: {key}"
+                )
+        if 'models' in components:
+            self.set_models(components['models'])
+        if 'securitySchemes' in components:
+            self.set_security_schemes(components['securitySchemes'])
+
     def set_models(self, models):
         self.models = models
+
+    def set_security_schemes(self, security_schemes):
+        self.security_schemes = security_schemes
 
     def format_request(self, request):
         formatted_request = Request(self.oai3_schema_resolver)
@@ -53,13 +69,16 @@ class OAI3JSON:
         data = {
             'openapi': '3.0.0',
             'paths': paths,
+            'components': {},
         }
 
         if self.models:
-            data['components'] = {
-                'schemas':
-                {model_name: self.oai3_schema_resolver(model).convert()
-                 for (model_name, model) in self.models.items()}
+            data['components']['schemas'] = {
+                model_name: self.oai3_schema_resolver(model).convert()
+                for (model_name, model) in self.models.items()
             }
+
+        if self.security_schemes:
+            data['components']['securitySchemes'] = {name: data for (name, data) in self.security_schemes.items()}
 
         return data

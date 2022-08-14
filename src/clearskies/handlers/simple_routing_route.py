@@ -64,3 +64,6 @@ class SimpleRoutingRoute:
 
     def documentation_models(self):
         return self._handler.documentation_models()
+
+    def documentation_security_schemes(self):
+        return self._handler.documentation_security_schemes()

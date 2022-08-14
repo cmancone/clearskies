@@ -52,17 +52,19 @@ class Auth0JWKSTest(unittest.TestCase):
     def test_doc(self):
         auth0_jwks = Auth0JWKS('environment', self.requests, self.jose_jwt)
         auth0_jwks.configure(auth0_domain='example.com', audience='sup')
-        params = auth0_jwks.documentation_request_parameters()
-        self.assertEquals(0, len(params))
 
         self.assertDictEqual({
-            "securityDefinitions": {
-                "auth0": {
+            "type": "oauth2",
+            "description": "Authentication with Auth0",
+            "name": "authorization",
+            "in": "header",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "flows": {
+                "implicit": {
                     "authorizationUrl": f"https://example.com/authorize",
-                    "description": "Authentication with Auth0",
-                    "flow": "implicit",
-                    "scopes": {},
-                    "type": "oauth2"
+                    "scopes": {}
                 }
             }
-        }, auth0_jwks.documentation_request_root_properites())
+        }, auth0_jwks.documentation_security_scheme())
+        self.assertEquals('example', auth0_jwks.documentation_security_scheme_name())

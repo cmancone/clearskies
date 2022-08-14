@@ -27,6 +27,13 @@
         },
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "ApiKey": {
+        "in": "header",
+        "name": "authorization",
+        "type": "apiKey"
+      }
     }
   },
   "info": {
@@ -176,8 +183,45 @@
               }
             },
             "description": "Invalid Call"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Fetch the list of current status records"
       }
     },
@@ -358,8 +402,45 @@
               }
             },
             "description": "Invalid Call"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Fetch the list of current status records"
       }
     },
@@ -409,6 +490,38 @@
             },
             "description": "The status record"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -442,6 +555,11 @@
             "description": "Not Found"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Fetch the status with an id of {id}"
       }
     },
@@ -587,8 +705,45 @@
               }
             },
             "description": "Invalid Call"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Fetch the list of current user records"
       },
       "post": {
@@ -650,6 +805,38 @@
             },
             "description": "Invalid client-side input"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -683,6 +870,11 @@
             "description": "Not Found"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Create a new user"
       }
     },
@@ -864,8 +1056,45 @@
               }
             },
             "description": "Invalid Call"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Fetch the list of current user records"
       }
     },
@@ -915,6 +1144,38 @@
             },
             "description": "The user was deleted"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -948,6 +1209,11 @@
             "description": "Not Found"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Delete the user with an id of {id}"
       },
       "get": {
@@ -995,6 +1261,38 @@
             },
             "description": "The user record"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -1028,6 +1326,11 @@
             "description": "Not Found"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Fetch the user with an id of {id}"
       },
       "put": {
@@ -1100,6 +1403,38 @@
             },
             "description": "Invalid client-side input"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -1133,6 +1468,11 @@
             "description": "Not Found"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Update the user with an id of {id}"
       }
     },
@@ -1277,8 +1617,45 @@
               }
             },
             "description": "Invalid Call"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Fetch the list of current status records"
       }
     },
@@ -1459,8 +1836,45 @@
               }
             },
             "description": "Invalid Call"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Fetch the list of current status records"
       }
     },
@@ -1510,6 +1924,38 @@
             },
             "description": "The status record"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "error": {
+                      "example": "User readable error message",
+                      "type": "string"
+                    },
+                    "input_errors": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pagination": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Access Denied"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -1543,6 +1989,11 @@
             "description": "Not Found"
           }
         },
+        "security": [
+          {
+            "ApiKey": []
+          }
+        ],
         "summary": "Fetch the status with an id of {id}"
       }
     }

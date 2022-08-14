@@ -29,6 +29,15 @@ class RequestMethodRouting(Routing):
             docs.append(doc)
         return docs
 
+    def documentation_security_schemes(self):
+        schemes = {}
+        for (method, handler) in self.method_handler_map.items():
+            schemes = {
+                **schemes,
+                **self.build_handler(method_handler_map[request_method]).documentation_security_schemes()
+            }
+        return schemes
+
     def documentation_models(self):
         models = {}
         for (method, handler) in self.method_handler_map.items():

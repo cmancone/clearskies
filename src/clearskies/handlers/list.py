@@ -324,8 +324,10 @@ class List(Base):
                 relative_path=self.configuration('base_url'),
                 request_methods=self.expected_request_methods,
                 parameters=self.documentation_request_parameters(),
-                root_properties=authentication.documentation_request_root_properites(),
-            )
+                root_properties={
+                    'security': self.documentation_request_security(),
+                },
+            ),
         ]
 
     def documentation_request_parameters(self):

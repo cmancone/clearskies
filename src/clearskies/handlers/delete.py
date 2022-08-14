@@ -46,6 +46,8 @@ class Delete(Get):
                 parameters=[
                     *authentication.documentation_request_parameters(),
                 ],
-                root_properties=authentication.documentation_request_root_properites(),
+                root_properties={
+                    'security': self.documentation_request_security(),
+                },
             )
         ]

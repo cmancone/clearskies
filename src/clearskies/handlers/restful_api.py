@@ -161,3 +161,8 @@ class RestfulAPI(Routing):
         # read and write use the same model, so we just need one
         read_handler = self.build_handler(self.configuration('get_handler'))
         return read_handler.documentation_models()
+
+    def documentation_security_schemes(self):
+        # read and write use the same model, so we just need one
+        read_handler = self.build_handler(self.configuration('get_handler'))
+        return read_handler.documentation_security_schemes()

@@ -201,7 +201,9 @@ class Write(Base):
                     *authentication.documentation_request_parameters(),
                     *self.documentation_write_parameters(nice_model),
                 ],
-                root_properties=authentication.documentation_request_root_properites(),
+                root_properties={
+                    'security': self.documentation_request_security(),
+                },
             )
         ]
 
