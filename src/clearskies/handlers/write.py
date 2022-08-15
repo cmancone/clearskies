@@ -198,7 +198,6 @@ class Write(Base):
                 ],
                 relative_path=url,
                 parameters=[
-                    *authentication.documentation_request_parameters(),
                     *self.documentation_write_parameters(nice_model),
                 ],
                 root_properties={

@@ -239,7 +239,6 @@ class Callable(Base):
                 ],
                 relative_path=self.configuration('base_url'),
                 parameters=[
-                    *authentication.documentation_request_parameters(),
                     *parameters,
                 ],
                 root_properties={

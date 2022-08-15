@@ -43,9 +43,7 @@ class Delete(Get):
                     self.documentation_not_found(),
                 ],
                 relative_path=self.configuration('base_url').rstrip('/') + '/{id}',
-                parameters=[
-                    *authentication.documentation_request_parameters(),
-                ],
+                parameters=[],
                 root_properties={
                     'security': self.documentation_request_security(),
                 },

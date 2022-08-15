@@ -170,7 +170,6 @@ class AdvancedSearch(SimpleSearch):
     def documentation_request_parameters(self):
         return [
             *self.documentation_json_parameters(),
-            *self.configuration('authentication').documentation_request_parameters(),
         ]
 
     def documentation_json_parameters(self):
