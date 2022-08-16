@@ -288,7 +288,7 @@ class Base(ABC):
 
     def documentation_security_schemes(self):
         authentication = self._configuration.get('authentication')
-        if not authentication:
+        if not authentication or not authentication.documentation_security_scheme_name():
             return {}
 
         return {
