@@ -8,7 +8,14 @@ class SimpleRoutingRoute:
         self._di = di
 
     def configure(
-        self, handler_class, handler_config, path=None, methods=None, authentication=None, response_headers=None
+        self,
+        handler_class,
+        handler_config,
+        path=None,
+        methods=None,
+        authentication=None,
+        response_headers=None,
+        security_headers=None
     ):
         if authentication is not None and not handler_config.get('authentication'):
             handler_config['authentication'] = authentication
@@ -30,6 +37,10 @@ class SimpleRoutingRoute:
         }
         if response_headers:
             sub_handler_config['response_headers'] = response_headers
+        security_headers = security_headers if security_headers is not None else []
+        if 'security_headers' in handler_config:
+            security_headers = [*security_headers, *handler_config['security_headers']]
+        sub_handler_config['security_headers'] = security_headers
         self._handler = self._di.build(handler_class, cache=False)
         self._handler.configure(sub_handler_config)
 

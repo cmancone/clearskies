@@ -63,6 +63,7 @@ class SimpleRouting(Base):
             base_url if base_url else '/',
             authentication=configuration.get('authentication'),
             response_headers=configuration.get('response_headers'),
+            security_headers=configuration.get('security_headers'),
         )
 
     def _finalize_configuration(self, configuration):
@@ -75,7 +76,7 @@ class SimpleRouting(Base):
             configuration['schema_authentication'] = self._di.build(configuration['schema_authentication'])
         return configuration
 
-    def _build_routes(self, routes, base_url, authentication=None, response_headers=None):
+    def _build_routes(self, routes, base_url, authentication=None, response_headers=None, security_headers=None):
         self._routes = []
         if base_url is None:
             base_url = ''
@@ -107,6 +108,7 @@ class SimpleRouting(Base):
                 methods=route_config.get('methods'),
                 authentication=authentication,
                 response_headers=response_headers,
+                security_headers=security_headers,
             )
             self._routes.append(route)
 

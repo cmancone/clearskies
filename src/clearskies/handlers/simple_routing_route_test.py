@@ -16,15 +16,18 @@ class SimpleRoutingRouteTest(unittest.TestCase):
     def test_configure(self):
         route = self.di.build(SimpleRoutingRoute)
         route.configure(
-            self.handler_class, {
+            self.handler_class,
+            {
                 'my': 'config',
                 'response_headers': {
                     'sup': 'yo'
-                }
+                },
+                'security_headers': [2]
             },
             path='users',
             authentication='blah',
-            response_headers={'kay': 'hi'}
+            response_headers={'kay': 'hi'},
+            security_headers=[1],
         )
         self.handler_config.assert_called_with({
             'my': 'config',
@@ -33,7 +36,8 @@ class SimpleRoutingRouteTest(unittest.TestCase):
             'response_headers': {
                 'sup': 'yo',
                 'kay': 'hi'
-            }
+            },
+            'security_headers': [1, 2],
         })
 
     def test_configure_no_override_for_authentication(self):
@@ -44,7 +48,12 @@ class SimpleRoutingRouteTest(unittest.TestCase):
                 'authentication': 'sup'
             }, path='users', authentication='blah'
         )
-        self.handler_config.assert_called_with({'my': 'config', 'base_url': '/users', 'authentication': 'sup'})
+        self.handler_config.assert_called_with({
+            'my': 'config',
+            'base_url': '/users',
+            'authentication': 'sup',
+            'security_headers': []
+        })
 
     def test_match_route(self):
         route = self.di.build(SimpleRoutingRoute)

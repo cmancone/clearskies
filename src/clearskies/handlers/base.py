@@ -23,6 +23,7 @@ class Base(ABC):
         'doc_description': '',
         'internal_casing': '',
         'external_casing': '',
+        'security_headers': None,
     }
     _di = None
     _configuration = None
@@ -112,6 +113,25 @@ class Base(ABC):
             configuration['base_url'] = '/'
         if not configuration['base_url'] or configuration['base_url'][0] != '/':
             configuration['base_url'] = '/' + configuration['base_url']
+        security_headers = configuration.get('security_headers')
+        if not security_headers:
+            configuration['security_headers'] = []
+        else:
+            # should be a list or a binding config.  If it's a binding config, convert it to a list
+            if hasattr(security_headers, 'object_class'):
+                security_headers = [security_headers]
+            if type(security_headers) != list:
+                raise ValueError(
+                    f"Configuration error for handler '{self.__class__.__name__}': if provided, security_headers must be a list or binding config"
+                )
+            final_security_headers = []
+            for (index, security_header) in enumerate(security_headers):
+                if not hasattr(security_header, 'object_class'):
+                    raise ValueError(
+                        f"Configuration error for handler '{self.__class__.__name__}': security header #{index+1} is not a binding config object, but should be"
+                    )
+                final_security_headers.append(self._di.build(security_header))
+            configuration['security_headers'] = final_security_headers
         return configuration
 
     def top_level_authentication_and_authorization(self, input_output, authentication=None):
@@ -177,6 +197,8 @@ class Base(ABC):
         response_headers = self.configuration('response_headers')
         if response_headers:
             input_output.set_headers(response_headers)
+        for security_header in self.configuration('security_headers'):
+            security_header.set_headers_for_input_output(input_output)
         return input_output.respond(self._normalize_response(response_data), status_code)
 
     def _normalize_response(self, response_data):
