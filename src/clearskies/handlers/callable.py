@@ -23,6 +23,7 @@ class Callable(Base):
     }
 
     _configuration_defaults = {
+        'base_url': '',
         'schema': None,
         'writeable_columns': None,
         'documentation_model_name': '',
