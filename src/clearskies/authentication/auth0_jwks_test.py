@@ -17,19 +17,23 @@ class Auth0JWKSTest(unittest.TestCase):
         self.requests = SimpleNamespace(get=MagicMock(return_value=SimpleNamespace(json=lambda: self.my_jwks)), )
         self.jose_jwt = SimpleNamespace(
             get_unverified_header=lambda jwt: {'kid': 3},
-            decode=MagicMock(),
+            decode=MagicMock(return_value={'id':5}),
         )
 
     def test_success(self):
         auth0_jwks = Auth0JWKS('environment', self.requests, self.jose_jwt)
         auth0_jwks.configure(auth0_domain='example.com', audience='sup')
-        input_output = SimpleNamespace(get_request_header=MagicMock(return_value='Bearer asdfqwer'))
+        input_output = SimpleNamespace(
+            get_request_header=MagicMock(return_value='Bearer asdfqwer'),
+            set_authorization_data=MagicMock(),
+        )
         self.assertTrue(auth0_jwks.authenticate(input_output))
         self.requests.get.assert_called_with('https://example.com/.well-known/jwks.json')
         input_output.get_request_header.assert_called_with('authorization', True)
         self.jose_jwt.decode.assert_called_with(
             'asdfqwer', {'kid': 3}, algorithms=["RS256"], audience='sup', issuer='https://example.com/'
         )
+        input_output.set_authorization_data.assert_called_with({'id': 5})
 
     def test_key_mismatch(self):
         self.jose_jwt.get_unverified_header = lambda jwt: {'kid': 5}

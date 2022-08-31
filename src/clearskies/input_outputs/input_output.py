@@ -7,6 +7,7 @@ class InputOutput(ABC):
     _body_as_json = None
     _body_loaded_as_json = False
     _routing_data = None
+    _authorization_data = None
 
     @abstractmethod
     def respond(self, body, status_code=200):
@@ -136,3 +137,9 @@ class InputOutput(ABC):
     @abstractmethod
     def get_query_parameters(self):
         pass
+
+    def set_authorization_data(self, data):
+        self._authorization_data = data
+
+    def get_authorization_data(self):
+        return self._authorization_data if self._authorization_data else {}
