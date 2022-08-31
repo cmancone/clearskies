@@ -25,14 +25,16 @@ class CORS(Base):
         self.expose_headers=expose_headers
 
     def set_headers_for_input_output(self, input_output):
-        for key in ['origin', 'methods', 'headers', 'credentials']:
+        for key in ['origin', 'methods', 'headers']:
             if not getattr(self, key):
                 continue
             input_output.set_header(f'access-control-allow-{key}'.replace('_', '-'), getattr(self, key))
+        if self.credentials:
+            input_output.set_header('access-control-allow-credentials', 'true')
         for key in ['max_age', 'expose_headers']:
             if not getattr(self, key):
                 continue
-            input_output.set_header(f'access-control-{key}'.replace('_', '-'), getattr(self, key))
+            input_output.set_header(f'access-control-{key}'.replace('_', '-'), str(getattr(self, key)))
 def cors(origin=None, methods=None, headers=None, max_age=None, credentials=None, expose_headers=None):
     # I didn't auto-pull into kwargs so that the allowed values are clearly defined.
     # however, checking and processing will be easier with a dict
@@ -53,7 +55,7 @@ def cors(origin=None, methods=None, headers=None, max_age=None, credentials=None
         value = kwargs[key]
         actual_type = type(value)
         if actual_type == list:
-            if not all(type(item) == str for item in value)
+            if not all([type(item) == str for item in value]):
                 raise ValueError(f"Invalid configuration value for CORS: {key} should be a list of strings, but another kind of value was found")
             kwargs[key] = ', '.join(value)
         if actual_type != str:
