@@ -55,6 +55,12 @@ class CLI:
     def get_path_info(self):
         return '/'.join(self._args)
 
+    def get_full_path(self):
+        return self.get_path_info()
+
+    def get_request_method(self):
+        return self._kwargs.get('request_method', 'GET')
+
     def has_body(self):
         if self._has_body is None:
             self._has_body = False

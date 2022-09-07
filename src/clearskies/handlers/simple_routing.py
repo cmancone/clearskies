@@ -94,7 +94,7 @@ class SimpleRouting(Base):
                     "Each route must specify a handler class via 'handler_class' key, " + \
                     f"but 'handler_class' was missing for route #{i+1}"
                 )
-            if not route_config.get('handler_config'):
+            if route_config.get('handler_config') is None:
                 raise ValueError(
                     "Each route must specify the handler configuration via 'handler_config' key, " + \
                     f"but 'handler_config' was missing for route #{i+1}"
