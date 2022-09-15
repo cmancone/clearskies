@@ -1,6 +1,8 @@
 from .base import Base
 from abc import abstractmethod
 from .simple_routing_route import SimpleRoutingRoute
+from . import callable as callable_handler
+from ..functional import string
 from .. import autodoc
 class SimpleRouting(Base):
     _routes = None
@@ -80,6 +82,17 @@ class SimpleRouting(Base):
         if base_url is None:
             base_url = ''
         for (i, route_config) in enumerate(routes):
+            # in general the route should be a dictionary with the route configuration,
+            # but the one exception is a "plain" callable.  In that case, wrap it in
+            # a callable handler and define the path from the name
+            if type(route_config) != dict and callable(route_config):
+                route_config = {
+                    'path': route_config.__name__,
+                    'handler_class': callable_handler.Callable,
+                    'handler_config': {
+                        'callable': route_config
+                    }
+                }
             path = route_config.get('path')
             if path is None:
                 path = ''
