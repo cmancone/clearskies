@@ -8,6 +8,7 @@ from .has_many import HasMany
 from .integer import Integer
 from .json import JSON
 from .many_to_many import ManyToMany
+from .many_to_many_with_data import ManyToManyWithData
 from .string import String
 from .updated import Updated
 from .uuid import UUID
@@ -31,6 +32,8 @@ def json(name, **kwargs):
     return build_column_config(name, JSON, **kwargs)
 def many_to_many(name, **kwargs):
     return build_column_config(name, ManyToMany, **kwargs)
+def many_to_many_with_data(name, **kwargs):
+    return build_column_config(name, ManyToManyWithData, **kwargs)
 def string(name, **kwargs):
     return build_column_config(name, String, **kwargs)
 def updated(name, **kwargs):

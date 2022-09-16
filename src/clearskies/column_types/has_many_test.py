@@ -108,92 +108,92 @@ class HasManyTest(unittest.TestCase):
             ]),
         ], self.has_many_users.to_json(self.pending))
 
-    #def test_auto_foreign_column(self):
-    #has_many = HasMany(self.di)
-    #has_many.configure('users', {'child_models_class': Users}, Status)
-    #self.assertEquals('status_id', has_many.config('foreign_column_name'))
+    def test_auto_foreign_column(self):
+        has_many = HasMany(self.di)
+        has_many.configure('users', {'child_models_class': Users}, Status)
+        self.assertEquals('status_id', has_many.config('foreign_column_name'))
 
-    #def test_require_child_model_class(self):
-    #has_many = HasMany(self.di)
-    #with self.assertRaises(KeyError) as context:
-    #has_many.configure('users', {}, str)
-    #self.assertIn("Missing required configuration 'child_models_class'", str(context.exception))
+    def test_require_child_model_class(self):
+        has_many = HasMany(self.di)
+        with self.assertRaises(KeyError) as context:
+            has_many.configure('users', {}, str)
+            self.assertIn("Missing required configuration 'child_models_class'", str(context.exception))
 
-    #def test_required_readable_columns_for_is_readable(self):
-    #has_many = HasMany(self.di)
-    #with self.assertRaises(ValueError) as context:
-    #has_many.configure(
-    #'users',
-    #{
-    #'child_models_class': Users,
-    #'is_readable': True,
-    #},
-    #Status,
-    #)
-    #self.assertIn("must provide 'readable_child_columns' if is_readable is set", str(context.exception))
+    def test_required_readable_columns_for_is_readable(self):
+        has_many = HasMany(self.di)
+        with self.assertRaises(ValueError) as context:
+            has_many.configure(
+                'users',
+                {
+                    'child_models_class': Users,
+                    'is_readable': True,
+                },
+                Status,
+            )
+            self.assertIn("must provide 'readable_child_columns' if is_readable is set", str(context.exception))
 
-    #def test_readable_columns_iterable(self):
-    #has_many = HasMany(self.di)
-    #with self.assertRaises(ValueError) as context:
-    #has_many.configure(
-    #'users',
-    #{
-    #'child_models_class': Users,
-    #'is_readable': True,
-    #'readable_child_columns': 5,
-    #},
-    #Status,
-    #)
-    #self.assertIn("'readable_child_columns' should be an iterable", str(context.exception))
+    def test_readable_columns_iterable(self):
+        has_many = HasMany(self.di)
+        with self.assertRaises(ValueError) as context:
+            has_many.configure(
+                'users',
+                {
+                    'child_models_class': Users,
+                    'is_readable': True,
+                    'readable_child_columns': 5,
+                },
+                Status,
+            )
+            self.assertIn("'readable_child_columns' should be an iterable", str(context.exception))
 
-    #def test_readable_columns_invalid_column(self):
-    #has_many = HasMany(self.di)
-    #with self.assertRaises(ValueError) as context:
-    #has_many.configure(
-    #'users',
-    #{
-    #'child_models_class': Users,
-    #'is_readable': True,
-    #'readable_child_columns': ['asdf'],
-    #},
-    #Status,
-    #)
-    #self.assertIn("readable_child_columns' references column named 'asdf' but", str(context.exception))
+    def test_readable_columns_invalid_column(self):
+        has_many = HasMany(self.di)
+        with self.assertRaises(ValueError) as context:
+            has_many.configure(
+                'users',
+                {
+                    'child_models_class': Users,
+                    'is_readable': True,
+                    'readable_child_columns': ['asdf'],
+                },
+                Status,
+            )
+            self.assertIn("readable_child_columns' references column named 'asdf' but", str(context.exception))
 
-    #def test_documentation(self):
-    #has_many = HasMany(self.di)
-    #has_many.configure(
-    #'users',
-    #{
-    #'child_models_class': Users,
-    #'is_readable': True,
-    #'readable_child_columns': ['status_id', 'first_name', 'last_name'],
-    #},
-    #Status,
-    #)
-    #doc = has_many.documentation()
+    def test_documentation(self):
+        has_many = HasMany(self.di)
+        has_many.configure(
+            'users',
+            {
+                'child_models_class': Users,
+                'is_readable': True,
+                'readable_child_columns': ['status_id', 'first_name', 'last_name'],
+            },
+            Status,
+        )
+        doc = has_many.documentation()
 
-    #self.assertEquals(AutoDocArray, doc.__class__)
-    #self.assertEquals('users', doc.name)
-    #self.assertEquals(AutoDocObject, doc.item_definition.__class__)
-    #self.assertEquals('user', doc.item_definition.name)
-    #self.assertEquals(4, len(doc.item_definition.children))
-    #self.assertEquals(
-    #['id', 'status_id', 'first_name', 'last_name'],
-    #[child.name for child in doc.item_definition.children]
-    #)
-    #self.assertEquals(
-    #[AutoDocInteger, AutoDocObject, AutoDocString, AutoDocString],
-    #[child.__class__ for child in doc.item_definition.children]
-    #)
+        self.assertEquals(AutoDocArray, doc.__class__)
+        self.assertEquals('users', doc.name)
+        self.assertEquals(AutoDocObject, doc.item_definition.__class__)
+        self.assertEquals('user', doc.item_definition.name)
+        self.assertEquals(4, len(doc.item_definition.children))
+        self.assertEquals(
+            ['id', 'status_id', 'first_name', 'last_name'],
+            [child.name for child in doc.item_definition.children]
+        )
+        self.assertEquals(
+            [AutoDocString, AutoDocObject, AutoDocString, AutoDocString],
+            [child.__class__ for child in doc.item_definition.children]
+        )
 
-    #status = doc.item_definition.children[1]
-    #self.assertEquals(2, len(status.children))
-    #self.assertEquals(
-    #['id', 'name'],
-    #[child.name for child in status.children]
-    #)
-    #self.assertEquals(
-    #[AutoDocInteger, AutoDocString],
-    #[child.__class__ for child in status.children]
-    #)
+        status = doc.item_definition.children[1]
+        self.assertEquals(2, len(status.children))
+        self.assertEquals(
+            ['id', 'name'],
+            [child.name for child in status.children]
+        )
+        self.assertEquals(
+            [AutoDocString, AutoDocString],
+            [child.__class__ for child in status.children]
+        )
