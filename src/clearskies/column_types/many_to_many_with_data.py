@@ -79,8 +79,9 @@ class ManyToManyWithData(ManyToMany):
         # unfortunately I'm using related_models and foreign_models interchangeably - this is likely
         # an accident due to the slow inheritence from he belongs to class, to the many to many class,
         # and now this.  Keep in mind that "foreign" and "related" refer to the same thing
-        foreign_column_name = self.config('foreign_column_name_in_pivot')
-        unique_foreign_columns = {column.name: column for column in self.related_columns}
+        foreign_column_name_in_pivot = self.config('foreign_column_name_in_pivot')
+        own_column_name_in_pivot = self.config('own_column_name_in_pivot')
+        unique_foreign_columns = {column.name: column.name for column in self.related_columns.values() if column.is_unique}
         related_models = self.related_models
         pivot_models = self.pivot_models
         new_ids = set()
@@ -88,10 +89,10 @@ class ManyToManyWithData(ManyToMany):
             # first we need to identify which foreign column this belongs to.
             foreign_column_id = None
             # if they provide the foreign column id in the pivot data then we're good
-            if foreign_column_name in pivot_record:
-                foreign_column_id = data[foreign_column_name_in_pivot]
+            if foreign_column_name_in_pivot in pivot_record:
+                foreign_column_id = pivot_record[foreign_column_name_in_pivot]
             elif len(unique_foreign_columns):
-                for (pivot_column, pivot_value) in data.keys():
+                for (pivot_column, pivot_value) in pivot_record.items():
                     if pivot_column not in unique_foreign_columns:
                         continue
                     foreign_model = related_models.find(f'{pivot_column}={pivot_value}')
@@ -101,22 +102,22 @@ class ManyToManyWithData(ManyToMany):
                         # record, but mostly won't exist in the model, unless we've been instructed
                         # to keep it
                         if not self.config('persist_unique_lookup_column_to_pivot_table'):
-                            del data[pivot_column]
+                            del pivot_record[pivot_column]
                         break
             if not foreign_column_id:
                 column_list = "'" + "', '".join([column for column in unique_foreign_columns.key()]) + "'"
-                raise ValueError(f"Missing data for {self.name}: Unable to match foreign record for a record in the many-to-many relationship: you must provide either '{foreign_column_name}' with the id column for the foreign table, or a value from one of the unique columns: {column_list}")
-            pivot_model = pivot_models.find(f'{foreign_column_name}={foreign_column_id}')
+                raise ValueError(f"Missing data for {self.name}: Unable to match foreign record for a record in the many-to-many relationship: you must provide either '{foreign_column_name_in_pivot}' with the id column for the foreign table, or a value from one of the unique columns: {column_list}")
+            pivot_model = pivot_models.where(f'{foreign_column_name_in_pivot}={foreign_column_id}').where(f'{own_column_name_in_pivot}={id}').first()
             new_ids.add(foreign_column_id)
             # this will either update or create accordingly
             pivot_model.save({
-                **data,
-                foreign_column_name: foreign_column_id,
+                **pivot_record,
+                foreign_column_name_in_pivot: foreign_column_id,
+                own_column_name_in_pivot: id,
             })
 
         # the above took care of isnerting and updating active records.  Now we need to delete
         # records that are no longer needed.
-        new_ids = set(data[self.name])
         to_delete = old_ids - new_ids
         if to_delete:
             pivot_models = self.pivot_models
@@ -144,5 +145,5 @@ class ManyToManyWithData(ManyToMany):
 
         # so if we get here then we need to provide the pivot models for this record
         own_column_name_in_pivot = self.config('own_column_name_in_pivot')
-        my_id = self.__getitem__(self.config('own_id_column_name'))
+        my_id = data[self.config('own_id_column_name')]
         return [model for model in self.pivot_models.where(f"{own_column_name_in_pivot}={my_id}")]
