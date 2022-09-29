@@ -1,7 +1,7 @@
 from .api_backend import ApiBackend
 from typing import Any, Callable, Dict, List, Tuple
 from ..autodoc.schema import Integer as AutoDocInteger
-class RestfulApiAdvancedSearchBackend(Backend):
+class RestfulApiAdvancedSearchBackend(ApiBackend):
     _requests = None
     _auth = None
     _records = None
