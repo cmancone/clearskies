@@ -131,7 +131,7 @@ class ApiBackend(Backend):
         if not response.ok:
             if self._auth.has_dynamic_credentials and retry_auth:
                 return self._execute_request(url, method, json=json, headers=headers, retry_auth=False)
-            response.raise_for_status()
+            raise ValueError(f'Failed request.  Status code: {response.status_code}, message: {response.content}')
 
         return response
 
