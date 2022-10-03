@@ -3,6 +3,7 @@ from .string import String
 from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.schema import String as AutoDocString
+from collections import OrderedDict
 class BelongsTo(String):
     """
     Controls a belongs to relationship.
