@@ -81,9 +81,10 @@ class BelongsTo(String):
         return column_name == self.config('model_column_name')
 
     def provide(self, data, column_name):
-        model_column_name = self.config('model_column_name')
-        if model_column_name not in data or not data[model_column_name]:
-            return self.parent_models.where(f"id={data[self.name]}").first()
+        parent_id = data.get(self.name)
+        if parent_id:
+            parent_id_column_name = self.parent_models.get_id_column_name()
+            return self.parent_models.where(f"{parent_id_column_name}={parent_id}").first()
         return self.parent_models.empty_model()
 
     @property
@@ -101,7 +102,7 @@ class BelongsTo(String):
 
         # otherwise return an object with the readable parent columns
         columns = self.parent_columns
-        parent = model.__getattr__(self.name)
+        parent = model.__getattr__(self.config('model_column_name'))
         json = OrderedDict()
         if parent.id_column_name not in self.config('readable_parent_columns'):
             json[parent.id_column_name] = columns[parent.id_column_name].to_json(parent)
