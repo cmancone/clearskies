@@ -59,6 +59,14 @@ class InputOutput(ABC):
     def set_routing_data(self, data):
         self._routing_data = data
 
+    def add_routing_data(self, key, value=None):
+        if self._routing_data is None:
+            self._routing_data = {}
+        if type(key) == dict:
+            self._routing_data = {**self._routing_data, **key}
+        else:
+            self._routing_data[key] = value
+
     def request_data(self, required=True):
         request_data = self.json_body(False)
         if not request_data:

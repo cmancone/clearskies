@@ -49,42 +49,58 @@ class SimpleRoutingRouteTest(unittest.TestCase):
     def test_match_route(self):
         route = self.di.build(SimpleRoutingRoute)
         route.configure(self.handler_class, {}, path='user')
-        self.assertTrue(route.matches('/user/id/5', 'SUP'))
-        self.assertTrue(route.matches('/user/', 'SUP'))
-        self.assertTrue(route.matches('/user', 'SUP'))
-        self.assertTrue(route.matches('user', 'SUP'))
+        self.assertEquals({}, route.matches('/user/id/5', 'SUP'))
+        self.assertEquals({}, route.matches('/user/', 'SUP'))
+        self.assertEquals({}, route.matches('/user', 'SUP'))
+        self.assertEquals({}, route.matches('user', 'SUP'))
 
     def test_mismatch_route(self):
         route = self.di.build(SimpleRoutingRoute)
         route.configure(self.handler_class, {}, path='user')
-        self.assertFalse(route.matches('/users/5', 'SUP'))
-        self.assertFalse(route.matches('/users', 'SUP'))
-        self.assertFalse(route.matches('users', 'SUP'))
+        self.assertEquals(None, route.matches('/users/5', 'SUP'))
+        self.assertEquals(None, route.matches('/users', 'SUP'))
+        self.assertEquals(None, route.matches('users', 'SUP'))
 
     def test_match_method(self):
         route = self.di.build(SimpleRoutingRoute)
         route.configure(self.handler_class, {}, methods='sup')
-        self.assertTrue(route.matches('/blah', 'SUP'))
-        self.assertTrue(route.matches('', 'SUP'))
+        self.assertEquals({}, route.matches('/blah', 'SUP'))
+        self.assertEquals({}, route.matches('', 'SUP'))
 
         route = self.di.build(SimpleRoutingRoute)
         route.configure(self.handler_class, {}, methods=['hey', 'bob'])
-        self.assertTrue(route.matches('', 'HEY'))
-        self.assertTrue(route.matches('', 'BOB'))
+        self.assertEquals({}, route.matches('', 'HEY'))
+        self.assertEquals({}, route.matches('', 'BOB'))
 
     def test_mismatch_method(self):
         route = self.di.build(SimpleRoutingRoute)
         route.configure(self.handler_class, {}, methods='sup')
-        self.assertFalse(route.matches('/blah', 'POST'))
-        self.assertFalse(route.matches('', 'GET'))
+        self.assertEquals(None, route.matches('/blah', 'POST'))
+        self.assertEquals(None, route.matches('', 'GET'))
 
         route = self.di.build(SimpleRoutingRoute)
         route.configure(self.handler_class, {}, methods=['hey', 'bob'])
-        self.assertFalse(route.matches('', 'POST'))
-        self.assertFalse(route.matches('', 'KAY'))
+        self.assertEquals(None, route.matches('', 'POST'))
+        self.assertEquals(None, route.matches('', 'KAY'))
 
     def test_call(self):
         route = self.di.build(SimpleRoutingRoute)
         route.configure(self.handler_class, {})
         self.assertEquals('5', route('hi'))
         self.handler_class.__call__.assert_called_with('hi')
+
+    def test_routing_data(self):
+        route = self.di.build(SimpleRoutingRoute)
+        route.configure(self.handler_class, {}, path='user/{user_id}/bob/{bob_id}')
+        self.assertEquals(
+            {
+                'user_id': '3434edifjere-ijere',
+                'bob_id': 'eij34980340afg8ef8hasdf--',
+            },
+            route.matches('/user/3434edifjere-ijere/bob/eij34980340afg8ef8hasdf--/', 'GET')
+        )
+        self.assertEquals(None, route.matches('/user/34343/', 'GET'))
+        self.assertEquals(
+            {'user_id': '2', 'bob_id': '3'},
+            route.matches('/user/2/bob/3/asdf', 'GET')
+        )

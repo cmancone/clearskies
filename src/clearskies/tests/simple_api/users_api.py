@@ -1,12 +1,21 @@
 import clearskies
 from . import models
 
+def restart_user(user_id, input_output):
+    return {'user_id': user_id}
+
 users_api = clearskies.Application(
     clearskies.handlers.SimpleRouting,
     {
         'authentication':
         clearskies.authentication.public(),
         'routes': [{
+            'path': 'users/{user_id}/restart',
+            'handler_class': clearskies.handlers.Callable,
+            'handler_config': {
+                'callable': restart_user,
+            }
+        }, {
             'path': 'users',
             'handler_class': clearskies.handlers.RestfulAPI,
             'handler_config': {

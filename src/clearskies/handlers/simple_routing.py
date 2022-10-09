@@ -37,8 +37,12 @@ class SimpleRouting(Base):
             return self.hosted_schema(input_output)
 
         for route in self._routes:
-            if route.matches(full_path, request_method):
-                return route(input_output)
+            route_data = route.matches(full_path, request_method)
+            if route_data is None:
+                continue
+            input_output.add_routing_data(route_data)
+
+            return route(input_output)
 
         return self.error(input_output, 'Page not found', 404)
 
