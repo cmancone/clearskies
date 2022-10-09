@@ -1,9 +1,7 @@
-from .backend import Backend
+from .api_backend import ApiBackend
 from typing import Any, Callable, Dict, List, Tuple
 from ..autodoc.schema import Integer as AutoDocInteger
-from .. import model
-class ApiBackend(Backend):
-    url = None
+class RestfulApiAdvancedSearchBackend(ApiBackend):
     _requests = None
     _auth = None
     _records = None
@@ -26,8 +24,7 @@ class ApiBackend(Backend):
     def __init__(self, requests):
         self._requests = requests
 
-    def configure(self, url=None, auth=None):
-        self.url = url
+    def configure(self, auth=None):
         self._auth = auth
 
     def update(self, id, data, model):
@@ -38,7 +35,8 @@ class ApiBackend(Backend):
         return self._map_update_response(response.json())
 
     def _build_update_request(self, id, data, model):
-        return [self.url, 'PATCH', data, {}]
+        url = model.table_name().rstrip('/')
+        return [f'{url}/{id}', 'PATCH', data, {}]
 
     def _map_update_response(self, json):
         if not 'data' in json:
@@ -51,7 +49,7 @@ class ApiBackend(Backend):
         return self._map_create_response(response.json())
 
     def _build_create_request(self, data, model):
-        return [self.url, 'POST', data, {}]
+        return [model.table_name().rstrip('/'), 'POST', data, {}]
 
     def _map_create_response(self, json):
         if not 'data' in json:
@@ -64,7 +62,8 @@ class ApiBackend(Backend):
         return self._validate_delete_response(response.json())
 
     def _build_delete_request(self, id, model):
-        return [self.url, 'DELETE', {model.id_column_name: id}, {}]
+        url = model.table_name().rstrip('/')
+        return [f'{url}/{id}', 'DELETE', {}, {}]
 
     def _validate_delete_response(self, json):
         if 'status' not in json:
@@ -73,12 +72,13 @@ class ApiBackend(Backend):
 
     def count(self, configuration, model):
         configuration = self._check_query_configuration(configuration)
-        [url, method, json_data, headers] = self._build_count_request(configuration)
+        [url, method, json_data, headers] = self._build_count_request(configuration, model)
         response = self._execute_request(url, method, json=json_data, headers=headers, retry_auth=True)
         return self._map_count_response(response.json())
 
-    def _build_count_request(self, configuration):
-        return [self.url, 'GET', {**{'count_only': True}, **self._as_post_data(configuration)}, {}]
+    def _build_count_request(self, configuration, model):
+        url = model.table_name().rstrip('/') + '/search'
+        return [url, 'POST', {**{'count_only': True}, **self._as_post_data(configuration)}, {}]
 
     def _map_count_response(self, json):
         if not 'total_matches' in json:
@@ -87,7 +87,7 @@ class ApiBackend(Backend):
 
     def records(self, configuration, model, next_page_data=None):
         configuration = self._check_query_configuration(configuration)
-        [url, method, json_data, headers] = self._build_records_request(configuration)
+        [url, method, json_data, headers] = self._build_records_request(configuration, model)
         response = self._execute_request(url, method, json=json_data, headers=headers, retry_auth=True)
         records = self._map_records_response(response.json())
         if type(next_page_data) == dict:
@@ -97,54 +97,14 @@ class ApiBackend(Backend):
                 next_page_data['start'] = start + limit
         return records
 
-    def _build_records_request(self, configuration):
-        return [self.url, 'GET', self._as_post_data(configuration), {}]
+    def _build_records_request(self, configuration, model):
+        url = model.table_name().rstrip('/') + '/search'
+        return [url, 'POST', self._as_post_data(configuration), {}]
 
     def _map_records_response(self, json):
         if not 'data' in json:
             raise ValueError("Unexpected response from records request")
         return json['data']
-
-    def _execute_request(self, url, method, json=None, headers=None, retry_auth=False):
-        if json is None:
-            json = {}
-        if headers is None:
-            headers = {}
-
-        headers = {**headers, **self._auth.headers(retry_auth=retry_auth)}
-        # the requests library seems to build a slightly different request if you specify the json parameter,
-        # even if it is null, and this causes trouble for some picky servers
-        if not json:
-            response = self._requests.request(
-                method,
-                url,
-                headers=headers,
-            )
-        else:
-            response = self._requests.request(
-                method,
-                url,
-                headers=headers,
-                json=json,
-            )
-
-        if not response.ok:
-            if self._auth.has_dynamic_credentials and retry_auth:
-                return self._execute_request(url, method, json=json, headers=headers, retry_auth=False)
-            if not response.ok:
-                raise ValueError(f'Failed request.  Status code: {response.status_code}, message: {response.content}')
-
-        return response
-
-    def _check_query_configuration(self, configuration):
-        for key in configuration.keys():
-            if key not in self._allowed_configs and configuration[key]:
-                raise KeyError(f"ApiBackend does not support config '{key}'. You may be using the wrong backend")
-
-        for key in self._allowed_configs:
-            if not key in configuration:
-                configuration[key] = [] if key[-1] == 's' else ''
-        return configuration
 
     def _as_post_data(self, configuration):
         data = {
@@ -159,36 +119,5 @@ class ApiBackend(Backend):
         return {
             'column': where['column'],
             'operator': where['operator'],
-            'values': where['values'],
+            'value': where['values'][0],
         }
-
-    def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
-        extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
-        if len(extra_keys):
-            key_name = case_mapping('start')
-            return "Invalid pagination key(s): '" + "','".join(extra_keys) + f"'.  Only '{key_name}' is allowed"
-        if 'start' not in kwargs:
-            key_name = case_mapping('start')
-            return f"You must specify '{key_name}' when setting pagination"
-        start = kwargs['start']
-        try:
-            start = int(start)
-        except:
-            key_name = case_mapping('start')
-            return f"Invalid pagination data: '{key_name}' must be a number"
-        return ''
-
-    def allowed_pagination_keys(self) -> List[str]:
-        return ['start']
-
-    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
-        return [AutoDocInteger(case_mapping('start'), example=10)]
-
-    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
-        return {case_mapping('start'): 10}
-
-    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
-        return [(
-            AutoDocInteger(case_mapping('start'),
-                           example=10), 'The zero-indexed record number to start listing results from'
-        )]

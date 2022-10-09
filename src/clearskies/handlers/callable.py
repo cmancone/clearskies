@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from .base import Base
-from .exceptions import InputError
+from .exceptions import InputError, ClientError, NotFound
 import inspect
 import json
 from ..functional import validations, string
@@ -24,6 +24,7 @@ class Callable(Base):
     }
 
     _configuration_defaults = {
+        'base_url': '',
         'schema': None,
         'writeable_columns': None,
         'documentation_model_name': '',
@@ -36,19 +37,27 @@ class Callable(Base):
 
     def handle(self, input_output):
         self._di.bind('input_output', input_output)
-        if self.configuration('schema'):
-            request_data = self.request_data(input_output)
-            input_errors = {
-                **self._extra_column_errors(request_data),
-                **self._find_input_errors(request_data),
-            }
-            if input_errors:
-                raise InputError(input_errors)
-            response = self._di.call_function(self.configuration('callable'), request_data=request_data)
-        else:
-            response = self._di.call_function(self.configuration('callable'))
-        if response is not None:
-            return self.success(input_output, response)
+        try:
+            if self.configuration('schema'):
+                request_data = self.request_data(input_output)
+                input_errors = {
+                    **self._extra_column_errors(request_data),
+                    **self._find_input_errors(request_data),
+                }
+                if input_errors:
+                    return self.input_errors(input_output, input_errors)
+                response = self._di.call_function(self.configuration('callable'), request_data=request_data, **input_output.routing_data())
+            else:
+                response = self._di.call_function(self.configuration('callable'), **input_output.routing_data())
+            if response:
+                return self.success(input_output, response)
+            return
+        except InputError as e:
+            return self.input_errors(input_output, str(e))
+        except ClientError as e:
+            return self.error(input_output, str(e), 400)
+        except NotFound as e:
+            return self.error(input_output, str(e), 404)
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)

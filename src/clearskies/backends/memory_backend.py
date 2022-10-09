@@ -14,6 +14,13 @@ class Null:
 
     def __eq__(self, other):
         return isinstance(other, Null) or other is None
+# for some comparisons we prefer comparing floats, but we need to be able to
+# fall back on string comparison
+def gentle_float_conversion(value):
+    try:
+        return float(value)
+    except:
+        return value
 def _sort(row_a, row_b, sorts):
     for sort in sorts:
         reverse = 1 if sort['direction'].lower() == 'asc' else -1
@@ -41,10 +48,10 @@ class MemoryTable:
     _operator_lambda_builders = {
         '<=>': lambda column, values, null: lambda row: row.get(column, null) == values[0],
         '!=': lambda column, values, null: lambda row: row.get(column, null) != values[0],
-        '<=': lambda column, values, null: lambda row: float(row.get(column, null)) <= float(values[0]),
-        '>=': lambda column, values, null: lambda row: float(row.get(column, null)) >= float(values[0]),
-        '>': lambda column, values, null: lambda row: float(row.get(column, null)) > float(values[0]),
-        '<': lambda column, values, null: lambda row: float(row.get(column, null)) < float(values[0]),
+        '<=': lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) <= gentle_float_conversion(values[0]),
+        '>=': lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) >= gentle_float_conversion(values[0]),
+        '>': lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) > gentle_float_conversion(values[0]),
+        '<': lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) < gentle_float_conversion(values[0]),
         '=': lambda column, values, null: lambda row: (str(row[column]) if column in row else null) == str(values[0]),
         'is not null': lambda column, values, null: lambda row: (column in row and row[column] is not None),
         'is null': lambda column, values, null: lambda row: (column not in row or row[column] is None),

@@ -194,3 +194,10 @@ class UsersApiTest(unittest.TestCase):
         )
         self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, response['pagination'])
         self.assertEquals('success', response['status'])
+
+    def test_restart_user(self):
+        result = self.api(url='/users/34383/restart')
+        status_code = result[1]
+        response = result[0]
+        self.assertEquals(200, status_code)
+        self.assertEquals({'user_id': '34383'}, response['data'])

@@ -5,6 +5,8 @@ from .. import input_requirements
 import inspect
 class Column(ABC):
     _auto_doc_class = AutoDocString
+    _is_unique = None
+    _is_required = None
     configuration = None
     common_configs = [
         'input_requirements',
@@ -26,18 +28,28 @@ class Column(ABC):
         return True
 
     @property
+    def is_unique(self):
+        if self._is_unique is None:
+            requirements = self.config('input_requirements')
+            self._is_unique = False
+            for requirement in requirements:
+                if isinstance(requirement, input_requirements.Unique):
+                    self._is_unique = True
+        return self._is_unique
+
+    @property
     def is_temporary(self):
         return bool(self.config('is_temporary', silent=True))
 
     @property
     def is_required(self):
-        requirements = self.config('input_requirements')
-        if not requirements:
-            return False
-        for requirement in requirements:
-            if isinstance(requirement, input_requirements.Required):
-                return True
-        return False
+        if self._is_required is None:
+            requirements = self.config('input_requirements')
+            self._is_required = False
+            for requirement in requirements:
+                if isinstance(requirement, input_requirements.Required):
+                    self._is_required = True
+        return self._is_required
 
     def model_column_configurations(self):
         nargs = len(inspect.getfullargspec(self.model_class.__init__).args) - 1
