@@ -10,21 +10,26 @@ class SimpleRoutingRouteTest(unittest.TestCase):
             '', (), {
                 'configure': self.handler_config,
                 '__call__': MagicMock(return_value='5'),
+                'cors': MagicMock(return_value='cors'),
+                'has_cors': True,
             }
         )
 
     def test_configure(self):
         route = self.di.build(SimpleRoutingRoute)
         route.configure(
-            self.handler_class, {
+            self.handler_class,
+            {
                 'my': 'config',
                 'response_headers': {
                     'sup': 'yo'
-                }
+                },
+                'security_headers': [2]
             },
             path='users',
             authentication='blah',
-            response_headers={'kay': 'hi'}
+            response_headers={'kay': 'hi'},
+            security_headers=[1],
         )
         self.handler_config.assert_called_with({
             'my': 'config',
@@ -33,7 +38,8 @@ class SimpleRoutingRouteTest(unittest.TestCase):
             'response_headers': {
                 'sup': 'yo',
                 'kay': 'hi'
-            }
+            },
+            'security_headers': [1, 2],
         })
 
     def test_configure_no_override_for_authentication(self):
@@ -44,7 +50,12 @@ class SimpleRoutingRouteTest(unittest.TestCase):
                 'authentication': 'sup'
             }, path='users', authentication='blah'
         )
-        self.handler_config.assert_called_with({'my': 'config', 'base_url': '/users', 'authentication': 'sup'})
+        self.handler_config.assert_called_with({
+            'my': 'config',
+            'base_url': '/users',
+            'authentication': 'sup',
+            'security_headers': []
+        })
 
     def test_match_route(self):
         route = self.di.build(SimpleRoutingRoute)
@@ -83,11 +94,32 @@ class SimpleRoutingRouteTest(unittest.TestCase):
         self.assertEquals(None, route.matches('', 'POST'))
         self.assertEquals(None, route.matches('', 'KAY'))
 
-    def test_call(self):
+    def test_match_options(self):
         route = self.di.build(SimpleRoutingRoute)
         route.configure(self.handler_class, {})
-        self.assertEquals('5', route('hi'))
-        self.handler_class.__call__.assert_called_with('hi')
+        self.assertEquals({}, route.matches('/user/id/5', 'OPTIONS'))
+
+    def test_call(self):
+        input_output = type(
+            '', (), {
+                'get_request_method': MagicMock(return_value='GET'),
+            }
+        )()
+        route = self.di.build(SimpleRoutingRoute)
+        route.configure(self.handler_class, {})
+        self.assertEquals('5', route(input_output))
+        self.handler_class.__call__.assert_called_with(input_output)
+
+    def test_call_cors(self):
+        input_output = type(
+            '', (), {
+                'get_request_method': MagicMock(return_value='OPTIONS'),
+            }
+        )()
+        route = self.di.build(SimpleRoutingRoute)
+        route.configure(self.handler_class, {})
+        self.assertEquals('cors', route(input_output))
+        self.handler_class.cors.assert_called_with(input_output)
 
     def test_routing_data(self):
         route = self.di.build(SimpleRoutingRoute)

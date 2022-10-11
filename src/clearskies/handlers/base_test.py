@@ -4,6 +4,7 @@ from .base import Base
 from .exceptions import ClientError, InputError
 from ..di import StandardDependencies
 from ..authentication import public
+from ..security_headers import hsts, cors
 def raise_exception(exception):
     raise exception
 class Handle(Base):
@@ -12,6 +13,7 @@ class Handle(Base):
         'global': 'yes',
         'response_headers': None,
         'authentication': None,
+        'security_headers': None,
     }
     _configuration_defaults = {
         'age': 5,
@@ -37,9 +39,12 @@ class Handle(Base):
 class BaseTest(unittest.TestCase):
     def setUp(self):
         self.di = StandardDependencies()
-        self.reflect_output = type('', (), {
-            'respond': lambda message, status_code: (message, status_code),
-        })
+        self.reflect_output = type(
+            '', (), {
+                'respond': lambda message, status_code: (message, status_code),
+                'set_header': MagicMock(),
+            }
+        )
 
     def test_configure(self):
         handle = Handle(self.di)
@@ -177,3 +182,20 @@ class BaseTest(unittest.TestCase):
             },
         }, data)
         self.assertEquals(200, code)
+
+    def test_security_headers(self):
+        authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
+        handle = Handle(self.di)
+        handle.configure({'authentication': authentication, 'security_headers': hsts()})
+        (data, code) = handle.success(self.reflect_output, [1, 2, 3])
+        self.assertEquals(200, code)
+        self.reflect_output.set_header.assert_called_with('strict-transport-security', 'max-age=31536000 ;')
+
+    def test_cors(self):
+        authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
+        handle = Handle(self.di)
+        handle.configure({'authentication': authentication, 'security_headers': cors(origin='*')})
+        (data, code) = handle.cors(self.reflect_output)
+        self.assertEquals(200, code)
+        self.assertEquals('', data)
+        self.reflect_output.set_header.assert_called_with('access-control-allow-origin', '*')

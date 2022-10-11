@@ -12,7 +12,14 @@ class SimpleRoutingRoute:
         self._di = di
 
     def configure(
-        self, handler_class, handler_config, path=None, methods=None, authentication=None, response_headers=None
+        self,
+        handler_class,
+        handler_config,
+        path=None,
+        methods=None,
+        authentication=None,
+        response_headers=None,
+        security_headers=None
     ):
         if authentication is not None and not handler_config.get('authentication'):
             handler_config['authentication'] = authentication
@@ -36,6 +43,10 @@ class SimpleRoutingRoute:
         }
         if response_headers:
             sub_handler_config['response_headers'] = response_headers
+        security_headers = security_headers if security_headers is not None else []
+        if 'security_headers' in handler_config:
+            security_headers = [*security_headers, *handler_config['security_headers']]
+        sub_handler_config['security_headers'] = security_headers
         self._handler = self._di.build(handler_class, cache=False)
         self._handler.configure(sub_handler_config)
 
@@ -61,6 +72,9 @@ class SimpleRoutingRoute:
         but has no route data, it returns an empty dictionary.  Check explicitly for None
         to understand if there was no route match at all.
         """
+        # The one trick part is the OPTIONS method, which is handled by CORS.
+        if request_method == 'OPTIONS' and self._handler.has_cors:
+            return {}
         if self._methods is not None and request_method not in self._methods:
             return None
         if self._resource_paths:
@@ -99,6 +113,8 @@ class SimpleRoutingRoute:
         return route_data
 
     def __call__(self, input_output):
+        if input_output.get_request_method() == 'OPTIONS':
+            return self._handler.cors(input_output)
         # including calling parameters that came from the route matching
         return self._handler(input_output)
 

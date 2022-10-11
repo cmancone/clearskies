@@ -20,6 +20,7 @@ class Callable(Base):
         'doc_description': '',
         'internal_casing': '',
         'external_casing': '',
+        'security_headers': None,
     }
 
     _configuration_defaults = {
