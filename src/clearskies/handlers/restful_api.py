@@ -76,6 +76,20 @@ class RestfulAPI(Routing):
             input_output.add_routing_data({'id': resource_id})
         return handler(input_output)
 
+    def cors(self, input_output):
+        cors = self._cors_header
+        authentication = self._configuration.get('authentication')
+        if authentication:
+            authentication.set_headers_for_cors(cors)
+        methods = {}
+        for action in ['create', 'delete', 'list', 'search', 'update']:
+            if self.configuration(f'allow_{action}'):
+                methods[self.configuration(f'{action}_request_method')] = True
+        for method in methods.key():
+            cors.add_method(method)
+        cors.set_headers_for_input_output(input_output)
+        return input_output.respond('', 200)
+
     def fetch_cached_handler(self, handler_class):
         cache_key = handler_class.__name__
         if cache_key not in self._cached_handlers:

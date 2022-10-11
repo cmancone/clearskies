@@ -311,7 +311,11 @@ class Base(ABC):
         return self._configuration.get('model').id_column_name
 
     def cors(self, input_output):
-        self._cors_header.set_headers_for_input_output(input_output)
+        cors = self._cors_header
+        authentication = self._configuration.get('authentication')
+        if authentication:
+            authentication.set_headers_for_cors(cors)
+        cors.set_headers_for_input_output(input_output)
         return input_output.respond('', 200)
 
     def documentation(self):

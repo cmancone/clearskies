@@ -192,10 +192,13 @@ class BaseTest(unittest.TestCase):
         self.reflect_output.set_header.assert_called_with('strict-transport-security', 'max-age=31536000 ;')
 
     def test_cors(self):
-        authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
+        authentication = type('', (), {'authenticate': MagicMock(return_value=True), 'set_headers_for_cors': lambda self, cors: cors.add_header('Authorization')})
         handle = Handle(self.di)
         handle.configure({'authentication': authentication, 'security_headers': cors(origin='*')})
         (data, code) = handle.cors(self.reflect_output)
         self.assertEquals(200, code)
         self.assertEquals('', data)
-        self.reflect_output.set_header.assert_called_with('access-control-allow-origin', '*')
+        self.reflect_output.set_header.assert_has_calls([
+            call('access-control-allow-origin', '*'),
+            call('access-control-allow-headers', 'Authorization'),
+        ])

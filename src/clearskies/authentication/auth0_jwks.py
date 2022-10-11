@@ -47,6 +47,9 @@ class Auth0JWKS:
         input_output.set_authorization_data(self.jwt_claims)
         return True
 
+    def set_headers_for_cors(self, cors):
+        cors.add_header('Authorization')
+
     def validate_jwt(self, raw_jwt):
         try:
             unverified_header = self._jose_jwt.get_unverified_header(raw_jwt)

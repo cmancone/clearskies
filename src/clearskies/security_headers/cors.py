@@ -19,11 +19,33 @@ class CORS(Base):
 
     def configure(self, origin=None, methods=None, headers=None, max_age=None, credentials=None, expose_headers=None):
         self.origin=origin
-        self.methods=methods
-        self.headers=headers
         self.max_age=max_age
         self.credentials=credentials
-        self.expose_headers=expose_headers
+        self.expose_headers=', '.join(expose_headers) if type(expose_headers) == list else expose_headers
+        self.set_methods(methods)
+        self.set_headers(headers)
+
+    def set_headers(self, headers):
+        if type(headers) == list:
+            headers = ', '.join(headers)
+        self.headers = headers if headers is not None else ''
+
+    def add_header(self, header):
+        if not self.headers:
+            self.headers = header
+        else:
+            self.headers += ', ' + header
+
+    def set_methods(self, methods):
+        if type(methods) == list:
+            methods = ', '.join(methods)
+        self.methods = methods if methods is not None else ''
+
+    def add_method(self, method):
+        if not self.methods:
+            self.methods = method
+        else:
+            self.methods += ', ' + method
 
     def set_headers_for_input_output(self, input_output):
         for key in ['origin', 'methods', 'headers']:

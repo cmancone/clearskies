@@ -15,6 +15,9 @@ class Public:
     def authorize(self, authorization):
         raise ValueError("Public endpoints do not support authorization")
 
+    def set_headers_for_cors(self, cors):
+        pass
+
     def documentation_request_parameters(self):
         return []
 

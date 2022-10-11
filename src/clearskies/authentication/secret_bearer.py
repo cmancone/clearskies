@@ -34,6 +34,9 @@ class SecretBearer:
     def authorize(self, authorization):
         raise ValueError("SecretBearer does not support authorization")
 
+    def set_headers_for_cors(self, cors):
+        cors.add_header('Authorization')
+
     def _configured_guard(self):
         if not self._secret:
             raise ValueError("Attempted to use SecretBearer authentication class without providing the configuration")
