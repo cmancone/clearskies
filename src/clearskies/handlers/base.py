@@ -244,7 +244,12 @@ class Base(ABC):
         json = OrderedDict()
         json[self.auto_case_internal_column_name('id')] = model_id
         for column in self._get_readable_columns().values():
-            json[self.auto_case_column_name(column.name, True)] = column.to_json(model)
+            column_data = column.to_json(model)
+            if type(column_data) == dict:
+                for (key, value) in column_data:
+                    json[self.auto_case_column_name(key, True)] = value
+            else:
+                json[self.auto_case_column_name(column.name, True)] = column_data
         return json
 
     def auto_case_internal_column_name(self, column_name):
@@ -419,7 +424,10 @@ class Base(ABC):
 
         for column in self._get_readable_columns().values():
             column_doc = column.documentation()
-            column_doc.name = self.auto_case_internal_column_name(column_doc.name)
-            properties.append(column_doc)
+            if type(column_doc) != list:
+                column_doc = [column_doc]
+            for doc in column_doc:
+                doc.name = self.auto_case_internal_column_name(doc.name)
+                properties.append(doc)
 
         return properties

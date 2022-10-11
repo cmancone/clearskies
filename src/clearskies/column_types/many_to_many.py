@@ -243,7 +243,11 @@ class ManyToMany(String):
             if related_id_column_name not in self.config('readable_related_columns'):
                 json[related_id_column_name] = columns[related_id_column_name].to_json(related)
             for column_name in self.config('readable_related_columns'):
-                json[column_name] = columns[column_name].to_json(related)
+                column_data = columns[column_name].to_json(related)
+                if type(column_data) == dict:
+                    json = {**json, **column_data}
+                else:
+                    json[column_name] = column_data
             records.append(json)
         return records
 
@@ -253,7 +257,10 @@ class ManyToMany(String):
         related_properties = [columns[related_id_column_name].documentation()]
 
         for column_name in self.config('readable_related_columns'):
-            related_properties.append(columns[column_name].documentation())
+            related_docs = columns[column_name].documentation()
+            if type(related_docs) != list:
+                related_docs = [related_docs]
+            related_properties.extend(child_docs)
 
         related_object = AutoDocObject(
             self.camel_to_nice(self.related_models.model_class().__name__),

@@ -108,7 +108,11 @@ class BelongsTo(String):
             json[parent.id_column_name] = columns[parent.id_column_name].to_json(parent)
         for column_name in self.config('readable_parent_columns'):
             json[column_name] = columns[column_name].to_json(parent)
-        return json
+        id_less_name = self.name[:-3]
+        return {
+            self.name: super().to_json(model),
+            id_less_name: json,
+        }
 
     def documentation(self, name=None, example=None, value=None):
         columns = self.parent_columns
@@ -116,15 +120,19 @@ class BelongsTo(String):
         parent_properties = [columns[parent_id_column_name].documentation()]
 
         parent_columns = self.config('readable_parent_columns', silent=True)
+        parent_id_doc = AutoDocString(name if name is not None else self.name)
         if not parent_columns:
-            return AutoDocString(name if name is not None else self.name)
+            return parent_id_doc
 
         for column_name in self.config('readable_parent_columns'):
             if column_name == parent_id_column_name:
                 continue
             parent_properties.append(columns[column_name].documentation())
 
-        return AutoDocObject(
-            name if name is not None else self.name,
-            parent_properties,
-        )
+        return [
+            parent_id_doc,
+            AutoDocObject(
+                self.name[:-3],
+                parent_properties,
+            )
+        ]

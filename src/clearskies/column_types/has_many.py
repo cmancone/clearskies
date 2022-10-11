@@ -103,7 +103,11 @@ class HasMany(Column):
             child_id_column_name = child.id_column_name
             json[child_id_column_name] = columns[child_id_column_name].to_json(child)
             for column_name in self.config('readable_child_columns'):
-                json[column_name] = columns[column_name].to_json(child)
+                column_data = columns[column_name].to_json(child)
+                if type(column_data) == dict:
+                    json = {**json, **column_data}
+                else:
+                    json[column_name] = column_data
             children.append(json)
         return children
 
@@ -117,7 +121,10 @@ class HasMany(Column):
         child_properties = [columns[child_id_column_name].documentation()]
 
         for column_name in self.config('readable_child_columns'):
-            child_properties.append(columns[column_name].documentation())
+            child_docs = columns[column_name].documentation()
+            if type(child_docs) != list:
+                child_docs = [child_docs]
+            child_properties.extend(child_docs)
 
         child_object = AutoDocObject(
             self.camel_to_nice(self.child_models.model_class().__name__),

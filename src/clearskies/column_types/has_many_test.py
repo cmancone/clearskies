@@ -177,17 +177,17 @@ class HasManyTest(unittest.TestCase):
         self.assertEquals('users', doc.name)
         self.assertEquals(AutoDocObject, doc.item_definition.__class__)
         self.assertEquals('user', doc.item_definition.name)
-        self.assertEquals(4, len(doc.item_definition.children))
+        self.assertEquals(5, len(doc.item_definition.children))
         self.assertEquals(
-            ['id', 'status_id', 'first_name', 'last_name'],
+            ['id', 'status_id', 'status', 'first_name', 'last_name'],
             [child.name for child in doc.item_definition.children]
         )
         self.assertEquals(
-            [AutoDocString, AutoDocObject, AutoDocString, AutoDocString],
+            [AutoDocString, AutoDocString, AutoDocObject, AutoDocString, AutoDocString],
             [child.__class__ for child in doc.item_definition.children]
         )
 
-        status = doc.item_definition.children[1]
+        status = doc.item_definition.children[2]
         self.assertEquals(2, len(status.children))
         self.assertEquals(
             ['id', 'name'],
