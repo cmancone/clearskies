@@ -27,6 +27,8 @@ class Base(ABC):
     }
     _di = None
     _configuration = None
+    _cors_header = None
+    has_cors = False
 
     def __init__(self, di):
         self._di = di
@@ -130,7 +132,11 @@ class Base(ABC):
                     raise ValueError(
                         f"Configuration error for handler '{self.__class__.__name__}': security header #{index+1} is not a binding config object, but should be"
                     )
-                final_security_headers.append(self._di.build(security_header))
+                header = self._di.build(security_header)
+                if header.is_cors:
+                    self._cors_header = header
+                    self.has_cors = True
+                final_security_headers.append(header)
             configuration['security_headers'] = final_security_headers
         return configuration
 
@@ -298,6 +304,10 @@ class Base(ABC):
         if self._configuration.get('model_class', False):
             return self._configuration.get('model_class').id_column_name
         return self._configuration.get('model').id_column_name
+
+    def cors(self, input_output):
+        self._cors_header.set_headers_for_input_output(input_output)
+        return input_output.respond('', 200)
 
     def documentation(self):
         return []

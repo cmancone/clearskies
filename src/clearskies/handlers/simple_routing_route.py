@@ -72,6 +72,9 @@ class SimpleRoutingRoute:
         but has no route data, it returns an empty dictionary.  Check explicitly for None
         to understand if there was no route match at all.
         """
+        # The one trick part is the OPTIONS method, which is handled by CORS.
+        if request_method == 'OPTIONS' and self._handler.has_cors:
+            return {}
         if self._methods is not None and request_method not in self._methods:
             return None
         if self._resource_paths:
@@ -110,6 +113,8 @@ class SimpleRoutingRoute:
         return route_data
 
     def __call__(self, input_output):
+        if input_output.get_request_method() == 'OPTIONS':
+            return self._handler.cors(input_output)
         # including calling parameters that came from the route matching
         return self._handler(input_output)
 

@@ -1,5 +1,6 @@
 class Base:
     environment = None
+    is_cors = False
 
     def __init__(self, environment):
         self.environment = environment

@@ -12,6 +12,7 @@ class CORS(Base):
     max_age = None
     credentials = None
     expose_headers = None
+    is_cors = True
 
     def __init__(self, environment):
         super().__init__(environment)
@@ -53,6 +54,8 @@ def cors(origin=None, methods=None, headers=None, max_age=None, credentials=None
     }
     for key in lists:
         value = kwargs[key]
+        if value is None:
+            continue
         actual_type = type(value)
         if actual_type == list:
             if not all([type(item) == str for item in value]):
@@ -60,7 +63,9 @@ def cors(origin=None, methods=None, headers=None, max_age=None, credentials=None
             kwargs[key] = ', '.join(value)
         if actual_type != str:
             raise ValueError(f"Invalid configuration value for CORS: {key} should be a string or list of strings but instead is '{actual_type}'")
-    for (key, allowed_type) in allowed_types:
+    for (key, allowed_type) in allowed_types.items():
+        if kwargs[key] is None:
+            continue
         actual_type = type(kwargs[key])
         if actual_type != allowed_type:
             raise ValueError(f"Invalid configuration value for CORS: {key} should be a {allowed_type} but instead is '{actual_type}'")
