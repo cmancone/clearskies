@@ -296,7 +296,7 @@ class List(Base):
 
     def documentation(self):
         nice_model = string.camel_case_to_words(self._model.__class__.__name__)
-        schema_model_name = string.camel_case_to_words(self._model.__class__.__name__)
+        schema_model_name = string.camel_case_to_snake_case(self._model.__class__.__name__)
         data_schema = self.documentation_data_schema()
 
         authentication = self.configuration('authentication')
@@ -337,9 +337,7 @@ class List(Base):
         ]
 
     def documentation_models(self):
-        schema_model_name = self.auto_case_internal_column_name(
-            string.camel_case_to_snake_case(self._model.__class__.__name__)
-        )
+        schema_model_name = self.camel_case_to_snake_case(self._model.__class__.__name__)
 
         return {
             schema_model_name:

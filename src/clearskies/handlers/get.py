@@ -79,7 +79,7 @@ class Get(Base):
                         autodoc.schema.Object(
                             'data',
                             children=self.documentation_data_schema(),
-                            model_name=string.camel_case_to_words(self._model.__class__.__name__),
+                            model_name=string.camel_case_to_snake_case(self._model.__class__.__name__),
                         ),
                         description=f'The {nice_model} record',
                     ),
