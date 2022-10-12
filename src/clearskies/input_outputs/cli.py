@@ -10,6 +10,7 @@ class CLI:
     _input_type = None
     _body_loaded_as_json = None
     _body_as_json = None
+    _routing_data = None
 
     def __init__(self, sys):
         self._sys = sys
@@ -126,3 +127,17 @@ class CLI:
                 except json.JSONDecodeError:
                     self._body_as_json = None
         return self._body_as_json
+
+    def routing_data(self):
+        return self._routing_data if self._routing_data is not None else {}
+
+    def set_routing_data(self, data):
+        self._routing_data = data
+
+    def add_routing_data(self, key, value=None):
+        if self._routing_data is None:
+            self._routing_data = {}
+        if type(key) == dict:
+            self._routing_data = {**self._routing_data, **key}
+        else:
+            self._routing_data[key] = value
