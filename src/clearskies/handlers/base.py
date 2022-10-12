@@ -128,15 +128,16 @@ class Base(ABC):
                 )
             final_security_headers = []
             for (index, security_header) in enumerate(security_headers):
-                if not hasattr(security_header, 'object_class'):
+                if hasattr(security_header, 'object_class'):
+                    security_header = self._di.build(security_header)
+                if not hasattr(security_header, 'set_headers_for_input_output'):
                     raise ValueError(
-                        f"Configuration error for handler '{self.__class__.__name__}': security header #{index+1} is not a binding config object, but should be"
+                        f"Configuration error for handler '{self.__class__.__name__}': security header #{index+1} did not resolve to a security header"
                     )
-                header = self._di.build(security_header)
-                if header.is_cors:
-                    self._cors_header = header
+                if security_header.is_cors:
+                    self._cors_header = security_header
                     self.has_cors = True
-                final_security_headers.append(header)
+                final_security_headers.append(security_header)
             configuration['security_headers'] = final_security_headers
         return configuration
 
@@ -312,6 +313,8 @@ class Base(ABC):
 
     def cors(self, input_output):
         cors = self._cors_header
+        if not cors:
+            return self.error(input_output, 'not found', 404)
         authentication = self._configuration.get('authentication')
         if authentication:
             authentication.set_headers_for_cors(cors)

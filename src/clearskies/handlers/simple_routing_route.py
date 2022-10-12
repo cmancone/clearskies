@@ -67,17 +67,15 @@ class SimpleRoutingRoute:
             resource_paths[index] = match.group(1)
         return resource_paths
 
-    def matches(self, full_path, request_method):
+    def matches(self, full_path, request_method, is_cors=False):
         """ Returns None if the route doesn't match, or a dictionary with route data for a match.
 
         You can't just match true/false against the return value, because of the route matches
         but has no route data, it returns an empty dictionary.  Check explicitly for None
         to understand if there was no route match at all.
         """
-        # The one trick part is the OPTIONS method, which is handled by CORS.
-        if request_method == 'OPTIONS' and self._handler.has_cors:
-            return {}
-        if self._methods is not None and request_method not in self._methods:
+        # If we're routing for CORS then ignore the request method (since it won't match)
+        if not is_cors and self._methods is not None and request_method not in self._methods:
             return None
         if self._resource_paths:
             return self._resource_path_match(full_path, self._path_parts, self._resource_paths)
@@ -115,10 +113,12 @@ class SimpleRoutingRoute:
         return route_data
 
     def __call__(self, input_output):
-        if input_output.get_request_method() == 'OPTIONS':
-            return self._handler.cors(input_output)
         # including calling parameters that came from the route matching
         return self._handler(input_output)
+
+    def cors(self, input_output):
+        # including calling parameters that came from the route matching
+        return self._handler.cors(input_output)
 
     def documentation(self):
         docs = []

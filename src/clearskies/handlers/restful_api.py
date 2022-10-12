@@ -78,6 +78,8 @@ class RestfulAPI(Routing):
 
     def cors(self, input_output):
         cors = self._cors_header
+        if not cors:
+            return self.error(input_output, 'not found', 404)
         authentication = self._configuration.get('authentication')
         if authentication:
             authentication.set_headers_for_cors(cors)
@@ -85,7 +87,7 @@ class RestfulAPI(Routing):
         for action in ['create', 'delete', 'list', 'search', 'update']:
             if self.configuration(f'allow_{action}'):
                 methods[self.configuration(f'{action}_request_method')] = True
-        for method in methods.key():
+        for method in methods.keys():
             cors.add_method(method)
         cors.set_headers_for_input_output(input_output)
         return input_output.respond('', 200)

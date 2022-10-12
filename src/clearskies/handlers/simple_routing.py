@@ -36,6 +36,9 @@ class SimpleRouting(Base):
         if self.configuration('schema_route') and self.configuration('schema_route') == full_path:
             return self.hosted_schema(input_output)
 
+        if request_method == 'OPTIONS':
+            return self.cors(input_output, is_cors=True)
+
         for route in self._routes:
             route_data = route.matches(full_path, request_method)
             if route_data is None:
@@ -44,6 +47,19 @@ class SimpleRouting(Base):
 
             return route(input_output)
 
+        return self.error(input_output, 'Page not found', 404)
+
+    def cors(self, input_output):
+        if not self._cors_header:
+            return self.error(input_output, 'not found', 404)
+        request_method = input_output.get_request_method()
+        full_path = input_output.get_full_path().strip('/')
+        for route in self._routes:
+            route_data = route.matches(full_path, request_method, is_cors=True)
+            if route_data is None:
+                continue
+
+            return route.cors(input_output)
         return self.error(input_output, 'Page not found', 404)
 
     def _check_configuration(self, configuration):

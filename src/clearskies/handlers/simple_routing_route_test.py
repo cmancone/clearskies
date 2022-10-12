@@ -118,7 +118,7 @@ class SimpleRoutingRouteTest(unittest.TestCase):
         )()
         route = self.di.build(SimpleRoutingRoute)
         route.configure(self.handler_class, {})
-        self.assertEquals('cors', route(input_output))
+        self.assertEquals('cors', route.cors(input_output))
         self.handler_class.cors.assert_called_with(input_output)
 
     def test_routing_data(self):
