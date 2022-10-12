@@ -173,4 +173,6 @@ class SimpleRouting(Base):
         response_headers = self.configuration('response_headers')
         if response_headers:
             input_output.set_headers(response_headers)
+        for security_header in self.configuration('security_headers'):
+            security_header.set_headers_for_input_output(input_output)
         return input_output.respond(schema.pretty(root_properties=extra_schema_config), 200)
