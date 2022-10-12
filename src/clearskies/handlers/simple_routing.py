@@ -37,7 +37,7 @@ class SimpleRouting(Base):
             return self.hosted_schema(input_output)
 
         if request_method == 'OPTIONS':
-            return self.cors(input_output, is_cors=True)
+            return self.cors(input_output)
 
         for route in self._routes:
             route_data = route.matches(full_path, request_method)
