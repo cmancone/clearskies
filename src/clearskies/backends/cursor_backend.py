@@ -97,7 +97,7 @@ class CursorBackend(Backend):
             limit = configuration.get('limit', None)
             start = configuration.get('pagination', {}).get('start', 0)
             if limit and len(records) == limit:
-                next_page_data['start'] = start + limit
+                next_page_data['start'] = int(start) + int(limit)
         return records
 
     def as_sql(self, configuration):
