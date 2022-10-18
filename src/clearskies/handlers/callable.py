@@ -25,6 +25,7 @@ class Callable(Base):
 
     _configuration_defaults = {
         'base_url': '',
+        'return_raw_response': False,
         'schema': None,
         'writeable_columns': None,
         'documentation_model_name': '',
@@ -122,6 +123,12 @@ class Callable(Base):
         if 'id' in routing_data:
             request_data['id'] = routing_data['id']
         return request_data
+
+    def success(self, input_output, data, number_results=None, limit=None, next_page=None):
+        if self.configuration('return_raw_response'):
+            return input_output.respond(data, 200)
+
+        return super().success(input_output, data, number_results=number_results, limit=limit, next_page=next_page)
 
     def _check_schema(self, schema, writeable_columns, error_prefix):
         """
