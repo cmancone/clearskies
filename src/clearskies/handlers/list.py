@@ -128,8 +128,14 @@ class List(Base):
             for internal_name in self.configuration('sortable_columns'):
                 external_name = self.auto_case_column_name(internal_name, True)
                 sort_column_map[external_name] = internal_name
-            if input['sort'] in sort_column_map:
-                input['sort'] = sort_column_map[input['sort']]
+            # sometimes the sort may be a list of directives
+            if type(input['sort']) == list:
+                for (index, sort_entry) in enumerate(input['sort']):
+                    if input['sort'][index]['column'] in sort_column_map:
+                        input['sort'][index]['column'] = sort_column_map[input['sort'][index]['column']]
+            else:
+                if input['sort'] in sort_column_map:
+                    input['sort'] = sort_column_map[input['sort']]
 
         return input
 
