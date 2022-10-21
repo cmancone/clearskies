@@ -216,17 +216,17 @@ class Callable(Base):
 
     def documentation(self):
         schema = self.configuration('schema')
-        if not schema:
-            return []
 
         # our request parameters
-        parameters = [
-            autodoc.request.JSONBody(
-                column.documentation(name=self.auto_case_column_name(column.name, True)),
-                description=f"Set '{column.name}'",
-                required=column.is_required,
-            ) for column in schema.values()
-        ]
+        parameters = []
+        if schema:
+            parameters = [
+                autodoc.request.JSONBody(
+                    column.documentation(name=self.auto_case_column_name(column.name, True)),
+                    description=f"Set '{column.name}'",
+                    required=column.is_required,
+                ) for column in schema.values()
+            ]
 
         authentication = self.configuration('authentication')
         standard_error_responses = []
@@ -254,6 +254,7 @@ class Callable(Base):
                     *standard_error_responses,
                     self.documentation_not_found(),
                 ],
+                request_methods='POST',
                 relative_path=self.configuration('base_url'),
                 parameters=[
                     *parameters,

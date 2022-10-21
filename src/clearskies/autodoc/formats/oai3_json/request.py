@@ -43,8 +43,8 @@ class Request:
 
             if self.json_body_parameters:
                 # For OAI3, there should only be one JSON body root parameter, so it should either be an
-                # object or an array.  If we have more than one JSON body parameter then wrap it in an object
-                if len(self.json_body_parameters) > 1:
+                # object or an array.  If we have an array then wrap it in an object
+                if type(self.json_body_parameters) == list:
                     definitions = [parameter.definition for parameter in self.json_body_parameters]
                     json_body = Object('body', definitions)
                     is_required = len([1 for param in self.json_body_parameters if param.required]) >= 1
