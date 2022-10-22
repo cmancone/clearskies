@@ -87,7 +87,7 @@ class Model(Models):
                     raise KeyError(f"Unknown column '{column_name}' requested from model '{self.__class__.__name__}'")
                 return None
         else:
-            value = self.columns()[column_name].from_backend(data[column_name]) \
+            value = self._backend.column_from_backend(self.columns()[column_name], data[column_name]) \
                 if column_name in self.columns() \
                 else data[column_name]
 
@@ -129,7 +129,7 @@ class Model(Models):
             new_data = self._backend.update(self._data[self.id_column_name], to_save, self)
         else:
             new_data = self._backend.create(to_save, self)
-        id = columns[self.id_column_name].from_backend(new_data[self.id_column_name])
+        id = self._backend.column_from_backend(columns[self.id_column_name], new_data[self.id_column_name])
 
         data = self.columns_post_save(data, id, columns)
         self.post_save(data, id)
@@ -219,7 +219,7 @@ class Model(Models):
                 del backend_data[column.name]
                 continue
 
-            backend_data = column.to_backend(backend_data)
+            backend_data = self._backend.column_to_backend(column, backend_data)
             if backend_data is None:
                 raise ValueError(
                     f'Column {column.name} of type {column.__class__.__name__} did not return any data for to_database'

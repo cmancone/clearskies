@@ -45,9 +45,13 @@ class ModelTest(unittest.TestCase):
 
     def test_create(self):
         new_user = {'id': '5', 'name': 'Conor', 'birth_date': '2020-11-28 12:30:45', 'age': '1'}
-        backend = type('', (), {
-            'create': MagicMock(return_value=new_user),
-        })()
+        backend = type(
+            '', (), {
+                'create': MagicMock(return_value=new_user),
+                'column_to_backend': lambda self, column, backend_data: column.to_backend(backend_data),
+                'column_from_backend': lambda self, column, value: column.from_backend(value),
+            }
+        )()
 
         birth_date = datetime.strptime('2020-11-28 12:30:45', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
         user = User(backend, self.columns)
@@ -60,7 +64,7 @@ class ModelTest(unittest.TestCase):
             'id': '1-2-3-4',
             'name': 'Conor',
             'birth_date': '2020-11-28 12:30:45',
-            'age': '1',
+            'age': 1,
             'test': 'thingy',
         }, user)
         self.assertEquals({
@@ -75,9 +79,13 @@ class ModelTest(unittest.TestCase):
     def test_update(self):
         old_user = {'id': '5', 'name': 'Ronoc', 'birth_date': '2019-11-28 23:30:30', 'age': '2'}
         new_user = {'id': '5', 'name': 'Conor', 'birth_date': '2020-11-28 12:30:45', 'age': '1'}
-        backend = type('', (), {
-            'update': MagicMock(return_value=new_user),
-        })()
+        backend = type(
+            '', (), {
+                'update': MagicMock(return_value=new_user),
+                'column_to_backend': lambda self, column, backend_data: column.to_backend(backend_data),
+                'column_from_backend': lambda self, column, value: column.from_backend(value),
+            }
+        )()
 
         birth_date = datetime.strptime('2020-11-28 12:30:45', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
         user = User(backend, self.columns)
@@ -91,7 +99,7 @@ class ModelTest(unittest.TestCase):
             '5', {
                 'name': 'Conor',
                 'birth_date': '2020-11-28 12:30:45',
-                'age': '1',
+                'age': 1,
                 'test': 'thingy',
             }, user
         )
@@ -105,9 +113,12 @@ class ModelTest(unittest.TestCase):
 
     def test_delete(self):
         user_data = {'id': '5', 'name': 'Ronoc', 'birth_date': '', 'age': '2'}
-        backend = type('', (), {
-            'delete': MagicMock(return_value=True),
-        })()
+        backend = type(
+            '', (), {
+                'delete': MagicMock(return_value=True),
+                'column_from_backend': lambda self, column, value: column.from_backend(value)
+            }
+        )()
 
         user = User(backend, self.columns)
         user.data = user_data
@@ -123,7 +134,8 @@ class ModelTest(unittest.TestCase):
         self.assertEquals('hey blahblah', user.blahbblah)
 
     def test_get_simple(self):
-        user = User('cursor', self.columns)
+        backend = type('', (), {'column_from_backend': lambda self, column, value: column.from_backend(value)})()
+        user = User(backend, self.columns)
         user.data = {'id': 5, 'name': 'hey'}
         self.assertEquals(5, user.id)
         self.assertEquals('hey', user.name)

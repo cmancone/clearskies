@@ -3,6 +3,15 @@ from ..autodoc.schema import Integer as AutoDocInteger
 class Integer(Column):
     _auto_doc_class = AutoDocInteger
 
+    def to_backend(self, data):
+        if self.name not in data or data[self.name] is None:
+            return data
+
+        return {
+            **data,
+            self.name: int(data[self.name]),
+        }
+
     def from_backend(self, value):
         return int(value)
 

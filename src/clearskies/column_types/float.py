@@ -6,6 +6,15 @@ class Float(Column):
     def from_backend(self, value):
         return float(value)
 
+    def to_backend(self, data):
+        if self.name not in data or data[self.name] is None:
+            return data
+
+        return {
+            **data,
+            self.name: float(data[self.name]),
+        }
+
     def check_input(self, model, data):
         if not self.name in data:
             return ''

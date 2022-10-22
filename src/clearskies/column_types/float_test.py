@@ -5,6 +5,16 @@ class FloatTest(unittest.TestCase):
         float_column = Float()
         self.assertEquals(5.0, float_column.from_backend('5'))
 
+    def test_to_backend(self):
+        float_column = Float()
+        float_column.name = 'age'
+
+        self.assertEquals({'name': 'hey', 'age': 5.0}, float_column.to_backend({'name': 'hey', 'age': '5'}))
+        # These two are just to make sure it doesn't crash if there is no data
+        # which is allowed and normal
+        self.assertEquals({'name': 'hey'}, float_column.to_backend({'name': 'hey'}))
+        self.assertEquals({'name': 'hey', 'age': None}, float_column.to_backend({'name': 'hey', 'age': None}))
+
     def test_check_input_bad(self):
         float_column = Float()
         float_column.configure('age', {}, FloatTest)

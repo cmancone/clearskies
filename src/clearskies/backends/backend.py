@@ -133,3 +133,31 @@ class Backend(ABC):
                 # if we get here there is no __init__ defined so we don't need to pass arguments
                 return model_or_class()
         return model_or_class
+
+    def column_from_backend(self, column, value):
+        """
+        Manages transformations from the backend
+
+        The idea with this (and `column_to_backend`) is that the transformations to
+        and from the backend are mostly determined by the column type - integer, string,
+        date, etc...  However, there are cases where these are also backend specific: a datetime
+        column may be serialized different ways for different databases, a JSON column must be
+        serialized for a database but won't be serialized for an API call, etc...  Therefore
+        we mostly just let the column handle this, but we want the backend to be in charge
+        in case it needs to make changes.
+        """
+        return column.from_backend(value)
+
+    def column_to_backend(self, column, backend_data):
+        """
+        Manages transformations to the backend
+
+        The idea with this (and `column_from_backend`) is that the transformations to
+        and from the backend are mostly determined by the column type - integer, string,
+        date, etc...  However, there are cases where these are also backend specific: a datetime
+        column may be serialized different ways for different databases, a JSON column must be
+        serialized for a database but won't be serialized for an API call, etc...  Therefore
+        we mostly just let the column handle this, but we want the backend to be in charge
+        in case it needs to make changes.
+        """
+        return column.to_backend(backend_data)

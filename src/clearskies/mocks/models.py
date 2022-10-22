@@ -127,3 +127,9 @@ class Models(ModelsBase):
         if self.iterator_index >= len(self.iterating):
             raise StopIteration()
         return self.iterating[self.iterator_index]
+
+    def column_from_backend(self, column, value):
+        return column.from_backend(value)
+
+    def column_to_backend(self, column, backend_data):
+        return column.to_backend(backend_data)
