@@ -20,7 +20,7 @@ class CursorBackendTest(unittest.TestCase):
         new_data = self.backend.create({'dummy': 'data', 'hey': 'people'}, self.model)
         self.cursor.execute.assert_has_calls([
             call('INSERT INTO `my_table` (`dummy`, `hey`) VALUES (%s, %s)', ('data', 'people')),
-            call('SELECT * FROM `my_table` WHERE id=%s', (10, )),
+            call('SELECT `my_table`.* FROM `my_table` WHERE id=%s', (10, )),
         ])
         self.assertEquals({'my': 'data'}, new_data)
 
@@ -29,7 +29,7 @@ class CursorBackendTest(unittest.TestCase):
         new_data = self.backend.update(5, to_save, self.model)
         self.cursor.execute.assert_has_calls([
             call('UPDATE `my_table` SET `hey`=%s, `qwerty`=%s, `foo`=%s WHERE id=%s', ('sup', 'asdf', 'bar', 5)),
-            call('SELECT * FROM `my_table` WHERE id=%s', (5, )),
+            call('SELECT `my_table`.* FROM `my_table` WHERE id=%s', (5, )),
         ])
         self.assertEquals({'my': 'data'}, new_data)
 
@@ -177,8 +177,9 @@ class CursorBackendTest(unittest.TestCase):
             }, {
                 'raw': 'JOIN peeps AS peeps ON peeps.id=dogs.id'
             }],
-            'selects':
-            'sup',
+            'select_all':
+            False,
+            'selects': ['sup'],
             'wheres': [
                 {
                     'values': [5],
@@ -229,8 +230,9 @@ class CursorBackendTest(unittest.TestCase):
             }, {
                 'raw': 'JOIN peeps AS peeps ON peeps.id=dogs.id'
             }],
-            'selects':
-            'sup',
+            'selects': ['sup'],
+            'select_all':
+            True,
             'wheres': [
                 {
                     'values': [5],
@@ -245,7 +247,7 @@ class CursorBackendTest(unittest.TestCase):
                                        'model',
                                        next_page_data=next_page_data)
         self.cursor.execute.assert_called_with(
-            'SELECT sup FROM `my_table` ' +
+            'SELECT `my_table`.*, sup FROM `my_table` ' +
                 'LEFT JOIN dogs ON dogs.id=ages.id ' + \
                 'JOIN peeps AS peeps ON peeps.id=dogs.id ' + \
                 'WHERE id=%s AND status_id IN (%s,%s) ' + \

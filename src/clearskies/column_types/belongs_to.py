@@ -22,6 +22,7 @@ class BelongsTo(String):
     # prints the name of the user with an id of 5.
     ```
     """
+    wants_n_plus_one = True
     required_configs = [
         'parent_models_class',
     ]
@@ -87,6 +88,23 @@ class BelongsTo(String):
             return self.parent_models.where(f"{parent_id_column_name}={parent_id}").first()
         return self.parent_models.empty_model()
 
+    def configure_n_plus_one(self, models):
+        readable_parent_columns = self.config('readable_parent_columns', silent=True)
+        if not readable_parent_columns:
+            return models
+
+        own_table_name = models.table_name()
+        parent_table = self.parent_models.table_name()
+        parent_id_column_name = self.parent_models.get_id_column_name()
+        with_join = models.join(
+            f'{parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}'
+        )
+
+        select_parts = [
+            f'{parent_table}.{column_name} AS {parent_table}_{column_name}' for column_name in readable_parent_columns
+        ]
+        return models.select(', '.join(select_parts))
+
     @property
     def parent_models(self):
         return self.di.build(self.config('parent_models_class'), cache=True)
@@ -135,10 +153,7 @@ class BelongsTo(String):
                 continue
             parent_properties.append(columns[column_name].documentation())
 
-        return [
-            parent_id_doc,
-            AutoDocObject(
-                self.name[:-3],
-                parent_properties,
-            )
-        ]
+        return [parent_id_doc, AutoDocObject(
+            self.name[:-3],
+            parent_properties,
+        )]

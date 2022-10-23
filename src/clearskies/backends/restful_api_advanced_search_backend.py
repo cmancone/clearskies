@@ -13,6 +13,7 @@ class RestfulApiAdvancedSearchBackend(ApiBackend):
         'pagination',
         'table_name',
         'model_columns',
+        'select_all',
     ]
 
     _empty_configs = [

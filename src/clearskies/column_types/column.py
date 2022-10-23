@@ -214,6 +214,9 @@ class Column(ABC):
         """
         return operator == '='
 
+    def configure_n_plus_one(self, models):
+        return models
+
     def check_search_value(self, value, operator=None):
         return self.input_error_for_value(value, operator=operator)
 

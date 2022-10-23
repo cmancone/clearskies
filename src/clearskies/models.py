@@ -14,6 +14,7 @@ class Models(ABC, ConditionParser):
     query_limit = None
     query_pagination = None
     query_selects = None
+    query_select_all = None
     must_rexecute = True
     must_recount = True
     count = None
@@ -35,7 +36,8 @@ class Models(ABC, ConditionParser):
         self.query_joins = []
         self.query_limit = None
         self.query_pagination = {}
-        self.query_selects = None
+        self.query_selects = []
+        self.query_select_all = True
 
     @abstractmethod
     def model_class(self):
@@ -70,6 +72,7 @@ class Models(ABC, ConditionParser):
             'limit': self.query_limit,
             'pagination': self.query_pagination,
             'selects': self.query_selects,
+            'select_all': self.query_select_all,
             'table_name': self.get_table_name(),
             'model_columns': self._model_columns,
         }
@@ -83,6 +86,7 @@ class Models(ABC, ConditionParser):
         self.query_limit = configuration['limit']
         self.query_pagination = configuration['pagination']
         self.query_selects = configuration['selects']
+        self.query_select_all = configuration['select_all']
         self._model_columns = configuration['model_columns']
 
     @property
@@ -95,7 +99,16 @@ class Models(ABC, ConditionParser):
         return self.clone().select_in_place(selects)
 
     def select_in_place(self, selects):
-        self.query_selects = selects
+        self.query_selects.append(selects)
+        self.must_rexecute = True
+        self._next_page_data = None
+        return self
+
+    def select_all(self, select_all=True):
+        return self.clone().select_all_in_place(select_all=select_all)
+
+    def select_all_in_place(self, select_all=True):
+        self.query_select_all = select_all
         self.must_rexecute = True
         self._next_page_data = None
         return self

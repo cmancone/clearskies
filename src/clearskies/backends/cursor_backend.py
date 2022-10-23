@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, List, Tuple
 from ..autodoc.schema import Integer as AutoDocInteger
 from .. import model
 class CursorBackend(Backend):
+    supports_n_plus_one = True
     _cursor = None
 
     _allowed_configs = [
@@ -13,6 +14,7 @@ class CursorBackend(Backend):
         'limit',
         'pagination',
         'selects',
+        'select_all',
         'joins',
         'model_columns',
     ]
@@ -42,6 +44,7 @@ class CursorBackend(Backend):
 
         results = self.records({
             'table_name': table_name,
+            'select_all': True,
             'wheres': [{
                 'parsed': f'{model.id_column_name}=%s',
                 'values': [id]
@@ -63,6 +66,7 @@ class CursorBackend(Backend):
 
         results = self.records({
             'table_name': table_name,
+            'select_all': True,
             'wheres': [{
                 'parsed': f'{model.id_column_name}=%s',
                 'values': [new_id]
@@ -102,7 +106,12 @@ class CursorBackend(Backend):
 
     def as_sql(self, configuration):
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration['wheres'])
-        select = configuration['selects'] if configuration['selects'] else '*'
+        select_parts = []
+        if configuration['select_all']:
+            select_parts.append(f"`{configuration['table_name']}`.*")
+        if configuration['selects']:
+            select_parts.extend(configuration['selects'])
+        select = ', '.join(select_parts)
         if configuration['joins']:
             joins = ' ' + ' '.join([join['raw'] for join in configuration['joins']])
         else:

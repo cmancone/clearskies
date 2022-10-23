@@ -11,6 +11,7 @@ class ApiBackend(Backend):
     _records = None
 
     _allowed_configs = [
+        'select_all',
         'wheres',
         'sorts',
         'limit',

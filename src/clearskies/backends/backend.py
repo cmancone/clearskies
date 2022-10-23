@@ -3,6 +3,8 @@ import inspect
 from .. import model
 from typing import Any, Callable, Dict, List, Tuple, Type, Union
 class Backend(ABC):
+    supports_n_plus_one = False
+
     @abstractmethod
     def update(self, id: str, data: Dict[str, Any], model: model.Model) -> Dict[str, Any]:
         """

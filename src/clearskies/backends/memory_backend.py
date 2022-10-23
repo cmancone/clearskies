@@ -46,19 +46,36 @@ class MemoryTable:
     # here be dragons.  This is not a 100% drop-in replacement for the equivalent SQL operators
     # https://codereview.stackexchange.com/questions/259198/in-memory-table-filtering-in-python
     _operator_lambda_builders = {
-        '<=>': lambda column, values, null: lambda row: row.get(column, null) == values[0],
-        '!=': lambda column, values, null: lambda row: row.get(column, null) != values[0],
-        '<=': lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) <= gentle_float_conversion(values[0]),
-        '>=': lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) >= gentle_float_conversion(values[0]),
-        '>': lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) > gentle_float_conversion(values[0]),
-        '<': lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) < gentle_float_conversion(values[0]),
-        '=': lambda column, values, null: lambda row: (str(row[column]) if column in row else null) == str(values[0]),
-        'is not null': lambda column, values, null: lambda row: (column in row and row[column] is not None),
-        'is null': lambda column, values, null: lambda row: (column not in row or row[column] is None),
-        'is not': lambda column, values, null: lambda row: row.get(column, null) != values[0],
-        'is': lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
-        'like': lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
-        'in': lambda column, values, null: lambda row: row.get(column, null) in values,
+        '<=>':
+        lambda column, values, null: lambda row: row.get(column, null) == values[0],
+        '!=':
+        lambda column, values, null: lambda row: row.get(column, null) != values[0],
+        '<=':
+        lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)
+                                                                         ) <= gentle_float_conversion(values[0]),
+        '>=':
+        lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)
+                                                                         ) >= gentle_float_conversion(values[0]),
+        '>':
+        lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)
+                                                                         ) > gentle_float_conversion(values[0]),
+        '<':
+        lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) <
+        gentle_float_conversion(values[0]),
+        '=':
+        lambda column, values, null: lambda row: (str(row[column]) if column in row else null) == str(values[0]),
+        'is not null':
+        lambda column, values, null: lambda row: (column in row and row[column] is not None),
+        'is null':
+        lambda column, values, null: lambda row: (column not in row or row[column] is None),
+        'is not':
+        lambda column, values, null: lambda row: row.get(column, null) != values[0],
+        'is':
+        lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
+        'like':
+        lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
+        'in':
+        lambda column, values, null: lambda row: row.get(column, null) in values,
     }
 
     def __init__(self, model):
@@ -172,6 +189,7 @@ class MemoryBackend(Backend):
         'pagination',
         'length',
         'selects',
+        'select_all',
         'model_columns',
     ]
 

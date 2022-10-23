@@ -178,6 +178,10 @@ class List(Base):
             self._prepared_models = self._prepared_models.group_by(self.configuration('group_by'))
         self._prepared_models = self._prepared_models.limit(self.configuration('default_limit'))
 
+        if self._prepared_models.supports_n_plus_one():
+            for column in self._get_readable_columns().values():
+                self._prepared_models = column.configure_n_plus_one(self._prepared_models)
+
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)

@@ -54,6 +54,9 @@ class Model(Models):
             self._configured_columns = self._columns.configure(self.all_columns(), self.__class__)
         return self._configured_columns
 
+    def supports_n_plus_one(self):
+        return self._backend.supports_n_plus_one
+
     def __getitem__(self, column_name):
         return self.__getattr__(column_name)
 

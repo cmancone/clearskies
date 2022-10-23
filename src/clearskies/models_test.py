@@ -70,7 +70,7 @@ class TestModels(unittest.TestCase):
         self.assertEquals('last_name', users.query_configuration['group_by_column'])
         self.assertEquals('LEFT JOIN posts ON posts.user_id=users.id', users.query_configuration['joins'][0]['raw'])
         self.assertEquals(10, users.query_configuration['limit'])
-        self.assertEquals('*', users.query_configuration['selects'])
+        self.assertEquals(['*'], users.query_configuration['selects'])
 
     def test_table_name(self):
         self.assertEquals('users', Users('cursor', self.columns).get_table_name())
@@ -88,7 +88,7 @@ class TestModels(unittest.TestCase):
             .join('LEFT JOIN posts ON posts.user_id=users.id') \
             .limit(10) \
             .pagination(start=5) \
-            .select('*')
+            .select('bob')
         iterator = users.__iter__()
         self.backend.records.assert_has_calls([
             call(
@@ -127,8 +127,9 @@ class TestModels(unittest.TestCase):
                     },
                     'limit':
                     10,
-                    'selects':
-                    '*',
+                    'selects': ['bob'],
+                    'select_all':
+                    True,
                     'table_name':
                     'users',
                     'model_columns':
@@ -154,7 +155,8 @@ class TestModels(unittest.TestCase):
                     'joins': [],
                     'pagination': {},
                     'limit': None,
-                    'selects': None,
+                    'selects': [],
+                    'select_all': True,
                     'table_name': 'users',
                     'model_columns': None,
                 },
@@ -172,7 +174,7 @@ class TestModels(unittest.TestCase):
             .join('LEFT JOIN more_posts ON more_posts.user_id=users.id') \
             .limit(10) \
             .pagination(**{'start': 5}) \
-            .select('*')
+            .select_all(False)
         count = len(users)
         self.assertEquals(10, count)
         self.backend.count.assert_has_calls([
@@ -224,8 +226,9 @@ class TestModels(unittest.TestCase):
                     },
                     'limit':
                     10,
-                    'selects':
-                    '*',
+                    'selects': [],
+                    'select_all':
+                    False,
                     'table_name':
                     'users',
                     'model_columns':
