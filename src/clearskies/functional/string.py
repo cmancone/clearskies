@@ -20,9 +20,7 @@ def title_case_to_camel_case(string: str) -> str:
         return string
     if len(string) == 1:
         return string.lower()
-    string[0].lower() + string[1:]
-def title_case_to_camel_case(string: str) -> str:
-    pass
+    return string[0].lower() + string[1:]
 def snake_case_to_title_case(string: str) -> str:
     """
     Converts a snake case string (my_string) to title case (MyString)
@@ -71,3 +69,9 @@ def swap_casing(string: str, from_casing: str, to_casing: str) -> str:
     if to_casing not in casings:
         raise ValueError(f"Invalid casing '{to_casing}'.  Must be one of '" + "', ".join(casings) + "'")
     return casing_swap_map[from_casing][to_casing](string)
+def make_plural(singular: str):
+    if singular[-1] == 'y':
+        return singular[:-1] + 'ies'
+    if singular[-1] == 's':
+        return singular + 'es'
+    return f'{singular}s'

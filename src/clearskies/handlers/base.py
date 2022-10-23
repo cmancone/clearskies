@@ -12,6 +12,7 @@ from typing import List, Dict
 class Base(ABC):
     _configuration = None
     _configuration_defaults = {}
+    _as_json_map = None
     _global_configuration_defaults = {
         'base_url': '',
         'response_headers': None,
@@ -241,17 +242,25 @@ class Base(ABC):
         if self.configuration('output_map'):
             return self.configuration('output_map')(model)
 
-        model_id = getattr(model, self.id_column_name)
+        if self._as_json_map is None:
+            self._as_json_map = self._build_as_json_map(model)
+
         json = OrderedDict()
-        json[self.auto_case_internal_column_name('id')] = model_id
-        for column in self._get_readable_columns().values():
+        for (output_name, column) in self._as_json_map.items():
             column_data = column.to_json(model)
             if type(column_data) == dict:
                 for (key, value) in column_data.items():
                     json[self.auto_case_column_name(key, True)] = value
             else:
-                json[self.auto_case_column_name(column.name, True)] = column_data
+                json[output_name] = column_data
         return json
+
+    def _build_as_json_map(self, model):
+        conversion_map = {self.auto_case_internal_column_name('id'): model.columns()[self.id_column_name]}
+
+        for column in self._get_readable_columns().values():
+            conversion_map[self.auto_case_column_name(column.name, True)] = column
+        return conversion_map
 
     def auto_case_internal_column_name(self, column_name):
         if self._configuration['external_casing']:

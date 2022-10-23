@@ -15,8 +15,13 @@ class StringTest(unittest.TestCase):
         self.assertEquals('DynamoDbBackend', string.snake_case_to_title_case('dYNamo_db_backend'))
         self.assertEquals('DynamoDbBackend', string.snake_case_to_title_case('dynamo__db_backend'))
 
-    def swap_casing(self):
+    def test_swap_casing(self):
         self.assertEquals('DynamoDbBackend', string.swap_casing('dYNamo_db_backend', 'snake_case', 'TitleCase'))
         self.assertEquals('dynamoDbBackend', string.swap_casing('dYNamo_db_backend', 'snake_case', 'camelCase'))
         self.assertEquals('dynamo_db_backend', string.swap_casing('DynamoDBBackend', 'camelCase', 'snake_case'))
         self.assertEquals('dynamoDbBackend', string.swap_casing('DynamoDbBackend', 'TitleCase', 'camelCase'))
+
+    def test_make_plural(self):
+        self.assertEquals('doggies', string.make_plural('doggy'))
+        self.assertEquals('dogs', string.make_plural('dog'))
+        self.assertEquals('classes', string.make_plural('class'))

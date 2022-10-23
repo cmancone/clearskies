@@ -8,6 +8,7 @@ class List(Base):
     _columns = None
     _searchable_columns = None
     _readable_columns = None
+    _prepared_models = None
     expected_request_methods = 'GET'
 
     _configuration_defaults = {
@@ -23,29 +24,14 @@ class List(Base):
         'default_sort_direction': 'asc',
         'default_limit': 100,
         'max_limit': 200,
-        'debug': False,
     }
 
     def __init__(self, di):
         super().__init__(di)
 
     def handle(self, input_output):
-        if self.configuration('debug'):
-            print('processing read request')
-        # first configure our models object with the defaults
-        models = self._model
-        for where in self.configuration('where'):
-            models = models.where(where)
-        for join in self.configuration('join'):
-            models = models.join(join)
-        if self.configuration('group_by'):
-            models = models.group_by(self.configuration('group_by'))
+        models = self._prepared_models.clone()
         limit = self.configuration('default_limit')
-        models = models.limit(limit)
-        if self.configuration('debug'):
-            print('Models config after adding default settings:')
-            print(models.configuration)
-
         request_data = self.map_input_to_internal_names(input_output.request_data(False))
         query_parameters = self.map_input_to_internal_names(input_output.get_query_parameters())
         pagination_data = {}
@@ -72,10 +58,6 @@ class List(Base):
             models = models.sort_by(
                 self.configuration('default_sort_column'), self.configuration('default_sort_direction')
             )
-
-        if self.configuration('debug'):
-            print('Models config after adding user input:')
-            print(models.configuration)
 
         return self.success(
             input_output,
@@ -182,6 +164,19 @@ class List(Base):
 
     def check_search_in_request_data(self, request_data, query_parameters):
         return None
+
+    def configure(self, configuration):
+        super().configure(configuration)
+        # performance optimizations! First, take any of our configuration options that affect
+        # the search results and create a models class with those built in
+        self._prepared_models = self._model
+        for where in self.configuration('where'):
+            self._prepared_models = self._prepared_models.where(where)
+        for join in self.configuration('join'):
+            self._prepared_models = self._prepared_models.join(join)
+        if self.configuration('group_by'):
+            self._prepared_models = self._prepared_models.group_by(self.configuration('group_by'))
+        self._prepared_models = self._prepared_models.limit(self.configuration('default_limit'))
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
