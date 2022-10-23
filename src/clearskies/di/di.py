@@ -44,6 +44,11 @@ class DI:
 
             self._classes[name] = {'id': id(add_class), 'class': add_class}
 
+            # if this is a model class then also add a plural version of its name
+            # to the DI configuration
+            if hasattr(add_class, 'id_column_name'):
+                self._classes[string.make_plural(name)] = {'id': id(add_class), 'class': add_class}
+
     def add_modules(self, modules, root=None, is_root=True):
         if inspect.ismodule(modules):
             modules = [modules]

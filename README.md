@@ -169,7 +169,6 @@ For more details and a working example that you can spin up via docker-compose, 
 
  - Built in webserver (That's what lambdas, and simple WSGI servers are for)
  - More advanced routing options (microservices don't need much routing, and load balancers/API gateways can handle the rest)
- - Log handling - that's what cloudwatch and log aggregators are for
  - Views, templates, content management
  - Anything that even remotely resembles a front end
  - Basically anything not listed in the "Inside the Box" section above
