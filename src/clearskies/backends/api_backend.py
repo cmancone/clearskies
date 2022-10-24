@@ -2,8 +2,7 @@ from .backend import Backend
 from typing import Any, Callable, Dict, List, Tuple
 from ..autodoc.schema import Integer as AutoDocInteger
 from .. import model
-from ..column_types import json
-from ..column_types import datetime
+from ..column_types import JSON, DateTime
 class ApiBackend(Backend):
     url = None
     _requests = None
@@ -201,7 +200,7 @@ class ApiBackend(Backend):
         We have a couple columns we want to override transformations for
         """
         # most importantly, there's no need to transform a JSON column in either direction
-        if isinstance(column, json.JSON):
+        if isinstance(column, JSON):
             return value
         return super().column_from_backend(column, value)
 
@@ -210,9 +209,9 @@ class ApiBackend(Backend):
         We have a couple columns we want to override transformations for
         """
         # most importantly, there's no need to transform a JSON column in either direction
-        if isinstance(column, json.JSON):
+        if isinstance(column, JSON):
             return backend_data
         # also, APIs tend to have a different format for dates than SQL
-        if isinstance(column, datetime.DateTime):
+        if isinstance(column, DateTime):
             return {**backend_data, **{self.name: backend_data[self.name].isoformat()}}
         return super().column_to_backend(column, value)
