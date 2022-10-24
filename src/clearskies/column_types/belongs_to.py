@@ -109,12 +109,12 @@ class BelongsTo(String):
         parent_table = self.parent_models.table_name()
         parent_id_column_name = self.parent_models.get_id_column_name()
         with_join = models.join(
-            f'{parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}'
+            f'LEFT JOIN {parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}'
         )
 
         select_parts = [f'{parent_table}.{column_name} AS {parent_table}_{column_name}' for column_name in columns]
         select_parts.append(f'{parent_table}.{parent_id_column_name} AS {parent_table}_{parent_id_column_name}')
-        return models.select(', '.join(select_parts))
+        return with_join.select(', '.join(select_parts))
 
     @property
     def parent_models(self):
