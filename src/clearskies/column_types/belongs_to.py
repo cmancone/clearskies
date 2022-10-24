@@ -82,15 +82,27 @@ class BelongsTo(String):
         return column_name == self.config('model_column_name')
 
     def provide(self, data, column_name):
+        # did we have data parent data loaded up with a query?
+        parent_table = self.parent_models.table_name()
+        parent_id_column_name = self.parent_models.get_id_column_name()
+        if f'{parent_table}_{parent_id_column_name}' in data:
+            parent_data = {parent_id_column_name: data[f'{parent_table}_{parent_id_column_name}']}
+            for column_name in self.parent_columns.keys():
+                select_alias = f'{parent_table}_{column_name}'
+                parent_data[column_name] = data[select_alias] if select_alias in data else None
+            return self.parent_models.model(parent_data)
+
+        # if not, just look it up from the id
         parent_id = data.get(self.name)
         if parent_id:
             parent_id_column_name = self.parent_models.get_id_column_name()
             return self.parent_models.where(f"{parent_id_column_name}={parent_id}").first()
         return self.parent_models.empty_model()
 
-    def configure_n_plus_one(self, models):
-        readable_parent_columns = self.config('readable_parent_columns', silent=True)
-        if not readable_parent_columns:
+    def configure_n_plus_one(self, models, columns=None):
+        if columns is None:
+            columns = self.config('readable_parent_columns', silent=True)
+        if not columns:
             return models
 
         own_table_name = models.table_name()
@@ -100,9 +112,8 @@ class BelongsTo(String):
             f'{parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}'
         )
 
-        select_parts = [
-            f'{parent_table}.{column_name} AS {parent_table}_{column_name}' for column_name in readable_parent_columns
-        ]
+        select_parts = [f'{parent_table}.{column_name} AS {parent_table}_{column_name}' for column_name in columns]
+        select_parts.append(f'{parent_table}.{parent_id_column_name} AS {parent_table}_{parent_id_column_name}')
         return models.select(', '.join(select_parts))
 
     @property

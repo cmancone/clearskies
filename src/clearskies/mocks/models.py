@@ -45,6 +45,9 @@ class Models(ModelsBase):
     def model_class(self):
         return Model
 
+    def table_name(self):
+        return 'mock_model'
+
     def blank(self):
         blank = self.__class__(self._model_configuration)
         blank.create_responses = self.create_responses
