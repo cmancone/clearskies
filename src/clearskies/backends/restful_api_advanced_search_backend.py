@@ -117,8 +117,11 @@ class RestfulApiAdvancedSearchBackend(ApiBackend):
         return {key: value for (key, value) in data.items() if value}
 
     def _where_for_post(self, where):
+        prefix = ''
+        if where.get('table'):
+            prefix = where['table'] + '.'
         return {
-            'column': where['column'],
+            'column': prefix + where['column'],
             'operator': where['operator'],
             'value': where['values'][0],
         }
