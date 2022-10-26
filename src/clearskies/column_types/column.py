@@ -192,10 +192,10 @@ class Column(ABC):
         """
         pass
 
-    def add_search(self, models, value, operator=None):
+    def add_search(self, models, value, operator=None, relationship_reference=None):
         return models.where(self.build_condition(value, operator=operator))
 
-    def build_condition(self, value, operator=None):
+    def build_condition(self, value, operator=None, column_prefix=''):
         """
         This is called by the read (and related) handlers to turn user input into a condition.
 
@@ -206,9 +206,9 @@ class Column(ABC):
 
         As a result, this is perfectly safe for any user input, assuming normal system flow.
         """
-        return f"{self.name}={value}"
+        return f"{column_prefix}{self.name}={value}"
 
-    def is_allowed_operator(self, operator):
+    def is_allowed_operator(self, operator, relationship_reference=None):
         """
         This is called when processing user data to decide if the end-user is specifying an allowed operator
         """
@@ -217,7 +217,7 @@ class Column(ABC):
     def configure_n_plus_one(self, models):
         return models
 
-    def check_search_value(self, value, operator=None):
+    def check_search_value(self, value, operator=None, relationship_reference=None):
         return self.input_error_for_value(value, operator=operator)
 
     def input_error_for_value(self, value, operator=None):

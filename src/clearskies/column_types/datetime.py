@@ -24,13 +24,13 @@ class DateTime(Column):
     def to_json(self, model):
         return model.__getattr__(self.name).isoformat()
 
-    def build_condition(self, value, operator=None):
+    def build_condition(self, value, operator=None, column_prefix=''):
         date = dateparser.parse(value).astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         if not operator:
             operator = '='
-        return f"{self.name}{operator}{date}"
+        return f"{column_prefix}{self.name}{operator}{date}"
 
-    def is_allowed_operator(self, operator):
+    def is_allowed_operator(self, operator, relationship_reference=None):
         """
         This is called when processing user data to decide if the end-user is specifying an allowed operator
         """

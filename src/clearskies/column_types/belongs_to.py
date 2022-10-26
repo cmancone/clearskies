@@ -168,3 +168,46 @@ class BelongsTo(String):
             self.name[:-3],
             parent_properties,
         )]
+
+    def is_allowed_operator(self, operator, relationship_reference=None):
+        """
+        This is called when processing user data to decide if the end-user is specifying an allowed operator
+        """
+        if not relationship_reference:
+            return '='
+        parent_columns = self.parent_columns
+        if relationship_reference not in self.parent_columns:
+            raise ValueError(
+                "I was asked to search on a related column that doens't exist.  This shouldn't have happened :("
+            )
+        return self.parent_columns[relationship_reference].is_allowed_operator(operator)
+
+    def check_search_value(self, value, operator=None, relationship_reference=None):
+        if not relationship_reference:
+            return self.input_error_for_value(value, operator=operator)
+        parent_columns = self.parent_columns
+        if relationship_reference not in self.parent_columns:
+            raise ValueError(
+                "I was asked to search on a related column that doens't exist.  This shouldn't have happened :("
+            )
+        return self.parent_columns[relationship_reference].check_search_value(value, operator=operator)
+
+    def add_search(self, models, value, operator=None, relationship_reference=None):
+        if not relationship_reference:
+            return super().add_search(models, value, operator=operator)
+
+        parent_columns = self.parent_columns
+        if relationship_reference not in self.parent_columns:
+            raise ValueError(
+                "I was asked to search on a related column that doens't exist.  This shouldn't have happened :("
+            )
+
+        own_table_name = models.table_name()
+        parent_table = self.parent_models.table_name()
+        parent_id_column_name = self.parent_models.get_id_column_name()
+        with_join = models.join(
+            f'JOIN {parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}'
+        )
+
+        related_column = self.parent_columns[relationship_reference]
+        return with_join.where(self.build_condition(value, operator=operator, column_prefix=f'{parent_table}.'))

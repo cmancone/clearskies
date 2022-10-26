@@ -34,9 +34,13 @@ class AdvancedSearch(SimpleSearch):
                 column_name = where['column']
                 if column_name == 'id':
                     column_name = self.id_column_name
+                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
                 column = self._columns[column_name]
                 models = column.add_search(
-                    models, where['value'], operator=where['operator'].lower() if 'operator' in where else None
+                    models,
+                    where['value'],
+                    operator=where['operator'].lower() if 'operator' in where else None,
+                    relationship_reference=relationship_reference
                 )
 
         return [models, limit]
@@ -105,6 +109,7 @@ class AdvancedSearch(SimpleSearch):
                 column_name = where['column']
                 if column_name not in self.configuration('searchable_columns'):
                     return f"Invalid request: invalid search column specified in where entry #{index+1}"
+                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
                 if column_name == 'id':
                     column_name = self.id_column_name
                 if 'value' not in where:
@@ -113,10 +118,14 @@ class AdvancedSearch(SimpleSearch):
                 if 'operator' in where:
                     if type(where['operator']) != str:
                         return f"Invalid request: operator must be a string in 'where' entry #{index+1}"
-                    if not self._columns[column_name].is_allowed_operator(where['operator']):
+                    if not self._columns[column_name].is_allowed_operator(
+                        where['operator'], relationship_reference=relationship_reference
+                    ):
                         return f"Invalid request: given operator is not allowed for column in 'where' entry #{index+1}"
                     operator = where['operator'].lower()
-                value_error = self._columns[column_name].check_search_value(where['value'], operator)
+                value_error = self._columns[column_name].check_search_value(
+                    where['value'], operator, relationship_reference=relationship_reference
+                )
                 if value_error:
                     return f"Invalid request: {value_error} for 'where' entry #{index+1}"
         # similarly, query parameters mean search conditions

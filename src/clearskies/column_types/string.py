@@ -1,13 +1,13 @@
 from .column import Column
 class String(Column):
-    def build_condition(self, value, operator=None):
+    def build_condition(self, value, operator=None, column_prefix=''):
         if not operator:
             operator = '='
         if operator.lower() == 'like':
-            return f"{self.name} LIKE '%{value}%'"
-        return f"{self.name}{operator}{value}"
+            return f"{column_prefix}{self.name} LIKE '%{value}%'"
+        return f"{column_prefix}{self.name}{operator}{value}"
 
-    def is_allowed_operator(self, operator):
+    def is_allowed_operator(self, operator, relationship_reference=None):
         """
         This is called when processing user data to decide if the end-user is specifying an allowed operator
         """

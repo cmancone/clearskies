@@ -22,12 +22,12 @@ class Float(Column):
             return ''
         return f'Invalid input: {self.name} must be an integer or float'
 
-    def build_condition(self, value, operator=None):
+    def build_condition(self, value, operator=None, column_prefix=''):
         if not operator:
             operator = '='
-        return f"{self.name}{operator}{value}"
+        return f"{column_prefix}{self.name}{operator}{value}"
 
-    def is_allowed_operator(self, operator):
+    def is_allowed_operator(self, operator, relationship_reference=None):
         return operator in ['=', '<', '>', '<=', '>=']
 
     def input_error_for_value(self, value, operator=None):

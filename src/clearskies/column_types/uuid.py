@@ -7,10 +7,10 @@ class UUID(String):
     def is_writeable(self):
         return False
 
-    def build_condition(self, value, operator=None):
-        return f"{self.name}={value}"
+    def build_condition(self, value, operator=None, column_prefix=''):
+        return f"{column_prefix}{self.name}={value}"
 
-    def is_allowed_operator(self, operator):
+    def is_allowed_operator(self, operator, relationship_reference=None):
         """
         This is called when processing user data to decide if the end-user is specifying an allowed operator
         """

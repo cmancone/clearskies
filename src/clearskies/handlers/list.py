@@ -165,6 +165,12 @@ class List(Base):
     def check_search_in_request_data(self, request_data, query_parameters):
         return None
 
+    def _unpack_search_column_name(self, column_name):
+        if '.' not in column_name:
+            return [column_name, '']
+        [parent_name, relationship_reference] = column_name.split('.', 1)
+        return [f'{parent_name}_id', relationship_reference]
+
     def configure(self, configuration):
         super().configure(configuration)
         # performance optimizations! First, take any of our configuration options that affect
@@ -200,6 +206,7 @@ class List(Base):
         model_class_name = self._model.__class__.__name__
         # checks for searchable_columns and readable_columns
         self._check_columns_in_configuration(configuration, 'readable_columns')
+        self._check_columns_in_configuration(configuration, 'searchable_columns')
 
         if not 'default_sort_column' in configuration:
             raise ValueError(f"{error_prefix} missing required configuration 'default_sort_column'")
@@ -253,6 +260,8 @@ class List(Base):
                 f", not {str(type(configuration[config_name]))}"
             )
         for column_name in configuration[config_name]:
+            if config_name == 'searchable_columns':
+                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
             if column_name not in self._columns:
                 raise ValueError(
                     f"{error_prefix} '{config_name}' references column named {column_name} " +

@@ -20,6 +20,7 @@ class SimpleSearch(List):
                     continue
                 if column_name not in self.configuration('searchable_columns'):
                     return f"Invalid request. An invalid search column, '{column_name}', was found in the {input_source_label}"
+                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
                 value_error = self._columns[column_name].check_search_value(value)
                 if value_error:
                     return f"Invalid request. {value_error} for search column '{column_name}' in the {input_source_label}"
@@ -35,8 +36,9 @@ class SimpleSearch(List):
                     continue
                 if column_name == 'id':
                     column_name = self.id_column_name
+                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
                 column = self._columns[column_name]
-                models = column.add_search(models, value)
+                models = column.add_search(models, value, relationship_reference=relationship_reference)
 
         return [models, limit]
 

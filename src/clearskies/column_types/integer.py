@@ -25,12 +25,12 @@ class Integer(Column):
             return ''
         return f'{self.name} must be an integer' if type(value) != int else ''
 
-    def build_condition(self, value, operator=None):
+    def build_condition(self, value, operator=None, column_prefix=''):
         if operator == 'in':
-            return f"{self.name} IN (" + ','.join([str(val) for val in value]) + ')'
+            return f"{column_prefix}{self.name} IN (" + ','.join([str(val) for val in value]) + ')'
         if not operator:
             operator = '='
-        return f"{self.name}{operator}{value}"
+        return f"{column_prefix}{self.name}{operator}{value}"
 
-    def is_allowed_operator(self, operator):
+    def is_allowed_operator(self, operator, relationship_reference=None):
         return operator in ['=', '<', '>', '<=', '>=', 'in']

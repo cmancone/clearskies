@@ -221,7 +221,7 @@ class ManyToMany(String):
     def related_columns(self):
         return self.related_models.model_columns
 
-    def add_search(self, models, value, operator=None):
+    def add_search(self, models, value, operator=None, relationship_reference=None):
         foreign_column_name_in_pivot = self.config('foreign_column_name_in_pivot')
         own_column_name_in_pivot = self.config('own_column_name_in_pivot')
         own_id_column_name = self.config('own_id_column_name')
