@@ -29,6 +29,7 @@ class BelongsTo(String):
 
     my_configs = [
         'readable_parent_columns',
+        'join_type',
     ]
 
     def __init__(self, di):
@@ -42,6 +43,12 @@ class BelongsTo(String):
             raise ValueError(
                 f"Invalid name for column '{self.name}' in '{self.model_class.__name__}' - " + \
                 "BelongsTo column names must end in '_id'"
+            )
+
+        join_type = configuration.get('join_type')
+        if join_type and join_type.upper() not in ['LEFT', 'INNER']:
+            raise ValueError(
+                f"Configuration error for '{self.name}' in '{self.model_class.__name__}': join_type must be INNER or LEFT"
             )
 
         if configuration.get('readable_parent_columns'):
@@ -66,7 +73,13 @@ class BelongsTo(String):
                     )
 
     def _finalize_configuration(self, configuration):
-        return {**super()._finalize_configuration(configuration), **{'model_column_name': self.name[:-3]}}
+        return {
+            **super()._finalize_configuration(configuration),
+            **{
+                'model_column_name': self.name[:-3],
+                'join_type': configuration.get('join_type', 'INNER').upper(),
+            }
+        }
 
     def input_error_for_value(self, value, operator=None):
         integer_check = super().input_error_for_value(value)
@@ -108,13 +121,17 @@ class BelongsTo(String):
         own_table_name = models.table_name()
         parent_table = self.parent_models.table_name()
         parent_id_column_name = self.parent_models.get_id_column_name()
-        with_join = models.join(
-            f'LEFT JOIN {parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}'
-        )
+        alias = models.is_joined(parent_table)
+        if not alias:
+            alias = parent_table
+            join_type = 'LEFT ' if self.config('join_type') == 'LEFT' else ''
+            models = models.join(
+                f'{join_type}JOIN {parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}'
+            )
 
-        select_parts = [f'{parent_table}.{column_name} AS {parent_table}_{column_name}' for column_name in columns]
-        select_parts.append(f'{parent_table}.{parent_id_column_name} AS {parent_table}_{parent_id_column_name}')
-        return with_join.select(', '.join(select_parts))
+        select_parts = [f'{alias}.{column_name} AS {parent_table}_{column_name}' for column_name in columns]
+        select_parts.append(f'{alias}.{parent_id_column_name} AS {parent_table}_{parent_id_column_name}')
+        return models.select(', '.join(select_parts))
 
     @property
     def parent_models(self):
@@ -205,9 +222,12 @@ class BelongsTo(String):
         own_table_name = models.table_name()
         parent_table = self.parent_models.table_name()
         parent_id_column_name = self.parent_models.get_id_column_name()
-        with_join = models.join(
-            f'JOIN {parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}'
-        )
+        alias = models.is_joined(parent_table)
+        if not alias:
+            models = models.join(
+                f'JOIN {parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}'
+            )
+            alias = parent_table
 
         related_column = self.parent_columns[relationship_reference]
-        return with_join.where(self.build_condition(value, operator=operator, column_prefix=f'{parent_table}.'))
+        return models.where(related_column.build_condition(value, operator=operator, column_prefix=f'{alias}.'))

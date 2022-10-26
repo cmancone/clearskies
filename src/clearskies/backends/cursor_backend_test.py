@@ -92,7 +92,7 @@ class CursorBackendTest(unittest.TestCase):
         self.assertEquals(10, my_count)
         self.cursor.execute.assert_called_with(
             'SELECT COUNT(' + \
-                'SELECT 1 FROM `my_table` JOIN peeps AS peeps ON peeps.id=dogs.id ' + \
+                'SELECT 1 FROM `my_table` LEFT JOIN dogs ON dogs.id=ages.id JOIN peeps AS peeps ON peeps.id=dogs.id ' + \
                 'WHERE id=%s AND status_id IN (%s,%s) ' + \
                 'GROUP BY `age`' + \
             ') AS count',
@@ -148,7 +148,7 @@ class CursorBackendTest(unittest.TestCase):
         }, 'model')
         self.assertEquals(10, my_count)
         self.cursor.execute.assert_called_with(
-            'SELECT COUNT(*) AS count FROM `my_table` JOIN peeps AS peeps ON peeps.id=dogs.id ' + \
+            'SELECT COUNT(*) AS count FROM `my_table` LEFT JOIN dogs ON dogs.id=ages.id JOIN peeps AS peeps ON peeps.id=dogs.id ' + \
                 'WHERE id=%s AND status_id IN (%s,%s)',
             (5, '2', '3')
         )

@@ -56,7 +56,9 @@ class List(Base):
              limit] = self.configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
         if not models.query_sorts:
             models = models.sort_by(
-                self.configuration('default_sort_column'), self.configuration('default_sort_direction')
+                self.configuration('default_sort_column'),
+                self.configuration('default_sort_direction'),
+                primary_table=models.table_name()
             )
 
         return self.success(
@@ -75,7 +77,7 @@ class List(Base):
         sort = query_parameters.get('sort')
         direction = query_parameters.get('direction')
         if sort and direction:
-            models = models.sort_by(sort, direction)
+            models = models.sort_by(sort, direction, primary_table=models.table_name())
 
         return [models, limit]
 

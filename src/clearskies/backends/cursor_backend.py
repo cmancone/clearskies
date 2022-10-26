@@ -117,9 +117,14 @@ class CursorBackend(Backend):
         else:
             joins = ''
         if configuration['sorts']:
-            order_by = ' ORDER BY ' + ', '.join(
-                map(lambda sort: '`%s` %s' % (sort['column'], sort['direction']), configuration['sorts'])
-            )
+            sort_parts = []
+            for sort in configuration['sorts']:
+                table_name = sort.get('table')
+                column_name = sort['column']
+                direction = sort['direction']
+                prefix = f'`{table_name}`.' if table_name else ''
+                sort_parts.append(f'{prefix}`{column_name}` {direction}')
+            order_by = ' ORDER BY ' + ', '.join(sort_parts)
         else:
             order_by = ''
         group_by = ' GROUP BY `' + configuration['group_by_column'] + '`' if configuration['group_by_column'] else ''
@@ -142,7 +147,7 @@ class CursorBackend(Backend):
         if configuration['joins']:
             # We can ignore left joins because they don't change the count
             join_sections = filter(lambda join: join['type'] != 'LEFT', configuration['joins'])
-            joins = (' ' + ' '.join([join['raw'] for join in join_sections])) if join_sections else ''
+            joins = ' ' + ' '.join([join['raw'] for join in configuration['joins']])
         else:
             joins = ''
         if not configuration['group_by_column']:

@@ -70,12 +70,14 @@ class ConditionParser:
         table = ''
         if '.' in column:
             [table, column] = column.split('.')
+        column_for_parsed = f'{table}.{column}' if table else column
         return {
             'table': table,
             'column': column,
             'operator': matching_operator.upper(),
             'values': [] if matching_operator in self.operators_without_placeholders else values,
-            'parsed': self._with_placeholders(column, matching_operator, values)
+            'parsed':
+            self._with_placeholders(column_for_parsed, matching_operator, values, escape=False if table else True)
         }
 
     def _parse_condition_list(self, value):
@@ -85,18 +87,19 @@ class ConditionParser:
         # note: this is not very smart and will mess things up if there are single quotes/commas in the data
         return list(map(lambda value: value.strip().strip("'"), value[1:-1].split(',')))
 
-    def _with_placeholders(self, column, operator, values):
+    def _with_placeholders(self, column, operator, values, escape=True):
+        quote = '`' if escape else ''
         column = column.replace('`', '')
         upper_case_operator = operator.upper()
         if operator in self.operators_with_simple_placeholders:
-            return f'`{column}`{upper_case_operator}%s'
+            return f'{quote}{column}{quote}{upper_case_operator}%s'
         if operator in self.operators_without_placeholders:
-            return f'`{column}` {upper_case_operator}'
+            return f'{quote}{column}{quote} {upper_case_operator}'
         if operator == 'is' or operator == 'is not' or operator == 'like':
-            return f'`{column}` {upper_case_operator} %s'
+            return f'{quote}{column}{quote} {upper_case_operator} %s'
 
         # the only thing left is "in" which has a variable number of placeholders
-        return f'`{column}` IN (' + ', '.join(['%s' for i in range(len(values))]) + ')'
+        return f'{quote}{column}{quote} IN (' + ', '.join(['%s' for i in range(len(values))]) + ')'
 
     def parse_join(self, join):
         # doing this the simple and stupid way, until that doesn't work.  Yes, it is ugly.

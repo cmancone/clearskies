@@ -137,6 +137,14 @@ class Models(ABC, ConditionParser):
         self.must_recount = True
         return self
 
+    def is_joined(self, table_name):
+        for join in self.query_joins:
+            if join['right_table'] != table_name:
+                continue
+
+            return join['alias'] if join['alias'] else join['right_table']
+        return False
+
     def group_by(self, group_column):
         return self.clone().group_by_in_place(group_column)
 
@@ -148,21 +156,41 @@ class Models(ABC, ConditionParser):
         self.must_recount = True
         return self
 
-    def sort_by(self, primary_column, primary_direction, secondary_column=None, secondary_direction=None):
+    def sort_by(
+        self,
+        primary_column,
+        primary_direction,
+        primary_table=None,
+        secondary_column=None,
+        secondary_direction=None,
+        secondary_table=None
+    ):
         return self.clone().sort_by_in_place(
             primary_column,
             primary_direction,
+            primary_table=primary_table,
             secondary_column=secondary_column,
             secondary_direction=secondary_direction,
+            secondary_table=secondary_table,
         )
 
-    def sort_by_in_place(self, primary_column, primary_direction, secondary_column=None, secondary_direction=None):
+    def sort_by_in_place(
+        self,
+        primary_column,
+        primary_direction,
+        primary_table=None,
+        secondary_column=None,
+        secondary_direction=None,
+        secondary_table=None
+    ):
         sorts = [
             {
+                'table': primary_table,
                 'column': primary_column,
                 'direction': primary_direction
             },
             {
+                'table': secondary_table,
                 'column': secondary_column,
                 'direction': secondary_direction
             },
@@ -186,7 +214,7 @@ class Models(ABC, ConditionParser):
         self._validate_column(sort['column'], 'sort')
 
         # down the line we may ask the model class what columns we can sort on, but we're good for now
-        return {'column': sort['column'], 'direction': sort['direction']}
+        return {'column': sort['column'], 'direction': sort['direction'], 'table': sort.get('table')}
 
     def _validate_column(self, column_name, action, table=None):
         """

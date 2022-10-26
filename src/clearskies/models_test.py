@@ -66,7 +66,11 @@ class TestModels(unittest.TestCase):
             'values': ['10'],
             'parsed': '`age`<%s',
         }, users.query_configuration['wheres'][1])
-        self.assertEquals({'column': 'created', 'direction': 'desc'}, users.query_configuration['sorts'][0])
+        self.assertEquals({
+            'column': 'created',
+            'direction': 'desc',
+            'table': None
+        }, users.query_configuration['sorts'][0])
         self.assertEquals('last_name', users.query_configuration['group_by_column'])
         self.assertEquals('LEFT JOIN posts ON posts.user_id=users.id', users.query_configuration['joins'][0]['raw'])
         self.assertEquals(10, users.query_configuration['limit'])
@@ -108,7 +112,8 @@ class TestModels(unittest.TestCase):
                     }],
                     'sorts': [{
                         'column': 'created',
-                        'direction': 'desc'
+                        'direction': 'desc',
+                        'table': None,
                     }],
                     'group_by_column':
                     'last_name',
@@ -195,7 +200,8 @@ class TestModels(unittest.TestCase):
                     }],
                     'sorts': [{
                         'column': 'created',
-                        'direction': 'desc'
+                        'direction': 'desc',
+                        'table': None,
                     }],
                     'group_by_column':
                     None,

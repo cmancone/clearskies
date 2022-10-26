@@ -26,8 +26,10 @@ class AdvancedSearch(SimpleSearch):
             models = models.sort_by(
                 primary_column,
                 primary_direction,
+                primary_table=models.table_name(),
                 secondary_column=secondary_column,
-                secondary_direction=secondary_direction
+                secondary_direction=secondary_direction,
+                secondary_table=models.table_name(),
             )
         if 'where' in request_data:
             for where in request_data['where']:
