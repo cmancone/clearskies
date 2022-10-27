@@ -79,7 +79,7 @@ class RestfulApiAdvancedSearchBackend(ApiBackend):
 
     def _build_count_request(self, configuration, model):
         url = model.table_name().rstrip('/') + '/search'
-        return [url, 'POST', {**{'count_only': True}, **self._as_post_data(configuration)}, {}]
+        return [url, 'POST', {**{'count_only': True}, **self._as_post_data(configuration, model)}, {}]
 
     def _map_count_response(self, json):
         if not 'total_matches' in json:
@@ -100,28 +100,38 @@ class RestfulApiAdvancedSearchBackend(ApiBackend):
 
     def _build_records_request(self, configuration, model):
         url = model.table_name().rstrip('/') + '/search'
-        return [url, 'POST', self._as_post_data(configuration), {}]
+        return [url, 'POST', self._as_post_data(configuration, model), {}]
 
     def _map_records_response(self, json):
         if not 'data' in json:
             raise ValueError("Unexpected response from records request")
         return json['data']
 
-    def _as_post_data(self, configuration):
+    def _as_post_data(self, configuration, model):
         data = {
-            'where': list(map(lambda where: self._where_for_post(where), configuration['wheres'])),
+            'where': list(map(lambda where: self._where_for_post(where, model), configuration['wheres'])),
             'sort': configuration['sorts'],
             'start': configuration['pagination'].get('start', 0),
             'limit': configuration['limit'],
         }
         return {key: value for (key, value) in data.items() if value}
 
-    def _where_for_post(self, where):
+    def _where_for_post(self, where, model):
         prefix = ''
         if where.get('table'):
             prefix = where['table'] + '.'
         return {
             'column': prefix + where['column'],
             'operator': where['operator'],
-            'value': where['values'][0],
+            'value': self.normalize_outgoing_value(where, model, where['values'][0]),
         }
+
+    def normalize_outgoing_value(self, where, model, value):
+        column_name = where['column']
+        columns = model.columns()
+        if where.get('table') or column_name not in columns:
+            return value
+        normalized_data = column_to_backend(self, columns[column_name], {column.name: value})
+        if column_name in normalized_data:
+            return normalized_data[column_name]
+        return value

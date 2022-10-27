@@ -14,7 +14,13 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
         })()
         self.backend = RestfulApiAdvancedSearchBackend(self.requests)
         self.backend.configure(auth=self.auth)
-        self.model = type('', (), {'id_column_name': 'id', 'table_name': MagicMock(return_value='https://example.com')})
+        self.model = type(
+            '', (), {
+                'id_column_name': 'id',
+                'table_name': MagicMock(return_value='https://example.com'),
+                'columns': MagicMock(return_value={})
+            }
+        )
 
     def test_update(self):
         response = self.backend.update('5', {'hey': 'sup'}, self.model)
