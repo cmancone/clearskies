@@ -131,7 +131,7 @@ class RestfulApiAdvancedSearchBackend(ApiBackend):
         columns = model.columns()
         if where.get('table') or column_name not in columns:
             return value
-        normalized_data = column_to_backend(self, columns[column_name], {column.name: value})
+        normalized_data = self.column_to_backend(self, columns[column_name], {column.name: value})
         if column_name in normalized_data:
             return normalized_data[column_name]
         return value
