@@ -28,6 +28,7 @@ class BelongsTo(String):
     ]
 
     my_configs = [
+        'model_column_name',
         'readable_parent_columns',
         'join_type',
     ]
@@ -39,10 +40,15 @@ class BelongsTo(String):
         super()._check_configuration(configuration)
         self.validate_models_class(configuration['parent_models_class'])
 
-        if self.name[-3:] != '_id':
+        if not configuration.get('model_column_name') and self.name[-3:] != '_id':
             raise ValueError(
                 f"Invalid name for column '{self.name}' in '{self.model_class.__name__}' - " + \
-                "BelongsTo column names must end in '_id'"
+                "BelongsTo column names must end in '_id', or you must set 'model_column_name' to specify the name of the column " + \
+                "that the parent model can be fetched from."
+            )
+        if configuration.get('model_column_name') and type(configuration.get('model_column_name')) != str:
+            raise ValueError(
+                f"Configuration error for '{self.name}' in '{self.model_class.__name__}': 'model_column_name' must be a string."
             )
 
         join_type = configuration.get('join_type')
@@ -76,8 +82,10 @@ class BelongsTo(String):
         return {
             **super()._finalize_configuration(configuration),
             **{
-                'model_column_name': self.name[:-3],
-                'join_type': configuration.get('join_type', 'INNER').upper(),
+                'model_column_name':
+                configuration.get('model_column_name') if configuration.get('model_column_name') else self.name[:-3],
+                'join_type':
+                configuration.get('join_type', 'INNER').upper(),
             }
         }
 
@@ -160,7 +168,7 @@ class BelongsTo(String):
                 json[column_name] = column_data
 
             json[column_name] = columns[column_name].to_json(parent)
-        id_less_name = self.name[:-3]
+        id_less_name = self.config('model_column_name')
         return {
             self.name: super().to_json(model),
             id_less_name: json,
@@ -182,7 +190,7 @@ class BelongsTo(String):
             parent_properties.append(columns[column_name].documentation())
 
         return [parent_id_doc, AutoDocObject(
-            self.name[:-3],
+            self.config('model_column_name'),
             parent_properties,
         )]
 

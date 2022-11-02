@@ -18,10 +18,18 @@ class BelongsToTest(unittest.TestCase):
     def test_require_proper_name(self):
         with self.assertRaises(ValueError) as context:
             self.belongs_to.configure('user', {'parent_models_class': Models}, BelongsToTest)
-        self.assertEquals(
+        self.assertIn(
             "Invalid name for column 'user' in 'BelongsToTest' - BelongsTo column names must end in '_id'",
             str(context.exception)
         )
+
+        self.belongs_to.configure(
+            'user', {
+                'parent_models_class': Models,
+                'model_column_name': 'user_model'
+            }, BelongsToTest
+        )
+        self.assertEquals('user_model', self.belongs_to.config('model_column_name'))
 
     def test_require_parent_models_class(self):
         with self.assertRaises(KeyError) as context:
