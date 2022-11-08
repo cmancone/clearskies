@@ -131,6 +131,8 @@ class ApiBackendTest(unittest.TestCase):
             'pagination': {
                 'start': 200
             },
+            'select_all':
+            True,
             'limit':
             100,
         }, 'model')

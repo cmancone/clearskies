@@ -1,5 +1,6 @@
 from .base import Base
 from ..binding_config import BindingConfig
+
 lists = [
     'headers',
     'expose_headers',
@@ -18,10 +19,10 @@ class CORS(Base):
         super().__init__(environment)
 
     def configure(self, origin=None, methods=None, headers=None, max_age=None, credentials=None, expose_headers=None):
-        self.origin=origin
-        self.max_age=max_age
-        self.credentials=credentials
-        self.expose_headers=', '.join(expose_headers) if type(expose_headers) == list else expose_headers
+        self.origin = origin
+        self.max_age = max_age
+        self.credentials = credentials
+        self.expose_headers = ', '.join(expose_headers) if type(expose_headers) == list else expose_headers
         self.set_methods(methods)
         self.set_headers(headers)
 
@@ -81,14 +82,20 @@ def cors(origin=None, methods=None, headers=None, max_age=None, credentials=None
         actual_type = type(value)
         if actual_type == list:
             if not all([type(item) == str for item in value]):
-                raise ValueError(f"Invalid configuration value for CORS: {key} should be a list of strings, but another kind of value was found")
+                raise ValueError(
+                    f"Invalid configuration value for CORS: {key} should be a list of strings, but another kind of value was found"
+                )
             kwargs[key] = ', '.join(value)
-        if actual_type != str:
-            raise ValueError(f"Invalid configuration value for CORS: {key} should be a string or list of strings but instead is '{actual_type}'")
+        elif actual_type != str:
+            raise ValueError(
+                f"Invalid configuration value for CORS: {key} should be a string or list of strings but instead is '{actual_type}'"
+            )
     for (key, allowed_type) in allowed_types.items():
         if kwargs[key] is None:
             continue
         actual_type = type(kwargs[key])
         if actual_type != allowed_type:
-            raise ValueError(f"Invalid configuration value for CORS: {key} should be a {allowed_type} but instead is '{actual_type}'")
+            raise ValueError(
+                f"Invalid configuration value for CORS: {key} should be a {allowed_type} but instead is '{actual_type}'"
+            )
     return BindingConfig(CORS, **kwargs)

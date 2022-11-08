@@ -290,6 +290,8 @@ class List(Base):
     def _get_columns(self, column_type):
         resolved_columns = OrderedDict()
         for column_name in self.configuration(f'{column_type}_columns'):
+            if column_type == 'searchable':
+                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
             if column_name not in self._columns:
                 class_name = self.__class__.__name__
                 model_class = self._model.__class__.__name__
