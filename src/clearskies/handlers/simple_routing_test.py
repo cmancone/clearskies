@@ -1,12 +1,14 @@
 import unittest
 from collections import OrderedDict
 from unittest.mock import MagicMock, call
+from .. import Application
 from ..mocks import InputOutput
 from ..backends import MemoryBackend
 from ..model import Model
 from ..models import Models
 from ..column_types import string, integer
 from .list import List
+from .callable import Callable
 from .simple_routing import SimpleRouting
 from ..authentication import public, secret_bearer
 from ..di import StandardDependencies
@@ -28,6 +30,8 @@ class Status(Model):
             string('name'),
             integer('order'),
         ])
+def my_function():
+    return 'some thing'
 class SimpleRoutingTest(unittest.TestCase):
     def setUp(self):
         self.input_output = InputOutput()
@@ -70,6 +74,21 @@ class SimpleRoutingTest(unittest.TestCase):
             'schema_authentication':
             secret_bearer(secret='asdfer'),
             'routes': [
+                my_function,
+                Application(
+                    handler_class=SimpleRouting,
+                    handler_config={
+                        'routes': [
+                            {
+                                'path': '/my/test/application',
+                                'handler_class': Callable,
+                                'handler_config': {
+                                    'callable': my_function,
+                                }
+                            },
+                        ],
+                    },
+                ),
                 {
                     'methods': 'SECRET',
                     'handler_class': List,
@@ -197,6 +216,32 @@ class SimpleRoutingTest(unittest.TestCase):
             'input_errors': {},
         }, result[0])
 
+    def test_auto_route_functions(self):
+        self.input_output.set_request_url('my_function')
+        result = self.handler(self.input_output)
+
+        self.assertEquals(200, result[1])
+        self.assertEquals({
+            'status': 'success',
+            'data': 'some thing',
+            'pagination': {},
+            'error': '',
+            'input_errors': {},
+        }, result[0])
+
+    def test_auto_route_routers(self):
+        self.input_output.set_request_url('my/test/application')
+        result = self.handler(self.input_output)
+
+        self.assertEquals(200, result[1])
+        self.assertEquals({
+            'status': 'success',
+            'data': 'some thing',
+            'pagination': {},
+            'error': '',
+            'input_errors': {},
+        }, result[0])
+
     def test_schema_authentication(self):
         self.input_output.set_request_url('schema')
         result = self.handler(self.input_output)
@@ -212,5 +257,6 @@ class SimpleRoutingTest(unittest.TestCase):
 
     def test_documentation(self):
         docs = self.handler.documentation()
-        self.assertEquals(['', 'users', 'statuses'], [doc.relative_path for doc in docs])
-        self.assertEquals(['SECRET', 'GET', 'GET'], [doc.request_methods[0] for doc in docs])
+        self.assertEquals(['my_function', 'my/test/application', '', 'users', 'statuses'],
+                          [doc.relative_path for doc in docs])
+        self.assertEquals(['POST', 'POST', 'SECRET', 'GET', 'GET'], [doc.request_methods[0] for doc in docs])

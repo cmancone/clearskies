@@ -30,6 +30,13 @@ class SimpleRouting(Base):
                 return super().top_level_authentication_and_authorization(input_output, schema_authentication)
         return super().top_level_authentication_and_authorization(input_output)
 
+    def can_handle(self, full_path, request_method, is_cors=False):
+        for route in self._routes:
+            route_data = route.matches(full_path, request_method, is_cors=is_cors)
+            if route_data is not None:
+                return route_data
+        return None
+
     def handle(self, input_output):
         request_method = input_output.get_request_method()
         full_path = input_output.get_full_path().strip('/')
@@ -104,16 +111,30 @@ class SimpleRouting(Base):
             base_url = ''
         for (i, route_config) in enumerate(routes):
             # in general the route should be a dictionary with the route configuration,
-            # but the one exception is a "plain" callable.  In that case, wrap it in
-            # a callable handler and define the path from the name
-            if type(route_config) != dict and callable(route_config):
-                route_config = {
-                    'path': route_config.__name__,
-                    'handler_class': callable_handler.Callable,
-                    'handler_config': {
-                        'callable': route_config
+            # but there are two exceptions.  The first is a "plain" callable.  In that case,
+            # wrap it in a callable handler and define the path from the name
+            if type(route_config) != dict:
+                if callable(route_config):
+                    route_config = {
+                        'path': route_config.__name__,
+                        'handler_class': callable_handler.Callable,
+                        'handler_config': {
+                            'callable': route_config
+                        }
                     }
-                }
+                # the other option is an application with another simple routing handler, in which
+                # case just skip the path (which is optional anyway)
+                elif hasattr(route_config, 'handler_class') and hasattr(route_config, 'handler_config') and issubclass(
+                    route_config.handler_class, SimpleRouting
+                ):
+                    route_config = {
+                        'path': '',
+                        'application': route_config,
+                    }
+            if type(route_config) != dict:
+                raise ValueError(
+                    f"Routing config expected a dictionary with route information but found something else for route #{i+1}"
+                )
             path = route_config.get('path')
             if path is None:
                 path = ''

@@ -1,7 +1,7 @@
 import re
 from ..autodoc.request import URLParameter
 from ..autodoc.schema import String
-
+from . import simple_routing
 class SimpleRoutingRoute:
     _di = None
     _handler = None
@@ -9,6 +9,7 @@ class SimpleRoutingRoute:
     _path = None
     _path_parts = None
     _resource_paths = None
+    _routes_to_simple_routing = False
 
     def __init__(self, di):
         self._di = di
@@ -51,6 +52,7 @@ class SimpleRoutingRoute:
         sub_handler_config['security_headers'] = security_headers
         self._handler = self._di.build(handler_class, cache=False)
         self._handler.configure(sub_handler_config)
+        self._routes_to_simple_routing = issubclass(handler_class, simple_routing.SimpleRouting)
 
     def _extract_resource_paths(self, path_parts):
         resource_paths = {}
@@ -60,10 +62,15 @@ class SimpleRoutingRoute:
             if part[0] != '{':
                 continue
             if part[-1] != '}':
-                raise ValueError(f"Invalid route configuration for URL '{path}': section '{part}'" + " starts with a '{' but does not end with one")
+                raise ValueError(
+                    f"Invalid route configuration for URL '{path}': section '{part}'" +
+                    " starts with a '{' but does not end with one"
+                )
             match = re.match('{(\w[\w\d_]{0,})\}', part)
             if not match:
-                raise ValueError(f"Invalid route configuration for URL '{path}', section '{part}': resource identifiers must start with a letter and contain only letters, numbers, and underscores")
+                raise ValueError(
+                    f"Invalid route configuration for URL '{path}', section '{part}': resource identifiers must start with a letter and contain only letters, numbers, and underscores"
+                )
             resource_paths[index] = match.group(1)
         return resource_paths
 
@@ -74,6 +81,9 @@ class SimpleRoutingRoute:
         but has no route data, it returns an empty dictionary.  Check explicitly for None
         to understand if there was no route match at all.
         """
+        # if we're routing to a simple router then defer to it
+        if self._routes_to_simple_routing:
+            return self._handler.can_handle(full_path, request_method, is_cors=is_cors)
         # If we're routing for CORS then ignore the request method (since it won't match)
         if not is_cors and self._methods is not None and request_method not in self._methods:
             return None

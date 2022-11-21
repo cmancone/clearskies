@@ -97,6 +97,10 @@ class StandardDependencies(DI):
         import datetime
         return datetime.datetime.now()
 
+    def provide_utcnow(self):
+        import datetime
+        return datetime.datetime.now(datetime.timezone.utc)
+
     def provide_input_output(self):
         raise AttributeError('The dependency injector requested an InputOutput but none has been configured')
 
