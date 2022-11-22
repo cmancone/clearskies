@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, call
 from .base import Base
 from .exceptions import ClientError, InputError
 from ..di import StandardDependencies
-from ..authentication import public
+from ..authentication import public, Authorization
 from ..security_headers import hsts, cors
 def raise_exception(exception):
     raise exception
@@ -13,6 +13,7 @@ class Handle(Base):
         'global': 'yes',
         'response_headers': None,
         'authentication': None,
+        'authorization': None,
         'security_headers': None,
     }
     _configuration_defaults = {
@@ -36,6 +37,12 @@ class Handle(Base):
 
     def handle(self, input_output):
         return self.success(input_output, [1, 2, 3])
+class RejectAuth(Authorization):
+    def gate(self, authorization_data, input_output):
+        return False
+class AllowAuth(Authorization):
+    def gate(self, authorization_data, input_output):
+        return True
 class BaseTest(unittest.TestCase):
     def setUp(self):
         self.di = StandardDependencies()
@@ -43,6 +50,7 @@ class BaseTest(unittest.TestCase):
             '', (), {
                 'respond': lambda message, status_code: (message, status_code),
                 'set_header': MagicMock(),
+                'get_authorization_data': lambda: {},
             }
         )
 
@@ -192,7 +200,12 @@ class BaseTest(unittest.TestCase):
         self.reflect_output.set_header.assert_called_with('strict-transport-security', 'max-age=31536000 ;')
 
     def test_cors(self):
-        authentication = type('', (), {'authenticate': MagicMock(return_value=True), 'set_headers_for_cors': lambda self, cors: cors.add_header('Authorization')})
+        authentication = type(
+            '', (), {
+                'authenticate': MagicMock(return_value=True),
+                'set_headers_for_cors': lambda self, cors: cors.add_header('Authorization')
+            }
+        )
         handle = Handle(self.di)
         handle.configure({'authentication': authentication, 'security_headers': cors(origin='*')})
         (data, code) = handle.cors(self.reflect_output)
@@ -202,3 +215,47 @@ class BaseTest(unittest.TestCase):
             call('access-control-allow-origin', '*'),
             call('access-control-allow-headers', 'Authorization'),
         ])
+
+    def test_authn(self):
+        authentication = type('', (), {'authenticate': MagicMock(return_value=False)})
+        handle = Handle(self.di)
+        handle.configure({
+            'authentication': authentication,
+        })
+        (data, code) = handle(self.reflect_output)
+        self.assertEquals({
+            'status': 'client_error',
+            'error': 'Not Authenticated',
+            'data': [],
+            'pagination': {},
+            'input_errors': {},
+        }, data)
+        self.assertEquals(401, code)
+
+    def test_authz_gate_reject(self):
+        authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
+        handle = Handle(self.di)
+        handle.configure({'authentication': authentication, 'authorization': RejectAuth()})
+        (data, code) = handle(self.reflect_output)
+        self.assertEquals({
+            'status': 'client_error',
+            'error': 'Not Authorized',
+            'data': [],
+            'pagination': {},
+            'input_errors': {},
+        }, data)
+        self.assertEquals(403, code)
+
+    def test_authz_gate_allow(self):
+        authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
+        handle = Handle(self.di)
+        handle.configure({'authentication': authentication, 'authorization': AllowAuth()})
+        (data, code) = handle(self.reflect_output)
+        self.assertEquals({
+            'status': 'success',
+            'error': '',
+            'data': [1, 2, 3],
+            'pagination': {},
+            'input_errors': {},
+        }, data)
+        self.assertEquals(200, code)

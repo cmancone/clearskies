@@ -38,6 +38,7 @@ class Get(Base):
         return model
 
     def _check_configuration(self, configuration):
+        super()._check_configuration(configuration)
         error_prefix = 'Configuration error for %s:' % (self.__class__.__name__)
         has_model_class = ('model_class' in configuration) and configuration['model_class'] is not None
         has_model = ('model' in configuration) and configuration['model'] is not None

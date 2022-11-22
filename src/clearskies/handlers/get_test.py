@@ -2,7 +2,7 @@ import unittest
 from .get import Get
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
-from ..authentication import Public, SecretBearer
+from ..authentication import Public, SecretBearer, Authorization
 from ..di import StandardDependencies
 from .. import Model
 from collections import OrderedDict
@@ -28,6 +28,10 @@ class User(Model):
                 'class': Integer
             }),
         ])
+class FilterAuth(Authorization):
+    def filter_models(self, models, authorization_data, input_output):
+        email = authorization_data.get('email')
+        return models.where(f'email={email}')
 class GetTest(unittest.TestCase):
     def setUp(self):
         self.get = test({
@@ -49,6 +53,31 @@ class GetTest(unittest.TestCase):
         self.assertEquals(25, response_data['age'])
         self.assertEquals('bob', response_data['name'])
         self.assertEquals('bob@example.com', response_data['email'])
+
+    def test_authz(self):
+        get = test({
+            'handler_class': Get,
+            'handler_config': {
+                'model_class': User,
+                'readable_columns': ['name', 'email', 'age'],
+                'authentication': Public(),
+                'authorization': FilterAuth(),
+            },
+        })
+        users = get.build(User)
+        users.create({'id': '5', 'name': 'bob', 'email': 'bob@example.com', 'age': '25'})
+        users.create({'id': '6', 'name': 'bob', 'email': 'bob2@example.com', 'age': '25'})
+        response = get(routing_data={'id': '5'}, authorization_data={'email': 'bob@example.com'})
+        response_data = response[0]['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('5', response_data['id'])
+        self.assertEquals(25, response_data['age'])
+        self.assertEquals('bob', response_data['name'])
+        self.assertEquals('bob@example.com', response_data['email'])
+
+        # double check that if we find nothing for a non-match
+        response = get(routing_data={'id': '6'}, authorization_data={'email': 'bob@example.com'})
+        self.assertEquals(404, response[1])
 
     def test_not_found(self):
         response = self.get(routing_data={'id': '10'})
