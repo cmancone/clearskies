@@ -27,7 +27,11 @@ class Get(Base):
         if 'id' not in routing_data:
             return "Missing 'id'"
         id = routing_data['id']
-        model = self._model.find(f'{self.id_column_name}={id}')
+        models = self._model.where(f'{self.id_column_name}={id}')
+        authorization = self._configuration.get('authorization', None)
+        if authorization and hasattr(authorization, 'filter_models'):
+            models = authorization.filter_models(models, input_output.get_authorization_data(), input_output)
+        model = models.first()
         if not model.exists:
             return "Not Found"
 

@@ -32,6 +32,9 @@ class List(Base):
     def handle(self, input_output):
         models = self._prepared_models.clone()
         limit = self.configuration('default_limit')
+        authorization = self._configuration.get('authorization', None)
+        if authorization and hasattr(authorization, 'filter_models'):
+            models = authorization.filter_models(models, input_output.get_authorization_data(), input_output)
         request_data = self.map_input_to_internal_names(input_output.request_data(False))
         query_parameters = self.map_input_to_internal_names(input_output.get_query_parameters())
         pagination_data = {}

@@ -2,6 +2,7 @@ from ..binding_config import BindingConfig
 from .secret_bearer import SecretBearer
 from .public import Public
 from .auth0_jwks import Auth0JWKS
+from .authorization import Authorization
 def public():
     return BindingConfig(Public)
 def secret_bearer(**kwargs):

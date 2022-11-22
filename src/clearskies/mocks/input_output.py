@@ -22,7 +22,8 @@ class InputOutput(input_outputs.InputOutput):
         query_string='',
         content_type='',
         protocol='',
-        query_parameters=None
+        query_parameters=None,
+        authorization_data=None,
     ):
         self.set_request_method(request_method)
         self.set_body(body)
@@ -33,6 +34,7 @@ class InputOutput(input_outputs.InputOutput):
         self._content_type = content_type
         self._protocol = protocol
         self._query_parameters = query_parameters if query_parameters is not None else {}
+        self._authorization_data = authorization_data
 
     def respond(self, body, status_code=200):
         self.response = {'body': body, 'status_code': status_code, 'headers': self._response_headers}

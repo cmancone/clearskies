@@ -2,7 +2,7 @@ import unittest
 from .list import List
 from ..column_types import String, Integer
 from ..di import StandardDependencies
-from ..authentication import Public, SecretBearer
+from ..authentication import Public, SecretBearer, Authorization
 from ..model import Model
 from ..contexts import test
 from collections import OrderedDict
@@ -25,6 +25,10 @@ class User(Model):
                 'class': Integer
             }),
         ])
+class FilterAuth(Authorization):
+    def filter_models(self, models, authorization_data, input_output):
+        email = authorization_data.get('email')
+        return models.where(f'email={email}')
 class ListTest(unittest.TestCase):
     def setUp(self):
         self.list = test({
@@ -131,6 +135,35 @@ class ListTest(unittest.TestCase):
         self.assertEquals({'number_results': 2, 'next_page': {}, 'limit': 100}, json_response['pagination'])
         self.assertEquals({'id': '1', 'awesome': 'ronoc'}, response_data[0])
         self.assertEquals({'id': '2', 'awesome': 'conor'}, response_data[1])
+
+    def test_authorization(self):
+        list = test({
+            'handler_class': List,
+            'handler_config': {
+                'model_class': User,
+                'readable_columns': ['name', 'email', 'age'],
+                'searchable_columns': ['name'],
+                'default_sort_column': 'email',
+                'authentication': Public(),
+                'authorization': FilterAuth()
+            }
+        })
+        users = list.build(User)
+        users.create({'id': '1', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': '6'})
+        users.create({'id': '2', 'name': 'conor', 'email': 'cmancone2@example.com', 'age': '8'})
+
+        response = list(authorization_data={'email': 'cmancone2@example.com'})
+        json_response = response[0]
+        response_data = json_response['data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('success', json_response['status'])
+        self.assertEquals({'number_results': 1, 'next_page': {}, 'limit': 100}, json_response['pagination'])
+        self.assertEquals({
+            'id': '2',
+            'name': 'conor',
+            'email': 'cmancone2@example.com',
+            'age': 8
+        }, dict(response_data[0]))
 
     def test_doc(self):
         list = List(StandardDependencies())

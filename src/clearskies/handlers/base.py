@@ -54,8 +54,17 @@ class Base(ABC):
                 f"You must provide authentication in the configuration for handler '{self.__class__.__name__}'"
             )
         if configuration.get('authorization', None):
-            if not callable(configuration['authorization']) and not isinstance(configuration['authorization'], dict):
-                raise ValueError("'authorization' should be a callable or a dictionary with subclaims to enforce")
+            # authorization can be a function (in which case we'll just call it for gating) or it can be an object
+            # with 'gate' and 'filter_models' attributes, per the authentication.authorization base class
+            # or it can be a binding config
+            authorization = configuration['authorization']
+            if hasattr(authorization, 'object_class'):
+                # if it's a binding config then pull out the target class, since we just need to check attributes here
+                authorization = authorization.object_class
+            is_callable = callable(authorization)
+            gates_or_filters = hasattr(authorization, 'gate') or hasattr(authentication, 'filter_models')
+            if not is_callable and not gates_or_filters:
+                raise ValueError("'authorization' should be a callable or a provide 'gate' or 'filter_models' methods")
         if configuration.get('output_map') is not None:
             if not callable(configuration['output_map']):
                 raise ValueError("'output_map' should be a callable")
@@ -112,6 +121,8 @@ class Base(ABC):
 
     def _finalize_configuration(self, configuration):
         configuration['authentication'] = self._di.build(configuration['authentication'])
+        if configuration.get('authorization') and hasattr(configuration.get('authorization'), 'object_class'):
+            configuration['authorization'] = self._di.build(configuration['authorization'])
         if configuration.get('base_url') is None:
             configuration['base_url'] = '/'
         if not configuration['base_url'] or configuration['base_url'][0] != '/':
@@ -154,8 +165,14 @@ class Base(ABC):
             raise exceptions.Authentication(str(client_error))
         authorization = self._configuration.get('authorization')
         if authorization:
+            authorization_data = input_output.get_authorization_data()
             try:
-                if not authentication.authorize(authorization):
+                allowed = True
+                if hasattr(authorization, 'gate'):
+                    allowed = authorization.gate(authorization_data, input_output)
+                elif callable(authorization):
+                    allowed = authorization(authorization_data, input_output)
+                if not allowed:
                     raise exceptions.Authorization('Not Authorized')
             except exceptions.ClientError as client_error:
                 raise exception.Authorization(str(client_error))
