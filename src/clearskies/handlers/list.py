@@ -31,6 +31,11 @@ class List(Base):
 
     def handle(self, input_output):
         models = self._prepared_models.clone()
+        for where in self.configuration('where'):
+            if callable(where):
+                models = self._di.call_function(
+                    where, models=models, input_output=input_output, routing_data=input_output.routing_data()
+                )
         limit = self.configuration('default_limit')
         authorization = self._configuration.get('authorization', None)
         if authorization and hasattr(authorization, 'filter_models'):
@@ -182,7 +187,8 @@ class List(Base):
         # the search results and create a models class with those built in
         self._prepared_models = self._model
         for where in self.configuration('where'):
-            self._prepared_models = self._prepared_models.where(where)
+            if type(where) == str:
+                self._prepared_models = self._prepared_models.where(where)
         for join in self.configuration('join'):
             self._prepared_models = self._prepared_models.join(join)
         if self.configuration('group_by'):

@@ -108,6 +108,40 @@ class ListTest(unittest.TestCase):
         self.assertEquals({'Id': '1', 'Name': 'conor'}, response_data[1])
         self.assertEquals({'NumberResults': 2, 'NextPage': {}, 'Limit': 50}, json_response['Pagination'])
 
+    def test_where_function(self):
+        list = test({
+            'handler_class': List,
+            'handler_config': {
+                'model_class': User,
+                'readable_columns': ['name'],
+                'searchable_columns': ['name'],
+                'where': [lambda models: models.where('age>5').where('age<10')],
+                'default_sort_column': 'name',
+                'default_sort_direction': 'desc',
+                'default_limit': 50,
+                'group_by': 'id',
+                'authentication': Public(),
+                'internal_casing': 'snake_case',
+                'external_casing': 'TitleCase',
+            }
+        })
+        users = list.build(User)
+        users.create({'id': '1', 'name': 'conor', 'email': 'cmancone1@example.com', 'age': '6'})
+        users.create({'id': '2', 'name': 'ronoc', 'email': 'cmancone1@example.com', 'age': '8'})
+        users.create({'id': '5', 'name': 'conor', 'email': 'cmancone1@example.com', 'age': '15'})
+        users.create({'id': '8', 'name': 'ronoc', 'email': 'cmancone2@example.com', 'age': '25'})
+        users.create({'id': '10', 'name': 'ronoc', 'email': 'cmancone2@example.com', 'age': '30'})
+
+        response = list()
+        json_response = response[0]
+        response_data = json_response['Data']
+        self.assertEquals(200, response[1])
+        self.assertEquals('Success', json_response['Status'])
+        self.assertEquals(2, len(response_data))
+        self.assertEquals({'Id': '2', 'Name': 'ronoc'}, response_data[0])
+        self.assertEquals({'Id': '1', 'Name': 'conor'}, response_data[1])
+        self.assertEquals({'NumberResults': 2, 'NextPage': {}, 'Limit': 50}, json_response['Pagination'])
+
     def test_output_map(self):
         list = test({
             'handler_class': List,

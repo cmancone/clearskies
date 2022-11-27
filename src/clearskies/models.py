@@ -50,7 +50,7 @@ class Models(ABC, ConditionParser):
         return clone
 
     def blank(self):
-        return self.__class__(self._backend, self._columns)
+        return self._build_model()
 
     def get_table_name(self):
         if self._table_name is None:
