@@ -133,6 +133,8 @@ class RestfulAPI(Routing):
         is_search = False
         full_path = input_output.get_full_path().strip('/')
         base_url = self.configuration('base_url').strip('/')
+        for (key, value) in input_output.routing_data().items():
+            base_url = base_url.replace('{' + key + '}', value)
         if base_url and full_path[:len(base_url)] != base_url:
             raise InvalidUrl()
         url = full_path[len(base_url):].strip('/')

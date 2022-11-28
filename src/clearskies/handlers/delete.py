@@ -8,6 +8,7 @@ class Delete(Get):
         'model': None,
         'model_class': None,
         'readable_columns': None,
+        'where': [],
     }
 
     def __init__(self, di):

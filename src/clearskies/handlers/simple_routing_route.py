@@ -1,5 +1,5 @@
 import re
-from ..autodoc.request import URLParameter
+from ..autodoc.request import URLPath
 from ..autodoc.schema import String
 from . import simple_routing
 class SimpleRoutingRoute:
@@ -135,11 +135,13 @@ class SimpleRoutingRoute:
         for doc in self._handler.documentation():
             if self._methods is not None:
                 doc.set_request_methods(self._methods)
-            docs.append(doc)
 
             # do we have any resource paths to document?
             for path_name in self._resource_paths.values():
-                doc.add_parameter(URLParameter(String(path_name, required=True)))
+                description = f'The {path_name} to show results for'
+                doc.add_parameter(URLPath(String(path_name, description), description=description, required=True))
+
+            docs.append(doc)
         return docs
 
     def documentation_models(self):

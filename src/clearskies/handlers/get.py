@@ -11,6 +11,7 @@ class Get(Base):
         'model': None,
         'model_class': None,
         'readable_columns': None,
+        'where': [],
     }
 
     def __init__(self, di):
@@ -28,6 +29,13 @@ class Get(Base):
             return "Missing 'id'"
         id = routing_data['id']
         models = self._model.where(f'{self.id_column_name}={id}')
+        for where in self.configuration('where'):
+            if type(where) == str:
+                models = models.where(where)
+            else:
+                models = self._di.call_function(
+                    where, models=models, input_output=input_output, routing_data=input_output.routing_data()
+                )
         authorization = self._configuration.get('authorization', None)
         if authorization and hasattr(authorization, 'filter_models'):
             models = authorization.filter_models(models, input_output.get_authorization_data(), input_output)
@@ -50,6 +58,18 @@ class Get(Base):
             raise ValueError(
                 "{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead"
             )
+        if 'where' in configuration:
+            if not hasattr(configuration['where'], '__iter__') or type(configuration['where']) == str:
+                raise ValueError(
+                    f"{error_prefix} 'where' should be an iterable of coditions or callables " + ", not " +
+                    str(type(configuration['where'])),
+                )
+            for (index, where) in enumerate(configuration['where']):
+                if type(where) != str and not callable(where):
+                    raise ValueError(
+                        f"{error_prefix} 'where' entry should be a string with a condition or a callable that filters models "
+                        + f", but entry #{index+1} is neither of these",
+                    )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
         self._columns = self._model.columns(overrides=configuration.get('overrides'))
 
