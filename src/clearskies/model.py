@@ -156,7 +156,7 @@ class Model(Models):
         if not has_old_value:
             return True
 
-        return self.__getattr__(key) == data[key]
+        return self.__getattr__(key) != data[key]
 
     def latest(self, key, data):
         """

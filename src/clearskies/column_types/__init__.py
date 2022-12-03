@@ -1,4 +1,5 @@
 from .belongs_to import BelongsTo
+from .category_tree import CategoryTree
 from .column import Column
 from .created import Created
 from .datetime import DateTime
@@ -16,6 +17,8 @@ def build_column_config(name, column_class, **kwargs):
     return (name, {**{"class": column_class}, **kwargs})
 def belongs_to(name, **kwargs):
     return build_column_config(name, BelongsTo, **kwargs)
+def category_tree(name, **kwargs):
+    return build_column_config(name, CategoryTree, **kwargs)
 def created(name, **kwargs):
     return build_column_config(name, Created, **kwargs)
 def datetime(name, **kwargs):

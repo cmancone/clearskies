@@ -223,16 +223,16 @@ class Column(ABC):
     def input_error_for_value(self, value, operator=None):
         return ''
 
-    def validate_models_class(self, models_class):
+    def validate_models_class(self, models_class, config_name='parent_models_class'):
         if not hasattr(models_class, 'model_class'):
             if hasattr(models_class, 'columns_configuration'):
                 raise ValueError(
-                    f"'parent_models_class' in configuration for column '{self.name}' in model class " + \
+                    f"'{config_name}' in configuration for column '{self.name}' in model class " + \
                     f"'{self.model_class.__name__}' appears to be a Model class, but it should be a Models class"
                 )
             else:
                 raise ValueError(
-                    f"'parent_models_class' in configuration for column '{self.name}' should be a Models class, " + \
+                    f"'{config_name}' in configuration for column '{self.name}' should be a Models class, " + \
                     f"but it appears to be something unknown."
                 )
 

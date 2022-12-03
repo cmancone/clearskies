@@ -47,7 +47,9 @@ class Callable(Base):
                 }
                 if input_errors:
                     return self.input_errors(input_output, input_errors)
-                response = self._di.call_function(self.configuration('callable'), request_data=request_data, **input_output.routing_data())
+                response = self._di.call_function(
+                    self.configuration('callable'), request_data=request_data, **input_output.routing_data()
+                )
             else:
                 response = self._di.call_function(self.configuration('callable'), **input_output.routing_data())
             if response:
@@ -254,7 +256,7 @@ class Callable(Base):
                     *standard_error_responses,
                     self.documentation_not_found(),
                 ],
-                request_methods='POST',
+                request_methods='POST' if schema else 'GET',
                 relative_path=self.configuration('base_url'),
                 parameters=[
                     *parameters,
