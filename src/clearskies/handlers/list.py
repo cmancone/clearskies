@@ -71,7 +71,7 @@ class List(Base):
 
         return self.success(
             input_output,
-            [self._model_as_json(model) for model in models],
+            [self._model_as_json(model, input_output) for model in models],
             number_results=len(models),
             limit=limit,
             next_page=models.next_page_data(),

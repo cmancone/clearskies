@@ -21,7 +21,7 @@ class Get(Base):
         model = self.fetch_model(input_output)
         if type(model) == str:
             return self.error(input_output, model, 404)
-        return self.success(input_output, self._model_as_json(model))
+        return self.success(input_output, self._model_as_json(model, input_output))
 
     def fetch_model(self, input_output):
         routing_data = input_output.routing_data()

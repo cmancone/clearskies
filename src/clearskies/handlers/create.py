@@ -17,7 +17,7 @@ class Create(Write):
             raise InputError(input_errors)
         model.save(input_data)
 
-        return self.success(input_output, self._model_as_json(model))
+        return self.success(input_output, self._model_as_json(model, input_output))
 
     def documentation(self):
         nice_model = string.camel_case_to_words(self._model.__class__.__name__)

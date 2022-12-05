@@ -255,7 +255,7 @@ class Base(ABC):
             },
         }
 
-    def _model_as_json(self, model):
+    def _model_as_json(self, model, input_output):
         if self.configuration('output_map'):
             return self.configuration('output_map')(model)
 

@@ -46,7 +46,7 @@ class Update(Write):
             raise InputError(input_errors)
         model.save(input_data)
 
-        return self.success(input_output, self._model_as_json(model))
+        return self.success(input_output, self._model_as_json(model, input_output))
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
