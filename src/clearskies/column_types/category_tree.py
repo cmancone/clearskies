@@ -201,6 +201,7 @@ class CategoryTree(BelongsTo):
                 next_next_parent_id = next_parent.__getattr__(self.name)
                 next_parent = parent_models.find(f'{id_column_name}={next_next_parent_id}')
 
+        tree.reverse()
         for (index, parent_id) in enumerate(tree):
             tree_models.create({
                 tree_parent_id_column_name: parent_id,
