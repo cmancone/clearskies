@@ -7,7 +7,7 @@ class AKeylessAdditionalConfig(AdditionalConfig):
 
     _auth_method_allowed_kwargs = {
         'aws_iam': [],
-        'saml': [],
+        'saml': ['profile'],
         'access_key': [],
         'jwt': ['jwt_env_key'],
     }
@@ -64,11 +64,13 @@ class AKeyless:
         import akeyless
         self._akeyless = akeyless
 
-    def configure(self, access_id=None, access_type=None, jwt_env_key=None, api_host=None):
+    def configure(self, access_id=None, access_type=None, jwt_env_key=None, api_host=None, profile=None):
         self._access_id = access_id if access_id is not None else self._environment.get('akeyless_access_id')
         self._access_type = access_type if access_type is not None else self._environment.get('akeyless_access_type')
         self._jwt_env_key = jwt_env_key
         self._api_host = api_host if api_host is not None else self._environment.get('akeyless_api_host', silent=True)
+        self._profile = profile if profile is not None else "default"
+
         if not self._api_host:
             self._api_host = 'https://api.akeyless.io'
 
@@ -149,9 +151,9 @@ class AKeyless:
     def auth_saml(self):
         import os
         from pathlib import Path
-        os.system("akeyless list-items --path /not/a/real/path > /dev/null 2>&1")
+        os.system(f"akeyless list-items --profile {self._profile} --path /not/a/real/path > /dev/null 2>&1")
         home = str(Path.home())
-        with open(f'{home}/.akeyless/.tmp_creds/default-{self._access_id}', 'r') as creds_file:
+        with open(f'{home}/.akeyless/.tmp_creds/{self._profile}-{self._access_id}', 'r') as creds_file:
             credentials = creds_file.read()
 
         # and now we can turn that into a token
