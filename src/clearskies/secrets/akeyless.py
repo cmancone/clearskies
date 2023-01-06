@@ -130,7 +130,7 @@ class AKeyless:
 
     def _get_token(self):
         # AKeyless tokens live for an hour
-        if self._token is not None and (self._token_refresh - datetime.datetime.now()).total_seconds() < 10:
+        if self._token is not None and (self._token_refresh - datetime.datetime.now()).total_seconds() > 10:
             return self._token
 
         auth_method_name = f'auth_{self._access_type}'

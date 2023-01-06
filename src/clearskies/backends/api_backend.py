@@ -76,7 +76,7 @@ class ApiBackend(Backend):
     def count(self, configuration, model):
         configuration = self._check_query_configuration(configuration)
         [url, method, json_data, headers] = self._build_count_request(configuration)
-        response = self._execute_request(url, method, json=json_data, headers=headers, retry_auth=True)
+        response = self._execute_request(url, method, json=json_data, headers=headers)
         return self._map_count_response(response.json())
 
     def _build_count_request(self, configuration):
@@ -90,7 +90,7 @@ class ApiBackend(Backend):
     def records(self, configuration, model, next_page_data=None):
         configuration = self._check_query_configuration(configuration)
         [url, method, json_data, headers] = self._build_records_request(configuration)
-        response = self._execute_request(url, method, json=json_data, headers=headers, retry_auth=True)
+        response = self._execute_request(url, method, json=json_data, headers=headers)
         records = self._map_records_response(response.json())
         if type(next_page_data) == dict:
             limit = configuration.get('limit', None)
@@ -107,13 +107,13 @@ class ApiBackend(Backend):
             raise ValueError("Unexpected response from records request")
         return json['data']
 
-    def _execute_request(self, url, method, json=None, headers=None, retry_auth=False):
+    def _execute_request(self, url, method, json=None, headers=None, is_retry=False):
         if json is None:
             json = {}
         if headers is None:
             headers = {}
 
-        headers = {**headers, **self._auth.headers(retry_auth=retry_auth)}
+        headers = {**headers, **self._auth.headers(retry_auth=is_retry)}
         # the requests library seems to build a slightly different request if you specify the json parameter,
         # even if it is null, and this causes trouble for some picky servers
         if not json:
@@ -131,8 +131,8 @@ class ApiBackend(Backend):
             )
 
         if not response.ok:
-            if self._auth.has_dynamic_credentials and retry_auth:
-                return self._execute_request(url, method, json=json, headers=headers, retry_auth=False)
+            if self._auth.has_dynamic_credentials and not is_retry:
+                return self._execute_request(url, method, json=json, headers=headers, is_retry=True)
             if not response.ok:
                 raise ValueError(f'Failed request.  Status code: {response.status_code}, message: {response.content}')
 

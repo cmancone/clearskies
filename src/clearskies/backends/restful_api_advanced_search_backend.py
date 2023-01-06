@@ -74,7 +74,7 @@ class RestfulApiAdvancedSearchBackend(ApiBackend):
     def count(self, configuration, model):
         configuration = self._check_query_configuration(configuration)
         [url, method, json_data, headers] = self._build_count_request(configuration, model)
-        response = self._execute_request(url, method, json=json_data, headers=headers, retry_auth=True)
+        response = self._execute_request(url, method, json=json_data, headers=headers)
         return self._map_count_response(response.json())
 
     def _build_count_request(self, configuration, model):
@@ -86,16 +86,15 @@ class RestfulApiAdvancedSearchBackend(ApiBackend):
             raise ValueError("Unexpected API response when executing count request")
         return json['total_matches']
 
-    def records(self, configuration, model, next_page_data=None):
+    def records(self, configuration, model, next_page_data={}):
         configuration = self._check_query_configuration(configuration)
         [url, method, json_data, headers] = self._build_records_request(configuration, model)
-        response = self._execute_request(url, method, json=json_data, headers=headers, retry_auth=True)
-        records = self._map_records_response(response.json())
-        if type(next_page_data) == dict:
-            limit = configuration.get('limit', None)
-            start = configuration.get('pagination', {}).get('start', 0)
-            if limit and len(records) == limit:
-                next_page_data['start'] = start + limit
+        response = self._execute_request(url, method, json=json_data, headers=headers).json()
+        records = self._map_records_response(response)
+        for next_page_key in ['nextPage', 'NextPage', 'next_page']:
+            if response.get('pagination', {}).get(next_page_key):
+                for (key, value) in response['pagination'][next_page_key].items():
+                    next_page_data[key] = value
         return records
 
     def _build_records_request(self, configuration, model):

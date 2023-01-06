@@ -288,6 +288,16 @@ class Models(ABC, ConditionParser):
         models = iter([self.model(row) for row in raw_rows])
         return models
 
+    def paginate_all(self):
+        next_models = self.clone()
+        results = list(next_models.__iter__())
+        next_page_data = next_models.next_page_data()
+        while next_page_data:
+            next_models = next_models.clone().pagination(**next_page_data)
+            results.extend(next_models.__iter__())
+            next_page_data = next_models.next_page_data()
+        return results
+
     def model(self, data):
         model = self._build_model()
         model.data = data
