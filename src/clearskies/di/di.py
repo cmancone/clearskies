@@ -7,28 +7,38 @@ import os
 from ..functional import string
 import logging
 from logging import Logger
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, Union
+from . import additional_config
 class DI:
     _bindings: Dict[str, Any] = {}
     _building: Dict[str, Any] = {}
     _classes: Dict[str, Any] = {}
     _prepared: Dict[str, Any] = {}
-    _added_modules: Dict[str, Any] = {}
-    _additional_configs: List[Any] = []
+    _added_modules: Dict[int, Any] = {}
+    _additional_configs: List[additional_config.AdditionalConfig] = []
     log: Optional[Logger] = None
     _di_log: Optional[Logger] = None
 
     def __init__(
         self,
-        classes: Optional[Dict[str, Type]] = None,
+        classes: Optional[List[Type]] = None,
         modules: Optional[Any] = None,
         bindings: Optional[Dict[str, Any]] = None,
-        additional_configs: Optional[List[Any]] = None
+        additional_configs: Optional[List[additional_config.AdditionalConfig]] = None
     ):
         """
         Initializes the dependency injection container.
+
+        Args:
+            classes: A list of classes that the DI container should make available for injection.
+            modules: A list of modules.  The DI container will recursively search each module
+                for classes to make available for injection.
+            bindings: A dictionary for the DI container to make available for injection.  The key
+                of each dictionary entry will be the injection name.  The value will be the thing to
+                inject and can be pre-built values or classes for the DI container to build.
+            additional_configs: A list of clearskies.di.AdditionalConfig objects that with instructions
+                for building additional dependencies.
         """
-        self._logging = None
         self._bindings = {}
         self._prepared = {}
         self._classes = {}
@@ -52,9 +62,18 @@ class DI:
         if self.log is None:
             self.set_logger(self.build('logging'))
 
-    def add_classes(self, classes):
+    def add_classes(self, classes: Union[List[Type], Type]) -> None:
+        """
+        Add additional classes that the dependency injection container should provide if requested
+
+        The injection name for each class is determined by converting the class name from TitleCase
+        to snake_case.  E.g. a class named `MyFancyClass` would have an injection name of `my_fancy_class`.
+
+        Args:
+            classes: A class or list of classes to include in the dependency injection container
+        """
         if inspect.isclass(classes):
-            classes = [classes]
+            classes = [classes]    # type: ignore
         for add_class in classes:
             name = string.camel_case_to_snake_case(add_class.__name__)
             #if name in self._classes:
@@ -72,7 +91,27 @@ class DI:
             if hasattr(add_class, 'id_column_name'):
                 self._classes[string.make_plural(name)] = {'id': id(add_class), 'class': add_class}
 
-    def add_modules(self, modules, root=None, is_root=True):
+    def add_modules(self, modules: List[Any], root: Optional[str] = None, is_root: bool = True):
+        """
+        Add additional modules that the dependency injection container should include for injection.
+
+        The modules will be searched recursively and any classes will be included for injection via
+        :py:meth:`clearskies.di.DI.add_classes`.
+
+        Note that this will exclude and core python modules that may have been imported by the given
+        module.  This happens by checking the `__file__` attribute on any sub-modules.  If the `__file__`
+        attribute does not exist (or has no value), then it is ignored.
+
+        Finally, it tries to also ignore nay third party libraries imported by the module.  When called
+        with `is_root=True`, it remembers the directory that the module is located in.  It then checks
+        the directory where any sub-modules live in.  If they are not in the same directory as the original
+        module, then they are ignored.
+
+        Args:
+            modules: A module or list of modules to search/include for injection
+            root: The root directory to search - any submodules not in this directory will be ignored
+            is_root: If true, the directory of the passed in module will be used as the root directory for the search.
+        """
         if inspect.ismodule(modules):
             modules = [modules]
 
@@ -82,7 +121,7 @@ class DI:
             module_id = id(module)
             if is_root:
                 root = os.path.dirname(module.__file__)
-            root_len = len(root)
+            root_len = len(root)    # type: ignore
             if module_id in self._added_modules:
                 continue
             self._added_modules[module_id] = True
@@ -107,12 +146,22 @@ class DI:
                         break
                     self.add_modules([item], root=root, is_root=False)
 
-    def add_additional_configs(self, additional_configs):
+    def add_additional_configs(
+        self, additional_configs: Union[additional_config.AdditionalConfig, List[additional_config.AdditionalConfig]]
+    ):
+        """
+        Add an AdditionalConfig (or a list of AdditionalConfig) object(s) to the dependency injection container.
+
+
+        """
+        # mypy likes to yell at me for mis-using types when there are two possible types, and doesn't
+        # recognize the fact that I'm using type checks to disambiguate these issues.  Therefore, lots
+        # of type ignores here.
         if type(additional_configs) != list:
-            additional_configs = [additional_configs]
-        for additional_config in additional_configs:
+            additional_configs = [additional_configs]    # type: ignore
+        for additional_config in additional_configs:    # type: ignore
             self._additional_configs.append(
-                additional_config() if inspect.isclass(additional_config) else additional_config
+                additional_config() if inspect.isclass(additional_config) else additional_config    # type: ignore
             )
 
     def bind(self, key, value):

@@ -4,8 +4,9 @@ import socket
 import subprocess
 import os
 import time
+from typing import Any, Dict, Optional
 class MySQLConnectionDynamicProducerViaSSHCertBastion(clearskies.di.additional_config.AdditionalConfig):
-    _config = None
+    _config: Dict[Any, Any] = {}
 
     def __init__(
         self,
