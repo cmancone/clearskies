@@ -207,14 +207,6 @@ class Model(Models):
                 )
         return data
 
-    def pre_save(self, data):
-        """
-        A hook to extend so you can provide additional pre-save logic as needed
-
-        It is passed in the data being saved and it should return the same data with adjustments as needed
-        """
-        return data
-
     def columns_to_backend(self, data, columns):
         backend_data = {**data}
         for column in columns.values():

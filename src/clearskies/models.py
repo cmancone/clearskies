@@ -330,19 +330,19 @@ class Models(ABC, ConditionParser):
         return self.model({}).all_columns()
 
     def allowed_pagination_keys(self) -> List[str]:
-        return self._backend.allowed_pagination_keys()
+        return self._backend.allowed_pagination_keys()    # type: ignore
 
     def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
-        return self._backend.validate_pagination_kwargs(kwargs, case_mapping)
+        return self._backend.validate_pagination_kwargs(kwargs, case_mapping)    # type: ignore
 
     def next_page_data(self):
         return self._next_page_data
 
     def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
-        return self._backend.documentation_pagination_next_page_response(case_mapping)
+        return self._backend.documentation_pagination_next_page_response(case_mapping)    # type: ignore
 
     def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
-        return self._backend.documentation_pagination_next_page_example(case_mapping)
+        return self._backend.documentation_pagination_next_page_example(case_mapping)    # type: ignore
 
     def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
-        return self._backend.documentation_pagination_parameters(case_mapping)
+        return self._backend.documentation_pagination_parameters(case_mapping)    # type: ignore

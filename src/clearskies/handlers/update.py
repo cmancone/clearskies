@@ -2,11 +2,12 @@ from .write import Write
 from .exceptions import InputError
 from collections import OrderedDict
 from ..functional import string
+from typing import Any, Dict
 class Update(Write):
     def __init__(self, di):
         super().__init__(di)
 
-    _configuration_defaults = {
+    _configuration_defaults: Dict[str, Any] = {
         'model': None,
         'model_class': None,
         'columns': None,

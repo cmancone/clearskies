@@ -3,8 +3,9 @@ from .base import Base
 from .. import autodoc
 from ..functional import string
 from .get import Get
+from typing import Any, Dict
 class Delete(Get):
-    _configuration_defaults = {
+    _configuration_defaults: Dict[str, Any] = {
         'model': None,
         'model_class': None,
         'readable_columns': None,

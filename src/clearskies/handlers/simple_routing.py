@@ -4,10 +4,11 @@ from .simple_routing_route import SimpleRoutingRoute
 from . import callable as callable_handler
 from ..functional import string
 from .. import autodoc
+from typing import Any, Dict
 class SimpleRouting(Base):
     _routes = None
 
-    _configuration_defaults = {
+    _configuration_defaults: Dict[str, Any] = {
         'base_url': '',
         'authentication': None,
         'routes': [],

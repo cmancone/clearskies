@@ -4,9 +4,10 @@ from .. import autodoc
 from .. import condition_parser
 from ..functional import string
 import inspect
+from typing import Any, Dict
 class HealthCheck(Base):
 
-    _configuration_defaults = {
+    _configuration_defaults: Dict[str, Any] = {
         'services': [],
         'callable': None,
     }

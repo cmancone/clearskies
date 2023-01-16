@@ -1,10 +1,9 @@
 from .backend import Backend
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from ..autodoc.schema import Integer as AutoDocInteger
 from .. import model
 class CursorBackend(Backend):
     supports_n_plus_one = True
-    _cursor = None
 
     _allowed_configs = [
         'table_name',
@@ -87,10 +86,12 @@ class CursorBackend(Backend):
             return row[0] if type(row) == tuple else row['count']
         return 0
 
-    def records(self,
-                configuration: Dict[str, Any],
-                model: model.Model,
-                next_page_data: Dict[str, str] = None) -> List[Dict[str, Any]]:
+    def records(
+        self,
+        configuration: Dict[str, Any],
+        model: model.Model,
+        next_page_data: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
         # I was going to get fancy and have this return an iterator, but since I'm going to load up
         # everything into a list anyway, I may as well just return the list, right?
         configuration = self._check_query_configuration(configuration)
@@ -101,8 +102,8 @@ class CursorBackend(Backend):
             limit = configuration.get('limit', None)
             start = configuration.get('pagination', {}).get('start', 0)
             if limit and len(records) == limit:
-                next_page_data['start'] = int(start) + int(limit)
-        return records
+                next_page_data['start'] = int(start) + int(limit)    # type: ignore
+        return records    # type: ignore
 
     def as_sql(self, configuration):
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration['wheres'])
@@ -208,7 +209,7 @@ class CursorBackend(Backend):
     def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
         return {case_mapping('start'): 10}
 
-    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any, Any]]:
         return [(
             AutoDocInteger(case_mapping('start'),
                            example=10), 'The zero-indexed record number to start listing results from'
