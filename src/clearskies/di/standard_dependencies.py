@@ -91,7 +91,7 @@ class StandardDependencies(DI):
 
     def provide_logging(self):
         import logging
-        return logging
+        return logging.getLogger('clearskies')
 
     def provide_now(self):
         import datetime

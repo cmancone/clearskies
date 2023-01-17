@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import inspect
 from .. import model
-from typing import Any, Callable, Dict, List, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 class Backend(ABC):
     supports_n_plus_one = False
 
@@ -34,10 +34,12 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def records(self,
-                configuration: Dict[str, Any],
-                model: model.Model,
-                next_page_data: Dict[str, str] = None) -> List[Dict[str, Any]]:
+    def records(
+        self,
+        configuration: Dict[str, Any],
+        model: model.Model,
+        next_page_data: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
         """
         Returns a list of records that match the given query configuration
 
@@ -48,7 +50,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def validate_pagination_kwargs(self, kwargs: Dict[str, Any]) -> str:
+    def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
         """
         Checks if the given dictionary is valid pagination data for the background.
 
@@ -75,7 +77,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any, Any]]:
         """
         Returns a list of autodoc schema objects describing the allowed input keys to set pagination.  It should
         return a list of tuples, with each tuple corresponding to an input key.  The first element in the
@@ -128,13 +130,13 @@ class Backend(ABC):
         if inspect.isclass(model_or_class):
             try:
                 # the list of args will include 'self' which we don't have to provide, so subtract 1
-                nargs = len(inspect.getfullargspec(model_or_class.__init__).args) - 1
+                nargs = len(inspect.getfullargspec(model_or_class.__init__).args) - 1    # type: ignore
                 # generate a list of empty strings with a size of nargs and pass that into the constructor
-                return model_or_class(*([''] * nargs))
+                return model_or_class(*([''] * nargs))    # type: ignore
             except AttributeError:
                 # if we get here there is no __init__ defined so we don't need to pass arguments
-                return model_or_class()
-        return model_or_class
+                return model_or_class()    # type: ignore
+        return model_or_class    # type: ignore
 
     def column_from_backend(self, column, value):
         """

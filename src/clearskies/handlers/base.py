@@ -8,12 +8,12 @@ from ..autodoc.schema import String as AutoDocString
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.response import Response as AutoDocResponse
 from ..functional import string
-from typing import List, Dict
+from typing import List, Dict, Any
 class Base(ABC):
-    _configuration = None
-    _configuration_defaults = {}
+    _configuration: Dict[str, Any] = {}
+    _configuration_defaults: Dict[str, Any] = {}
     _as_json_map = None
-    _global_configuration_defaults = {
+    _global_configuration_defaults: Dict[str, Any] = {
         'base_url': '',
         'response_headers': None,
         'authentication': None,
@@ -33,7 +33,7 @@ class Base(ABC):
 
     def __init__(self, di):
         self._di = di
-        self._configuration = None
+        self._configuration = {}
 
     @abstractmethod
     def handle(self):
@@ -334,8 +334,8 @@ class Base(ABC):
                 "To properly use handler.id_column_name, the handler must have a 'model_class' or 'model' configuration key"
             )
         if self._configuration.get('model_class', False):
-            return self._configuration.get('model_class').id_column_name
-        return self._configuration.get('model').id_column_name
+            return self._configuration.get('model_class').id_column_name    # type: ignore
+        return self._configuration.get('model').id_column_name    # type: ignore
 
     def cors(self, input_output):
         cors = self._cors_header

@@ -4,10 +4,11 @@ from .. import autodoc
 from .. import condition_parser
 from ..functional import string
 import inspect
+from typing import Any, Dict
 class Get(Base):
     _model = None
 
-    _configuration_defaults = {
+    _configuration_defaults: Dict[str, Any] = {
         'model': None,
         'model_class': None,
         'readable_columns': None,

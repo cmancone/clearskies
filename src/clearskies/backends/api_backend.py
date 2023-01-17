@@ -189,7 +189,7 @@ class ApiBackend(Backend):
     def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
         return {case_mapping('start'): 10}
 
-    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any, Any]]:
         return [(
             AutoDocInteger(case_mapping('start'),
                            example=10), 'The zero-indexed record number to start listing results from'

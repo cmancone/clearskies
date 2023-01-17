@@ -3,8 +3,9 @@ import re
 from ..autodoc.schema import String as AutoDocString
 from .. import input_requirements
 import inspect
+from typing import List, Any
 class Column(ABC):
-    _auto_doc_class = AutoDocString
+    _auto_doc_class: Any = AutoDocString
     _is_unique = None
     _is_required = None
     configuration = None
@@ -15,8 +16,8 @@ class Column(ABC):
         'is_temporary',
     ]
 
-    my_configs = []
-    required_configs = []
+    my_configs: List[str] = []
+    required_configs: List[str] = []
 
     @property
     def is_writeable(self):

@@ -3,6 +3,7 @@ from collections import OrderedDict
 from .. import autodoc
 from ..functional import string
 import inspect
+from typing import Any, Dict
 class List(Base):
     _model = None
     _columns = None
@@ -11,7 +12,7 @@ class List(Base):
     _prepared_models = None
     expected_request_methods = 'GET'
 
-    _configuration_defaults = {
+    _configuration_defaults: Dict[str, Any] = {
         'model': None,
         'model_class': None,
         'readable_columns': None,
