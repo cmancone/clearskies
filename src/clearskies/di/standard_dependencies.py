@@ -1,7 +1,7 @@
 from .di import DI
 from ..columns import Columns
 from ..environment import Environment
-from ..backends import CursorBackend, MemoryBackend, SecretsBackend
+from ..backends import CursorBackend, JsonBackend, MemoryBackend, SecretsBackend
 from .. import autodoc
 import os
 import uuid
@@ -85,6 +85,9 @@ class StandardDependencies(DI):
 
     def provide_memory_backend(self):
         return MemoryBackend()
+
+    def provide_json_backend(self):
+        return JsonBackend()
 
     def provide_secrets_backend(self, secrets):
         return SecretsBackend(secrets)
