@@ -65,7 +65,7 @@ class BaseTest(unittest.TestCase):
 
     def test_require_config(self):
         handle = Handle(self.di)
-        self.assertRaises(ValueError, lambda: handle.configuration('age'))
+        self.assertRaises(KeyError, lambda: handle.configuration('age'))
 
     def test_invalid_configuration(self):
         handle = Handle(self.di)
@@ -155,7 +155,7 @@ class BaseTest(unittest.TestCase):
         self.assertEquals(200, code)
         authentication.authenticate.assert_called_with(self.reflect_output)
 
-    def test_error(self):
+    def test_error_2(self):
         authentication = type('', (), {'authenticate': MagicMock(return_value=True)})
         handle = Handle(self.di)
         handle.configure({

@@ -8,26 +8,35 @@ class AdditionalConfig:
     injection name.  These provide methods can declare their own dependencies and they will be provided by the
     dependency injection container - even if declared in the same AdditionalConfig class.
 
-    Example:
-        The following example declares an AdditionalConfig object and shows how to use it in a simple application.
-        It prints out "this is a simple example"::
+    Note that AdditionalConfig objects take precedence over any "standard" dependencies.
 
-            class MyDependencies(clearskies.di.AdditionalConfig):
-                def provide_my_first_dependency(self):
-                    return 'simple example'
-                def provide_my_second_dependency(self, my_first_dependency):
-                    return 'this is a ' + my_first_dependency
+        Example:
+            The following example uses the additional_configs kwarg on the context constructor, which is passed into
+            to the constructor of the dependency injection container.
 
-            def my_function(my_second_dependency):
-                print(my_second_dependency)
+                class DateTimeOverride(clearskies.di.AdditionalConfig):
+                    def provide_now(self):
+                        import datetime
+                        return datetime.datetime.now() - datetime.timedelta(weeks=520)
+                def my_function(now):
+                    print(now.year)
 
-            cli = clearskies.contexts.cli(
-                my_function,
-                additional_configs=[MyDependencies()],
-            )
-            cli()
+                # default behavior without our additional config
+                cli = clearskies.contexts.cli(
+                    my_function,
+                )
+                cli()
+                # prints:
+                # 2023
 
-    Note that an instance is passed to the dependency injection container - not the class.
+                # with the additional config
+                cli = clearskies.contexts.cli(
+                    my_function,
+                    additional_configs=[DateTimeOverride],
+                )
+                cli()
+                # prints:
+                # 2013
     """
     _config: Dict[Any, Any] = {}
 
