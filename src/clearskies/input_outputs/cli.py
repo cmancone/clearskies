@@ -23,7 +23,10 @@ class CLI:
             raise exceptions.CLINotFound()
         if status_code != 200:
             self._sys.exit(response)
-        print(response)
+        if type(response) != str:
+            print(json.dumps(response))
+        else:
+            print(response)
 
     def error(self, body):
         return self.respond(body, 400)
