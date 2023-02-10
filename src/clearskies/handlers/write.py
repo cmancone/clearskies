@@ -42,7 +42,7 @@ class Write(Base):
                 "{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead"
             )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
-        self._columns = self._model.columns(overrides=configuration.get('overrides'))
+        self._columns = self._model.columns(overrides=configuration.get('column_overrides'))
         has_columns = 'columns' in configuration and configuration['columns'] is not None
         has_writeable = 'writeable_columns' in configuration and configuration['writeable_columns'] is not None
         has_readable = 'readable_columns' in configuration and configuration['readable_columns'] is not None

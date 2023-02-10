@@ -71,7 +71,7 @@ class Get(Base):
                         + f", but entry #{index+1} is neither of these",
                     )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
-        self._columns = self._model.columns(overrides=configuration.get('overrides'))
+        self._columns = self._model.columns(overrides=configuration.get('column_overrides'))
 
     def _get_readable_columns(self):
         resolved_columns = OrderedDict()

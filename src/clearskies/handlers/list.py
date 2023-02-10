@@ -213,7 +213,7 @@ class List(Base):
                 "{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead"
             )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
-        self._columns = self._model.columns(overrides=configuration.get('overrides'))
+        self._columns = self._model.columns(overrides=configuration.get('column_overrides'))
         model_class_name = self._model.__class__.__name__
         # checks for searchable_columns and readable_columns
         self._check_columns_in_configuration(configuration, 'readable_columns')
