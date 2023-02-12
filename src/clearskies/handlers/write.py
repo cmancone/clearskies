@@ -80,7 +80,7 @@ class Write(Base):
             if column_name not in self._columns:
                 raise KeyError(f"{error_prefix} specified writeable column '{column_name}' does not exist")
             if not self._columns[column_name].is_writeable:
-                raise KeyError(f"{error_prefix} specified writeable column '{column.name}' is not writeable")
+                raise KeyError(f"{error_prefix} specified writeable column '{column_name}' is not writeable")
         readable_columns = configuration['readable_columns'] if has_readable else configuration['columns']
         for column_name in readable_columns:
             if column_name not in self._columns:

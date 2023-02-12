@@ -28,9 +28,8 @@ class Callable(Base):
         'return_raw_response': False,
         'schema': None,
         'writeable_columns': None,
-        'documentation_model_name': '',
-        'documentation_description': '',
-        'documentation_response_data_schema': None,
+        'doc_model_name': '',
+        'doc_response_data_schema': None,
     }
 
     def __init__(self, di):
@@ -76,9 +75,9 @@ class Callable(Base):
         configuration = super()._finalize_configuration(configuration)
         if configuration.get('schema') is not None:
             if validations.is_model(configuration['schema']):
-                configuration['documentation_model_name'] = configuration['schema'].__class__.__name__
+                configuration['doc_model_name'] = configuration['schema'].__class__.__name__
             elif validations.is_model_class(configuration['schema']):
-                configuration['documentation_model_name'] = configuration['schema'].__name__
+                configuration['doc_model_name'] = configuration['schema'].__name__
             configuration['schema'] = self._schema_to_columns(
                 configuration['schema'], columns_to_keep=configuration.get('writeable_columns')
             )
@@ -237,19 +236,19 @@ class Callable(Base):
             if getattr(authentication, 'can_authorize', False):
                 standard_error_responses.append(self.documentation_unauthorized_response())
 
-        response_data_schema = self.configuration('documentation_response_data_schema')
+        response_data_schema = self.configuration('doc_response_data_schema')
         if not response_data_schema:
             response_data_schema = []
 
         return [
             autodoc.request.Request(
-                self.configuration('documentation_description'),
+                self.configuration('doc_description'),
                 [
                     self.documentation_success_response(
                         autodoc.schema.Object(
                             self.auto_case_internal_column_name('data'),
                             children=response_data_schema,
-                            model_name=self.configuration('documentation_model_name'),
+                            model_name=self.configuration('doc_model_name'),
                         ),
                         include_pagination=False,
                     ),
