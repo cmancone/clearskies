@@ -162,14 +162,14 @@ class MemoryTable:
             rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration['sorts'])))
         if 'length' in configuration or ('pagination' in configuration and configuration['pagination'].get('start')):
             number_rows = len(rows)
-            start = configuration['pagination'].get('start') if 'pagination' in configuration else 0
+            start = int(configuration['pagination'].get('start')) if 'pagination' in configuration else 0
             if not start:
                 start = 0
-            if start >= number_rows:
+            if int(start) >= number_rows:
                 start = number_rows - 1
             end = len(rows)
-            if configuration.get('limit') and start + configuration['limit'] <= number_rows:
-                end = start + configuration['limit']
+            if configuration.get('limit') and start + int(configuration['limit']) <= number_rows:
+                end = start + int(configuration['limit'])
             rows = rows[start:end]
         return rows
 

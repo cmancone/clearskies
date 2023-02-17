@@ -217,9 +217,11 @@ class List(Base):
         model_class_name = self._model.__class__.__name__
         # checks for searchable_columns and readable_columns
         self._check_columns_in_configuration(configuration, 'readable_columns')
-        self._check_columns_in_configuration(configuration, 'searchable_columns')
+        # the List base class doesn't use searchable columns so just ignore this check for List
+        if type(self) != List:
+            self._check_columns_in_configuration(configuration, 'searchable_columns')
 
-        if not 'default_sort_column' in configuration:
+        if 'default_sort_column' not in configuration:
             raise ValueError(f"{error_prefix} missing required configuration 'default_sort_column'")
 
         # sortable_columns, wheres, and joins should all be iterables
