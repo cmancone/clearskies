@@ -6,6 +6,8 @@ def convert_to_application(application):
     # with, so it's not yet clear how to make this DRY
     # The goal of this is to make sure we have an actual application, so users can have a bit
     # more flexibility about what they pass into the build_context method.
+    if hasattr(application, 'is_wrapped_application') and application.is_wrapped_application:
+        return application()
 
     # first, if it has the handler_class attribute, then just assume it is an application object
     if hasattr(application, 'handler_class'):

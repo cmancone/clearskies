@@ -50,7 +50,11 @@ class Callable(Base):
                     self.configuration('callable'), request_data=request_data, **input_output.routing_data()
                 )
             else:
-                response = self._di.call_function(self.configuration('callable'), **input_output.routing_data())
+                response = self._di.call_function(
+                    self.configuration('callable'),
+                    request_data=self.request_data(input_output, required=False),
+                    **input_output.routing_data()
+                )
             if response:
                 return self.success(input_output, response)
             return
@@ -102,6 +106,8 @@ class Callable(Base):
         return input_errors
 
     def request_data(self, input_output, required=True):
+        if not self.configuration('schema'):
+            return input_output.request_data(required=required)
         # we have to map from internal names to external names, because case mapping
         # isn't always one-to-one, so we want to do it exactly the same way that the documentation
         # is built.
@@ -265,3 +271,15 @@ class Callable(Base):
                 },
             )
         ]
+
+    def documentation_models(self):
+        if not self.configuration('doc_model_name') or not self.configuration('doc_response_data_schema'):
+            return {}
+
+        schema_model_name = self.configuration('doc_model_name')
+        return {
+            schema_model_name: autodoc.schema.Object(
+                'data',
+                children=self.configuration('doc_response_data_schema'),
+            ),
+        }

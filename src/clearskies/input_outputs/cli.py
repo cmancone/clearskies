@@ -65,6 +65,14 @@ class CLI:
     def get_request_method(self):
         return self._kwargs.get('request_method', 'GET')
 
+    def request_data(self, required=True):
+        request_data = self.json_body(False)
+        if not request_data:
+            if self.has_body():
+                raise ClientError("Request body was not valid JSON")
+            request_data = {}
+        return request_data
+
     def has_body(self):
         if self._has_body is None:
             self._has_body = False

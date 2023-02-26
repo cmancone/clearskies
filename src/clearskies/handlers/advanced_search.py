@@ -6,7 +6,7 @@ class AdvancedSearch(SimpleSearch):
 
     @property
     def allowed_request_keys(self):
-        return ['sort', 'direction', 'where', 'limit']
+        return ['sort', 'where', 'limit']
 
     def configure_models_from_request_data(self, models, request_data, query_parameters, pagination_data):
         limit = int(
