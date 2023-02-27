@@ -3,13 +3,22 @@ from ..handlers import callable as callable_handler
 from ..handlers import simple_routing
 from typing import Any, Dict, Set
 def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
+    bindings = None
+    if 'bindings' in kwargs:
+        bindings = kwargs['bindings']
+        del kwargs['bindings']
+
     is_wrapped_application = getattr(function, 'is_wrapped_application', False)
     callable_configs = extract_callable_configs(kwargs)
     routing_configs = extract_routing_configs(kwargs)
 
     # if ths is the first decorator added then we need to wrap it in an application
     if not is_wrapped_application and type(function) != Application:
-        application = Application(callable_handler.Callable, {**callable_configs, 'callable': function})
+        application = Application(
+            callable_handler.Callable, {
+                **callable_configs, 'callable': function
+            }, bindings=bindings
+        )
         # and if we have a route then we also want to wrap it in a router. Note that
         # there is a possible future issue in here and things will break if path
         # and methods are not specified at the same time.
@@ -25,6 +34,7 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
                         },
                     ],
                 },
+                bindings=bindings,
             )
         # and then we are all done
         return application
@@ -46,6 +56,8 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
             )
         # Now then, wrap the application in a router.  For the inner application,
         # merge any configurations for the callable
+        if application.bindings:
+            bindings = {**application.bindings, **(bindings if bindings else {})}
         return Application(
             simple_routing.SimpleRouting,
             {
@@ -60,6 +72,7 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
                     },
                 ],
             },
+            bindings=bindings,
         )
 
     # if we got here then we just need to merge in our callable configs.  The only trick is
@@ -73,6 +86,8 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
     else:
         application.handler_config = {**application.handler_config, **callable_configs}
 
+    if bindings:
+        application.bindings = {**application.bindings, **bindings}
     return application
 routing_kwargs = ['path', 'methods']
 def extract_callable_configs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
