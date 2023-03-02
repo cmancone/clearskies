@@ -16,6 +16,7 @@ class CLI:
         self._sys = sys
         self._args = []
         self._kwargs = {}
+        self._request_method = None
         self._parse_args(self._sys.argv)
 
     def respond(self, response, status_code):
@@ -49,7 +50,16 @@ class CLI:
                     value = True
                 if name in self._kwargs:
                     raise exceptions.CLIInputError(f"Received multiple flags for '{name}'")
-                self._kwargs[name] = value
+                if name == 'X':
+                    name = 'request_method'
+                if name == 'request_method':
+                    if self._request_method:
+                        raise ValueError(
+                            "Received multiple flags for the request method (setablve via 'request_method' and 'X')"
+                        )
+                    self._request_method = value.upper()
+                else:
+                    self._kwargs[name] = value
             else:
                 self._args.append(arg)
 
@@ -63,7 +73,7 @@ class CLI:
         return self.get_path_info()
 
     def get_request_method(self):
-        return self._kwargs.get('request_method', 'GET')
+        return self._request_method if self._request_method else 'GET'
 
     def request_data(self, required=True):
         request_data = self.json_body(False)
