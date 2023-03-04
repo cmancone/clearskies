@@ -13,7 +13,6 @@ from .post import post
 from .public import public
 from .response_headers import response_headers
 from .return_raw_response import return_raw_response
-#from .route import route
 from .schema import schema
-#from .secret_bearer import secret_bearer
-#from .security_headers import security_headers
+from .secret_bearer import secret_bearer
+from .security_headers import security_headers
