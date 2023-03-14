@@ -10,6 +10,7 @@ class SimpleRoutingRoute:
     _path_parts = None
     _resource_paths = None
     _routes_to_simple_routing = False
+    _bindings = None
 
     def __init__(self, di):
         self._di = di
@@ -22,7 +23,8 @@ class SimpleRoutingRoute:
         methods=None,
         authentication=None,
         response_headers=None,
-        security_headers=None
+        security_headers=None,
+        bindings=None,
     ):
         if authentication is not None and not handler_config.get('authentication'):
             handler_config['authentication'] = authentication
@@ -36,6 +38,7 @@ class SimpleRoutingRoute:
             self._path = path.rstrip('/') + '/' + handler_config.get('base_url').lstrip('/')
         self._path_parts = self._path.strip('/').split('/') if self._path is not None else []
         self._resource_paths = self._extract_resource_paths(self._path_parts)
+        self._bindings = bindings if bindings else {}
         if methods is not None:
             self._methods = [methods.upper()] if isinstance(methods, str) else [met.upper() for met in methods]
         sub_handler_config = {
