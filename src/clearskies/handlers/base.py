@@ -62,7 +62,7 @@ class Base(ABC):
                 # if it's a binding config then pull out the target class, since we just need to check attributes here
                 authorization = authorization.object_class
             is_callable = callable(authorization)
-            gates_or_filters = hasattr(authorization, 'gate') or hasattr(authentication, 'filter_models')
+            gates_or_filters = hasattr(authorization, 'gate') or hasattr(authorization, 'filter_models')
             if not is_callable and not gates_or_filters:
                 raise ValueError("'authorization' should be a callable or a provide 'gate' or 'filter_models' methods")
         if configuration.get('output_map') is not None:

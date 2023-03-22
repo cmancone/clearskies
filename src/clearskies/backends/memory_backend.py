@@ -151,7 +151,7 @@ class MemoryTable:
     def count(self, configuration, wheres):
         return len(self.rows(configuration, wheres, filter_only=True))
 
-    def rows(self, configuration, wheres, filter_only=False):
+    def rows(self, configuration, wheres, filter_only=False, next_page_data=None):
         rows = list(filter(None, self._rows))
         for where in wheres:
             rows = filter(self._where_as_filter(where), rows)
@@ -160,9 +160,9 @@ class MemoryTable:
             return rows
         if 'sorts' in configuration and configuration['sorts']:
             rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration['sorts'])))
-        if 'length' in configuration or ('pagination' in configuration and configuration['pagination'].get('start')):
+        if 'limit' in configuration or ('pagination' in configuration and configuration['pagination'].get('start')):
             number_rows = len(rows)
-            start = int(configuration['pagination'].get('start')) if 'pagination' in configuration else 0
+            start = int(configuration.get('pagination', {}).get('start', 0))
             if not start:
                 start = 0
             if int(start) >= number_rows:
@@ -170,6 +170,8 @@ class MemoryTable:
             end = len(rows)
             if configuration.get('limit') and start + int(configuration['limit']) <= number_rows:
                 end = start + int(configuration['limit'])
+            if end < number_rows and type(next_page_data) == dict:
+                next_page_data['start'] = start + configuration['limit']
             rows = rows[start:end]
         return rows
 
@@ -260,7 +262,7 @@ class MemoryBackend(Backend):
         # this is easy if we have no joins, so just return early so I don't have to think about it
         if 'joins' not in configuration or not configuration['joins']:
             wheres = configuration['wheres'] if 'wheres' in configuration else []
-            return self._tables[table_name].rows(configuration, wheres)
+            return self._tables[table_name].rows(configuration, wheres, next_page_data=next_page_data)
 
         rows = self.rows_with_joins(configuration)
 
