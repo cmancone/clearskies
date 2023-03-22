@@ -47,6 +47,7 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
         application = function()
     else:
         application = function
+    authentication = application.handler_config.get('authentication')
 
     # Next question: is there a path in our kwargs?  If so then we are trying to add routing to
     # the application.
@@ -70,6 +71,8 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
         return Application(
             simple_routing.SimpleRouting,
             {
+                'authentication':
+                authentication,
                 'routes': [
                     {
                         **routing_configs,

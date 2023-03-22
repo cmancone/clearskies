@@ -1,8 +1,13 @@
+import inspect
+import os
+import types
 from ..application import Application
 from ..handlers.callable import Callable as CallableHandler
 from ..handlers.simple_routing import SimpleRouting as SimpleRoutingHandler
 from typing import Any, Callable, Dict, Union, List
-def convert_to_application(application: Union[Application, Dict[str, Any], Callable, List[Callable]]) -> Application:
+def convert_to_application(
+    application: Union[Application, Dict[str, Any], Callable, List[Callable], types.ModuleType]
+) -> Application:
     """
     Converts a variety of allowed inputs into an application which the context can run.
 
@@ -11,17 +16,24 @@ def convert_to_application(application: Union[Application, Dict[str, Any], Calla
     The context itself always runs an application.  However, we want to give the developer
     additional options.  This function marrys the two.  This function can specifically handle:
 
-     1. A function
-     2. A function with one or more clearskies.decorators.* applied to it
-     3. A list containing any number of the above
-     4. A clearskies.Application object
-     5. A dictionary containing two keys: 'handler_class' and 'handler_config'
+     1. A module
+     2. A function
+     3. A function with one or more clearskies.decorators.* applied to it
+     4. A list containing any number of the above
+     5. A clearskies.Application object
+     6. A dictionary containing two keys: 'handler_class' and 'handler_config'
 
     Note that if more than one function is provided they will all be wrapped in a SimpleRouting
     handler.  In addition, if any of the functions don't have routing information provided
     by a decorator, then the the function name will be used as the route for the function
     and only the GET method will be allowed.
+
+    Finally, if passing in a module, note that only functions with routing decorators will be
+    imported.  This stops you from accidentally taking helper functions and exposing them as endpoints.
     """
+    if type(application) == types.ModuleType:
+        return convert_module_to_application(application)
+
     # Lists need some special processing, although they just end up back here in the end
     if type(application) == list:
         return convert_list_to_application(application)
@@ -52,9 +64,37 @@ def convert_to_application(application: Union[Application, Dict[str, Any], Calla
     raise ValueError(
         "A context was passed something but I'm not smart enough to figure out what it is :(  In general you want to pass in an Application, a callable, or a callable with decorators from the clearskies.decorators module.  You can also try a dictionary with `handler_class` and `handler_config` options.  I'll link to the docs eventually."
     )
+def convert_module_to_application(module: types.ModuleType) -> Application:
+    """
+    Take a module, find any routing applications in it, and convert it to a single application
+    """
+    if not hasattr(module, '__file__') or not module.__file__:
+        raise ValueError("I'm trying to find routed functions in a module but I was passed a python-native module")
+    root = os.path.dirname(module.__file__)
+    routes = convert_list_to_application(return_routed_functions(module, root, len(root)))
+    return routes
+def return_routed_functions(module: types.ModuleType, root: str, root_len: int) -> List[Application]:
+    routed_functions = []
+    for (name, item) in module.__dict__.items():
+        if type(item) == Application:
+            routed_functions.append(item)
+            continue
+        if getattr(item, 'is_wrapped_application', False):
+            routed_functions.append(item())
+            continue
+        if inspect.ismodule(item):
+            if not hasattr(item, '__file__') or not item.__file__:
+                continue
+            child_root = os.path.dirname(item.__file__)
+            if child_root[:root_len] != root:
+                continue
+            if module.__name__ == 'clearskies':
+                continue
+            routed_functions.extend(return_routed_functions(item, root, root_len))
+    return routed_functions
 def convert_list_to_application(applications: List[Union[Application, Callable]]) -> Application:
     """
-    Handle processing a list is passed into the convert_to_application function
+    Take a list of applications and convert it into a single application.
     """
     # First check the items.  Only callables or SimpleRouting handlers are allowed.  Everything else is too complicated.
     for (index, application) in enumerate(applications):
@@ -72,8 +112,13 @@ def convert_list_to_application(applications: List[Union[Application, Callable]]
     # in the outer one.
     di_config = {}
     routes = []
+    # also, our top level router will need something for authentication.  It's a requirement.  It doesn't
+    # actually matter exactly _what_ it is because it won't overwrite authentication for the children.
+    authentication = None
     for application in applications:
         converted = convert_to_application(application)
+        if not authentication and converted.handler_config.get('authentication'):
+            authentication = converted.handler_config.get('authentication')
         routes.append(ensure_routing(converted))
         for di_key in ['bindings', 'binding_classes', 'binding_modules', 'additional_configs']:
             di_value = getattr(application, di_key)
@@ -83,9 +128,16 @@ def convert_list_to_application(applications: List[Union[Application, Callable]]
                 else:
                     di_config[di_key] = [*di_config.get(di_key, []), *di_value]
 
+    if not authentication:
+        raise ValueError(
+            "I couldn't find any authentication rules while auto-importing your routes.  Make sure an add an authentication decorator to your routes, even if it's just @clearskies.decorators.public"
+        )
+
     return Application(
-        SimpleRoutingHandler,
-        {'routes': [ensure_routing(convert_to_application(application)) for application in applications]}, **di_config
+        SimpleRoutingHandler, {
+            'authentication': authentication,
+            'routes': [ensure_routing(convert_to_application(application)) for application in applications]
+        }, **di_config
     )
 def ensure_routing(application: Application) -> Application:
     """
@@ -109,6 +161,8 @@ def ensure_routing(application: Application) -> Application:
         )
     return Application(
         SimpleRouting, {
+            'authentication':
+            application.handler_config.get('authentication', None),
             'routes': [{
                 'path': name,
                 'handler_class': application.handler_class,
