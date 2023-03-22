@@ -3,6 +3,7 @@ import unittest
 @clearskies.decorators.return_raw_response()
 @clearskies.decorators.get('users/{user_id}')
 @clearskies.decorators.bindings(sup='hey')
+@clearskies.decorators.public()
 def example_callable(user_id, request_data, sup):
     return {
         "price": 27.50,
