@@ -59,7 +59,7 @@ def convert_to_application(
 
     # if we get a callable, then use the callable handler class
     if callable(application):
-        Application(CallableHandler, {'callable': application})
+        return Application(CallableHandler, {'callable': application})
 
     raise ValueError(
         "A context was passed something but I'm not smart enough to figure out what it is :(  In general you want to pass in an Application, a callable, or a callable with decorators from the clearskies.decorators module.  You can also try a dictionary with `handler_class` and `handler_config` options.  I'll link to the docs eventually."
