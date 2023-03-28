@@ -121,7 +121,7 @@ def convert_list_to_application(applications: List[Union[Application, Callable]]
             authentication = converted.handler_config.get('authentication')
         routes.append(ensure_routing(converted))
         for di_key in ['bindings', 'binding_classes', 'binding_modules', 'additional_configs']:
-            di_value = getattr(application, di_key)
+            di_value = getattr(application, di_key, None)
             if di_value:
                 if di_key == 'bindings':
                     di_config['bindings'] = {**di_config.get('bindings', {}), **di_value}
@@ -160,7 +160,7 @@ def ensure_routing(application: Application) -> Application:
             "A lambda was sent to the application for auto-routing, but since lambdas don't have names, I can't create the route for it.  To fix this, switch it out for a regular function, attach a decorator with a path, or manually wrap it in a SimpleRouting handler"
         )
     return Application(
-        SimpleRouting, {
+        SimpleRoutingHandler, {
             'authentication':
             application.handler_config.get('authentication', None),
             'routes': [{
