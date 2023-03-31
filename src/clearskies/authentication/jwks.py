@@ -10,9 +10,16 @@ class JWKS(Auth0JWKS):
         super().__init__(environment, requests, jose_jwt)
 
     def configure(
-        self, jwks_url=None, algorithms=None, audience=None, documentation_security_name=None, jwks_cache_time=86400
+        self,
+        jwks_url=None,
+        algorithms=None,
+        audience=None,
+        issuer=None,
+        documentation_security_name=None,
+        jwks_cache_time=86400
     ):
         self._audience = audience
+        self._issuer = issuer
         self._jwks_url = jwks_url
         self._jwks_cache_time = jwks_cache_time
         if not self._jwks_url:
@@ -46,6 +53,7 @@ class JWKS(Auth0JWKS):
                 raw_jwt,
                 rsa_key,
                 audience=self._audience,
+                issuer=self._issuer,
                 algorithms=self._algorithms,
             )
         except self._jose_jwt.ExpiredSignatureError:
