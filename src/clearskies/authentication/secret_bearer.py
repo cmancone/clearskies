@@ -4,32 +4,43 @@ class SecretBearer:
     can_authorize = False
     has_dynamic_credentials = False
     _environment = None
+    _secrets = None
     _secret = None
+    _header_prefix = None
+    _header_prefix_length = None
     _documentation_security_name = None
 
-    def __init__(self, environment):
+    def __init__(self, secrets, environment):
         self._environment = environment
-        self._secret = None
+        self._secrets = secrets
 
-    def configure(self, secret=None, environment_key=None, documentation_security_name=None):
-        if environment_key:
+    def configure(
+        self, secret_key=None, secret=None, environment_key=None, header_prefix=None, documentation_security_name=None
+    ):
+        if secret_key:
+            self._secret = self._secrets.get(secret_key)
+        elif environment_key:
             self._secret = self._environment.get(environment_key)
         elif secret:
             self._secret = secret
         else:
-            raise ValueError("Must set either 'secret' or 'environment_key' when configuring the SecretBearer")
+            raise ValueError(
+                "Must set either 'secret_key', 'environment_key', or 'secret', when configuring the SecretBearer"
+            )
+        self._header_prefix = header_prefix if header_prefix else 'authorization '
+        self._header_prefix_length = len(self._header_prefix)
         self._documentation_security_name = documentation_security_name
 
     def headers(self, retry_auth=False):
         self._configured_guard()
-        return {'Authorization': f'Bearer {self._secret}'}
+        return {'Authorization': f'{self._header_prefix}{self._secret}'}
 
     def authenticate(self, input_output):
         self._configured_guard()
         auth_header = input_output.get_request_header('authorization', True)
-        if auth_header[:7].lower() != 'bearer ':
+        if auth_header[:self._header_prefix_length].lower() != self._header_prefix.lower():
             return False
-        return self._secret == auth_header[7:]
+        return self._secret == auth_header[self._header_prefix_length:]
 
     def authorize(self, authorization):
         raise ValueError("SecretBearer does not support authorization")

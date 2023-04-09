@@ -40,8 +40,8 @@ class DeleteTest(unittest.TestCase):
         self.users = self.delete.build(User)
         self.users.create({'id': '5', 'name': '', 'email': '', 'age': 0})
 
-        self.secret_bearer = SecretBearer('environment')
-        self.secret_bearer.configure(secret='asdfer')
+        self.secret_bearer = SecretBearer('secrets', 'environment')
+        self.secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
 
     def test_delete_flow(self):
         response = self.delete(routing_data={'id': '5'})

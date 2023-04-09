@@ -45,8 +45,8 @@ class CreateTest(unittest.TestCase):
             }
         })
 
-        secret_bearer = SecretBearer('environment')
-        secret_bearer.configure(secret='asdfer')
+        secret_bearer = SecretBearer('secrets', 'environment')
+        secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
         self.create_secret_bearer = test({
             'handler_class': Create,
             'handler_config': {

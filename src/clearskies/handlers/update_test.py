@@ -129,8 +129,8 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals('default@email.com', response_data['email'])
 
     def test_auth_failure(self):
-        secret_bearer = SecretBearer('environment')
-        secret_bearer.configure(secret='asdfer')
+        secret_bearer = SecretBearer('secrets', 'environment')
+        secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
         update = test({
             'handler_class': Update,
             'handler_config': {
@@ -155,8 +155,8 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals('Not Authenticated', response[0]['error'])
 
     def test_auth_success(self):
-        secret_bearer = SecretBearer('environment')
-        secret_bearer.configure(secret='asdfer')
+        secret_bearer = SecretBearer('secrets', 'environment')
+        secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
         update = test({
             'handler_class': Update,
             'handler_config': {
