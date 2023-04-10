@@ -78,6 +78,11 @@ class AKeyless:
         api_client = self._akeyless.ApiClient(configuration)
         self._api = self._akeyless.V2Api(api_client)
 
+    def create(self, path, value):
+        self._configure_guard()
+        res = self._api.create_secret(self._akeyless.CreateSecret(name=path, value=str(value), token=self._get_token()))
+        return True
+
     def get(self, path):
         self._configure_guard()
 
@@ -106,6 +111,13 @@ class AKeyless:
             self._akeyless.UpdateSecretVal(name=path, value=str(value), token=self._get_token())
         )
         return True
+
+    def upsert(self, path, value):
+        try:
+            if self.update(path, value):
+                return True
+        except Exception as e:
+            return self.create(path, value)
 
     def get_ssh_certificate(self, cert_issuer, cert_username, path_to_public_file):
         self._configure_guard()
