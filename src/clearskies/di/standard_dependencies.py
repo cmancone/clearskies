@@ -32,9 +32,8 @@ class StandardDependencies(DI):
         return Columns(self)
 
     def provide_secrets(self):
-        # This is just here so that we can auto-inject the secrets into the environment without having
-        # to force the developer to define a secrets manager
-        return {}
+        from ..secrets import secrets
+        return secrets.Secrets()
 
     def provide_environment(self):
         return Environment(os.getcwd() + '/.env', os.environ, {})
