@@ -99,6 +99,10 @@ class StandardDependencies(DI):
         import datetime
         return datetime.datetime.now()
 
+    def provide_datetime(self):
+        import datetime
+        return datetime
+
     def provide_utcnow(self):
         import datetime
         return datetime.datetime.now(datetime.timezone.utc)
