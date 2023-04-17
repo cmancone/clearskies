@@ -1,4 +1,5 @@
 import unittest
+import logging
 from .create import Create
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
@@ -45,7 +46,7 @@ class CreateTest(unittest.TestCase):
             }
         })
 
-        secret_bearer = SecretBearer('secrets', 'environment')
+        secret_bearer = SecretBearer('secrets', 'environment', logging)
         secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
         self.create_secret_bearer = test({
             'handler_class': Create,

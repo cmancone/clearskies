@@ -5,14 +5,16 @@ class SecretBearer:
     has_dynamic_credentials = False
     _environment = None
     _secrets = None
+    _logging = None
     _secret = None
     _header_prefix = None
     _header_prefix_length = None
     _documentation_security_name = None
 
-    def __init__(self, secrets, environment):
+    def __init__(self, secrets, environment, logging):
         self._environment = environment
         self._secrets = secrets
+        self._logging = logging
 
     def configure(
         self, secret_key=None, secret=None, environment_key=None, header_prefix=None, documentation_security_name=None
@@ -39,8 +41,16 @@ class SecretBearer:
         self._configured_guard()
         auth_header = input_output.get_request_header('authorization', True)
         if auth_header[:self._header_prefix_length].lower() != self._header_prefix.lower():
+            self._logging.debug(
+                'Authentication failure due to prefix mismatch.  Configured prefix: ' + self._header_prefix.lower() +
+                ".  Found prefix: " + auth_header[:self._header_prefix_length].lower()
+            )
             return False
-        return self._secret == auth_header[self._header_prefix_length:]
+        if self._secret == auth_header[self._header_prefix_length:]:
+            self._logging.debug('Authentication success')
+            return True
+        self._logging.debug('Authentication failure due to secret mismatch')
+        return False
 
     def authorize(self, authorization):
         raise ValueError("SecretBearer does not support authorization")
