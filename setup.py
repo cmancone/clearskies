@@ -18,7 +18,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='clear-skies',
-    version='1.14.3',
+    version='1.14.4',
     description='A framework for building backends in the cloud',
     long_description=long_description,
     long_description_content_type='text/markdown',
