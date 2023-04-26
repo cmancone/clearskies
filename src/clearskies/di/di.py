@@ -77,7 +77,7 @@ class DI:
                 if inspect.ismodule(item):
                     if not hasattr(item, '__file__') or not item.__file__:
                         continue
-                    child_root = os.path.dirname(module.__file__)
+                    child_root = os.path.dirname(item.__file__)
                     if child_root[:root_len] != root:
                         continue
                     if module.__name__ == 'clearskies':
