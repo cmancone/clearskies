@@ -120,9 +120,9 @@ class Base(ABC):
         return self._configuration[key]
 
     def _finalize_configuration(self, configuration):
-        configuration['authentication'] = self._di.build(configuration['authentication'])
+        configuration['authentication'] = self._di.build(configuration['authentication'], cache=True)
         if configuration.get('authorization') and hasattr(configuration.get('authorization'), 'object_class'):
-            configuration['authorization'] = self._di.build(configuration['authorization'])
+            configuration['authorization'] = self._di.build(configuration['authorization'], cache=True)
         if configuration.get('base_url') is None:
             configuration['base_url'] = '/'
         if not configuration['base_url'] or configuration['base_url'][0] != '/':
@@ -141,7 +141,7 @@ class Base(ABC):
             final_security_headers = []
             for (index, security_header) in enumerate(security_headers):
                 if hasattr(security_header, 'object_class'):
-                    security_header = self._di.build(security_header)
+                    security_header = self._di.build(security_header, cache=True)
                 if not hasattr(security_header, 'set_headers_for_input_output'):
                     raise ValueError(
                         f"Configuration error for handler '{self.__class__.__name__}': security header #{index+1} did not resolve to a security header"
