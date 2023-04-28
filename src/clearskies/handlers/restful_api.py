@@ -30,7 +30,7 @@ class RestfulAPI(Routing):
         'delete_request_method': 'DELETE',
         'get_request_method': 'GET',
         'list_request_method': 'GET',
-        'search_request_method': 'POST',
+        'search_request_method': ['GET', 'POST'],
         'update_request_method': 'PUT',
     }
 
@@ -66,6 +66,24 @@ class RestfulAPI(Routing):
                 configuration[f'allow_{action}'] = False
 
         super().configure(configuration)
+
+    def _finalize_configuration(self, configuration):
+        search_request_method = configuration.get('search_request_method')
+        if type(search_request_method) == str:
+            configuration['search_request_method'] = [search_request_method]
+        configuration['search_request_method'] = [method.upper() for method in configuration['search_request_method']]
+
+        request_method_keys = [
+            'create_request_method',
+            'delete_request_method',
+            'get_request_method',
+            'list_request_method',
+            'update_request_method',
+        ]
+        for key in request_method_keys:
+            configuration[key] = configuration[key].upper()
+
+        return super()._finalize_configuration(configuration)
 
     def handle(self, input_output):
         [resource_id, handler_class] = self._get_handler_class_for_route(input_output)
@@ -103,9 +121,9 @@ class RestfulAPI(Routing):
             [is_search, resource_id] = self._parse_url(input_output)
         except InvalidUrl:
             return [None, None]
-        request_method = input_output.get_request_method()
+        request_method = input_output.get_request_method().upper()
         if is_search:
-            if request_method != self.configuration('search_request_method'):
+            if request_method not in self.configuration('search_request_method'):
                 return [None, None]
             return [resource_id, self.configuration('search_handler') if self.configuration('allow_search') else None]
         if resource_id:
@@ -153,7 +171,8 @@ class RestfulAPI(Routing):
             handler = self.build_handler(self.configuration(f'{name}_handler'))
             action_docs = handler.documentation()
             for doc in action_docs:
-                doc.set_request_methods([self.configuration(f'{name}_request_method')])
+                request_methods = self.configuration(f'{name}_request_method')
+                doc.set_request_methods(request_methods if type(request_methods) == list else [request_methods])
 
                 if name == 'search':
                     doc.append_relative_path('search')
