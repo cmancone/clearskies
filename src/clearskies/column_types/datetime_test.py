@@ -22,11 +22,11 @@ class DateTimeTest(unittest.TestCase):
 
     def test_to_json(self):
         some_day = datetime.strptime('2021-01-07 22:45:13', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-        model = type('', (), {'__getattr__': MagicMock(return_value=some_day)})()
+        model = type('', (), {'get': MagicMock(return_value=some_day)})()
         date = DateTime()
         date.configure('created', {}, int)
         self.assertEquals('2021-01-07T22:45:13+00:00', date.to_json(model))
-        model.__getattr__.assert_called_with('created')
+        model.get.assert_called_with('created', silent=True)
 
     def test_is_allowed_operator(self):
         date = DateTime()

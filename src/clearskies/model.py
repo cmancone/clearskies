@@ -68,6 +68,12 @@ class Model(Models):
 
         return self.get_transformed_from_data(column_name, self._data)
 
+    def get(self, column_name, silent=False):
+        if not self.exists:
+            return None
+
+        return self.get_transformed_from_data(column_name, self._data, silent=silent)
+
     def get_transformed_from_data(self, column_name, data, cache=True, check_providers=True, silent=False):
         if cache and column_name in self._transformed:
             return self._transformed[column_name]

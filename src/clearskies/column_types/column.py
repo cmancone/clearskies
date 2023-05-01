@@ -115,7 +115,7 @@ class Column(ABC):
         """
         Grabs the column out of the model and converts it into a representation that can be turned into JSON
         """
-        return model.__getattr__(self.name)
+        return model.get(self.name, silent=True)
 
     def input_errors(self, model, data):
         error = self.check_input(model, data)
