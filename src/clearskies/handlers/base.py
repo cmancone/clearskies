@@ -58,7 +58,10 @@ class Base(ABC):
             # with 'gate' and 'filter_models' attributes, per the authentication.authorization base class
             # or it can be a binding config
             authorization = configuration['authorization']
-            if hasattr(authorization, 'object_class'):
+            if type(authorization) == str:
+                # if we have a binding name then we need to build the authorization object
+                authorization = self._di.build(authorization, cache=True)
+            elif hasattr(authorization, 'object_class'):
                 # if it's a binding config then pull out the target class, since we just need to check attributes here
                 authorization = authorization.object_class
             is_callable = callable(authorization)
@@ -121,7 +124,8 @@ class Base(ABC):
 
     def _finalize_configuration(self, configuration):
         configuration['authentication'] = self._di.build(configuration['authentication'], cache=True)
-        if configuration.get('authorization') and hasattr(configuration.get('authorization'), 'object_class'):
+        authorization = configuration.get('authorization')
+        if authorization and (hasattr(authorization, 'object_class') or type(authorization) == str):
             configuration['authorization'] = self._di.build(configuration['authorization'], cache=True)
         if configuration.get('base_url') is None:
             configuration['base_url'] = '/'
