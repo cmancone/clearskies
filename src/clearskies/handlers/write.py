@@ -19,6 +19,7 @@ class Write(Base):
         'columns': None,
         'writeable_columns': None,
         'readable_columns': None,
+        'input_error_callable': None,
     }
 
     def __init__(self, di):
@@ -40,6 +41,10 @@ class Write(Base):
         if has_model and inspect.isclass(configuration['model']):
             raise ValueError(
                 "{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead"
+            )
+        if 'input_error_callable' in configuration and not callable(configuration.get('input_error_callable')):
+            raise ValueError(
+                "{error_prefix} you must provide a callable for the 'input_error_callable' configuration but the provided value is not callable"
             )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
         self._columns = self._model.columns(overrides=configuration.get('column_overrides'))
@@ -120,12 +125,30 @@ class Write(Base):
                 input_errors[column_name] = f"Input column '{column_name}' is not an allowed column"
         return input_errors
 
-    def _find_input_errors(self, model, input_data):
+    def _find_input_errors(self, model, input_data, input_output):
         input_errors = {}
         for column in self._get_writeable_columns().values():
             input_errors = {
                 **input_errors,
                 **column.input_errors(model, input_data),
+            }
+        input_error_callable = self.configuration('input_error_callable')
+        if input_error_callable:
+            more_input_errors = self._di.call_function(
+                input_error_callable,
+                input_data=input_data,
+                input_output=input_output,
+                routing_data=input_output.routing_data(),
+                authorization_data=input_output.get_authorization_data(),
+            )
+            if type(more_input_errors) != dict:
+                raise ValueError(
+                    "The input error callable, '" + str(input_error_callable) +
+                    "', did not return a dictionary as required"
+                )
+            input_errors = {
+                **input_errors,
+                **more_input_errors,
             }
         return input_errors
 

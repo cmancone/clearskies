@@ -29,6 +29,10 @@ class User(Model):
                 'class': Integer
             }),
         ])
+def no_bob(input_data):
+    if input_data.get('email') == 'bob@asdf.com':
+        return {'email': "Bob is not allowed."}
+    return {}
 class UpdateTest(unittest.TestCase):
     def setUp(self):
         self.update = test({
@@ -215,3 +219,24 @@ class UpdateTest(unittest.TestCase):
         data_response_properties = success_response.schema.children[1].children
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
         self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
+
+    def test_custom_input_errors(self):
+        update = test({
+            'handler_class': Update,
+            'handler_config': {
+                'model_class': User,
+                'columns': ['name', 'email', 'age'],
+                'authentication': Public(),
+                'input_error_callable': no_bob
+            }
+        })
+        users = update.build(User)
+        users.create({'id': '5', 'name': '', 'email': '', 'age': 0})
+
+        response = update(body={'id': 5, 'name': 'Conor', 'email': 'bob@asdf.com', 'age': 10})
+        self.assertEquals(200, response[1])
+        self.assertEquals({'email': "Bob is not allowed."}, response[0]['input_errors'])
+
+        response = update(body={'id': 5, 'name': 'Conor', 'email': 'bob2@asdf.com', 'age': 10})
+        self.assertEquals(200, response[1])
+        self.assertEquals({}, response[0]['input_errors'])

@@ -14,7 +14,7 @@ class Create(Write):
         self._logging.debug('Incoming request data: ' + json.dumps(input_data))
         input_errors = {
             **self._extra_column_errors(input_data),
-            **self._find_input_errors(model, input_data),
+            **self._find_input_errors(model, input_data, input_output),
         }
         if input_errors:
             self._logging.debug('Request rejected due to input errors: ' + json.dumps(input_errors))

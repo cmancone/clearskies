@@ -13,6 +13,7 @@ class Update(Write):
         'writeable_columns': None,
         'readable_columns': None,
         'where': [],
+        'input_error_callable': None,
     }
 
     def handle(self, input_output):
@@ -40,7 +41,7 @@ class Update(Write):
 
         input_errors = {
             **self._extra_column_errors(input_data),
-            **self._find_input_errors(model, input_data),
+            **self._find_input_errors(model, input_data, input_output),
         }
         if input_errors:
             raise InputError(input_errors)
