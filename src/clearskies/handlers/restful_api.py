@@ -104,7 +104,11 @@ class RestfulAPI(Routing):
         methods = {}
         for action in ['create', 'delete', 'list', 'search', 'update']:
             if self.configuration(f'allow_{action}'):
-                methods[self.configuration(f'{action}_request_method')] = True
+                route_methods = self.configuration(f'{action}_request_method')
+                if type(route_methods) != list:
+                    route_methods = [route_methods]
+                for route_method in route_methods:
+                    methods[route_method] = True
         for method in methods.keys():
             cors.add_method(method)
         cors.set_headers_for_input_output(input_output)

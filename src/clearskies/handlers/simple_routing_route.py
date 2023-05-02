@@ -142,7 +142,7 @@ class SimpleRoutingRoute:
             # do we have any resource paths to document?
             for path_name in self._resource_paths.values():
                 description = f'The {path_name} to show results for'
-                doc.add_parameter(URLPath(String(path_name, description), description=description, required=True))
+                doc.add_parameter(URLPath(String(path_name), description=description, required=True))
 
             docs.append(doc)
         return docs
