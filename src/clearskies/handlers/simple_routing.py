@@ -160,6 +160,7 @@ class SimpleRouting(Base):
                 route_config['handler_config'],
                 path=base_url.rstrip('/') + '/' + path.lstrip('/'),
                 methods=route_config.get('methods'),
+                path_parameter_with_slashes=route_config.get('path_parameter_with_slashes'),
                 authentication=authentication,
                 response_headers=response_headers,
                 security_headers=security_headers,
