@@ -19,7 +19,7 @@ class ManyToManyWithData(ManyToMany):
     ]
 
     def __init__(self, di):
-        self.di = di
+        super().__init__(di)
 
     @property
     def is_readable(self):
@@ -81,7 +81,10 @@ class ManyToManyWithData(ManyToMany):
         # and now this.  Keep in mind that "foreign" and "related" refer to the same thing
         foreign_column_name_in_pivot = self.config('foreign_column_name_in_pivot')
         own_column_name_in_pivot = self.config('own_column_name_in_pivot')
-        unique_foreign_columns = {column.name: column.name for column in self.related_columns.values() if column.is_unique}
+        unique_foreign_columns = {
+            column.name: column.name
+            for column in self.related_columns.values() if column.is_unique
+        }
         related_models = self.related_models
         pivot_models = self.pivot_models
         new_ids = set()
@@ -106,8 +109,11 @@ class ManyToManyWithData(ManyToMany):
                         break
             if not foreign_column_id:
                 column_list = "'" + "', '".join([column for column in unique_foreign_columns.key()]) + "'"
-                raise ValueError(f"Missing data for {self.name}: Unable to match foreign record for a record in the many-to-many relationship: you must provide either '{foreign_column_name_in_pivot}' with the id column for the foreign table, or a value from one of the unique columns: {column_list}")
-            pivot_model = pivot_models.where(f'{foreign_column_name_in_pivot}={foreign_column_id}').where(f'{own_column_name_in_pivot}={id}').first()
+                raise ValueError(
+                    f"Missing data for {self.name}: Unable to match foreign record for a record in the many-to-many relationship: you must provide either '{foreign_column_name_in_pivot}' with the id column for the foreign table, or a value from one of the unique columns: {column_list}"
+                )
+            pivot_model = pivot_models.where(f'{foreign_column_name_in_pivot}={foreign_column_id}'
+                                             ).where(f'{own_column_name_in_pivot}={id}').first()
             new_ids.add(foreign_column_id)
             # this will either update or create accordingly
             pivot_model.save({

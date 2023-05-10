@@ -27,7 +27,7 @@ class HasMany(Column):
     ]
 
     def __init__(self, di):
-        self.di = di
+        super().__init__(di)
 
     @property
     def is_writeable(self):

@@ -34,7 +34,7 @@ class BelongsTo(String):
     ]
 
     def __init__(self, di):
-        self.di = di
+        super().__init__(di)
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)

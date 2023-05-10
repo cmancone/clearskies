@@ -1,6 +1,9 @@
 import json
 from .column import Column
 class JSON(Column):
+    def __init__(self, di):
+        super().__init__(di)
+
     def from_backend(self, value):
         if type(value) == list or type(value) == dict:
             return value

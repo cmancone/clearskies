@@ -13,5 +13,6 @@ from .restful_api import RestfulAPI
 from .routing import Routing
 from .update import Update
 from .write import Write
+from .schema_helper import SchemaHelper
 from .simple_routing import SimpleRouting
 from .simple_search import SimpleSearch

@@ -5,6 +5,9 @@ from ..autodoc.schema import DateTime as AutoDocDateTime
 class DateTime(Column):
     _auto_doc_class = AutoDocDateTime
 
+    def __init__(self, di):
+        super().__init__(di)
+
     def from_backend(self, value):
         if value == None:
             date = datetime.strptime('1970-01-01', '%Y-%m-%d')

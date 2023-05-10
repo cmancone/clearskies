@@ -146,6 +146,10 @@ class Model(Models):
         self.data = new_data
         self._transformed = {}
         self._previous_data = old_data
+
+        self.columns_save_finished(columns)
+        self.save_finished()
+
         return True
 
     def is_changing(self, key, data):
@@ -182,7 +186,17 @@ class Model(Models):
         """ Returns True/False to denote if a column was changed in the last save """
         if self._previous_data is None:
             raise ValueError("was_changed was called before a save was finished - you must save something first")
-        return self.is_changing(key, self._previous_data)
+
+        has_old_value = key in self._previous_data
+        has_new_value = key in self._data
+
+        if has_new_value != has_old_value:
+            return True
+
+        if not has_old_value:
+            return False
+
+        return self.__getattr__(key) != self._previous_data[key]
 
     def previous_value(self, key):
         return self.get_transformed_from_data(key, self._previous_data, cache=False, check_providers=False, silent=True)
@@ -249,6 +263,11 @@ class Model(Models):
                 )
         return data
 
+    def columns_save_finished(self, columns):
+        """ Calls the save_finished method on all of our columns """
+        for column in columns.values():
+            column.save_finished(self)
+
     def post_save(self, data, id):
         """
         A hook to extend so you can provide additional pre-save logic as needed
@@ -265,6 +284,16 @@ class Model(Models):
         It is passed in the data being saved and it should return the same data with adjustments as needed
         """
         return data
+
+    def save_finished(self):
+        """
+        A hook to extend so you can provide additional logic after a save operation has fully completed
+
+        It has no retrun value and is passed no data.  By the time this fires the model has already been
+        updated with the new data.  You can decide on the necessary actions using the `was_changed` and
+        the `previous_value` functions.
+        """
+        pass
 
     def columns_pre_delete(self, columns):
         """ Uses the column information present in the model to make any necessary changes before deleting """

@@ -119,7 +119,7 @@ class CategoryTree(BelongsTo):
     ]
 
     def __init__(self, di):
-        self.di = di
+        super().__init__(di)
 
     def _check_configuration(self, configuration):
         # our parent class is the BelongsTo which needs to know the parent model class.

@@ -2,11 +2,11 @@ import unittest
 from .json import JSON
 class JSONTest(unittest.TestCase):
     def test_from_backend(self):
-        json = JSON()
+        json = JSON('di')
         self.assertDictEqual({'name': 'Bob', 'age': 5}, json.from_backend('{"name":"Bob","age":5}'))
 
     def test_to_backend(self):
-        json = JSON()
+        json = JSON('di')
         json.configure('some_data', {}, JSON)
         for_database = json.to_backend({
             'some_data': {

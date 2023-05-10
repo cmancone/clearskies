@@ -1,5 +1,8 @@
 from .column import Column
 class String(Column):
+    def __init__(self, di):
+        super().__init__(di)
+
     def build_condition(self, value, operator=None, column_prefix=''):
         if not operator:
             operator = '='
