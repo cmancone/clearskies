@@ -102,20 +102,23 @@ class SchemaHelper(ABC):
         # only keep things that we're allowed to keep
         return OrderedDict([(key, value) for (key, value) in columns.items() if key in columns_to_keep])
 
-    def _find_input_errors(self, input_data):
+    def _find_input_errors(self, input_data, schema=None):
+        if not schema:
+            schema = self.configuration('schema')
         input_errors = {}
         fake_model = FakeModel()
-        for column in self.configuration('schema').values():
+        for column in schema.values():
             input_errors = {
                 **input_errors,
                 **column.input_errors(fake_model, input_data),
             }
         return input_errors
 
-    def _extra_column_errors(self, input_data):
+    def _extra_column_errors(self, input_data, schema=None):
+        if not schema:
+            schema = self.configuration('schema')
         input_errors = {}
-        allowed = self.configuration('schema')
         for column_name in input_data.keys():
-            if column_name not in allowed:
+            if column_name not in schema:
                 input_errors[column_name] = f"Input column '{column_name}' is not an allowed column"
         return input_errors
