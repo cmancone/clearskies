@@ -5,6 +5,7 @@ from ..backends import CursorBackend, JsonBackend, MemoryBackend, SecretsBackend
 from .. import autodoc
 import os
 import uuid
+import inspect
 class StandardDependencies(DI):
     def provide_requests(self):
         # by importing the requests library when requested, instead of in the top of the file,
@@ -13,12 +14,16 @@ class StandardDependencies(DI):
         from requests.adapters import HTTPAdapter
         from requests.packages.urllib3.util.retry import Retry
 
-        retry_strategy = Retry(
-            total=3,
-            status_forcelist=[429, 500, 502, 503, 504],
-            backoff_factor=1,
-            method_whitelist=['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH']
-        )
+        use_allowed_methods = "allowed_methods" in inspect.getfullargspec(Retry.__init__).args
+        methods_key = "allowed_methods" if use_allowed_methods else "method_whitelist"
+        kwargs = {
+            'total': 3,
+            'status_forcelist': [429, 500, 502, 503, 504],
+            'backoff_factor': 1,
+            methods_key: ['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH']
+        }
+
+        retry_strategy = Retry(**kwargs)
         adapter = HTTPAdapter(max_retries=retry_strategy)
         http = requests.Session()
         http.mount("https://", adapter)
