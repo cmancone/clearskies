@@ -91,11 +91,13 @@ class CLI:
             # compare data against a schema:
 
             # isatty() means that someone is piping input into the program
-            if not self._sys.stdin.isatty():
-                self._has_body = True
-                self._input_type = 'atty'
+            # however, it behaves unreliably in "alternate" environments in later versions
+            # of python, so I'm removing it until I can find a better solution
+            #if not self._sys.stdin.isatty():
+            #self._has_body = True
+            #self._input_type = 'atty'
             # or if the user set 'data' or 'd' keys
-            elif 'data' in self._kwargs or 'd' in self._kwargs:
+            if 'data' in self._kwargs or 'd' in self._kwargs:
                 self._has_body = True
                 self._input_type = 'data' if 'data' in self._kwargs else 'd'
             # or finally if we have kwargs in general
