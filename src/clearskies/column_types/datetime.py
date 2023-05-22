@@ -9,13 +9,13 @@ class DateTime(Column):
         super().__init__(di)
 
     def from_backend(self, value):
-        if value == None:
-            date = datetime.strptime('1970-01-01', '%Y-%m-%d')
+        if not value or value == '0000-00-00 00:00:00':
+            date = None
         elif type(value) == str:
-            date = dateparser.parse(value) if value else datetime.strptime('1970-01-01', '%Y-%m-%d')
+            date = dateparser.parse(value)
         else:
             date = value
-        return date.replace(tzinfo=timezone.utc)
+        return date.replace(tzinfo=timezone.utc) if date else None
 
     def to_backend(self, data):
         if not self.name in data or type(data[self.name]) == str or data[self.name] == None:
