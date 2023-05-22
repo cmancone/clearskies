@@ -3,9 +3,6 @@
     "schemas": {
       "status": {
         "properties": {
-          "id": {
-            "type": "string"
-          },
           "name": {
             "type": "string"
           }
@@ -17,9 +14,6 @@
           "age": {
             "format": "int32",
             "type": "integer"
-          },
-          "id": {
-            "type": "string"
           },
           "name": {
             "type": "string"
@@ -1537,7 +1531,7 @@
       "delete": {
         "parameters": [
           {
-            "description": "The id of the record to delete",
+            "description": "The id of the record to delete.",
             "in": "path",
             "name": "id",
             "required": true,
@@ -1771,7 +1765,7 @@
       "put": {
         "parameters": [
           {
-            "description": "The id of the record to update",
+            "description": "The id of the record in question.",
             "in": "path",
             "name": "id",
             "required": true,

@@ -30,7 +30,7 @@ class RestfulAPITest(unittest.TestCase):
             'handler_class': RestfulAPI,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'age', 'email'],
+                'readable_columns': ['id', 'name', 'age', 'email'],
                 'writeable_columns': ['name', 'age', 'email'],
                 'searchable_columns': ['name', 'age'],
                 'sortable_columns': ['name'],

@@ -67,8 +67,9 @@ class Update(Write):
 
     def documentation(self):
         nice_model = string.camel_case_to_words(self._model.__class__.__name__)
+        id_label = 'id' if self.configuration('id_column_name') else self.id_column_name
         return self._documentation(
-            description='Update the ' + nice_model + ' with an id of {id}',
+            description='Update the ' + nice_model + ' with an ' + id_label + ' of {' + id_label + '}',
             response_description=f'The updated {nice_model}',
             include_id_in_path=True,
         )

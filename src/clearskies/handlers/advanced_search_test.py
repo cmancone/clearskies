@@ -31,7 +31,7 @@ class AdvancedSearchTest(unittest.TestCase):
             'handler_class': AdvancedSearch,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
                 'searchable_columns': ['name'],
                 'default_sort_column': 'email',
                 'authentication': Public(),
@@ -62,7 +62,7 @@ class AdvancedSearchTest(unittest.TestCase):
             'handler_class': AdvancedSearch,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
                 'searchable_columns': ['name', 'age'],
                 'default_sort_column': 'email',
                 'authentication': Public(),
@@ -131,7 +131,7 @@ class AdvancedSearchTest(unittest.TestCase):
         advanced_search = AdvancedSearch(StandardDependencies())
         advanced_search.configure({
             'model_class': User,
-            'readable_columns': ['name', 'email', 'age'],
+            'readable_columns': ['id', 'name', 'email', 'age'],
             'searchable_columns': ['name', 'email'],
             'default_sort_column': 'email',
             'authentication': Public(),
@@ -164,7 +164,7 @@ class AdvancedSearchTest(unittest.TestCase):
         advanced_search = AdvancedSearch(StandardDependencies())
         advanced_search.configure({
             'model_class': User,
-            'readable_columns': ['name', 'email', 'age'],
+            'readable_columns': ['id', 'name', 'email', 'age'],
             'searchable_columns': ['name', 'email'],
             'default_sort_column': 'email',
             'authentication': Public(),

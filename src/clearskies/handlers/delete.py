@@ -32,9 +32,10 @@ class Delete(Get):
             if getattr(authentication, 'can_authorize', False):
                 standard_error_responses.append(self.documentation_unauthorized_response())
 
+        id_label = 'id' if self.configuration('id_column_name') else self.id_column_name
         return [
             autodoc.request.Request(
-                'Delete the ' + nice_model + ' with an id of {id}',
+                'Delete the ' + nice_model + ' with an ' + id_label + ' of {' + id_label + '}',
                 [
                     self.documentation_success_response(
                         autodoc.schema.Object('data', children=[]),
@@ -43,8 +44,14 @@ class Delete(Get):
                     *standard_error_responses,
                     self.documentation_not_found(),
                 ],
-                relative_path=self.configuration('base_url').rstrip('/') + '/{id}',
-                parameters=[],
+                relative_path=self.configuration('base_url').rstrip('/') + '/{' + id_label + '}',
+                parameters=[
+                    autodoc.request.URLPath(
+                        autodoc.schema.Integer(id_label),
+                        description=f'The {id_label} of the record to delete.',
+                        required=True,
+                    )
+                ],
                 root_properties={
                     'security': self.documentation_request_security(),
                 },

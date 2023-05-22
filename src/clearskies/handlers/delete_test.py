@@ -103,7 +103,7 @@ class DeleteTest(unittest.TestCase):
 
         documentation = delete.documentation()[0]
 
-        self.assertEquals(0, len(documentation.parameters))
+        self.assertEquals(1, len(documentation.parameters))
         self.assertEquals(2, len(documentation.responses))
         self.assertEquals([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]

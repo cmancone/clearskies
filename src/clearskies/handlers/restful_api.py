@@ -181,17 +181,6 @@ class RestfulAPI(Routing):
                 if name == 'search':
                     doc.append_relative_path('search')
 
-                # the restful API adjusts the routing behavior of delete and update, so we want to clobber
-                # the parameters
-                if name in ['get', 'update', 'delete']:
-                    doc.add_parameter(
-                        autodoc.request.URLPath(
-                            autodoc.schema.Integer('id'),
-                            description=f'The id of the record to {name}',
-                            required=True,
-                        )
-                    )
-
                 docs.append(doc)
 
         return docs

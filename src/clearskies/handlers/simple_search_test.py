@@ -31,8 +31,8 @@ class SimpleSearchTest(unittest.TestCase):
             'handler_class': SimpleSearch,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
-                'searchable_columns': ['name', 'email'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
+                'searchable_columns': ['id', 'name', 'email'],
                 'default_sort_column': 'email',
                 'authentication': Public(),
             }
@@ -48,8 +48,8 @@ class SimpleSearchTest(unittest.TestCase):
             'handler_class': SimpleSearch,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
-                'searchable_columns': ['name', 'email'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
+                'searchable_columns': ['id', 'name', 'email'],
                 'where': ['age>5', 'age<10'],
                 'default_sort_column': 'name',
                 'default_sort_direction': 'desc',
@@ -109,7 +109,7 @@ class SimpleSearchTest(unittest.TestCase):
             'handler_class': SimpleSearch,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
                 'searchable_columns': ['name', 'email'],
                 'default_sort_column': 'email',
                 'authentication': Public(),
@@ -155,7 +155,7 @@ class SimpleSearchTest(unittest.TestCase):
         simple_search = SimpleSearch(StandardDependencies())
         simple_search.configure({
             'model_class': User,
-            'readable_columns': ['name', 'email', 'age'],
+            'readable_columns': ['id', 'name', 'email', 'age'],
             'searchable_columns': ['name', 'email'],
             'default_sort_column': 'email',
             'authentication': Public(),

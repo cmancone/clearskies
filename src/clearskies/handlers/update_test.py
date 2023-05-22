@@ -39,7 +39,7 @@ class UpdateTest(unittest.TestCase):
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'email', 'age'],
+                'columns': ['id', 'name', 'email', 'age'],
                 'authentication': Public(),
             }
         })
@@ -52,7 +52,7 @@ class UpdateTest(unittest.TestCase):
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'age'],
+                'columns': ['id', 'name', 'age'],
                 'authentication': Public(),
             }
         })
@@ -73,7 +73,7 @@ class UpdateTest(unittest.TestCase):
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'email', 'age'],
+                'columns': ['id', 'name', 'email', 'age'],
                 'authentication': Public(),
                 'internal_casing': 'snake_case',
                 'external_casing': 'TitleCase',
@@ -118,8 +118,8 @@ class UpdateTest(unittest.TestCase):
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
-                'writeable_columns': ['name', 'age'],
-                'readable_columns': ['name', 'age', 'email'],
+                'writeable_columns': ['id', 'name', 'age'],
+                'readable_columns': ['id', 'name', 'age', 'email'],
                 'authentication': Public(),
             }
         })
@@ -141,7 +141,7 @@ class UpdateTest(unittest.TestCase):
             'handler_config': {
                 'model_class': User,
                 'writeable_columns': ['name', 'age'],
-                'readable_columns': ['name', 'age', 'email'],
+                'readable_columns': ['id', 'name', 'age', 'email'],
                 'authentication': secret_bearer,
             }
         })
@@ -167,7 +167,7 @@ class UpdateTest(unittest.TestCase):
             'handler_config': {
                 'model_class': User,
                 'writeable_columns': ['name', 'age'],
-                'readable_columns': ['name', 'age', 'email'],
+                'readable_columns': ['id', 'name', 'age', 'email'],
                 'authentication': secret_bearer,
             }
         })
@@ -199,7 +199,7 @@ class UpdateTest(unittest.TestCase):
         update = Update(StandardDependencies())
         update.configure({
             'model': self.users,
-            'columns': ['name', 'email', 'age'],
+            'columns': ['id', 'name', 'email', 'age'],
             'authentication': Public(),
         })
 
@@ -207,9 +207,9 @@ class UpdateTest(unittest.TestCase):
 
         self.assertEquals('{id}', documentation.relative_path)
 
-        self.assertEquals(3, len(documentation.parameters))
-        self.assertEquals(['name', 'email', 'age'], [param.definition.name for param in documentation.parameters])
-        self.assertEquals([True, True, False], [param.required for param in documentation.parameters])
+        self.assertEquals(4, len(documentation.parameters))
+        self.assertEquals(['name', 'email', 'age', 'id'], [param.definition.name for param in documentation.parameters])
+        self.assertEquals([True, True, False, True], [param.required for param in documentation.parameters])
 
         self.assertEquals(3, len(documentation.responses))
         self.assertEquals([200, 200, 404], [response.status for response in documentation.responses])
@@ -225,7 +225,7 @@ class UpdateTest(unittest.TestCase):
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'email', 'age'],
+                'columns': ['id', 'name', 'email', 'age'],
                 'authentication': Public(),
                 'input_error_callable': no_bob
             }

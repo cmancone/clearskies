@@ -200,9 +200,11 @@ class Write(Base):
             if getattr(authentication, 'can_authorize', False):
                 standard_error_responses.append(self.documentation_unauthorized_response())
 
+        id_label = 'id' if self.configuration('id_column_name') else self.id_column_name
+
         url = self.configuration('base_url')
         if include_id_in_path:
-            url = url.rstrip('/') + '/{id}'
+            url = url.rstrip('/') + '/{' + id_label + '}'
 
         return [
             autodoc.request.Request(
@@ -221,7 +223,7 @@ class Write(Base):
                 ],
                 relative_path=url,
                 parameters=[
-                    *self.documentation_write_parameters(nice_model),
+                    *self.documentation_write_parameters(nice_model, include_id_in_path=include_id_in_path),
                 ],
                 root_properties={
                     'security': self.documentation_request_security(),
@@ -229,11 +231,21 @@ class Write(Base):
             )
         ]
 
-    def documentation_write_parameters(self, model_name):
-        return [
+    def documentation_write_parameters(self, model_name, include_id_in_path=False):
+        id_label = 'id' if self.configuration('id_column_name') else self.id_column_name
+        parameters = [
             autodoc.request.JSONBody(
                 column.documentation(name=self.auto_case_column_name(column.name, True)),
                 description=f"Set '{column.name}' for the {model_name}",
                 required=column.is_required,
-            ) for column in self._get_writeable_columns().values()
+            ) for column in self._get_writeable_columns().values() if column.name != id_label
         ]
+        if include_id_in_path:
+            parameters.append(
+                autodoc.request.URLPath(
+                    autodoc.schema.Integer(id_label),
+                    description=f'The {id_label} of the record in question.',
+                    required=True,
+                )
+            )
+        return parameters

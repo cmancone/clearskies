@@ -277,7 +277,9 @@ class Base(ABC):
         return json
 
     def _build_as_json_map(self, model):
-        conversion_map = {self.auto_case_internal_column_name('id'): model.columns()[self.id_column_name]}
+        conversion_map = {}
+        if self.configuration('id_column_name'):
+            conversion_map[self.auto_case_internal_column_name('id')] = model.columns()[self.id_column_name]
 
         for column in self._get_readable_columns().values():
             conversion_map[self.auto_case_column_name(column.name, True)] = column
@@ -454,10 +456,12 @@ class Base(ABC):
 
     def documentation_data_schema(self):
         id_column_name = self.id_column_name
-        properties = [
-            self._columns[id_column_name].documentation(name=self.auto_case_internal_column_name('id'))
-            if id_column_name in self._columns else AutoDocString(self.auto_case_internal_column_name('id'))
-        ]
+        properties = []
+        if self.configuration('id_column_name'):
+            properties.append(
+                self._columns[id_column_name].documentation(name=self.auto_case_internal_column_name('id'))
+                if id_column_name in self._columns else AutoDocString(self.auto_case_internal_column_name('id'))
+            )
 
         for column in self._get_readable_columns().values():
             column_doc = column.documentation()

@@ -38,7 +38,7 @@ class GetTest(unittest.TestCase):
             'handler_class': Get,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
                 'authentication': Public(),
             }
         })
@@ -59,7 +59,7 @@ class GetTest(unittest.TestCase):
             'handler_class': Get,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
                 'authentication': Public(),
                 'authorization': FilterAuth(),
             },
@@ -94,7 +94,7 @@ class GetTest(unittest.TestCase):
         get = Get(StandardDependencies())
         get.configure({
             'model': self.users,
-            'readable_columns': ['name', 'email', 'age'],
+            'readable_columns': ['id', 'name', 'email', 'age'],
             'authentication': Public(),
         })
 
@@ -102,7 +102,7 @@ class GetTest(unittest.TestCase):
 
         self.assertEquals('{id}', documentation.relative_path)
 
-        self.assertEquals(0, len(documentation.parameters))
+        self.assertEquals(1, len(documentation.parameters))
         self.assertEquals(2, len(documentation.responses))
         self.assertEquals([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]

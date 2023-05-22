@@ -31,7 +31,8 @@ class CreateTest(unittest.TestCase):
             'handler_class': Create,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
+                'writeable_columns': ['name', 'email', 'age'],
                 'authentication': Public(),
             }
         })
@@ -41,7 +42,8 @@ class CreateTest(unittest.TestCase):
             'handler_class': Create,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'age'],
+                'readable_columns': ['id', 'name', 'age'],
+                'writeable_columns': ['name', 'age'],
                 'authentication': Public(),
             }
         })
@@ -74,7 +76,8 @@ class CreateTest(unittest.TestCase):
             'handler_class': Create,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
+                'writeable_columns': ['name', 'email', 'age'],
                 'authentication': Public(),
                 'internal_casing': 'snake_case',
                 'external_casing': 'TitleCase',
@@ -121,8 +124,8 @@ class CreateTest(unittest.TestCase):
             'handler_class': Create,
             'handler_config': {
                 'model_class': User,
+                'readable_columns': ['id', 'name', 'age', 'email'],
                 'writeable_columns': ['name', 'age'],
-                'readable_columns': ['name', 'age', 'email'],
                 'authentication': Public(),
             }
         })
