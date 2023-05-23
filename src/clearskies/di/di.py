@@ -11,6 +11,7 @@ class DI:
     _prepared = None
     _added_modules = None
     _additional_configs = None
+    _class_mocks = None
 
     def __init__(self, classes=None, modules=None, bindings=None, additional_configs=None):
         self._bindings = {}
@@ -19,6 +20,7 @@ class DI:
         self._building = {}
         self._added_modules = {}
         self._additional_configs = []
+        self._class_mocks = {}
         if classes is not None:
             self.add_classes(classes)
         if modules is not None:
@@ -180,6 +182,23 @@ class DI:
             f"or a corresponding 'provide_{name}' method for this name."
         )
 
+    def mock_class(self, class_or_name, replacement):
+        if type(class_or_name) == str:
+            name = class_or_name
+        elif inspect.isclass(class_or_name):
+            name = string.camel_case_to_snake_case(class_or_name.__name__)
+        else:
+            raise ValueError(
+                "Invalid value passed to 'mock_class' for 'class_or_name' parameter: it was neither a name nor a class"
+            )
+        if not inspect.isclass(replacement):
+            raise ValueError(
+                "Invalid value passed to 'mock_class' for 'replacement' parameter: a class should be passed but I got a "
+                + type(replacement)
+            )
+
+        self._class_mocks[name] = replacement
+
     def build_class(self, class_to_build, context=None, name=None, cache=False):
         """
         Builds a class
@@ -190,6 +209,9 @@ class DI:
             name = string.camel_case_to_snake_case(class_to_build.__name__)
         if name in self._prepared and cache:
             return self._prepared[name]
+
+        if name in self._class_mocks:
+            class_to_build = self._class_mocks[name]
 
         init_args = inspect.getfullargspec(class_to_build)
         if init_args.defaults is not None:
