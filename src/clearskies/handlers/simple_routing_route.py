@@ -72,7 +72,7 @@ class SimpleRoutingRoute:
                     f"Invalid route configuration for URL '{path}': section '{part}'" +
                     " starts with a '{' but does not end with one"
                 )
-            match = re.match('{(\\w[\\w\\d_]{0,})\}', part)
+            match = re.match('{(\\w[\\w\\d_]{0,})\\}', part)
             if not match:
                 raise ValueError(
                     f"Invalid route configuration for URL '{path}', section '{part}': resource identifiers must start with a letter and contain only letters, numbers, and underscores"
