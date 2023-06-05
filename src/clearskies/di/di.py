@@ -6,9 +6,11 @@ import sys
 import os
 from ..functional import string
 import logging
-from logging import Logger
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 from . import additional_config
+
+log = logging.getLogger(__name__)
+
 class DI:
     _bindings: Dict[str, Any] = {}
     _building: Dict[int, Any] = {}
@@ -46,23 +48,18 @@ class DI:
         self._additional_configs = []
         self._class_mocks = {}
         if classes is not None:
-            self.add_classes(classes)
+            self.add_classes(classes, debug=False)
         if modules is not None:
-            self.add_modules(modules)
+            self.add_modules(modules, debug=False)
         if bindings is not None:
             for (key, value) in bindings.items():
-                self.bind(key, value)
+                self.bind(key, value, debug=False)
         if additional_configs is not None:
-            self.add_additional_configs(additional_configs)
+            self.add_additional_configs(additional_configs, debug=False)
 
-        # we're going to interact directly with the logging module so pull it out as soon as we're
-        # done initializing.  Note that we may already have it because the binding methods are
-        # greedy and will grab it if set - this helps ensure that we don't get stuck with an old
-        # logging module if the user sets a different one later
-        if self.log is None:
-            self.set_logger(self.build('logging'))
+        self.dump_debug_info()
 
-    def add_classes(self, classes: Union[List[Type], Type]) -> None:
+    def add_classes(self, classes: Union[List[Type], Type], debug: bool = True) -> None:
         """
         Add additional classes that the dependency injection container should provide if requested
 
@@ -96,6 +93,7 @@ class DI:
 
         Args:
             classes: A class or list of classes to include in the dependency injection container
+            debug: If true, add a debug entry about the newly set class
         """
         if inspect.isclass(classes):
             classes = [classes]    # type: ignore
@@ -109,14 +107,22 @@ class DI:
             ## otherwise throw an exception
             #raise ValueError(f"More than one class with a name of '{name}' was added")
 
+            class_name = add_class.__name__
             self._classes[name] = {'id': id(add_class), 'class': add_class}
+
+            if debug:
+                log.info("Injection name '{name}' provides class '{class_name}' via class/module binding")
 
             # if this is a model class then also add a plural version of its name
             # to the DI configuration
             if hasattr(add_class, 'id_column_name'):
-                self._classes[string.make_plural(name)] = {'id': id(add_class), 'class': add_class}
+                plural_name = string.make_plural(name)
+                self._classes[plural_name] = {'id': id(add_class), 'class': add_class}
+                if debug:
+                    log.info("Injection name '{plural_name}' provides class '{class_name}' via class/module binding")
 
-    def add_modules(self, modules: List[Any], root: Optional[str] = None, is_root: bool = True):
+
+    def add_modules(self, modules: List[Any], root: Optional[str] = None, is_root: bool = True, debug: bool = True):
         """
         Add additional modules that the dependency injection container should include for injection.
 
@@ -136,6 +142,7 @@ class DI:
             modules: A module or list of modules to search/include for injection
             root: The root directory to search - any submodules not in this directory will be ignored
             is_root: If true, the directory of the passed in module will be used as the root directory for the search.
+            debug: If true, a line will be added to the debugger for each class found and added.
         """
         if inspect.ismodule(modules):
             modules = [modules]
@@ -160,7 +167,7 @@ class DI:
                         continue
                     if class_root[:root_len] != root:
                         continue
-                    self.add_classes([item])
+                    self.add_classes([item], debug=debug)
                 if inspect.ismodule(item):
                     if not hasattr(item, '__file__') or not item.__file__:
                         continue
@@ -169,10 +176,10 @@ class DI:
                         continue
                     if module.__name__ == 'clearskies':
                         break
-                    self.add_modules([item], root=root, is_root=False)
+                    self.add_modules([item], root=root, is_root=False, debug=debug)
 
     def add_additional_configs(
-        self, additional_configs: Union[additional_config.AdditionalConfig, List[additional_config.AdditionalConfig]]
+        self, additional_configs: Union[additional_config.AdditionalConfig, List[additional_config.AdditionalConfig]], debug: bool = True
     ):
         """
         Add an AdditionalConfig (or a list of AdditionalConfig) object(s) to the dependency injection container.
@@ -214,6 +221,7 @@ class DI:
 
 `       Args:
             additional_configs: An instance of the clearskies.di.AdditionalConfig class, or a list of such instances
+            debug: If true, a line will be added to the debugger for each "provide_" function in the additional configs.
         """
         # mypy likes to yell at me for mis-using types when there are two possible types, and doesn't
         # recognize the fact that I'm using type checks to disambiguate these issues.  Therefore, lots
@@ -224,8 +232,13 @@ class DI:
             self._additional_configs.append(
                 additional_config() if inspect.isclass(additional_config) else additional_config    # type: ignore
             )
+            for attribute in dir(additional_config):
+                if attribute[:8] != 'provide_':
+                    continue
+                key = attribute[8:]
+                log.info(f"Injection name '{key}' provided by additional config '{additional_config}'")
 
-    def bind(self, key: str, value: Any):
+    def bind(self, key: str, value: Any, debug: bool = True):
         """
         Binds a given value to a dependency injection name
 
@@ -258,6 +271,7 @@ class DI:
         Args:
             key: The dependency injection name to make the value available at
             value: The value to provide
+            debuug: If true, a line will be added to the debug log for each binding added.
         """
         if key in self._building:
             raise KeyError(f"Attempt to set binding for '{key}' while '{key}' was already being built")
@@ -268,10 +282,14 @@ class DI:
             self._bindings[key] = value
             if key in self._prepared:
                 del self._prepared[key]
+            if inspect.isclass(value):
+                log.info(f"Injection name '{key}' provided by direct binding with class {value.__name__}")
+            else:
+                log.info(f"Injection name '{key}' provided by direct binding of BindingConfig with class {value.object_class.__name__}")
         else:
-            if key == 'logging':
-                self.set_logger(value)
             self._prepared[key] = value
+            log.info(f"Injection name '{key}' provided by direct binding with value {value}")
+
 
     def build(self, thing: Any, context: Optional[str] = None, cache: bool = False) -> Any:
         """
@@ -605,30 +623,17 @@ class DI:
         """
         raise ValueError(f"Cannot {action} because it has keyword arguments.")
 
-    def set_logger(self, log: logging.Logger):
-        """
-        Sets the root logger for the DI container to use.
-
-        This Also creates the logger to use for the dependency injection container, which is "named" as a
-        sub-module of the root logger by appending '.di' to the name of the root logger.  For instance, if the
-        root logger was named 'clearskies' (e.g. `di.set_logger(logging.getLogger('clearskies'))`) then the
-        di logger would be called 'clearskies.di'
-
-        Args:
-            log: The log container, e.g. `logging.getLogger('clearskies')`
-        """
-        self.log = log
-        self._di_log = logging.getLogger(self.log.name + '.di')
-
+    def dump_debug_info(self):
+        """ Dumps all the debug data into the logger. """
         # log our DI information.
-        self._di_log.info('Available dependency injection names in order of increasing priority')
-        self._di_log.info('In other words - things on the bottom of this list trump things on top')
+        log.info('Available dependency injection names in order of increasing priority')
+        log.info('In other words - things on the bottom of this list trump things on top')
 
         for attribute in dir(self):
             if attribute[:8] != 'provide_':
                 continue
             key = attribute[8:]
-            self._di_log.info(
+            log.info(
                 f"Injection name '{key}' provided by dependency injection object of class '{self.__class__.__name__}'"
             )
 
@@ -637,36 +642,21 @@ class DI:
                 if attribute[:8] != 'provide_':
                     continue
                 key = attribute[8:]
-                self._di_log.info(f"Injection name '{key}' provided by additional config '{additional_config}'")
+                log.info(f"Injection name '{key}' provided by additional config '{additional_config}'")
 
         for (key, class_info) in self._classes.items():
             class_name = class_info['class'].__name__
-            self._di_log.info(f"Injection name '{key}' provides class '{class_name}' via class/module binding")
+            log.info(f"Injection name '{key}' provides class '{class_name}' via class/module binding")
 
         for (key, value) in self._bindings.items():
-            self._di_log.info(f"Injection name '{key}' provides '{value}' via bindings")
+            log.info(f"Injection name '{key}' provides '{value}' via bindings")
 
         for (key, value) in self._prepared.items():
-            self._di_log.info(f"Injection name '{key}' provides '{value}' via bindings")
+            log.info(f"Injection name '{key}' provides '{value}' via bindings")
 
-        self._di_log.info(f"Injection name 'di' provides the dependency injection container")
-
-    def di_log(self, message: str):
-        """
-        Logs a message to the dependency injection logger.
-
-        See `set_logger` to understand how the dependency injection logger is named.
-
-        Args:
-            message: The message to log.
-        """
-        if not self._di_log:
-            return
-        self._di_log.debug(message)
-
-    def provide_logging(self):
-        import logging
-        return logging.getLogger('clearskies')
+        log.info("Injection name 'di' provides the dependency injection container")
+        log.info("This concludes the list of dependencies added at at the moment,")
+        log.info("*BUT* more can still be added later, so check below for the full record or call di.dump_debug_info() again.")
 
     @classmethod
     def init(cls: type, *binding_classes: List[Any], **bindings: Dict[str, Any]) -> Any:
