@@ -94,7 +94,7 @@ class SimpleRoutingTest(unittest.TestCase):
                     'handler_class': List,
                     'handler_config': {
                         'model_class': Status,
-                        'readable_columns': ['name', 'order'],
+                        'readable_columns': ['id', 'name', 'order'],
                         'searchable_columns': ['name', 'order'],
                         'sortable_columns': ['name', 'order'],
                         'default_sort_column': 'name',
@@ -105,7 +105,7 @@ class SimpleRoutingTest(unittest.TestCase):
                     'handler_class': List,
                     'handler_config': {
                         'model_class': User,
-                        'readable_columns': ['name', 'age'],
+                        'readable_columns': ['id', 'name', 'age'],
                         'searchable_columns': ['name'],
                         'sortable_columns': ['name', 'age'],
                         'default_sort_column': 'name',
@@ -116,7 +116,7 @@ class SimpleRoutingTest(unittest.TestCase):
                     'handler_class': List,
                     'handler_config': {
                         'model_class': Status,
-                        'readable_columns': ['name'],
+                        'readable_columns': ['id', 'name'],
                         'searchable_columns': ['name'],
                         'sortable_columns': ['name'],
                         'default_sort_column': 'name',

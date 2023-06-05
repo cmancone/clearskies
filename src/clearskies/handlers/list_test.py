@@ -35,7 +35,7 @@ class ListTest(unittest.TestCase):
             'handler_class': List,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
                 'searchable_columns': ['name'],
                 'default_sort_column': 'email',
                 'authentication': Public(),
@@ -79,7 +79,7 @@ class ListTest(unittest.TestCase):
             'handler_class': List,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name'],
+                'readable_columns': ['id', 'name'],
                 'searchable_columns': ['name'],
                 'where': ['age>5', 'age<10'],
                 'default_sort_column': 'name',
@@ -113,7 +113,7 @@ class ListTest(unittest.TestCase):
             'handler_class': List,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name'],
+                'readable_columns': ['id', 'name'],
                 'searchable_columns': ['name'],
                 'where': [lambda models: models.where('age>5').where('age<10')],
                 'default_sort_column': 'name',
@@ -147,7 +147,7 @@ class ListTest(unittest.TestCase):
             'handler_class': List,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
                 'searchable_columns': ['name'],
                 'default_sort_column': 'email',
                 'authentication': Public(),
@@ -175,7 +175,7 @@ class ListTest(unittest.TestCase):
             'handler_class': List,
             'handler_config': {
                 'model_class': User,
-                'readable_columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
                 'searchable_columns': ['name'],
                 'default_sort_column': 'email',
                 'authentication': Public(),
@@ -203,7 +203,7 @@ class ListTest(unittest.TestCase):
         list = List(StandardDependencies())
         list.configure({
             'model_class': User,
-            'readable_columns': ['name', 'email', 'age'],
+            'readable_columns': ['id', 'name', 'email', 'age'],
             'searchable_columns': ['name', 'email'],
             'default_sort_column': 'email',
             'authentication': Public(),

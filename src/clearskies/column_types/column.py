@@ -2,6 +2,7 @@ from abc import ABC
 import re
 from ..autodoc.schema import String as AutoDocString
 from .. import input_requirements
+from .. import binding_config
 import inspect
 from typing import List, Any
 class Column(ABC):
@@ -14,10 +15,14 @@ class Column(ABC):
         'class',
         'is_writeable',
         'is_temporary',
+        'on_change',
     ]
 
     my_configs: List[str] = []
     required_configs: List[str] = []
+
+    def __init__(self, di):
+        self.di = di
 
     @property
     def is_writeable(self):
@@ -80,12 +85,36 @@ class Column(ABC):
                 )
         if 'is_writeable' in configuration and type(configuration['is_writeable']) != bool:
             raise ValueError("'is_writeable' must be a boolean")
+        if configuration.get('on_change'):
+            self._check_actions(configuration.get('on_change'), 'on_change')
 
     def _finalize_configuration(self, configuration):
         """ Make any changes to the configuration/fill in defaults """
         if not 'input_requirements' in configuration:
             configuration['input_requirements'] = []
         return configuration
+
+    def _check_actions(self, actions, trigger_name):
+        """ Check that the given actions are actually understandable by the system """
+        if type(actions) != list:
+            raise ValueError(
+                "The actions provided to a trigger should be a list of callables/binding configs, but something " +
+                f"else was provided for the '{trigger_name}' trigger in '{self.model_class.__name__}'"
+            )
+        for (index, action) in enumerate(actions):
+            # if it's callable we're good.  This includes functions, lambdas, callable objects,
+            # and classes that will be callable when instantiated
+            if callable(action):
+                continue
+            # the above pretty much covers everything.  The only thing that we support otherwise
+            # is a binding config containing a callable class.
+            if type(action) == binding_config.BindingConfig:
+                if callable(action.object_class):
+                    continue
+
+            raise ValueError(
+                f"Invalid action: action #{index+1} for trigger '{trigger_name} in '{self.model_class.__name__}'"
+            )
 
     def config(self, key, silent=False):
         if not key in self.configuration:
@@ -116,7 +145,7 @@ class Column(ABC):
         """
         Grabs the column out of the model and converts it into a representation that can be turned into JSON
         """
-        return model.__getattr__(self.name)
+        return model.get(self.name, silent=True)
 
     def input_errors(self, model, data):
         error = self.check_input(model, data)
@@ -160,6 +189,18 @@ class Column(ABC):
         """
         return data
 
+    def save_finished(self, model):
+        """
+        Make any necessary changes needed after a save has completely finished.
+
+        This is typically used for configurable triggers set by the developer.   Column-specific behavior
+        that needs to always happen is placed in pre_save or post_save because those affect the save
+        process itself.
+        """
+        on_change_actions = self.config("on_change", silent=True)
+        if on_change_actions and model.was_changed(self.name):
+            self.execute_actions(on_change_actions, model)
+
     def pre_delete(self, model):
         """
         Make any changes needed to the data before starting the delete process
@@ -192,6 +233,17 @@ class Column(ABC):
         See can_provide for more details on the flow here
         """
         pass
+
+    def execute_actions(self, actions, model):
+        for action in actions:
+            if type(action) == binding_config.BindingConfig:
+                action = self.di.build(action)
+            elif inspect.isclass(action):
+                action = self.di.build(action)
+            if hasattr(action, '__call__'):
+                self.di.call_function(action.__call__, model=model)
+            else:
+                self.di.call_function(action.__call__, model=model)
 
     def add_search(self, models, value, operator=None, relationship_reference=None):
         return models.where(self.build_condition(value, operator=operator))

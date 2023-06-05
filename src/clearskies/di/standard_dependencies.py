@@ -1,10 +1,11 @@
 from .di import DI
 from ..columns import Columns
 from ..environment import Environment
-from ..backends import CursorBackend, MemoryBackend, SecretsBackend
+from ..backends import CursorBackend, JsonBackend, MemoryBackend, SecretsBackend
 from .. import autodoc
 import os
 import uuid
+import inspect
 class StandardDependencies(DI):
     def provide_requests(self):
         # by importing the requests library when requested, instead of in the top of the file,
@@ -13,12 +14,16 @@ class StandardDependencies(DI):
         from requests.adapters import HTTPAdapter
         from requests.packages.urllib3.util.retry import Retry
 
-        retry_strategy = Retry(
-            total=3,
-            status_forcelist=[429, 500, 502, 503, 504],
-            backoff_factor=1,
-            method_whitelist=['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH']
-        )
+        use_allowed_methods = "allowed_methods" in inspect.getfullargspec(Retry.__init__).args
+        methods_key = "allowed_methods" if use_allowed_methods else "method_whitelist"
+        kwargs = {
+            'total': 3,
+            'status_forcelist': [429, 500, 502, 503, 504],
+            'backoff_factor': 1,
+            methods_key: ['GET', 'POST', 'DELETE', 'OPTIONS', 'PATCH']
+        }
+
+        retry_strategy = Retry(**kwargs)
         adapter = HTTPAdapter(max_retries=retry_strategy)
         http = requests.Session()
         http.mount("https://", adapter)
@@ -32,9 +37,8 @@ class StandardDependencies(DI):
         return Columns(self)
 
     def provide_secrets(self):
-        # This is just here so that we can auto-inject the secrets into the environment without having
-        # to force the developer to define a secrets manager
-        return {}
+        from ..secrets import secrets
+        return secrets.Secrets()
 
     def provide_environment(self):
         return Environment(os.getcwd() + '/.env', os.environ, {})
@@ -86,12 +90,19 @@ class StandardDependencies(DI):
     def provide_memory_backend(self):
         return MemoryBackend()
 
+    def provide_json_backend(self):
+        return JsonBackend()
+
     def provide_secrets_backend(self, secrets):
         return SecretsBackend(secrets)
 
     def provide_now(self):
         import datetime
         return datetime.datetime.now()
+
+    def provide_datetime(self):
+        import datetime
+        return datetime
 
     def provide_utcnow(self):
         import datetime

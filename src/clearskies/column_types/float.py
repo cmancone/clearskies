@@ -3,6 +3,9 @@ from ..autodoc.schema import Number as AutoDocNumber
 class Float(Column):
     _auto_doc_class = AutoDocNumber
 
+    def __init__(self, di):
+        super().__init__(di)
+
     def from_backend(self, value):
         return float(value)
 

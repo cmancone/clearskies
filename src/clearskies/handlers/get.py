@@ -72,7 +72,7 @@ class Get(Base):
                         + f", but entry #{index+1} is neither of these",
                     )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
-        self._columns = self._model.columns(overrides=configuration.get('overrides'))
+        self._columns = self._model.columns(overrides=configuration.get('column_overrides'))
 
     def _get_readable_columns(self):
         resolved_columns = OrderedDict()
@@ -97,9 +97,11 @@ class Get(Base):
             if getattr(authentication, 'can_authorize', False):
                 standard_error_responses.append(self.documentation_unauthorized_response())
 
+        id_label = 'id' if self.configuration('id_column_name') else self.id_column_name
+
         return [
             autodoc.request.Request(
-                'Fetch the ' + nice_model + ' with an id of {id}',
+                'Fetch the ' + nice_model + ' with an ' + id_label + ' of {' + id_label + '}',
                 [
                     self.documentation_success_response(
                         autodoc.schema.Object(
@@ -112,8 +114,14 @@ class Get(Base):
                     *standard_error_responses,
                     self.documentation_not_found(),
                 ],
-                relative_path=self.configuration('base_url').rstrip('/') + '/{id}',
-                parameters=[],
+                relative_path=self.configuration('base_url').rstrip('/') + '/{' + id_label + '}',
+                parameters=[
+                    autodoc.request.URLPath(
+                        autodoc.schema.Integer(id_label),
+                        description=f'The {id_label} of the record to get',
+                        required=True,
+                    )
+                ],
                 root_properties={
                     'security': self.documentation_request_security(),
                 },

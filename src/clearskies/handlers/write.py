@@ -19,6 +19,7 @@ class Write(Base):
         'columns': None,
         'writeable_columns': None,
         'readable_columns': None,
+        'input_error_callable': None,
     }
 
     def __init__(self, di):
@@ -41,8 +42,12 @@ class Write(Base):
             raise ValueError(
                 "{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead"
             )
+        if 'input_error_callable' in configuration and not callable(configuration.get('input_error_callable')):
+            raise ValueError(
+                "{error_prefix} you must provide a callable for the 'input_error_callable' configuration but the provided value is not callable"
+            )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
-        self._columns = self._model.columns(overrides=configuration.get('overrides'))
+        self._columns = self._model.columns(overrides=configuration.get('column_overrides'))
         has_columns = 'columns' in configuration and configuration['columns'] is not None
         has_writeable = 'writeable_columns' in configuration and configuration['writeable_columns'] is not None
         has_readable = 'readable_columns' in configuration and configuration['readable_columns'] is not None
@@ -80,7 +85,7 @@ class Write(Base):
             if column_name not in self._columns:
                 raise KeyError(f"{error_prefix} specified writeable column '{column_name}' does not exist")
             if not self._columns[column_name].is_writeable:
-                raise KeyError(f"{error_prefix} specified writeable column '{column.name}' is not writeable")
+                raise KeyError(f"{error_prefix} specified writeable column '{column_name}' is not writeable")
         readable_columns = configuration['readable_columns'] if has_readable else configuration['columns']
         for column_name in readable_columns:
             if column_name not in self._columns:
@@ -120,12 +125,30 @@ class Write(Base):
                 input_errors[column_name] = f"Input column '{column_name}' is not an allowed column"
         return input_errors
 
-    def _find_input_errors(self, model, input_data):
+    def _find_input_errors(self, model, input_data, input_output):
         input_errors = {}
         for column in self._get_writeable_columns().values():
             input_errors = {
                 **input_errors,
                 **column.input_errors(model, input_data),
+            }
+        input_error_callable = self.configuration('input_error_callable')
+        if input_error_callable:
+            more_input_errors = self._di.call_function(
+                input_error_callable,
+                input_data=input_data,
+                input_output=input_output,
+                routing_data=input_output.routing_data(),
+                authorization_data=input_output.get_authorization_data(),
+            )
+            if type(more_input_errors) != dict:
+                raise ValueError(
+                    "The input error callable, '" + str(input_error_callable) +
+                    "', did not return a dictionary as required"
+                )
+            input_errors = {
+                **input_errors,
+                **more_input_errors,
             }
         return input_errors
 
@@ -177,9 +200,11 @@ class Write(Base):
             if getattr(authentication, 'can_authorize', False):
                 standard_error_responses.append(self.documentation_unauthorized_response())
 
+        id_label = 'id' if self.configuration('id_column_name') else self.id_column_name
+
         url = self.configuration('base_url')
         if include_id_in_path:
-            url = url.rstrip('/') + '/{id}'
+            url = url.rstrip('/') + '/{' + id_label + '}'
 
         return [
             autodoc.request.Request(
@@ -198,7 +223,7 @@ class Write(Base):
                 ],
                 relative_path=url,
                 parameters=[
-                    *self.documentation_write_parameters(nice_model),
+                    *self.documentation_write_parameters(nice_model, include_id_in_path=include_id_in_path),
                 ],
                 root_properties={
                     'security': self.documentation_request_security(),
@@ -206,11 +231,21 @@ class Write(Base):
             )
         ]
 
-    def documentation_write_parameters(self, model_name):
-        return [
+    def documentation_write_parameters(self, model_name, include_id_in_path=False):
+        id_label = 'id' if self.configuration('id_column_name') else self.id_column_name
+        parameters = [
             autodoc.request.JSONBody(
                 column.documentation(name=self.auto_case_column_name(column.name, True)),
                 description=f"Set '{column.name}' for the {model_name}",
                 required=column.is_required,
-            ) for column in self._get_writeable_columns().values()
+            ) for column in self._get_writeable_columns().values() if column.name != id_label
         ]
+        if include_id_in_path:
+            parameters.append(
+                autodoc.request.URLPath(
+                    autodoc.schema.Integer(id_label),
+                    description=f'The {id_label} of the record in question.',
+                    required=True,
+                )
+            )
+        return parameters

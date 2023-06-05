@@ -3,12 +3,15 @@ from .column import Column
 from ..input_requirements import MinimumLength
 from ..autodoc.schema import String as AutoDocString
 class RealColumn(Column):
+    def __init__(self, di):
+        super().__init__(di)
+
     def check_input(self, model, data):
         if 'name' in data and data['name'] == 'me':
             return 'You are not allowed'
 class ColumnTest(unittest.TestCase):
     def setUp(self):
-        self.column = RealColumn()
+        self.column = RealColumn('di')
         self.minimum_length = MinimumLength()
         self.minimum_length.column_name = 'name'
         self.minimum_length.configure(10)

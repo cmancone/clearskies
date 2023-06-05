@@ -15,6 +15,9 @@ class Context:
     def build(self, key):
         return self.di.build(key)
 
+    def mock_class(self, class_or_name, replacement):
+        self.di.mock_class(class_or_name, replacement)
+
     def extract_handler(self, application):
         """
         This accepts the application passed in to the context and returns the handler

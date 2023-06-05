@@ -1,4 +1,5 @@
 import unittest
+import logging
 from .create import Create
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
@@ -30,7 +31,8 @@ class CreateTest(unittest.TestCase):
             'handler_class': Create,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
+                'writeable_columns': ['name', 'email', 'age'],
                 'authentication': Public(),
             }
         })
@@ -40,13 +42,14 @@ class CreateTest(unittest.TestCase):
             'handler_class': Create,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'age'],
+                'readable_columns': ['id', 'name', 'age'],
+                'writeable_columns': ['name', 'age'],
                 'authentication': Public(),
             }
         })
 
-        secret_bearer = SecretBearer('environment')
-        secret_bearer.configure(secret='asdfer')
+        secret_bearer = SecretBearer('secrets', 'environment', logging)
+        secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
         self.create_secret_bearer = test({
             'handler_class': Create,
             'handler_config': {
@@ -73,7 +76,8 @@ class CreateTest(unittest.TestCase):
             'handler_class': Create,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'email', 'age'],
+                'readable_columns': ['id', 'name', 'email', 'age'],
+                'writeable_columns': ['name', 'email', 'age'],
                 'authentication': Public(),
                 'internal_casing': 'snake_case',
                 'external_casing': 'TitleCase',
@@ -120,8 +124,8 @@ class CreateTest(unittest.TestCase):
             'handler_class': Create,
             'handler_config': {
                 'model_class': User,
+                'readable_columns': ['id', 'name', 'age', 'email'],
                 'writeable_columns': ['name', 'age'],
-                'readable_columns': ['name', 'age', 'email'],
                 'authentication': Public(),
             }
         })

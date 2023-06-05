@@ -3,6 +3,9 @@ from ..autodoc.schema import Integer as AutoDocInteger
 class Integer(Column):
     _auto_doc_class = AutoDocInteger
 
+    def __init__(self, di):
+        super().__init__(di)
+
     def to_backend(self, data):
         if self.name not in data or data[self.name] is None:
             return data

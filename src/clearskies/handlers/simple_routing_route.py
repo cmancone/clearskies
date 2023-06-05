@@ -10,6 +10,8 @@ class SimpleRoutingRoute:
     _path_parts = None
     _resource_paths = None
     _routes_to_simple_routing = False
+    _bindings = None
+    _path_parameter_with_slashes = None
 
     def __init__(self, di):
         self._di = di
@@ -22,7 +24,9 @@ class SimpleRoutingRoute:
         methods=None,
         authentication=None,
         response_headers=None,
-        security_headers=None
+        security_headers=None,
+        path_parameter_with_slashes=None,
+        bindings=None,
     ):
         if authentication is not None and not handler_config.get('authentication'):
             handler_config['authentication'] = authentication
@@ -36,6 +40,8 @@ class SimpleRoutingRoute:
             self._path = path.rstrip('/') + '/' + handler_config.get('base_url').lstrip('/')
         self._path_parts = self._path.strip('/').split('/') if self._path is not None else []
         self._resource_paths = self._extract_resource_paths(self._path_parts)
+        self._bindings = bindings if bindings else {}
+        self._path_parameter_with_slashes = path_parameter_with_slashes if path_parameter_with_slashes else []
         if methods is not None:
             self._methods = [methods.upper()] if isinstance(methods, str) else [met.upper() for met in methods]
         sub_handler_config = {
@@ -66,7 +72,7 @@ class SimpleRoutingRoute:
                     f"Invalid route configuration for URL '{path}': section '{part}'" +
                     " starts with a '{' but does not end with one"
                 )
-            match = re.match('{(\w[\w\d_]{0,})\}', part)
+            match = re.match('{(\\w[\\w\\d_]{0,})\\}', part)
             if not match:
                 raise ValueError(
                     f"Invalid route configuration for URL '{path}', section '{part}': resource identifiers must start with a letter and contain only letters, numbers, and underscores"
@@ -116,7 +122,10 @@ class SimpleRoutingRoute:
             return None
         for index in range(path_length):
             if index in resource_paths:
-                route_data[resource_paths[index]] = requested_parts[index]
+                if resource_paths[index] == self._path_parameter_with_slashes:
+                    route_data[resource_paths[index]] = "/".join(requested_parts[index:])
+                else:
+                    route_data[resource_paths[index]] = requested_parts[index]
             else:
                 if requested_parts[index] != path_parts[index]:
                     return None
@@ -139,7 +148,7 @@ class SimpleRoutingRoute:
             # do we have any resource paths to document?
             for path_name in self._resource_paths.values():
                 description = f'The {path_name} to show results for'
-                doc.add_parameter(URLPath(String(path_name, description), description=description, required=True))
+                doc.add_parameter(URLPath(String(path_name), description=description, required=True))
 
             docs.append(doc)
         return docs

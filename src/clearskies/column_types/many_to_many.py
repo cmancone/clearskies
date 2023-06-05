@@ -71,7 +71,7 @@ class ManyToMany(String):
     ]
 
     def __init__(self, di):
-        self.di = di
+        super().__init__(di)
 
     @property
     def is_readable(self):

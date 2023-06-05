@@ -213,5 +213,7 @@ class ApiBackend(Backend):
             return backend_data
         # also, APIs tend to have a different format for dates than SQL
         if isinstance(column, DateTime):
-            return {**backend_data, **{column.name: backend_data[column.name].isoformat()}}
+            as_date = backend_data[column.name].isoformat() if type(backend_data[column.name]
+                                                                    ) != str else backend_data[column.name]
+            return {**backend_data, **{column.name: as_date}}
         return column.to_backend(backend_data)

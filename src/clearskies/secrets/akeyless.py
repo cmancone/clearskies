@@ -1,5 +1,7 @@
 import datetime
 from clearskies.di import AdditionalConfig
+from .exceptions import NotFound
+from akeyless.exceptions import ApiException as AkeylessApiException
 class AKeylessAdditionalConfig(AdditionalConfig):
     _allowed_auth_methods = ['aws_iam', 'saml', 'jwt', 'access_key']
     _auth_method = None
@@ -78,10 +80,22 @@ class AKeyless:
         api_client = self._akeyless.ApiClient(configuration)
         self._api = self._akeyless.V2Api(api_client)
 
-    def get(self, path):
+    def create(self, path, value):
+        self._configure_guard()
+        res = self._api.create_secret(self._akeyless.CreateSecret(name=path, value=str(value), token=self._get_token()))
+        return True
+
+    def get(self, path, silent_if_not_found=False):
         self._configure_guard()
 
-        res = self._api.get_secret_value(self._akeyless.GetSecretValue(names=[path], token=self._get_token()))
+        try:
+            res = self._api.get_secret_value(self._akeyless.GetSecretValue(names=[path], token=self._get_token()))
+        except Exception as e:
+            if e.status == 404:
+                if silent_if_not_found:
+                    return None
+                raise NotFound(f"Secret '{path}' not found")
+            raise e
         return res[path]
 
     def get_dynamic_secret(self, path):
@@ -106,6 +120,13 @@ class AKeyless:
             self._akeyless.UpdateSecretVal(name=path, value=str(value), token=self._get_token())
         )
         return True
+
+    def upsert(self, path, value):
+        try:
+            if self.update(path, value):
+                return True
+        except Exception as e:
+            return self.create(path, value)
 
     def get_ssh_certificate(self, cert_issuer, cert_username, path_to_public_file):
         self._configure_guard()

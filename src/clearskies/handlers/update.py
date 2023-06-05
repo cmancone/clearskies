@@ -14,6 +14,7 @@ class Update(Write):
         'writeable_columns': None,
         'readable_columns': None,
         'where': [],
+        'input_error_callable': None,
     }
 
     def handle(self, input_output):
@@ -41,7 +42,7 @@ class Update(Write):
 
         input_errors = {
             **self._extra_column_errors(input_data),
-            **self._find_input_errors(model, input_data),
+            **self._find_input_errors(model, input_data, input_output),
         }
         if input_errors:
             raise InputError(input_errors)
@@ -67,8 +68,9 @@ class Update(Write):
 
     def documentation(self):
         nice_model = string.camel_case_to_words(self._model.__class__.__name__)
+        id_label = 'id' if self.configuration('id_column_name') else self.id_column_name
         return self._documentation(
-            description='Update the ' + nice_model + ' with an id of {id}',
+            description='Update the ' + nice_model + ' with an ' + id_label + ' of {' + id_label + '}',
             response_description=f'The updated {nice_model}',
             include_id_in_path=True,
         )

@@ -58,11 +58,14 @@ class Base(ABC):
             # with 'gate' and 'filter_models' attributes, per the authentication.authorization base class
             # or it can be a binding config
             authorization = configuration['authorization']
-            if hasattr(authorization, 'object_class'):
+            if type(authorization) == str:
+                # if we have a binding name then we need to build the authorization object
+                authorization = self._di.build(authorization, cache=True)
+            elif hasattr(authorization, 'object_class'):
                 # if it's a binding config then pull out the target class, since we just need to check attributes here
                 authorization = authorization.object_class
             is_callable = callable(authorization)
-            gates_or_filters = hasattr(authorization, 'gate') or hasattr(authentication, 'filter_models')
+            gates_or_filters = hasattr(authorization, 'gate') or hasattr(authorization, 'filter_models')
             if not is_callable and not gates_or_filters:
                 raise ValueError("'authorization' should be a callable or a provide 'gate' or 'filter_models' methods")
         if configuration.get('output_map') is not None:
@@ -120,9 +123,10 @@ class Base(ABC):
         return self._configuration[key]
 
     def _finalize_configuration(self, configuration):
-        configuration['authentication'] = self._di.build(configuration['authentication'])
-        if configuration.get('authorization') and hasattr(configuration.get('authorization'), 'object_class'):
-            configuration['authorization'] = self._di.build(configuration['authorization'])
+        configuration['authentication'] = self._di.build(configuration['authentication'], cache=True)
+        authorization = configuration.get('authorization')
+        if authorization and (hasattr(authorization, 'object_class') or type(authorization) == str):
+            configuration['authorization'] = self._di.build(configuration['authorization'], cache=True)
         if configuration.get('base_url') is None:
             configuration['base_url'] = '/'
         if not configuration['base_url'] or configuration['base_url'][0] != '/':
@@ -141,7 +145,7 @@ class Base(ABC):
             final_security_headers = []
             for (index, security_header) in enumerate(security_headers):
                 if hasattr(security_header, 'object_class'):
-                    security_header = self._di.build(security_header)
+                    security_header = self._di.build(security_header, cache=True)
                 if not hasattr(security_header, 'set_headers_for_input_output'):
                     raise ValueError(
                         f"Configuration error for handler '{self.__class__.__name__}': security header #{index+1} did not resolve to a security header"
@@ -273,7 +277,9 @@ class Base(ABC):
         return json
 
     def _build_as_json_map(self, model):
-        conversion_map = {self.auto_case_internal_column_name('id'): model.columns()[self.id_column_name]}
+        conversion_map = {}
+        if self.configuration('id_column_name'):
+            conversion_map[self.auto_case_internal_column_name('id')] = model.columns()[self.id_column_name]
 
         for column in self._get_readable_columns().values():
             conversion_map[self.auto_case_column_name(column.name, True)] = column
@@ -450,10 +456,12 @@ class Base(ABC):
 
     def documentation_data_schema(self):
         id_column_name = self.id_column_name
-        properties = [
-            self._columns[id_column_name].documentation(name=self.auto_case_internal_column_name('id'))
-            if id_column_name in self._columns else AutoDocString(self.auto_case_internal_column_name('id'))
-        ]
+        properties = []
+        if self.configuration('id_column_name'):
+            properties.append(
+                self._columns[id_column_name].documentation(name=self.auto_case_internal_column_name('id'))
+                if id_column_name in self._columns else AutoDocString(self.auto_case_internal_column_name('id'))
+            )
 
         for column in self._get_readable_columns().values():
             column_doc = column.documentation()

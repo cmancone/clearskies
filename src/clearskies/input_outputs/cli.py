@@ -16,6 +16,7 @@ class CLI:
         self._sys = sys
         self._args = []
         self._kwargs = {}
+        self._request_method = None
         self._parse_args(self._sys.argv)
 
     def respond(self, response, status_code):
@@ -23,7 +24,10 @@ class CLI:
             raise exceptions.CLINotFound()
         if status_code != 200:
             self._sys.exit(response)
-        print(response)
+        if type(response) != str:
+            print(json.dumps(response))
+        else:
+            print(response)
 
     def error(self, body):
         return self.respond(body, 400)
@@ -46,7 +50,16 @@ class CLI:
                     value = True
                 if name in self._kwargs:
                     raise exceptions.CLIInputError(f"Received multiple flags for '{name}'")
-                self._kwargs[name] = value
+                if name == 'X':
+                    name = 'request_method'
+                if name == 'request_method':
+                    if self._request_method:
+                        raise ValueError(
+                            "Received multiple flags for the request method (setablve via 'request_method' and 'X')"
+                        )
+                    self._request_method = value.upper()
+                else:
+                    self._kwargs[name] = value
             else:
                 self._args.append(arg)
 
@@ -60,7 +73,15 @@ class CLI:
         return self.get_path_info()
 
     def get_request_method(self):
-        return self._kwargs.get('request_method', 'GET')
+        return self._request_method if self._request_method else 'GET'
+
+    def request_data(self, required=True):
+        request_data = self.json_body(False)
+        if not request_data:
+            if self.has_body():
+                raise ClientError("Request body was not valid JSON")
+            request_data = {}
+        return request_data
 
     def has_body(self):
         if self._has_body is None:
@@ -70,11 +91,13 @@ class CLI:
             # compare data against a schema:
 
             # isatty() means that someone is piping input into the program
-            if not self._sys.stdin.isatty():
-                self._has_body = True
-                self._input_type = 'atty'
+            # however, it behaves unreliably in "alternate" environments in later versions
+            # of python, so I'm removing it until I can find a better solution
+            #if not self._sys.stdin.isatty():
+            #self._has_body = True
+            #self._input_type = 'atty'
             # or if the user set 'data' or 'd' keys
-            elif 'data' in self._kwargs or 'd' in self._kwargs:
+            if 'data' in self._kwargs or 'd' in self._kwargs:
                 self._has_body = True
                 self._input_type = 'data' if 'data' in self._kwargs else 'd'
             # or finally if we have kwargs in general

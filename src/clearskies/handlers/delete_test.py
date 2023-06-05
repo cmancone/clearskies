@@ -1,4 +1,5 @@
 import unittest
+import logging
 from .delete import Delete
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
@@ -40,8 +41,8 @@ class DeleteTest(unittest.TestCase):
         self.users = self.delete.build(User)
         self.users.create({'id': '5', 'name': '', 'email': '', 'age': 0})
 
-        self.secret_bearer = SecretBearer('environment')
-        self.secret_bearer.configure(secret='asdfer')
+        self.secret_bearer = SecretBearer('secrets', 'environment', logging)
+        self.secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
 
     def test_delete_flow(self):
         response = self.delete(routing_data={'id': '5'})
@@ -102,7 +103,7 @@ class DeleteTest(unittest.TestCase):
 
         documentation = delete.documentation()[0]
 
-        self.assertEquals(0, len(documentation.parameters))
+        self.assertEquals(1, len(documentation.parameters))
         self.assertEquals(2, len(documentation.responses))
         self.assertEquals([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]

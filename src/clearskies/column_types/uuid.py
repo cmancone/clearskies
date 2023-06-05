@@ -1,6 +1,7 @@
 from .string import String
 class UUID(String):
-    def __init__(self, uuid):
+    def __init__(self, di, uuid):
+        super().__init__(di)
         self.uuid = uuid
 
     @property

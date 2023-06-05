@@ -75,6 +75,11 @@ class ModelTest(unittest.TestCase):
             'test': 'thingy'
         }, user.post_save_data)
         self.assertEquals('5', user.post_save_id)
+        self.assertTrue(user.was_changed('id'))
+        self.assertTrue(user.was_changed('name'))
+        self.assertTrue(user.was_changed('birth_date'))
+        self.assertTrue(user.was_changed('age'))
+        self.assertFalse(user.was_changed('cool'))
 
     def test_update(self):
         old_user = {'id': '5', 'name': 'Ronoc', 'birth_date': '2019-11-28 23:30:30', 'age': '2'}
@@ -110,6 +115,10 @@ class ModelTest(unittest.TestCase):
             'test': 'thingy'
         }, user.post_save_data)
         self.assertEquals('5', user.post_save_id)
+        self.assertFalse(user.was_changed('id'))
+        self.assertFalse(user.was_changed('blahblah'))
+        self.assertTrue(user.was_changed('name'))
+        self.assertTrue(user.was_changed('age'))
 
     def test_delete(self):
         user_data = {'id': '5', 'name': 'Ronoc', 'birth_date': '', 'age': '2'}
@@ -148,3 +157,57 @@ class ModelTest(unittest.TestCase):
         user = User('cursor', self.columns)
         self.assertEquals(False, user.exists)
         self.assertEquals(None, user.id)
+
+    def test_on_change(self):
+        old_user = {'id': '5', 'name': 'Ronoc'}
+        new_user = {'id': '5', 'name': 'Conor'}
+        backend = type(
+            '', (), {
+                'update': MagicMock(return_value=new_user),
+                'column_to_backend': lambda self, column, backend_data: column.to_backend(backend_data),
+                'column_from_backend': lambda self, column, value: column.from_backend(value),
+            }
+        )()
+        on_change = MagicMock()
+
+        class UserOnChange(Model):
+            def __init__(self, backend, columns):
+                super().__init__(backend, columns)
+
+            def columns_configuration(self):
+                return OrderedDict([('name', {
+                    'class': String,
+                    'on_change': [on_change],
+                })])
+
+        user = UserOnChange(backend, self.columns)
+        user.data = old_user
+        user.save({'name': 'Conor'})
+        on_change.assert_called()
+
+    def test_no_change(self):
+        old_user = {'id': '5', 'name': 'Ronoc'}
+        new_user = {'id': '5', 'name': 'Ronoc'}
+        backend = type(
+            '', (), {
+                'update': MagicMock(return_value=new_user),
+                'column_to_backend': lambda self, column, backend_data: column.to_backend(backend_data),
+                'column_from_backend': lambda self, column, value: column.from_backend(value),
+            }
+        )()
+        on_change = MagicMock()
+
+        class UserOnChange(Model):
+            def __init__(self, backend, columns):
+                super().__init__(backend, columns)
+
+            def columns_configuration(self):
+                return OrderedDict([('name', {
+                    'class': String,
+                    'on_change': [on_change],
+                })])
+
+        user = UserOnChange(backend, self.columns)
+        user.data = old_user
+        user.save({'name': 'Ronoc'})
+        on_change.assert_not_called()

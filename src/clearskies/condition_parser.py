@@ -105,8 +105,8 @@ class ConditionParser:
         # doing this the simple and stupid way, until that doesn't work.  Yes, it is ugly.
         # Splitting this into two regexps for simplicity: this one does not check for an alias
         matches = re.match(
-            '(\w+\s+)?join\s+`?([^\s`]+)`?\s+on\s+`?([^`]+)`?\.`?([^`]+)`?\s*=\s*`?([^`]+)`?\.`?([^`]+)`?', join,
-            re.IGNORECASE
+            '(\\w+\\s+)?join\\s+`?([^\\s`]+)`?\\s+on\\s+`?([^`]+)`?\\.`?([^`]+)`?\\s*=\\s*`?([^`]+)`?\\.`?([^`]+)`?',
+            join, re.IGNORECASE
         )
         if matches:
             groups = matches.groups()
@@ -119,7 +119,7 @@ class ConditionParser:
             second_column = groups[5]
         else:
             matches = re.match(
-                '(\w+\s+)?join\s+`?([^\s`]+)`?\s+(as\s+)?(\S+)\s+on\s+`?([^`]+)`?\.`?([^`]+)`?\s*=\s*`?([^`]+)`?\.`?([^`]+)`?',
+                '(\\w+\\s+)?join\\s+`?([^\\s`]+)`?\\s+(as\\s+)?(\\S+)\\s+on\\s+`?([^`]+)`?\\.`?([^`]+)`?\\s*=\\s*`?([^`]+)`?\\.`?([^`]+)`?',
                 join, re.IGNORECASE
             )
             if not matches:

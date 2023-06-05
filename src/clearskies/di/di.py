@@ -16,8 +16,7 @@ class DI:
     _prepared: Dict[str, Any] = {}
     _added_modules: Dict[int, Any] = {}
     _additional_configs: List[additional_config.AdditionalConfig] = []
-    log: Optional[Logger] = None
-    _di_log: Optional[Logger] = None
+    _class_mocks: Dict[str, Any] = {}
 
     def __init__(
         self,
@@ -45,6 +44,7 @@ class DI:
         self._building = {}
         self._added_modules = {}
         self._additional_configs = []
+        self._class_mocks = {}
         if classes is not None:
             self.add_classes(classes)
         if modules is not None:
@@ -164,7 +164,7 @@ class DI:
                 if inspect.ismodule(item):
                     if not hasattr(item, '__file__') or not item.__file__:
                         continue
-                    child_root = os.path.dirname(module.__file__)
+                    child_root = os.path.dirname(item.__file__)
                     if child_root[:root_len] != root:
                         continue
                     if module.__name__ == 'clearskies':
@@ -417,6 +417,23 @@ class DI:
             f"or a corresponding 'provide_{name}' method for this name."
         )
 
+    def mock_class(self, class_or_name: Any, replacement: Any) -> None:
+        if type(class_or_name) == str:
+            name = class_or_name
+        elif inspect.isclass(class_or_name):
+            name = string.camel_case_to_snake_case(class_or_name.__name__)
+        else:
+            raise ValueError(
+                "Invalid value passed to 'mock_class' for 'class_or_name' parameter: it was neither a name nor a class"
+            )
+        if not inspect.isclass(replacement):
+            raise ValueError(
+                "Invalid value passed to 'mock_class' for 'replacement' parameter: a class should be passed but I got a "
+                + type(replacement)
+            )
+
+        self._class_mocks[name] = replacement
+
     def build_class(
         self,
         class_to_build: type,
@@ -446,6 +463,9 @@ class DI:
             name = string.camel_case_to_snake_case(class_to_build.__name__)
         if name in self._prepared and cache:
             return self._prepared[name]
+
+        if name in self._class_mocks:
+            class_to_build = self._class_mocks[name]
 
         init_args = inspect.getfullargspec(class_to_build)
         if init_args.defaults is not None:

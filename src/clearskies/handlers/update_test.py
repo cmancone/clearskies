@@ -7,6 +7,7 @@ from ..di import StandardDependencies
 from .. import Model
 from collections import OrderedDict
 from ..contexts import test
+import logging
 class User(Model):
     def __init__(self, memory_backend, columns):
         super().__init__(memory_backend, columns)
@@ -28,13 +29,17 @@ class User(Model):
                 'class': Integer
             }),
         ])
+def no_bob(input_data):
+    if input_data.get('email') == 'bob@asdf.com':
+        return {'email': "Bob is not allowed."}
+    return {}
 class UpdateTest(unittest.TestCase):
     def setUp(self):
         self.update = test({
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'email', 'age'],
+                'columns': ['id', 'name', 'email', 'age'],
                 'authentication': Public(),
             }
         })
@@ -47,7 +52,7 @@ class UpdateTest(unittest.TestCase):
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'age'],
+                'columns': ['id', 'name', 'age'],
                 'authentication': Public(),
             }
         })
@@ -68,7 +73,7 @@ class UpdateTest(unittest.TestCase):
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
-                'columns': ['name', 'email', 'age'],
+                'columns': ['id', 'name', 'email', 'age'],
                 'authentication': Public(),
                 'internal_casing': 'snake_case',
                 'external_casing': 'TitleCase',
@@ -113,8 +118,8 @@ class UpdateTest(unittest.TestCase):
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
-                'writeable_columns': ['name', 'age'],
-                'readable_columns': ['name', 'age', 'email'],
+                'writeable_columns': ['id', 'name', 'age'],
+                'readable_columns': ['id', 'name', 'age', 'email'],
                 'authentication': Public(),
             }
         })
@@ -129,14 +134,14 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals('default@email.com', response_data['email'])
 
     def test_auth_failure(self):
-        secret_bearer = SecretBearer('environment')
-        secret_bearer.configure(secret='asdfer')
+        secret_bearer = SecretBearer('secrets', 'environment', logging)
+        secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
         update = test({
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
                 'writeable_columns': ['name', 'age'],
-                'readable_columns': ['name', 'age', 'email'],
+                'readable_columns': ['id', 'name', 'age', 'email'],
                 'authentication': secret_bearer,
             }
         })
@@ -155,14 +160,14 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals('Not Authenticated', response[0]['error'])
 
     def test_auth_success(self):
-        secret_bearer = SecretBearer('environment')
-        secret_bearer.configure(secret='asdfer')
+        secret_bearer = SecretBearer('secrets', 'environment', logging)
+        secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
         update = test({
             'handler_class': Update,
             'handler_config': {
                 'model_class': User,
                 'writeable_columns': ['name', 'age'],
-                'readable_columns': ['name', 'age', 'email'],
+                'readable_columns': ['id', 'name', 'age', 'email'],
                 'authentication': secret_bearer,
             }
         })
@@ -194,7 +199,7 @@ class UpdateTest(unittest.TestCase):
         update = Update(StandardDependencies())
         update.configure({
             'model': self.users,
-            'columns': ['name', 'email', 'age'],
+            'columns': ['id', 'name', 'email', 'age'],
             'authentication': Public(),
         })
 
@@ -202,9 +207,9 @@ class UpdateTest(unittest.TestCase):
 
         self.assertEquals('{id}', documentation.relative_path)
 
-        self.assertEquals(3, len(documentation.parameters))
-        self.assertEquals(['name', 'email', 'age'], [param.definition.name for param in documentation.parameters])
-        self.assertEquals([True, True, False], [param.required for param in documentation.parameters])
+        self.assertEquals(4, len(documentation.parameters))
+        self.assertEquals(['name', 'email', 'age', 'id'], [param.definition.name for param in documentation.parameters])
+        self.assertEquals([True, True, False, True], [param.required for param in documentation.parameters])
 
         self.assertEquals(3, len(documentation.responses))
         self.assertEquals([200, 200, 404], [response.status for response in documentation.responses])
@@ -214,3 +219,24 @@ class UpdateTest(unittest.TestCase):
         data_response_properties = success_response.schema.children[1].children
         self.assertEquals(['id', 'name', 'email', 'age'], [prop.name for prop in data_response_properties])
         self.assertEquals(['string', 'string', 'string', 'integer'], [prop._type for prop in data_response_properties])
+
+    def test_custom_input_errors(self):
+        update = test({
+            'handler_class': Update,
+            'handler_config': {
+                'model_class': User,
+                'columns': ['id', 'name', 'email', 'age'],
+                'authentication': Public(),
+                'input_error_callable': no_bob
+            }
+        })
+        users = update.build(User)
+        users.create({'id': '5', 'name': '', 'email': '', 'age': 0})
+
+        response = update(body={'id': 5, 'name': 'Conor', 'email': 'bob@asdf.com', 'age': 10})
+        self.assertEquals(200, response[1])
+        self.assertEquals({'email': "Bob is not allowed."}, response[0]['input_errors'])
+
+        response = update(body={'id': 5, 'name': 'Conor', 'email': 'bob2@asdf.com', 'age': 10})
+        self.assertEquals(200, response[1])
+        self.assertEquals({}, response[0]['input_errors'])

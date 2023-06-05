@@ -214,13 +214,15 @@ class List(Base):
                 "{error_prefix} you must provide a model instance in the 'model' configuration setting, but a class was provided instead"
             )
         self._model = self._di.build(configuration['model_class']) if has_model_class else configuration['model']
-        self._columns = self._model.columns(overrides=configuration.get('overrides'))
+        self._columns = self._model.columns(overrides=configuration.get('column_overrides'))
         model_class_name = self._model.__class__.__name__
         # checks for searchable_columns and readable_columns
         self._check_columns_in_configuration(configuration, 'readable_columns')
-        self._check_columns_in_configuration(configuration, 'searchable_columns')
+        # the List base class doesn't use searchable columns so just ignore this check for List
+        if type(self) != List:
+            self._check_columns_in_configuration(configuration, 'searchable_columns')
 
-        if not 'default_sort_column' in configuration:
+        if 'default_sort_column' not in configuration:
             raise ValueError(f"{error_prefix} missing required configuration 'default_sort_column'")
 
         # sortable_columns, wheres, and joins should all be iterables
