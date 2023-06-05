@@ -55,7 +55,6 @@
             "name": "start",
             "required": false,
             "schema": {
-              "example": 10,
               "format": "int32",
               "type": "integer"
             }
@@ -120,7 +119,6 @@
                         "next_page": {
                           "properties": {
                             "start": {
-                              "example": 10,
                               "format": "int32",
                               "type": "integer"
                             }
@@ -257,7 +255,6 @@
                     "type": "array"
                   },
                   "start": {
-                    "example": 10,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -339,7 +336,6 @@
                         "next_page": {
                           "properties": {
                             "start": {
-                              "example": 10,
                               "format": "int32",
                               "type": "integer"
                             }
@@ -474,7 +470,6 @@
                     "type": "array"
                   },
                   "start": {
-                    "example": 10,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -556,7 +551,6 @@
                         "next_page": {
                           "properties": {
                             "start": {
-                              "example": 10,
                               "format": "int32",
                               "type": "integer"
                             }
@@ -793,7 +787,6 @@
             "name": "start",
             "required": false,
             "schema": {
-              "example": 10,
               "format": "int32",
               "type": "integer"
             }
@@ -859,7 +852,6 @@
                         "next_page": {
                           "properties": {
                             "start": {
-                              "example": 10,
                               "format": "int32",
                               "type": "integer"
                             }
@@ -1128,7 +1120,6 @@
                     "type": "array"
                   },
                   "start": {
-                    "example": 10,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -1210,7 +1201,6 @@
                         "next_page": {
                           "properties": {
                             "start": {
-                              "example": 10,
                               "format": "int32",
                               "type": "integer"
                             }
@@ -1346,7 +1336,6 @@
                     "type": "array"
                   },
                   "start": {
-                    "example": 10,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -1428,7 +1417,6 @@
                         "next_page": {
                           "properties": {
                             "start": {
-                              "example": 10,
                               "format": "int32",
                               "type": "integer"
                             }
@@ -1924,7 +1912,6 @@
             "name": "start",
             "required": false,
             "schema": {
-              "example": 10,
               "format": "int32",
               "type": "integer"
             }
@@ -1989,7 +1976,6 @@
                         "next_page": {
                           "properties": {
                             "start": {
-                              "example": 10,
                               "format": "int32",
                               "type": "integer"
                             }
@@ -2126,7 +2112,6 @@
                     "type": "array"
                   },
                   "start": {
-                    "example": 10,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -2208,7 +2193,6 @@
                         "next_page": {
                           "properties": {
                             "start": {
-                              "example": 10,
                               "format": "int32",
                               "type": "integer"
                             }
@@ -2343,7 +2327,6 @@
                     "type": "array"
                   },
                   "start": {
-                    "example": 10,
                     "format": "int32",
                     "type": "integer"
                   },
@@ -2425,7 +2408,6 @@
                         "next_page": {
                           "properties": {
                             "start": {
-                              "example": 10,
                               "format": "int32",
                               "type": "integer"
                             }
