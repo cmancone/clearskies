@@ -2,12 +2,16 @@ from collections import OrderedDict
 from collections.abc import Sequence
 import inspect
 from .binding_config import BindingConfig
-from . import di_shim
+from .column_types import column
+from .input_requirements import requirement
+from . import di_shim, model
+from typing import Any, Dict, List, Optional
 class Columns:
     def __init__(self, di: di_shim.DiShim):
         self.di = di
 
-    def configure(self, definitions, model_class, overrides=None):
+    def configure(self, definitions: Dict[str, Dict[str, Any]], model_class: model.Model, overrides: Optional[Dict[str, Dict[str, Any]]]=None):
+        """Specifies the configuration for the columns."""
         columns = OrderedDict()
         for (name, configuration) in definitions.items():
             name = name.strip()
@@ -43,14 +47,16 @@ class Columns:
 
         return columns
 
-    def build_column(self, name, configuration, model_class):
+    def build_column(self, name: str, configuration: Dict[str, Any], model_class: model.Model) -> column.Column:
+        """Builds the column object."""
         if not 'class' in configuration:
             raise ValueError(f"Missing column class for column {name} in {model_class.__name__}")
         column = self.di.build(configuration['class'], cache=False)
         column.configure(name, configuration, model_class)
         return column
 
-    def _merge_input_requirements(self, config_requirements, override_requirements):
+    def _merge_input_requirements(self, config_requirements: Any, override_requirements: Any) -> Any:
+        """Merge together the input requirements from the column and any overrides and de-duplicate."""
         if config_requirements is None and override_requirements is None:
             return []
         if config_requirements is None:
@@ -74,7 +80,7 @@ class Columns:
 
         return requirements
 
-    def _input_requirement_args_and_class(self, requirement):
+    def _input_requirement_args_and_class(self, requirement: Any, error_prefix: Optional[str] = "") -> List[Any]:
         """
         This takes the input requirement data provided by the developer and returns the things we need to build it.
 
@@ -100,7 +106,7 @@ class Columns:
         else:
             raise ValueError("Unrecognized value for input_requirement")
 
-    def _resolve_input_requirements(self, input_requirements, column_name, model_class_name):
+    def _resolve_input_requirements(self, input_requirements: List[Any], column_name: str, model_class_name: str) -> List[requirement.Requirement]:
         error_prefix = f"Configuration error for column '{column_name}' in model '{model_class_name}':"
         if not hasattr(input_requirements, '__iter__'):
             raise ValueError(
@@ -108,7 +114,7 @@ class Columns:
             )
         resolved_requirements = []
         for requirement in input_requirements:
-            [requirement_class, args, kwargs] = self._input_requirement_args_and_class(requirement)
+            [requirement_class, args, kwargs] = self._input_requirement_args_and_class(requirement, error_prefix)
             requirement_instance = self.di.build(requirement_class, cache=False)
             requirement_instance.column_name = column_name
             requirement_instance.configure(*args, **kwargs)

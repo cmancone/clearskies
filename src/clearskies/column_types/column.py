@@ -1,8 +1,7 @@
 from abc import ABC
 import re
 from ..autodoc.schema import String as AutoDocString
-from .. import input_requirements
-from .. import binding_config
+from .. import input_requirements, binding_config, di_shim
 import inspect
 from typing import List, Any
 class Column(ABC):
@@ -21,7 +20,7 @@ class Column(ABC):
     my_configs: List[str] = []
     required_configs: List[str] = []
 
-    def __init__(self, di):
+    def __init__(self, di: di_shim.DiShim):
         self.di = di
 
     @property

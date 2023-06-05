@@ -1,14 +1,16 @@
 from .column import Column
 from ..autodoc.schema import Boolean as AutoDocBoolean
+from .. import di_shim
+from typing import List
 class Boolean(Column):
     _auto_doc_class = AutoDocBoolean
 
-    my_configs = {
-        'on_true': None,
-        'on_false': None,
-    }
+    my_configs: List[str] = [
+        'on_true',
+        'on_false',
+    ]
 
-    def __init__(self, di):
+    def __init__(self, di: di_shim.DiShim):
         super().__init__(di)
 
     def _check_configuration(self, configuration):

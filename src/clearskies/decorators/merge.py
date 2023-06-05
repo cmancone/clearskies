@@ -1,17 +1,17 @@
 from ..application import Application
 from ..handlers import callable as callable_handler
 from ..handlers import simple_routing
-from typing import Any, Dict, Set
+from typing import Any, Callable, Dict, Set, Union
 
 routing_kwargs = ['path', 'methods']
 binding_kwargs = ['bindings', 'binding_classes', 'binding_modules']
-def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
+def merge(function: Union[Callable, Application], **kwargs: Dict[str, Any]) -> Application:
     is_wrapped_application = getattr(function, 'is_wrapped_application', False)
     binding_configs = extract_binding_configs(kwargs)
     callable_configs = extract_callable_configs(kwargs)
     routing_configs = extract_routing_configs(kwargs)
 
-    # if ths is the first decorator added then we need to wrap it in an application
+    # if this is the first decorator added then we need to wrap it in an application
     if not is_wrapped_application and type(function) != Application:
         application = Application(
             callable_handler.Callable,
@@ -43,10 +43,12 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
     # if we got here then we have a wrapped application, which means that function will return an
     # application when called... except when it doesn't which has to do with nested decorators and
     # I'm too lazy to sort it out but the below works fine.
-    if is_wrapped_application:
+    if isinstance(function, Application):
+        application = function
+    elif is_wrapped_application:
         application = function()
     else:
-        application = function
+        raise ValueError("I never should have arrived here")
     authentication = application.handler_config.get('authentication')
 
     # Next question: is there a path in our kwargs?  If so then we are trying to add routing to
