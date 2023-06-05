@@ -1,4 +1,7 @@
 from .. import autodoc
+import logging
+
+log = logging.getLogger(__name__)
 class SecretBearer:
     is_public = False
     can_authorize = False
@@ -11,20 +14,22 @@ class SecretBearer:
     _header_prefix_length = None
     _documentation_security_name = None
 
-    def __init__(self, secrets, environment, logging):
+    def __init__(self, secrets, environment):
         self._environment = environment
         self._secrets = secrets
-        self._logging = logging
 
     def configure(
         self, secret_key=None, secret=None, environment_key=None, header_prefix=None, documentation_security_name=None
     ):
         if secret_key:
             self._secret = self._secrets.get(secret_key)
+            log.info(f"Fetching secret for secret bearer from secret manager at path '{secret_key}'")
         elif environment_key:
             self._secret = self._environment.get(environment_key)
+            log.info(f"Fetching secret for secret bearer from environment variable named '{secret_key}'")
         elif secret:
             self._secret = secret
+            log.info(f"Secret for secret bearer was set directly")
         else:
             raise ValueError(
                 "Must set either 'secret_key', 'environment_key', or 'secret', when configuring the SecretBearer"
@@ -41,15 +46,15 @@ class SecretBearer:
         self._configured_guard()
         auth_header = input_output.get_request_header('authorization', True)
         if auth_header[:self._header_prefix_length].lower() != self._header_prefix.lower():
-            self._logging.debug(
+            log.debug(
                 'Authentication failure due to prefix mismatch.  Configured prefix: ' + self._header_prefix.lower() +
                 ".  Found prefix: " + auth_header[:self._header_prefix_length].lower()
             )
             return False
         if self._secret == auth_header[self._header_prefix_length:]:
-            self._logging.debug('Authentication success')
+            log.debug('Authentication success')
             return True
-        self._logging.debug('Authentication failure due to secret mismatch')
+        log.debug('Authentication failure due to secret mismatch')
         return False
 
     def authorize(self, authorization):

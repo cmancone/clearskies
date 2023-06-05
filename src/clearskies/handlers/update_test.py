@@ -7,7 +7,6 @@ from ..di import StandardDependencies
 from .. import Model
 from collections import OrderedDict
 from ..contexts import test
-import logging
 class User(Model):
     def __init__(self, memory_backend, columns):
         super().__init__(memory_backend, columns)
@@ -134,7 +133,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals('default@email.com', response_data['email'])
 
     def test_auth_failure(self):
-        secret_bearer = SecretBearer('secrets', 'environment', logging)
+        secret_bearer = SecretBearer('secrets', 'environment')
         secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
         update = test({
             'handler_class': Update,
@@ -160,7 +159,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals('Not Authenticated', response[0]['error'])
 
     def test_auth_success(self):
-        secret_bearer = SecretBearer('secrets', 'environment', logging)
+        secret_bearer = SecretBearer('secrets', 'environment')
         secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
         update = test({
             'handler_class': Update,

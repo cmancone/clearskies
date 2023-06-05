@@ -1,0 +1,2 @@
+class DiShim:
+    pass

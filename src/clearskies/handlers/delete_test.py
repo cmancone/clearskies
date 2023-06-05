@@ -1,5 +1,4 @@
 import unittest
-import logging
 from .delete import Delete
 from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
@@ -41,7 +40,7 @@ class DeleteTest(unittest.TestCase):
         self.users = self.delete.build(User)
         self.users.create({'id': '5', 'name': '', 'email': '', 'age': 0})
 
-        self.secret_bearer = SecretBearer('secrets', 'environment', logging)
+        self.secret_bearer = SecretBearer('secrets', 'environment')
         self.secret_bearer.configure(secret='asdfer', header_prefix='Bearer ')
 
     def test_delete_flow(self):

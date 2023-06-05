@@ -2,8 +2,9 @@ from collections import OrderedDict
 from collections.abc import Sequence
 import inspect
 from .binding_config import BindingConfig
+from . import di_shim
 class Columns:
-    def __init__(self, di):
+    def __init__(self, di: di_shim.DiShim):
         self.di = di
 
     def configure(self, definitions, model_class, overrides=None):

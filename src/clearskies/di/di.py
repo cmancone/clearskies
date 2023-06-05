@@ -1,5 +1,6 @@
 from __future__ import annotations
 from ..binding_config import BindingConfig
+from .. import di_shim
 import inspect
 import re
 import sys
@@ -10,8 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, Type, Union
 from . import additional_config
 
 log = logging.getLogger(__name__)
-
-class DI:
+class DI(di_shim.DiShim):
     _bindings: Dict[str, Any] = {}
     _building: Dict[int, Any] = {}
     _classes: Dict[str, Any] = {}
@@ -121,7 +121,6 @@ class DI:
                 if debug:
                     log.info("Injection name '{plural_name}' provides class '{class_name}' via class/module binding")
 
-
     def add_modules(self, modules: List[Any], root: Optional[str] = None, is_root: bool = True, debug: bool = True):
         """
         Add additional modules that the dependency injection container should include for injection.
@@ -179,7 +178,9 @@ class DI:
                     self.add_modules([item], root=root, is_root=False, debug=debug)
 
     def add_additional_configs(
-        self, additional_configs: Union[additional_config.AdditionalConfig, List[additional_config.AdditionalConfig]], debug: bool = True
+        self,
+        additional_configs: Union[additional_config.AdditionalConfig, List[additional_config.AdditionalConfig]],
+        debug: bool = True
     ):
         """
         Add an AdditionalConfig (or a list of AdditionalConfig) object(s) to the dependency injection container.
@@ -285,11 +286,12 @@ class DI:
             if inspect.isclass(value):
                 log.info(f"Injection name '{key}' provided by direct binding with class {value.__name__}")
             else:
-                log.info(f"Injection name '{key}' provided by direct binding of BindingConfig with class {value.object_class.__name__}")
+                log.info(
+                    f"Injection name '{key}' provided by direct binding of BindingConfig with class {value.object_class.__name__}"
+                )
         else:
             self._prepared[key] = value
             log.info(f"Injection name '{key}' provided by direct binding with value {value}")
-
 
     def build(self, thing: Any, context: Optional[str] = None, cache: bool = False) -> Any:
         """
@@ -385,22 +387,22 @@ class DI:
         context_note = f" for '{context}'" if context else ''
         log_message = f"Requested to build '{name}'{context_note}: "
         if name == 'di':
-            self.di_log(log_message + 'I will return myself')
+            log.info(log_message + 'I will return myself')
             return self
 
         if name in self._prepared and cache:
-            self.di_log(log_message + 'I will return it from the cache')
+            log.info(log_message + 'I will return it from the cache')
             return self._prepared[name]
 
         if name in self._bindings:
-            self.di_log(log_message + 'I found a binding with a matching name - I will build that')
+            log.info(log_message + 'I found a binding with a matching name - I will build that')
             built_value = self.build(self._bindings[name], context=context)
             if cache:
                 self._prepared[name] = built_value
             return built_value
 
         if name in self._classes:
-            self.di_log(log_message + 'I found a class with a matching name - I will build that')
+            log.info(log_message + 'I found a class with a matching name - I will build that')
             built_value = self.build_class(self._classes[name]['class'], context=context)
             if cache:
                 self._prepared[name] = built_value
@@ -412,7 +414,7 @@ class DI:
             additional_config = self._additional_configs[index]
             if not additional_config.can_build(name):
                 continue
-            self.di_log(
+            log.info(
                 log_message +
                 f'I have an additional config named {additional_config.__class__.__name__} that says it can build this, so I will let it do it'
             )
@@ -422,7 +424,7 @@ class DI:
             return built_value
 
         if hasattr(self, f'provide_{name}'):
-            self.di_log(
+            log.info(
                 log_message + 'I have a "provide" function of my own that can build it, so I will call my own function'
             )
             built_value = self.call_function(getattr(self, f'provide_{name}'))
@@ -656,7 +658,9 @@ class DI:
 
         log.info("Injection name 'di' provides the dependency injection container")
         log.info("This concludes the list of dependencies added at at the moment,")
-        log.info("*BUT* more can still be added later, so check below for the full record or call di.dump_debug_info() again.")
+        log.info(
+            "*BUT* more can still be added later, so check below for the full record or call di.dump_debug_info() again."
+        )
 
     @classmethod
     def init(cls: type, *binding_classes: List[Any], **bindings: Dict[str, Any]) -> Any:
