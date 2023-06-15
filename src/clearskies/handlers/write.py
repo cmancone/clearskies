@@ -17,6 +17,7 @@ class Write(Base):
         'model': None,
         'model_class': None,
         'columns': None,
+        'column_overrides': None,
         'writeable_columns': None,
         'readable_columns': None,
         'input_error_callable': None,
@@ -137,6 +138,7 @@ class Write(Base):
             more_input_errors = self._di.call_function(
                 input_error_callable,
                 input_data=input_data,
+                request_data=input_data,
                 input_output=input_output,
                 routing_data=input_output.routing_data(),
                 authorization_data=input_output.get_authorization_data(),

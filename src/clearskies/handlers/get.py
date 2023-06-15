@@ -25,16 +25,16 @@ class Get(Base):
 
     def fetch_model(self, input_output):
         routing_data = input_output.routing_data()
-        if 'id' not in routing_data:
-            return "Missing 'id'"
-        id = routing_data['id']
+        if self.id_column_name not in routing_data:
+            raise ValueError("I didn't receive the ID in my routing data.  I am probably misconfigured.")
+        id = routing_data[self.id_column_name]
         models = self._model.where(f'{self.id_column_name}={id}')
         for where in self.configuration('where'):
             if type(where) == str:
                 models = models.where(where)
             else:
                 models = self._di.call_function(
-                    where, models=models, input_output=input_output, routing_data=input_output.routing_data()
+                    where, models=models, input_output=input_output, routing_data=input_output.routing_data(), authorization_data=input_output.get_authorization_data()
                 )
         authorization = self._configuration.get('authorization', None)
         if authorization and hasattr(authorization, 'filter_models'):
@@ -80,7 +80,7 @@ class Get(Base):
                 class_name = self.__class__.__name__
                 model_class = self._model.__class__.__name__
                 raise ValueError(
-                    f"Handler {class_name} was configured with {column_type} column '{column_name}' but this " +
+                    f"Handler {class_name} was configured with readable column '{column_name}' but this " +
                     f"column doesn't exist for model {model_class}"
                 )
             resolved_columns[column_name] = self._columns[column_name]
