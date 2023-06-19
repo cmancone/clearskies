@@ -44,13 +44,17 @@ class Callable(Base, SchemaHelper):
                 if input_errors:
                     return self.input_errors(input_output, input_errors)
                 response = self._di.call_function(
-                    self.configuration('callable'), request_data=request_data, **input_output.routing_data()
+                    self.configuration('callable'),
+                    request_data=request_data,
+                    **input_output.routing_data(),
+                    **input_output.context_specifics(),
                 )
             else:
                 response = self._di.call_function(
                     self.configuration('callable'),
                     request_data=self.request_data(input_output, required=False),
-                    **input_output.routing_data()
+                    **input_output.routing_data(),
+                    **input_output.context_specifics(),
                 )
             if response:
                 return self.success(input_output, response)

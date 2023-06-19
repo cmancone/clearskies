@@ -151,3 +151,6 @@ class InputOutput(ABC):
 
     def get_authorization_data(self):
         return self._authorization_data if self._authorization_data else {}
+
+    def context_specifics(self):
+        return {}

@@ -9,6 +9,7 @@ class InputOutput(input_outputs.InputOutput):
     _content_type = ''
     _protocol = ''
     _query_parameters = None
+    _context_specifics = None
     response = None
 
     def __init__(
@@ -24,6 +25,7 @@ class InputOutput(input_outputs.InputOutput):
         protocol='',
         query_parameters=None,
         authorization_data=None,
+        context_specifics=None,
     ):
         self.set_request_method(request_method)
         self.set_body(body)
@@ -35,6 +37,7 @@ class InputOutput(input_outputs.InputOutput):
         self._protocol = protocol
         self._query_parameters = query_parameters if query_parameters is not None else {}
         self._authorization_data = authorization_data
+        self._context_specifics = context_specifics if context_specifics is not None else {}
 
     def respond(self, body, status_code=200):
         self.response = {'body': body, 'status_code': status_code, 'headers': self._response_headers}
@@ -105,3 +108,9 @@ class InputOutput(input_outputs.InputOutput):
 
     def get_query_parameters(self):
         return self._query_parameters
+
+    def set_context_specifics(self, context_specifics):
+        self._context_specifics = context_specifics
+
+    def context_specifics(self):
+        return self._context_specifics

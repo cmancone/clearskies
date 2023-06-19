@@ -164,3 +164,6 @@ class CLI:
             self._routing_data = {**self._routing_data, **key}
         else:
             self._routing_data[key] = value
+
+    def context_specifics(self):
+        return {}
