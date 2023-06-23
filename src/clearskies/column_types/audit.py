@@ -37,7 +37,6 @@ class Audit(has_many.HasMany):
     my_configs = [
         'child_models_class',
         'exclude_columns',
-        'class_name',
         'foreign_column_name',
         'is_readable',
         'readable_child_columns',
@@ -106,24 +105,23 @@ class Audit(has_many.HasMany):
                     )
 
     def provide(self, data, column_name):
-        return super().provide(data, column_name).where("class=" + self.config('class_name'))
+        return super().provide(data, column_name).where("class=" + self.config('parent_class_name'))
 
     def save_finished(self, model):
         super().save_finished(model)
         old_data = model._previous_data
         new_data = model.data
         exclude_columns = self.config('exclude_columns')
+        parent_columns = self.parent_columns
 
         if not old_data:
             self.child_models.create({
-                'class': self.config('class_name'),
+                'class': self.config('parent_class_name'),
                 'resource_id': model.get(self.config('parent_id_column_name')),
                 'action': 'create',
                 'data': {key: parent_columns[key].to_json(model) for key in new_data.keys() if key not in exclude_columns},
             })
             return
-
-        parent_columns = self.parent_columns
 
         # note that this is fairly simple logic to get started.  It's not going to detect changes that happen
         # in other "tables".  For instance, disconnecting a record by deleting an entry in a many-to-many relationship
@@ -154,7 +152,7 @@ class Audit(has_many.HasMany):
         super().post_delete(model)
         exclude_columns = self.config('exclude_columns')
         self.child_models.create({
-            'class': self.config('class_name'),
+            'class': self.config('parent_class_name'),
             'resource_id': model.get(self.config('parent_id_column_name')),
             'action': 'delete',
             'data': {key: value for (key, value) in model.data.items() if key not in exclude_columns},
