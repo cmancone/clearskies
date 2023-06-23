@@ -1,3 +1,4 @@
+from .audit import Audit
 from .belongs_to import BelongsTo
 from .boolean import Boolean
 from .category_tree import CategoryTree
@@ -16,6 +17,8 @@ from .updated import Updated
 from .uuid import UUID
 def build_column_config(name, column_class, **kwargs):
     return (name, {**{"class": column_class}, **kwargs})
+def audit(name, **kwargs):
+    return build_column_config(name, Audit, **kwargs)
 def belongs_to(name, **kwargs):
     return build_column_config(name, BelongsTo, **kwargs)
 def boolean(name, **kwargs):
