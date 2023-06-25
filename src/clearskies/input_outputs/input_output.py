@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from ..handlers.exceptions import ClientError
 import json
+
+
 class InputOutput(ABC):
     _response_headers = None
     _body_as_json = None
@@ -42,7 +44,7 @@ class InputOutput(ABC):
         self._response_headers = None
 
     def set_headers(self, headers):
-        for (key, value) in headers.items():
+        for key, value in headers.items():
             self.set_header(key, value)
 
     @abstractmethod
@@ -114,9 +116,9 @@ class InputOutput(ABC):
     def get_full_path(self):
         path_info = self.get_path_info()
         script_name = self.get_script_name()
-        if not path_info or path_info[0] != '/':
-            path_info = f'/{path_info}'
-        return f'{path_info}{script_name}'.replace('//', '/')
+        if not path_info or path_info[0] != "/":
+            path_info = f"/{path_info}"
+        return f"{path_info}{script_name}".replace("//", "/")
 
     @abstractmethod
     def get_query_string(self):

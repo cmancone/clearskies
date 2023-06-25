@@ -3,91 +3,81 @@ from unittest.mock import MagicMock, call
 from .belongs_to import BelongsTo
 from ..mocks.models import Models
 from .string import String
+
+
 class BelongsToTest(unittest.TestCase):
     def setUp(self):
         Models.reset()
-        self.models = Models({
-            'name': {
-                'class': String
-            },
-        })
+        self.models = Models(
+            {
+                "name": {"class": String},
+            }
+        )
 
-        self.di = type('', (), {'build': MagicMock(return_value=self.models)})()
+        self.di = type("", (), {"build": MagicMock(return_value=self.models)})()
         self.belongs_to = BelongsTo(self.di)
 
     def test_require_proper_name(self):
         with self.assertRaises(ValueError) as context:
-            self.belongs_to.configure('user', {'parent_models_class': Models}, BelongsToTest)
+            self.belongs_to.configure("user", {"parent_models_class": Models}, BelongsToTest)
         self.assertIn(
             "Invalid name for column 'user' in 'BelongsToTest' - BelongsTo column names must end in '_id'",
-            str(context.exception)
+            str(context.exception),
         )
 
         self.belongs_to.configure(
-            'user', {
-                'parent_models_class': Models,
-                'model_column_name': 'user_model'
-            }, BelongsToTest
+            "user", {"parent_models_class": Models, "model_column_name": "user_model"}, BelongsToTest
         )
-        self.assertEquals('user_model', self.belongs_to.config('model_column_name'))
+        self.assertEquals("user_model", self.belongs_to.config("model_column_name"))
 
     def test_require_parent_models_class(self):
         with self.assertRaises(KeyError) as context:
-            self.belongs_to.configure('user_id', {}, BelongsToTest)
+            self.belongs_to.configure("user_id", {}, BelongsToTest)
         self.assertEquals(
             "\"Missing required configuration 'parent_models_class' for column 'user_id' in 'BelongsToTest'\"",
-            str(context.exception)
+            str(context.exception),
         )
 
     def test_check_input_no_match(self):
         self.models.add_search_response([])
-        self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
-        error = self.belongs_to.input_errors('model', {'user_id': '5'})
-        self.assertEquals({'user_id': 'Invalid selection for user_id: record does not exist'}, error)
+        self.belongs_to.configure("user_id", {"parent_models_class": Models}, BelongsToTest)
+        error = self.belongs_to.input_errors("model", {"user_id": "5"})
+        self.assertEquals({"user_id": "Invalid selection for user_id: record does not exist"}, error)
         self.assertEquals(1, len(Models.counted))
-        self.assertEquals([{
-            'table': '',
-            'column': 'id',
-            'operator': '=',
-            'values': ['5'],
-            'parsed': '`id`=%s'
-        }], Models.counted[0]['wheres'])
+        self.assertEquals(
+            [{"table": "", "column": "id", "operator": "=", "values": ["5"], "parsed": "`id`=%s"}],
+            Models.counted[0]["wheres"],
+        )
 
     def test_check_input_match(self):
-        self.models.add_search_response([{'id': 1}])
-        self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
-        error = self.belongs_to.input_errors('model', {'user_id': '10'})
+        self.models.add_search_response([{"id": 1}])
+        self.belongs_to.configure("user_id", {"parent_models_class": Models}, BelongsToTest)
+        error = self.belongs_to.input_errors("model", {"user_id": "10"})
         self.assertEquals({}, error)
         self.assertEquals(1, len(Models.counted))
-        self.assertEquals([{
-            'table': '',
-            'column': 'id',
-            'operator': '=',
-            'values': ['10'],
-            'parsed': '`id`=%s'
-        }], Models.counted[0]['wheres'])
+        self.assertEquals(
+            [{"table": "", "column": "id", "operator": "=", "values": ["10"], "parsed": "`id`=%s"}],
+            Models.counted[0]["wheres"],
+        )
 
     def test_check_input_null(self):
-        self.models.add_search_response([{'id': 1}])
-        self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
-        error = self.belongs_to.input_errors('model', {'user_id': None})
+        self.models.add_search_response([{"id": 1}])
+        self.belongs_to.configure("user_id", {"parent_models_class": Models}, BelongsToTest)
+        error = self.belongs_to.input_errors("model", {"user_id": None})
         self.assertEquals({}, error)
         self.assertEquals(None, Models.counted)
 
     def test_provide(self):
-        self.models.add_search_response([{'id': 2, 'name': 'hey'}])
-        self.belongs_to.configure('user_id', {'parent_models_class': Models}, BelongsToTest)
-        self.assertTrue(self.belongs_to.can_provide('user'))
-        self.assertFalse(self.belongs_to.can_provide('users'))
+        self.models.add_search_response([{"id": 2, "name": "hey"}])
+        self.belongs_to.configure("user_id", {"parent_models_class": Models}, BelongsToTest)
+        self.assertTrue(self.belongs_to.can_provide("user"))
+        self.assertFalse(self.belongs_to.can_provide("users"))
 
-        user = self.belongs_to.provide({'user_id': 2}, 'user_id')
+        user = self.belongs_to.provide({"user_id": 2}, "user_id")
         self.assertEquals(2, user.id)
-        self.assertEquals('hey', user.name)
+        self.assertEquals("hey", user.name)
         self.assertEquals(1, len(Models.iterated))
-        self.assertEquals([{
-            'table': '',
-            'column': 'id',
-            'operator': '=',
-            'values': ['2'],
-            'parsed': '`id`=%s'
-        }], Models.iterated[0]['wheres'])
+        self.assertEquals(
+            [{"table": "", "column": "id", "operator": "=", "values": ["2"], "parsed": "`id`=%s"}],
+            Models.iterated[0]["wheres"],
+        )

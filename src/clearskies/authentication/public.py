@@ -25,4 +25,4 @@ class Public:
         return {}
 
     def documentation_security_scheme_name(self):
-        return ''
+        return ""

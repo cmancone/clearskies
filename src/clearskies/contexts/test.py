@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from .build_context import build_context
 from .context import Context
 from .convert_to_application import convert_to_application
+
+
 class Test(Context):
     application = None
     input_output = None
@@ -22,9 +24,9 @@ class Test(Context):
         self.memory_backend = self.di.build(MemoryBackend, cache=False)
         self.memory_backend.silent_on_missing_tables(silent=True)
 
-        self.di.bind('now', self.now)
+        self.di.bind("now", self.now)
         if cursor_backend_to_memory_backend:
-            self.di.bind('cursor_backend', self.memory_backend)
+            self.di.bind("cursor_backend", self.memory_backend)
 
     def __call__(
         self,
@@ -58,13 +60,15 @@ class Test(Context):
             input_output.set_authorization_data(authorization_data)
 
         self.handler = self.di.build(self.application.handler_class, cache=False)
-        self.handler.configure({
-            **{
-                'authentication': public()
-            },
-            **self.application.handler_config,
-        })
+        self.handler.configure(
+            {
+                **{"authentication": public()},
+                **self.application.handler_config,
+            }
+        )
         return self.handler(input_output)
+
+
 def test(
     application,
     di_class=None,
@@ -82,5 +86,5 @@ def test(
         binding_classes=binding_classes,
         binding_modules=binding_modules,
         additional_configs=additional_configs,
-        additional_kwargs={'cursor_backend_to_memory_backend': cursor_backend_to_memory_backend}
+        additional_kwargs={"cursor_backend_to_memory_backend": cursor_backend_to_memory_backend},
     )

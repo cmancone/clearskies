@@ -1,11 +1,15 @@
 from .mysql_connection_dynamic_producer import MySQLConnectionDynamicProducer
 from .mysql_connection_dynamic_producer_via_ssh_cert_bastion import MySQLConnectionDynamicProducerViaSSHCertBastion
+
+
 def mysql_connection_dynamic_producer(producer_name=None, database_host=None, database_name=None):
     return MySQLConnectionDynamicProducer(
         producer_name=producer_name,
         database_host=database_host,
         database_name=database_name,
     )
+
+
 def mysql_connection_dynamic_producer_via_ssh_cert_bastion(
     producer_name=None,
     bastion_host=None,
@@ -14,7 +18,7 @@ def mysql_connection_dynamic_producer_via_ssh_cert_bastion(
     cert_issuer_name=None,
     database_host=None,
     database_name=None,
-    local_proxy_port=None
+    local_proxy_port=None,
 ):
     return MySQLConnectionDynamicProducerViaSSHCertBastion(
         producer_name=producer_name,

@@ -2,6 +2,8 @@ from ..models import Models as ModelsBase
 from ..model import Model as ModelBase
 from ..columns import Columns
 from ..di import StandardDependencies
+
+
 class Model(ModelBase):
     _columns_configuration = None
 
@@ -10,6 +12,8 @@ class Model(ModelBase):
 
     def columns_configuration(self):
         return self._columns_configuration
+
+
 class Models(ModelsBase):
     _model_configuration = None
     updated = None
@@ -46,7 +50,7 @@ class Models(ModelsBase):
         return Model
 
     def table_name(self):
-        return 'mock_model'
+        return "mock_model"
 
     def blank(self):
         blank = self.__class__(self._model_configuration)
@@ -86,7 +90,7 @@ class Models(ModelsBase):
             raise ValueError("Ran out of responses while processing an update!")
         if Models.updated is None:
             Models.updated = []
-        Models.updated.append({'id': id, 'data': data, 'model': model})
+        Models.updated.append({"id": id, "data": data, "model": model})
         return self.update_responses.pop(0)
 
     def create(self, data, model):
@@ -96,13 +100,13 @@ class Models(ModelsBase):
             raise ValueError("Ran out of responses while processing an create!")
         if Models.created is None:
             Models.created = []
-        Models.created.append({'data': data, 'model': model})
+        Models.created.append({"data": data, "model": model})
         return self.create_responses.pop(0)
 
     def delete(self, id, model):
         if Models.deleted is None:
             Models.deleted = []
-        Models.deleted.append({'id': id, 'model': model})
+        Models.deleted.append({"id": id, "model": model})
         return True
 
     def count(self, configuration, model):
@@ -110,7 +114,7 @@ class Models(ModelsBase):
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
         if Models.counted == None:
             Models.counted = []
-        del configuration['model_columns']
+        del configuration["model_columns"]
         Models.counted.append(configuration)
         counted = self.search_responses.pop(0)
         return len(counted)
@@ -120,7 +124,7 @@ class Models(ModelsBase):
             raise ValueError("Must set search data through 'models.add_search_response' before counting")
         if Models.iterated == None:
             Models.iterated = []
-        del configuration['model_columns']
+        del configuration["model_columns"]
         Models.iterated.append(configuration)
         records = self.search_responses.pop(0)
         return records

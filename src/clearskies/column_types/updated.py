@@ -1,4 +1,6 @@
 from .datetime import DateTime
+
+
 class Updated(DateTime):
     def __init__(self, di, now):
         super().__init__(di)

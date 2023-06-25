@@ -1,4 +1,6 @@
 from .requirement import Requirement
+
+
 class MaximumLength(Requirement):
     maximum_length = None
 
@@ -11,7 +13,7 @@ class MaximumLength(Requirement):
 
     def check(self, model, data):
         if self.column_name not in data or not data[self.column_name]:
-            return ''
+            return ""
         if len(data[self.column_name]) <= self.maximum_length:
-            return ''
+            return ""
         return f"'{self.column_name}' must be at most {self.maximum_length} characters long."

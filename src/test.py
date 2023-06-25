@@ -4,7 +4,7 @@ import sys, os
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-glob = '?*test.py'
+glob = "?*test.py"
 if len(sys.argv) > 1:
     path = sys.argv[1]
     # generally expecting a directory.  If it is a file then find the parent directory
@@ -15,9 +15,9 @@ if len(sys.argv) > 1:
         raise ValueError("Cannot find file or directory named %s" % path)
 
     # convert to python speak
-    path = path.replace('/', '.').strip('.')
+    path = path.replace("/", ".").strip(".")
 else:
-    path = '.'
+    path = "."
 
 tests = unittest.TestLoader().discover(path, pattern=glob)
 testRunner = unittest.runner.TextTestRunner()

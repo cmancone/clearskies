@@ -1,6 +1,8 @@
 from clearskies.authentication import Auth0JWKS
 from clearskies.handlers.exceptions import ClientError
 import datetime
+
+
 class JWKS(Auth0JWKS):
     _audience = None
     _jwks_url = None
@@ -16,7 +18,7 @@ class JWKS(Auth0JWKS):
         audience=None,
         issuer=None,
         documentation_security_name=None,
-        jwks_cache_time=86400
+        jwks_cache_time=86400,
     ):
         self._audience = audience
         self._issuer = issuer
@@ -28,10 +30,10 @@ class JWKS(Auth0JWKS):
         self._documentation_security_name = documentation_security_name
 
     def authenticate(self, input_output):
-        auth_header = input_output.get_request_header('authorization', True)
+        auth_header = input_output.get_request_header("authorization", True)
         if not auth_header:
             raise ClientError("Missing 'Authorization' header in request")
-        if auth_header[:7].lower() != 'bearer ':
+        if auth_header[:7].lower() != "bearer ":
             raise ClientError("Missing 'Bearer ' prefix in authorization header")
         self.validate_jwt(auth_header[7:])
         input_output.set_authorization_data(self.jwt_claims)
@@ -44,9 +46,9 @@ class JWKS(Auth0JWKS):
             raise ClientError(str(e))
         jwks = self._get_jwks()
         # find a matching key in the JWKS for the key in the JWT
-        rsa_key = next((key for key in jwks['keys'] if key['kid'] == unverified_header['kid']), False)
+        rsa_key = next((key for key in jwks["keys"] if key["kid"] == unverified_header["kid"]), False)
         if not rsa_key:
-            raise ClientError('No matching keys found')
+            raise ClientError("No matching keys found")
 
         try:
             self.jwt_claims = self._jose_jwt.decode(
@@ -57,11 +59,11 @@ class JWKS(Auth0JWKS):
                 algorithms=self._algorithms,
             )
         except self._jose_jwt.ExpiredSignatureError:
-            raise ClientError('JWT is expired')
+            raise ClientError("JWT is expired")
         except self._jose_jwt.JWTClaimsError:
-            raise ClientError('JWT has incorrect claims: double check the audience and issuer')
+            raise ClientError("JWT has incorrect claims: double check the audience and issuer")
         except Exception:
-            raise ClientError('Unable to parse JWT')
+            raise ClientError("Unable to parse JWT")
         return True
 
     def _get_jwks(self):

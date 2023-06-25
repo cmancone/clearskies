@@ -1,4 +1,6 @@
 from . import memory_backend
+
+
 class FileBackend(memory_backend.MemoryBackend):
     _tables = None
     _silent_on_missing_tables = False
@@ -9,7 +11,7 @@ class FileBackend(memory_backend.MemoryBackend):
         if file_name in self._tables:
             return
 
-        with open(file_name, 'r') as fp:
+        with open(file_name, "r") as fp:
             records = self.transform_data_from_file(fp.read())
         table = memory_backend.MemoryTable(model)
         id_column_name = model.id_column_name
@@ -22,7 +24,7 @@ class FileBackend(memory_backend.MemoryBackend):
         table_data = []
         id_index = {}
         record_index = 0
-        for (row_index, data) in enumerate(records):
+        for row_index, data in enumerate(records):
             record_id = data.get(id_column_name)
             if not record_id:
                 print(
@@ -39,7 +41,7 @@ class FileBackend(memory_backend.MemoryBackend):
         self._tables[file_name] = table
 
     def transform_data_from_file(self, file_contents):
-        raise NotImplementedError('You must define how to transform the file contents to a list of dicts')
+        raise NotImplementedError("You must define how to transform the file contents to a list of dicts")
 
     def records(self, configuration, model, next_page_data=None):
         self.create_table(model)

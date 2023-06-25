@@ -1,4 +1,6 @@
 from .requirement import Requirement
+
+
 class Required(Requirement):
     def check(self, model, data):
         # you'd think that "required" is straight forward and we want an input error if it isn't found.
@@ -15,7 +17,7 @@ class Required(Requirement):
             else:
                 has_value = bool(data[self.column_name])
         if has_value:
-            return ''
+            return ""
         if model.exists and model[self.column_name] and not has_some_value:
-            return ''
+            return ""
         return f"'{self.column_name}' is required."

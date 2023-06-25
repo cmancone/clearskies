@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from .condition_parser import ConditionParser
 from typing import Any, Callable, Dict, List, Tuple
+
+
 class Models(ABC, ConditionParser):
     # The database connection
     _backend = None
@@ -41,7 +43,7 @@ class Models(ABC, ConditionParser):
 
     @abstractmethod
     def model_class(self):
-        """ Return the model class that this models object will find/return instances of """
+        """Return the model class that this models object will find/return instances of"""
         pass
 
     def clone(self):
@@ -65,29 +67,29 @@ class Models(ABC, ConditionParser):
     @property
     def query_configuration(self):
         return {
-            'wheres': [*self.query_wheres],
-            'sorts': [*self.query_sorts],
-            'group_by_column': self.query_group_by_column,
-            'joins': [*self.query_joins],
-            'limit': self.query_limit,
-            'pagination': self.query_pagination,
-            'selects': self.query_selects,
-            'select_all': self.query_select_all,
-            'table_name': self.get_table_name(),
-            'model_columns': self._model_columns,
+            "wheres": [*self.query_wheres],
+            "sorts": [*self.query_sorts],
+            "group_by_column": self.query_group_by_column,
+            "joins": [*self.query_joins],
+            "limit": self.query_limit,
+            "pagination": self.query_pagination,
+            "selects": self.query_selects,
+            "select_all": self.query_select_all,
+            "table_name": self.get_table_name(),
+            "model_columns": self._model_columns,
         }
 
     @query_configuration.setter
     def query_configuration(self, configuration):
-        self.query_wheres = configuration['wheres']
-        self.query_sorts = configuration['sorts']
-        self.query_group_by_column = configuration['group_by_column']
-        self.query_joins = configuration['joins']
-        self.query_limit = configuration['limit']
-        self.query_pagination = configuration['pagination']
-        self.query_selects = configuration['selects']
-        self.query_select_all = configuration['select_all']
-        self._model_columns = configuration['model_columns']
+        self.query_wheres = configuration["wheres"]
+        self.query_sorts = configuration["sorts"]
+        self.query_group_by_column = configuration["group_by_column"]
+        self.query_joins = configuration["joins"]
+        self.query_limit = configuration["limit"]
+        self.query_pagination = configuration["pagination"]
+        self.query_selects = configuration["selects"]
+        self.query_select_all = configuration["select_all"]
+        self._model_columns = configuration["model_columns"]
 
     @property
     def model_columns(self):
@@ -114,13 +116,13 @@ class Models(ABC, ConditionParser):
         return self
 
     def where(self, where):
-        """ Adds the given condition to the query and returns a new Models object """
+        """Adds the given condition to the query and returns a new Models object"""
         return self.clone().where_in_place(where)
 
     def where_in_place(self, where):
-        """ Adds the given condition to the query for the current Models object """
+        """Adds the given condition to the query for the current Models object"""
         condition = self.parse_condition(where)
-        self._validate_column(condition['column'], 'filter', table=condition['table'])
+        self._validate_column(condition["column"], "filter", table=condition["table"])
         self.query_wheres.append(self.parse_condition(where))
         self.must_rexecute = True
         self._next_page_data = None
@@ -139,17 +141,17 @@ class Models(ABC, ConditionParser):
 
     def is_joined(self, table_name):
         for join in self.query_joins:
-            if join['right_table'] != table_name:
+            if join["right_table"] != table_name:
                 continue
 
-            return join['alias'] if join['alias'] else join['right_table']
+            return join["alias"] if join["alias"] else join["right_table"]
         return False
 
     def group_by(self, group_column):
         return self.clone().group_by_in_place(group_column)
 
     def group_by_in_place(self, group_column):
-        self._validate_column(group_column, 'group')
+        self._validate_column(group_column, "group")
         self.query_group_by_column = group_column
         self.must_rexecute = True
         self._next_page_data = None
@@ -163,7 +165,7 @@ class Models(ABC, ConditionParser):
         primary_table=None,
         secondary_column=None,
         secondary_direction=None,
-        secondary_table=None
+        secondary_table=None,
     ):
         return self.clone().sort_by_in_place(
             primary_column,
@@ -181,40 +183,32 @@ class Models(ABC, ConditionParser):
         primary_table=None,
         secondary_column=None,
         secondary_direction=None,
-        secondary_table=None
+        secondary_table=None,
     ):
         sorts = [
-            {
-                'table': primary_table,
-                'column': primary_column,
-                'direction': primary_direction
-            },
-            {
-                'table': secondary_table,
-                'column': secondary_column,
-                'direction': secondary_direction
-            },
+            {"table": primary_table, "column": primary_column, "direction": primary_direction},
+            {"table": secondary_table, "column": secondary_column, "direction": secondary_direction},
         ]
-        sorts = filter(lambda sort: sort['column'] is not None and sort['direction'] is not None, sorts)
+        sorts = filter(lambda sort: sort["column"] is not None and sort["direction"] is not None, sorts)
         self.query_sorts = list(map(lambda sort: self._normalize_and_validate_sort(sort), sorts))
         if len(self.query_sorts) == 0:
-            raise ValueError('Missing primary column or direction in call to sort_by')
+            raise ValueError("Missing primary column or direction in call to sort_by")
         self.must_rexecute = True
         self._next_page_data = None
         return self
 
     def _normalize_and_validate_sort(self, sort):
-        if 'column' not in sort or not sort['column']:
+        if "column" not in sort or not sort["column"]:
             raise ValueError("Missing 'column' for sort")
-        if 'direction' not in sort or not sort['direction']:
+        if "direction" not in sort or not sort["direction"]:
             raise ValueError("Missing 'direction' for sort: should be ASC or DESC")
-        direction = sort['direction'].upper().strip()
-        if direction != 'ASC' and direction != 'DESC':
+        direction = sort["direction"].upper().strip()
+        if direction != "ASC" and direction != "DESC":
             raise ValueError(f"Invalid sort direction: should be ASC or DESC, not '{direction}'")
-        self._validate_column(sort['column'], 'sort')
+        self._validate_column(sort["column"], "sort")
 
         # down the line we may ask the model class what columns we can sort on, but we're good for now
-        return {'column': sort['column'], 'direction': sort['direction'], 'table': sort.get('table')}
+        return {"column": sort["column"], "direction": sort["direction"], "table": sort.get("table")}
 
     def _validate_column(self, column_name, action, table=None):
         """
@@ -224,24 +218,24 @@ class Models(ABC, ConditionParser):
         # in some cases we are explicitly told the column name
         if table is not None:
             # note that table may be '', in which case it is implicitly "our" table
-            if table != '' and table != self.get_table_name():
+            if table != "" and table != self.get_table_name():
                 return
 
         # but in some cases we should check and see if it is included with the column name
-        column_name = column_name.replace('`', '')
-        if '.' in column_name:
-            parts = column_name.split('.')
+        column_name = column_name.replace("`", "")
+        if "." in column_name:
+            parts = column_name.split(".")
             if parts[0] != self.get_table_name():
                 return
-            column_name = column_name.split('.')[1]
+            column_name = column_name.split(".")[1]
 
         model_columns = self.model_columns
         if column_name not in model_columns:
             model_class = self.model_class()
             raise KeyError(
-                f"Cannot {action} by column '{column_name}' for model class {model_class.__name__} because this " + \
-                'column does not exist for the model.  You can suppress this error by adding a matching column ' + \
-                'to your model definition'
+                f"Cannot {action} by column '{column_name}' for model class {model_class.__name__} because this "
+                + "column does not exist for the model.  You can suppress this error by adding a matching column "
+                + "to your model definition"
             )
 
     def limit(self, limit):
@@ -260,8 +254,8 @@ class Models(ABC, ConditionParser):
         error = self._backend.validate_pagination_kwargs(kwargs, str)
         if error:
             raise ValueError(
-                f"Invalid pagination data for model {self.__class__.__name__} with backend " + \
-                f"{self._backend.__class__.__name__}. {error}"
+                f"Invalid pagination data for model {self.__class__.__name__} with backend "
+                + f"{self._backend.__class__.__name__}. {error}"
             )
         self.query_pagination = kwargs
         self.must_rexecute = True
@@ -269,7 +263,7 @@ class Models(ABC, ConditionParser):
         return self
 
     def find(self, where):
-        """ Returns the first model where condition """
+        """Returns the first model where condition"""
         return self.clone().where(where).first()
 
     def __len__(self):

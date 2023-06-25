@@ -1,9 +1,13 @@
 from collections import OrderedDict
 from abc import ABC
 from ..functional import validations
+
+
 class FakeModel:
     def __getattr__(self, key):
         return None
+
+
 class SchemaHelper(ABC):
     """
     A helper for handlers that want to accept arbitrary schemas as configuration inputs.
@@ -18,6 +22,7 @@ class SchemaHelper(ABC):
     }
     ```
     """
+
     def _check_schema(self, schema, writeable_columns, error_prefix):
         """
         Validates that the schema provided in the configuration is valid.
@@ -43,10 +48,9 @@ class SchemaHelper(ABC):
         if validations.is_model_or_class(schema):
             is_valid_schema = True
         else:
-            if not hasattr(schema, '__iter__') or type(schema) == str:
+            if not hasattr(schema, "__iter__") or type(schema) == str:
                 raise ValueError(
-                    f"{error_prefix} 'schema' should be a list of column definitions, but was instead a " +
-                    type(schema)
+                    f"{error_prefix} 'schema' should be a list of column definitions, but was instead a " + type(schema)
                 )
             for column in schema:
                 if type(column) != tuple:
@@ -66,10 +70,10 @@ class SchemaHelper(ABC):
             )
 
         if writeable_columns:
-            if not hasattr(writeable_columns, '__iter__') or type(writeable_columns) == str:
+            if not hasattr(writeable_columns, "__iter__") or type(writeable_columns) == str:
                 raise ValueError(
-                    f"{error_prefix} 'writeable_columns' should be a list of column names, but was instead a " +
-                    type(writeable_columns)
+                    f"{error_prefix} 'writeable_columns' should be a list of column names, but was instead a "
+                    + type(writeable_columns)
                 )
             columns = self._schema_to_columns(schema)
             for column in writeable_columns:
@@ -93,7 +97,7 @@ class SchemaHelper(ABC):
         elif validations.is_model_class(schema):
             columns = self._di.build(schema).columns()
         else:
-            columns = self._di.build('columns').configure(OrderedDict(schema), self.__class__)
+            columns = self._di.build("columns").configure(OrderedDict(schema), self.__class__)
 
         # if we don't have a list of columns to keep, then we're done
         if not columns_to_keep:
@@ -104,7 +108,7 @@ class SchemaHelper(ABC):
 
     def _find_input_errors(self, input_data, schema=None):
         if not schema:
-            schema = self.configuration('schema')
+            schema = self.configuration("schema")
         input_errors = {}
         fake_model = FakeModel()
         for column in schema.values():
@@ -116,7 +120,7 @@ class SchemaHelper(ABC):
 
     def _extra_column_errors(self, input_data, schema=None):
         if not schema:
-            schema = self.configuration('schema')
+            schema = self.configuration("schema")
         input_errors = {}
         for column_name in input_data.keys():
             if column_name not in schema:

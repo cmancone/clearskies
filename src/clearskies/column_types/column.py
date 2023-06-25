@@ -4,17 +4,19 @@ from ..autodoc.schema import String as AutoDocString
 from .. import input_requirements
 from .. import binding_config
 import inspect
+
+
 class Column(ABC):
     _auto_doc_class = AutoDocString
     _is_unique = None
     _is_required = None
     configuration = None
     common_configs = [
-        'input_requirements',
-        'class',
-        'is_writeable',
-        'is_temporary',
-        'on_change',
+        "input_requirements",
+        "class",
+        "is_writeable",
+        "is_temporary",
+        "on_change",
     ]
 
     def __init__(self, di):
@@ -25,7 +27,7 @@ class Column(ABC):
 
     @property
     def is_writeable(self):
-        is_writeable = self.config('is_writeable', True)
+        is_writeable = self.config("is_writeable", True)
         return True if (is_writeable or is_writeable is None) else False
 
     @property
@@ -35,7 +37,7 @@ class Column(ABC):
     @property
     def is_unique(self):
         if self._is_unique is None:
-            requirements = self.config('input_requirements')
+            requirements = self.config("input_requirements")
             self._is_unique = False
             for requirement in requirements:
                 if isinstance(requirement, input_requirements.Unique):
@@ -44,12 +46,12 @@ class Column(ABC):
 
     @property
     def is_temporary(self):
-        return bool(self.config('is_temporary', silent=True))
+        return bool(self.config("is_temporary", silent=True))
 
     @property
     def is_required(self):
         if self._is_required is None:
-            requirements = self.config('input_requirements')
+            requirements = self.config("input_requirements")
             self._is_required = False
             for requirement in requirements:
                 if isinstance(requirement, input_requirements.Required):
@@ -58,7 +60,7 @@ class Column(ABC):
 
     def model_column_configurations(self):
         nargs = len(inspect.getfullargspec(self.model_class.__init__).args) - 1
-        fake_model = self.model_class(*([''] * nargs))
+        fake_model = self.model_class(*([""] * nargs))
         return fake_model.all_columns()
 
     def configure(self, name, configuration, model_class):
@@ -71,7 +73,7 @@ class Column(ABC):
         self.configuration = configuration
 
     def _check_configuration(self, configuration):
-        """ Check the configuration and throw exceptions as needed """
+        """Check the configuration and throw exceptions as needed"""
         for key in self.required_configs:
             if key not in configuration:
                 raise KeyError(
@@ -82,25 +84,25 @@ class Column(ABC):
                 raise KeyError(
                     f"Configuration '{key}' not allowed for column '{self.name}' in '{self.model_class.__name__}'"
                 )
-        if 'is_writeable' in configuration and type(configuration['is_writeable']) != bool:
+        if "is_writeable" in configuration and type(configuration["is_writeable"]) != bool:
             raise ValueError("'is_writeable' must be a boolean")
-        if configuration.get('on_change'):
-            self._check_actions(configuration.get('on_change'), 'on_change')
+        if configuration.get("on_change"):
+            self._check_actions(configuration.get("on_change"), "on_change")
 
     def _finalize_configuration(self, configuration):
-        """ Make any changes to the configuration/fill in defaults """
-        if not 'input_requirements' in configuration:
-            configuration['input_requirements'] = []
+        """Make any changes to the configuration/fill in defaults"""
+        if not "input_requirements" in configuration:
+            configuration["input_requirements"] = []
         return configuration
 
     def _check_actions(self, actions, trigger_name):
-        """ Check that the given actions are actually understandable by the system """
+        """Check that the given actions are actually understandable by the system"""
         if type(actions) != list:
             raise ValueError(
-                "The actions provided to a trigger should be a list of callables/binding configs, but something " +
-                f"else was provided for the '{trigger_name}' trigger in '{self.model_class.__name__}'"
+                "The actions provided to a trigger should be a list of callables/binding configs, but something "
+                + f"else was provided for the '{trigger_name}' trigger in '{self.model_class.__name__}'"
             )
-        for (index, action) in enumerate(actions):
+        for index, action in enumerate(actions):
             # if it's callable we're good.  This includes functions, lambdas, callable objects,
             # and classes that will be callable when instantiated
             if callable(action):
@@ -151,7 +153,7 @@ class Column(ABC):
         if error:
             return {self.name: error}
 
-        for requirement in self.config('input_requirements'):
+        for requirement in self.config("input_requirements"):
             error = requirement.check(model, data)
             if error:
                 return {self.name: error}
@@ -160,7 +162,7 @@ class Column(ABC):
 
     def check_input(self, model, data):
         if self.name not in data or not data[self.name]:
-            return ''
+            return ""
         return self.input_error_for_value(data[self.name])
 
     def pre_save(self, data, model):
@@ -239,7 +241,7 @@ class Column(ABC):
                 action = self.di.build(action)
             elif inspect.isclass(action):
                 action = self.di.build(action)
-            if hasattr(action, '__call__'):
+            if hasattr(action, "__call__"):
                 self.di.call_function(action.__call__, model=model)
             else:
                 self.di.call_function(action.__call__, model=model)
@@ -247,7 +249,7 @@ class Column(ABC):
     def add_search(self, models, value, operator=None, relationship_reference=None):
         return models.where(self.build_condition(value, operator=operator))
 
-    def build_condition(self, value, operator=None, column_prefix=''):
+    def build_condition(self, value, operator=None, column_prefix=""):
         """
         This is called by the read (and related) handlers to turn user input into a condition.
 
@@ -264,7 +266,7 @@ class Column(ABC):
         """
         This is called when processing user data to decide if the end-user is specifying an allowed operator
         """
-        return operator == '='
+        return operator == "="
 
     def configure_n_plus_one(self, models):
         return models
@@ -273,24 +275,24 @@ class Column(ABC):
         return self.input_error_for_value(value, operator=operator)
 
     def input_error_for_value(self, value, operator=None):
-        return ''
+        return ""
 
-    def validate_models_class(self, models_class, config_name='parent_models_class'):
-        if not hasattr(models_class, 'model_class'):
-            if hasattr(models_class, 'columns_configuration'):
+    def validate_models_class(self, models_class, config_name="parent_models_class"):
+        if not hasattr(models_class, "model_class"):
+            if hasattr(models_class, "columns_configuration"):
                 raise ValueError(
-                    f"'{config_name}' in configuration for column '{self.name}' in model class " + \
-                    f"'{self.model_class.__name__}' appears to be a Model class, but it should be a Models class"
+                    f"'{config_name}' in configuration for column '{self.name}' in model class "
+                    + f"'{self.model_class.__name__}' appears to be a Model class, but it should be a Models class"
                 )
             else:
                 raise ValueError(
-                    f"'{config_name}' in configuration for column '{self.name}' should be a Models class, " + \
-                    f"but it appears to be something unknown."
+                    f"'{config_name}' in configuration for column '{self.name}' should be a Models class, "
+                    + f"but it appears to be something unknown."
                 )
 
     def camel_to_nice(self, string):
-        string = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', string)
-        string = re.sub('([a-z0-9])([A-Z])', r'\1 \2', string).lower()
+        string = re.sub("(.)([A-Z][a-z]+)", r"\1 \2", string)
+        string = re.sub("([a-z0-9])([A-Z])", r"\1 \2", string).lower()
         return string
 
     def documentation(self, name=None, example=None, value=None):

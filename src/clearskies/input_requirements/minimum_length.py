@@ -1,4 +1,6 @@
 from .requirement import Requirement
+
+
 class MinimumLength(Requirement):
     minimum_length = None
 
@@ -14,7 +16,7 @@ class MinimumLength(Requirement):
         # make a column required, and this will likely cause more problems than it solves.  In short, the minimum
         # length should only apply if data is actually being set
         if self.column_name not in data or not data[self.column_name]:
-            return ''
+            return ""
         if len(data[self.column_name]) >= self.minimum_length:
-            return ''
+            return ""
         return f"'{self.column_name}' must be at least {self.minimum_length} characters long."

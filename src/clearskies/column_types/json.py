@@ -1,5 +1,7 @@
 import json
 from .column import Column
+
+
 class JSON(Column):
     def __init__(self, di):
         super().__init__(di)
@@ -16,5 +18,5 @@ class JSON(Column):
 
     def to_backend(self, data):
         if self.name in data:
-            data[self.name] = json.dumps(data[self.name]) if data[self.name] else ''
+            data[self.name] = json.dumps(data[self.name]) if data[self.name] else ""
         return data

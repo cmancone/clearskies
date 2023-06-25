@@ -1,4 +1,6 @@
 from abc import ABC
+
+
 class Secrets:
     def create(self, path, value):
         raise NotImplementedError(

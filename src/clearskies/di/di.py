@@ -4,6 +4,8 @@ import re
 import sys
 import os
 from ..functional import string
+
+
 class DI:
     _bindings = None
     _building = None
@@ -26,7 +28,7 @@ class DI:
         if modules is not None:
             self.add_modules(modules)
         if bindings is not None:
-            for (key, value) in bindings.items():
+            for key, value in bindings.items():
                 self.bind(key, value)
         if additional_configs is not None:
             self.add_additional_configs(additional_configs)
@@ -36,27 +38,27 @@ class DI:
             classes = [classes]
         for add_class in classes:
             name = string.camel_case_to_snake_case(add_class.__name__)
-            #if name in self._classes:
+            # if name in self._classes:
             ## if we're re-adding the same class twice then just ignore it.
-            #if id(add_class) == self._classes[name]['id']:
-            #continue
+            # if id(add_class) == self._classes[name]['id']:
+            # continue
 
             ## otherwise throw an exception
-            #raise ValueError(f"More than one class with a name of '{name}' was added")
+            # raise ValueError(f"More than one class with a name of '{name}' was added")
 
-            self._classes[name] = {'id': id(add_class), 'class': add_class}
+            self._classes[name] = {"id": id(add_class), "class": add_class}
 
             # if this is a model class then also add a plural version of its name
             # to the DI configuration
-            if hasattr(add_class, 'id_column_name'):
-                self._classes[string.make_plural(name)] = {'id': id(add_class), 'class': add_class}
+            if hasattr(add_class, "id_column_name"):
+                self._classes[string.make_plural(name)] = {"id": id(add_class), "class": add_class}
 
     def add_modules(self, modules, root=None, is_root=True):
         if inspect.ismodule(modules):
             modules = [modules]
 
         for module in modules:
-            if not hasattr(module, '__file__') or not module.__file__:
+            if not hasattr(module, "__file__") or not module.__file__:
                 continue
             module_id = id(module)
             if is_root:
@@ -66,7 +68,7 @@ class DI:
                 continue
             self._added_modules[module_id] = True
 
-            for (name, item) in module.__dict__.items():
+            for name, item in module.__dict__.items():
                 if inspect.isclass(item):
                     try:
                         class_root = os.path.dirname(inspect.getfile(item))
@@ -77,12 +79,12 @@ class DI:
                         continue
                     self.add_classes([item])
                 if inspect.ismodule(item):
-                    if not hasattr(item, '__file__') or not item.__file__:
+                    if not hasattr(item, "__file__") or not item.__file__:
                         continue
                     child_root = os.path.dirname(item.__file__)
                     if child_root[:root_len] != root:
                         continue
-                    if module.__name__ == 'clearskies':
+                    if module.__name__ == "clearskies":
                         break
                     self.add_modules([item], root=root, is_root=False)
 
@@ -114,10 +116,10 @@ class DI:
             if not inspect.isclass(thing.object_class):
                 raise ValueError("BindingConfig contained a non-class!")
             instance = self.build_class(thing.object_class, context=context, cache=cache)
-            if (thing.args or thing.kwargs) and not hasattr(instance, 'configure'):
+            if (thing.args or thing.kwargs) and not hasattr(instance, "configure"):
                 raise ValueError(
-                    f"Cannot build instance of class '{binding.object_class.__name__}' " + \
-                    "because it is missing the 'configure' method"
+                    f"Cannot build instance of class '{binding.object_class.__name__}' "
+                    + "because it is missing the 'configure' method"
                 )
             instance.configure(*thing.args, **thing.kwargs)
             return instance
@@ -141,7 +143,7 @@ class DI:
           5. Things set in "additional_config" classes
           6. Method on DI class called `provide_[name]`
         """
-        if name == 'di':
+        if name == "di":
             return self
 
         if name in self._prepared and cache:
@@ -154,7 +156,7 @@ class DI:
             return built_value
 
         if name in self._classes:
-            built_value = self.build_class(self._classes[name]['class'], context=context)
+            built_value = self.build_class(self._classes[name]["class"], context=context)
             if cache:
                 self._prepared[name] = built_value
             return built_value
@@ -170,16 +172,16 @@ class DI:
                 self._prepared[name] = built_value
             return built_value
 
-        if hasattr(self, f'provide_{name}'):
-            built_value = self.call_function(getattr(self, f'provide_{name}'))
+        if hasattr(self, f"provide_{name}"):
+            built_value = self.call_function(getattr(self, f"provide_{name}"))
             if cache:
                 self._prepared[name] = built_value
             return built_value
 
-        context_note = f" for {context}" if context else ''
+        context_note = f" for {context}" if context else ""
         raise ValueError(
-            f"I was asked to build {name}{context_note} but there is no added class, configured binding, " + \
-            f"or a corresponding 'provide_{name}' method for this name."
+            f"I was asked to build {name}{context_note} but there is no added class, configured binding, "
+            + f"or a corresponding 'provide_{name}' method for this name."
         )
 
     def mock_class(self, class_or_name, replacement):
@@ -232,13 +234,12 @@ class DI:
         # building a class, see if its id is in self._building, raise an error if so, or continue if not.
         class_id = id(class_to_build)
         if class_id in self._building:
-            original_context_label = f"'{self._building[class_id]}'" \
-                if self._building[class_id] \
-                is not None \
-                else 'itself'
+            original_context_label = (
+                f"'{self._building[class_id]}'" if self._building[class_id] is not None else "itself"
+            )
             raise ValueError(
-                f"Circular dependencies detected while building '{class_to_build.__name__}' because '" + \
-                f"{class_to_build.__name__} is a dependency of both '{context}' and {original_context_label}"
+                f"Circular dependencies detected while building '{class_to_build.__name__}' because '"
+                + f"{class_to_build.__name__} is a dependency of both '{context}' and {original_context_label}"
             )
 
         self._building[class_id] = context
@@ -267,12 +268,13 @@ class DI:
         # but this will be fooled by methods with decorators.  There doesn't seem to be a good solution to this
         # that works in all cases: https://stackoverflow.com/a/50074581/1921979
         call_arguments = args_data.args
-        if hasattr(callable_to_execute, '__self__'):
+        if hasattr(callable_to_execute, "__self__"):
             call_arguments = call_arguments[1:]
 
         args = [
-            kwargs[call_argument] if call_argument in kwargs else
-            self.build_from_name(call_argument, context=callable_to_execute.__name__, cache=True)
+            kwargs[call_argument]
+            if call_argument in kwargs
+            else self.build_from_name(call_argument, context=callable_to_execute.__name__, cache=True)
             for call_argument in call_arguments
         ]
 
@@ -302,12 +304,12 @@ class DI:
     def init(cls, *binding_classes, **bindings):
         modules = None
         additional_configs = None
-        if 'modules' in bindings:
-            modules = bindings['modules']
-            del bindings['modules']
-        if 'additional_configs' in bindings:
-            additional_configs = bindings['additional_configs']
-            del bindings['additional_configs']
+        if "modules" in bindings:
+            modules = bindings["modules"]
+            del bindings["modules"]
+        if "additional_configs" in bindings:
+            additional_configs = bindings["additional_configs"]
+            del bindings["additional_configs"]
 
         di = cls(classes=binding_classes, modules=modules, bindings=bindings, additional_configs=additional_configs)
         return di

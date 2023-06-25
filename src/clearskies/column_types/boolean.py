@@ -1,20 +1,22 @@
 from .column import Column
 from ..autodoc.schema import Boolean as AutoDocBoolean
+
+
 class Boolean(Column):
     _auto_doc_class = AutoDocBoolean
 
     my_configs = {
-        'on_true': None,
-        'on_false': None,
+        "on_true": None,
+        "on_false": None,
     }
 
     def __init__(self, di):
         super().__init__(di)
 
     def _check_configuration(self, configuration):
-        """ Check the configuration and throw exceptions as needed """
+        """Check the configuration and throw exceptions as needed"""
         super()._check_configuration(configuration)
-        for trigger in ['on_true', 'on_false']:
+        for trigger in ["on_true", "on_false"]:
             if configuration.get(trigger):
                 self._check_actions(configuration[trigger], trigger)
 
@@ -31,12 +33,12 @@ class Boolean(Column):
         return bool(value)
 
     def input_error_for_value(self, value, operator=None):
-        return f'{self.name} must be a boolean' if type(value) != bool else ''
+        return f"{self.name} must be a boolean" if type(value) != bool else ""
 
-    def build_condition(self, value, operator=None, column_prefix=''):
-        condition_value = '1' if value else '0'
+    def build_condition(self, value, operator=None, column_prefix=""):
+        condition_value = "1" if value else "0"
         if not operator:
-            operator = '='
+            operator = "="
         return f"{column_prefix}{self.name}{operator}{condition_value}"
 
     def save_finished(self, model):

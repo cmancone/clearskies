@@ -5,6 +5,8 @@ from ..application import Application
 from ..handlers.callable import Callable as CallableHandler
 from ..handlers.simple_routing import SimpleRouting as SimpleRoutingHandler
 from typing import Any, Callable, Dict, Union, List
+
+
 def convert_to_application(
     application: Union[Application, Dict[str, Any], Callable, List[Callable], types.ModuleType]
 ) -> Application:
@@ -39,65 +41,71 @@ def convert_to_application(
         return convert_list_to_application(application)
 
     # if it has the handler_class attribute, then just assume it is an application object
-    if hasattr(application, 'handler_class'):
+    if hasattr(application, "handler_class"):
         return application
 
     # check for a dictionary with the same thing (in case the developer doesn't want to bother with
     # an application)
-    if hasattr(application, '__getitem__') and 'handler_class' in application:
-        if not 'handler_config' in application:
+    if hasattr(application, "__getitem__") and "handler_class" in application:
+        if not "handler_config" in application:
             raise ValueError(
-                "build_context was passed a dictionary-like object with 'handler_class', but not " + \
-                "'handler_config'.  Both are required to build an application"
+                "build_context was passed a dictionary-like object with 'handler_class', but not "
+                + "'handler_config'.  Both are required to build an application"
             )
-        return Application(application['handler_class'], application['handler_config'])
+        return Application(application["handler_class"], application["handler_config"])
 
     # if we have a wrapped application, then it's a callable with decorators and we can invoke
     # it to return an application
-    if getattr(application, 'is_wrapped_application', False):
+    if getattr(application, "is_wrapped_application", False):
         return application if type(application) == Application else application()
 
     # if we get a callable, then use the callable handler class
     if callable(application):
-        return Application(CallableHandler, {'callable': application})
+        return Application(CallableHandler, {"callable": application})
 
     raise ValueError(
         "A context was passed something but I'm not smart enough to figure out what it is :(  In general you want to pass in an Application, a callable, or a callable with decorators from the clearskies.decorators module.  You can also try a dictionary with `handler_class` and `handler_config` options.  I'll link to the docs eventually."
     )
+
+
 def convert_module_to_application(module: types.ModuleType) -> Application:
     """
     Take a module, find any routing applications in it, and convert it to a single application
     """
-    if not hasattr(module, '__file__') or not module.__file__:
+    if not hasattr(module, "__file__") or not module.__file__:
         raise ValueError("I'm trying to find routed functions in a module but I was passed a python-native module")
     root = os.path.dirname(module.__file__)
     routes = convert_list_to_application(return_routed_functions(module, root, len(root)))
     return routes
+
+
 def return_routed_functions(module: types.ModuleType, root: str, root_len: int) -> List[Application]:
     routed_functions = []
-    for (name, item) in module.__dict__.items():
+    for name, item in module.__dict__.items():
         if type(item) == Application:
             routed_functions.append(item)
             continue
-        if getattr(item, 'is_wrapped_application', False):
+        if getattr(item, "is_wrapped_application", False):
             routed_functions.append(item())
             continue
         if inspect.ismodule(item):
-            if not hasattr(item, '__file__') or not item.__file__:
+            if not hasattr(item, "__file__") or not item.__file__:
                 continue
             child_root = os.path.dirname(item.__file__)
             if child_root[:root_len] != root:
                 continue
-            if module.__name__ == 'clearskies':
+            if module.__name__ == "clearskies":
                 continue
             routed_functions.extend(return_routed_functions(item, root, root_len))
     return routed_functions
+
+
 def convert_list_to_application(applications: List[Union[Application, Callable]]) -> Application:
     """
     Take a list of applications and convert it into a single application.
     """
     # First check the items.  Only callables or SimpleRouting handlers are allowed.  Everything else is too complicated.
-    for (index, application) in enumerate(applications):
+    for index, application in enumerate(applications):
         if not callable(application) and application.handler_class not in [CallableHandler, SimpleRoutingHandler]:
             raise ValueError(
                 f"A context was provided with a list of applications, but in this case all the applications must be callables or wrapped in a SimpleRouting function.  Item #{index+1} was not either of these things."
@@ -117,14 +125,14 @@ def convert_list_to_application(applications: List[Union[Application, Callable]]
     authentication = None
     for application in applications:
         converted = convert_to_application(application)
-        if not authentication and converted.handler_config.get('authentication'):
-            authentication = converted.handler_config.get('authentication')
+        if not authentication and converted.handler_config.get("authentication"):
+            authentication = converted.handler_config.get("authentication")
         routes.append(ensure_routing(converted))
-        for di_key in ['bindings', 'binding_classes', 'binding_modules', 'additional_configs']:
+        for di_key in ["bindings", "binding_classes", "binding_modules", "additional_configs"]:
             di_value = getattr(application, di_key, None)
             if di_value:
-                if di_key == 'bindings':
-                    di_config['bindings'] = {**di_config.get('bindings', {}), **di_value}
+                if di_key == "bindings":
+                    di_config["bindings"] = {**di_config.get("bindings", {}), **di_value}
                 else:
                     di_config[di_key] = [*di_config.get(di_key, []), *di_value]
 
@@ -134,11 +142,15 @@ def convert_list_to_application(applications: List[Union[Application, Callable]]
         )
 
     return Application(
-        SimpleRoutingHandler, {
-            'authentication': authentication,
-            'routes': [ensure_routing(convert_to_application(application)) for application in applications]
-        }, **di_config
+        SimpleRoutingHandler,
+        {
+            "authentication": authentication,
+            "routes": [ensure_routing(convert_to_application(application)) for application in applications],
+        },
+        **di_config,
     )
+
+
 def ensure_routing(application: Application) -> Application:
     """
     Add routing to an application by wrapping it in a SimpleRouting handler if it isn't already.
@@ -150,23 +162,25 @@ def ensure_routing(application: Application) -> Application:
     # an application and it should either be a SimpleRoutingHnadler (which we took care of above) or it
     # should be a callable application. To add routing we wrap it in a SimpleRouting handler and use the callable
     # name as the route.  Still, let's just check even if it isn't the most meanginful error message.
-    if not application.handler_config.get('callable'):
+    if not application.handler_config.get("callable"):
         raise ValueError(
             "Huh, I should have an application with a callable handler class but it doesn't have a callable so I don't know what went wrong :("
         )
-    name = application.handler_config['callable'].__name__
-    if name == '<lambda>':
+    name = application.handler_config["callable"].__name__
+    if name == "<lambda>":
         raise ValueError(
             "A lambda was sent to the application for auto-routing, but since lambdas don't have names, I can't create the route for it.  To fix this, switch it out for a regular function, attach a decorator with a path, or manually wrap it in a SimpleRouting handler"
         )
     return Application(
-        SimpleRoutingHandler, {
-            'authentication':
-            application.handler_config.get('authentication', None),
-            'routes': [{
-                'path': name,
-                'handler_class': application.handler_class,
-                'handler_config': application.handler_config,
-            }]
-        }
+        SimpleRoutingHandler,
+        {
+            "authentication": application.handler_config.get("authentication", None),
+            "routes": [
+                {
+                    "path": name,
+                    "handler_class": application.handler_class,
+                    "handler_config": application.handler_config,
+                }
+            ],
+        },
     )

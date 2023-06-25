@@ -2,13 +2,15 @@ from collections import OrderedDict
 from collections.abc import Sequence
 import inspect
 from .binding_config import BindingConfig
+
+
 class Columns:
     def __init__(self, di):
         self.di = di
 
     def configure(self, definitions, model_class, overrides=None):
         columns = OrderedDict()
-        for (name, configuration) in definitions.items():
+        for name, configuration in definitions.items():
             name = name.strip()
             if not name:
                 raise ValueError(f"Missing name for column in '{model_class.__name__}'")
@@ -17,35 +19,36 @@ class Columns:
             column_overrides = overrides[name] if (overrides is not None and name in overrides) else {}
             configuration = {
                 **configuration,
-                **column_overrides, 'input_requirements':
-                self._resolve_input_requirements(
+                **column_overrides,
+                "input_requirements": self._resolve_input_requirements(
                     self._merge_input_requirements(
-                        configuration.get('input_requirements'),
-                        column_overrides.get('input_requirements'),
+                        configuration.get("input_requirements"),
+                        column_overrides.get("input_requirements"),
                     ),
                     name,
                     model_class.__name__,
-                )
+                ),
             }
             columns[name] = self.build_column(name, configuration, model_class)
 
         # overrides can add columns too - need to handle those separately
         if overrides is not None:
-            for (name, configuration) in overrides.items():
+            for name, configuration in overrides.items():
                 if name in columns:
                     continue
-                configuration['input_requirements'] = \
-                    self._resolve_input_requirements(configuration['input_requirements'], name, model_class.__name__) \
-                    if 'input_requirements' in configuration \
+                configuration["input_requirements"] = (
+                    self._resolve_input_requirements(configuration["input_requirements"], name, model_class.__name__)
+                    if "input_requirements" in configuration
                     else []
+                )
                 columns[name] = self.build_column(name, configuration, model_class)
 
         return columns
 
     def build_column(self, name, configuration, model_class):
-        if not 'class' in configuration:
+        if not "class" in configuration:
             raise ValueError(f"Missing column class for column {name} in {model_class.__name__}")
-        column = self.di.build(configuration['class'], cache=False)
+        column = self.di.build(configuration["class"], cache=False)
         column.configure(name, configuration, model_class)
         return column
 
@@ -92,8 +95,8 @@ class Columns:
         elif isinstance(requirement, Sequence) and type(requirement) != str:
             if not inspect.isclass(requirement[0]):
                 raise ValueError(
-                    f"{error_prefix} incorrect value for input_requirement. First element should " +
-                    f"be the Requirement class, but instead {type(requirement[0])} was found"
+                    f"{error_prefix} incorrect value for input_requirement. First element should "
+                    + f"be the Requirement class, but instead {type(requirement[0])} was found"
                 )
             return [requirement[0], requirement[1:], {}]
         else:
@@ -101,7 +104,7 @@ class Columns:
 
     def _resolve_input_requirements(self, input_requirements, column_name, model_class_name):
         error_prefix = f"Configuration error for column '{column_name}' in model '{model_class_name}':"
-        if not hasattr(input_requirements, '__iter__'):
+        if not hasattr(input_requirements, "__iter__"):
             raise ValueError(
                 f"{error_prefix} 'input_requirements' should be an iterable but is {type(input_requirements)}"
             )

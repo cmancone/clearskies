@@ -5,6 +5,8 @@ import inspect
 from typing import Any, Callable, Dict, List, Tuple
 from ..autodoc.schema import Integer as AutoDocInteger
 from .. import model
+
+
 class Null:
     def __lt__(self, other):
         return True
@@ -14,6 +16,8 @@ class Null:
 
     def __eq__(self, other):
         return isinstance(other, Null) or other is None
+
+
 # for some comparisons we prefer comparing floats, but we need to be able to
 # fall back on string comparison
 def gentle_float_conversion(value):
@@ -21,11 +25,13 @@ def gentle_float_conversion(value):
         return float(value)
     except:
         return value
+
+
 def _sort(row_a, row_b, sorts):
     for sort in sorts:
-        reverse = 1 if sort['direction'].lower() == 'asc' else -1
-        value_a = row_a[sort['column']] if sort['column'] in row_a else None
-        value_b = row_b[sort['column']] if sort['column'] in row_b else None
+        reverse = 1 if sort["direction"].lower() == "asc" else -1
+        value_a = row_a[sort["column"]] if sort["column"] in row_a else None
+        value_b = row_b[sort["column"]] if sort["column"] in row_b else None
         if value_a == value_b:
             continue
         if value_a is None:
@@ -34,6 +40,8 @@ def _sort(row_a, row_b, sorts):
             return 1 * reverse
         return reverse * (1 if value_a > value_b else -1)
     return 0
+
+
 class MemoryTable:
     _table_name = None
     _column_names = None
@@ -46,36 +54,23 @@ class MemoryTable:
     # here be dragons.  This is not a 100% drop-in replacement for the equivalent SQL operators
     # https://codereview.stackexchange.com/questions/259198/in-memory-table-filtering-in-python
     _operator_lambda_builders = {
-        '<=>':
-        lambda column, values, null: lambda row: row.get(column, null) == values[0],
-        '!=':
-        lambda column, values, null: lambda row: row.get(column, null) != values[0],
-        '<=':
-        lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)
-                                                                         ) <= gentle_float_conversion(values[0]),
-        '>=':
-        lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)
-                                                                         ) >= gentle_float_conversion(values[0]),
-        '>':
-        lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)
-                                                                         ) > gentle_float_conversion(values[0]),
-        '<':
-        lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null)) <
-        gentle_float_conversion(values[0]),
-        '=':
-        lambda column, values, null: lambda row: (str(row[column]) if column in row else null) == str(values[0]),
-        'is not null':
-        lambda column, values, null: lambda row: (column in row and row[column] is not None),
-        'is null':
-        lambda column, values, null: lambda row: (column not in row or row[column] is None),
-        'is not':
-        lambda column, values, null: lambda row: row.get(column, null) != values[0],
-        'is':
-        lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
-        'like':
-        lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
-        'in':
-        lambda column, values, null: lambda row: row.get(column, null) in values,
+        "<=>": lambda column, values, null: lambda row: row.get(column, null) == values[0],
+        "!=": lambda column, values, null: lambda row: row.get(column, null) != values[0],
+        "<=": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+        <= gentle_float_conversion(values[0]),
+        ">=": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+        >= gentle_float_conversion(values[0]),
+        ">": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+        > gentle_float_conversion(values[0]),
+        "<": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+        < gentle_float_conversion(values[0]),
+        "=": lambda column, values, null: lambda row: (str(row[column]) if column in row else null) == str(values[0]),
+        "is not null": lambda column, values, null: lambda row: (column in row and row[column] is not None),
+        "is null": lambda column, values, null: lambda row: (column not in row or row[column] is None),
+        "is not": lambda column, values, null: lambda row: row.get(column, null) != values[0],
+        "is": lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
+        "like": lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
+        "in": lambda column, values, null: lambda row: row.get(column, null) in values,
     }
 
     def __init__(self, model):
@@ -158,45 +153,47 @@ class MemoryTable:
         rows = list(rows)
         if filter_only:
             return rows
-        if 'sorts' in configuration and configuration['sorts']:
-            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration['sorts'])))
-        if 'limit' in configuration or ('pagination' in configuration and configuration['pagination'].get('start')):
+        if "sorts" in configuration and configuration["sorts"]:
+            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration["sorts"])))
+        if "limit" in configuration or ("pagination" in configuration and configuration["pagination"].get("start")):
             number_rows = len(rows)
-            start = int(configuration.get('pagination', {}).get('start', 0))
+            start = int(configuration.get("pagination", {}).get("start", 0))
             if not start:
                 start = 0
             if int(start) >= number_rows:
                 start = number_rows - 1
             end = len(rows)
-            if configuration.get('limit') and start + int(configuration['limit']) <= number_rows:
-                end = start + int(configuration['limit'])
+            if configuration.get("limit") and start + int(configuration["limit"]) <= number_rows:
+                end = start + int(configuration["limit"])
             if end < number_rows and type(next_page_data) == dict:
-                next_page_data['start'] = start + configuration['limit']
+                next_page_data["start"] = start + configuration["limit"]
             rows = rows[start:end]
         return rows
 
     def _where_as_filter(self, where):
-        column = where['column']
-        values = where['values']
-        return self._operator_lambda_builders[where['operator'].lower()](column, values, self.null)
+        column = where["column"]
+        values = where["values"]
+        return self._operator_lambda_builders[where["operator"].lower()](column, values, self.null)
+
+
 class MemoryBackend(Backend):
     _tables = None
     _silent_on_missing_tables = False
 
     _allowed_configs = [
-        'table_name',
-        'wheres',
-        'joins',
-        'sorts',
-        'pagination',
-        'length',
-        'selects',
-        'select_all',
-        'model_columns',
+        "table_name",
+        "wheres",
+        "joins",
+        "sorts",
+        "pagination",
+        "length",
+        "selects",
+        "select_all",
+        "model_columns",
     ]
 
     _required_configs = [
-        'table_name',
+        "table_name",
     ]
 
     def __init__(self):
@@ -231,7 +228,7 @@ class MemoryBackend(Backend):
         return self._tables[model.table_name()].delete(id)
 
     def count(self, configuration, model):
-        if configuration['table_name'] not in self._tables:
+        if configuration["table_name"] not in self._tables:
             if self._silent_on_missing_tables:
                 return 0
 
@@ -240,17 +237,17 @@ class MemoryBackend(Backend):
             )
 
         # this is easy if we have no joins, so just return early so I don't have to think about it
-        if 'joins' not in configuration or not configuration['joins']:
-            wheres = configuration['wheres'] if 'wheres' in configuration else []
-            return self._tables[configuration['table_name']].count(configuration, wheres)
+        if "joins" not in configuration or not configuration["joins"]:
+            wheres = configuration["wheres"] if "wheres" in configuration else []
+            return self._tables[configuration["table_name"]].count(configuration, wheres)
 
         # we can ignore left joins when counting
         configuration = {**configuration}
-        configuration['joins'] = [join for join in configuration['joins'] if join['type'] != 'LEFT']
+        configuration["joins"] = [join for join in configuration["joins"] if join["type"] != "LEFT"]
         return len(self.rows_with_joins(configuration))
 
     def records(self, configuration, model, next_page_data=None):
-        table_name = configuration['table_name']
+        table_name = configuration["table_name"]
         if table_name not in self._tables:
             if self._silent_on_missing_tables:
                 return []
@@ -260,8 +257,8 @@ class MemoryBackend(Backend):
             )
 
         # this is easy if we have no joins, so just return early so I don't have to think about it
-        if 'joins' not in configuration or not configuration['joins']:
-            wheres = configuration['wheres'] if 'wheres' in configuration else []
+        if "joins" not in configuration or not configuration["joins"]:
+            wheres = configuration["wheres"] if "wheres" in configuration else []
             return self._tables[table_name].rows(configuration, wheres, next_page_data=next_page_data)
 
         rows = self.rows_with_joins(configuration)
@@ -270,33 +267,33 @@ class MemoryBackend(Backend):
         # table.
         rows = [row[table_name] for row in rows]
 
-        if 'sorts' in configuration and configuration['sorts']:
-            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration['sorts'])))
-        if 'start' in configuration.get('pagination', {}) or 'limit' in configuration:
+        if "sorts" in configuration and configuration["sorts"]:
+            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, configuration["sorts"])))
+        if "start" in configuration.get("pagination", {}) or "limit" in configuration:
             number_rows = len(rows)
-            start = configuration.get('pagination', {}).get('start', 0)
+            start = configuration.get("pagination", {}).get("start", 0)
             if start >= number_rows:
                 start = number_rows - 1
             end = len(rows)
-            if configuration.get('limit') and start + configuration.get('limit') <= number_rows:
-                end = start + configuration.get('limit')
+            if configuration.get("limit") and start + configuration.get("limit") <= number_rows:
+                end = start + configuration.get("limit")
             rows = rows[start:end]
             if end < number_rows and type(next_page_data) == dict:
-                next_page_data['start'] = start + configuration['limit']
+                next_page_data["start"] = start + configuration["limit"]
         return rows
 
     def rows_with_joins(self, configuration):
-        joins = configuration['joins']
-        wheres = configuration['wheres'] if 'wheres' in configuration else []
+        joins = configuration["joins"]
+        wheres = configuration["wheres"] if "wheres" in configuration else []
         # quick sanity check
-        for join in configuration['joins']:
-            if join['table'] not in self._tables:
+        for join in configuration["joins"]:
+            if join["table"] not in self._tables:
                 raise ValueError(
                     f"Join '{join['raw']}' refrences table '{join['table']}' which does not exist in MemoryBackend"
                 )
 
         # start with the matches in the main table
-        left_table = configuration['table_name']
+        left_table = configuration["table_name"]
         main_rows = self._tables[left_table].rows(
             configuration, self._wheres_for_table(left_table, wheres, is_left=True), filter_only=True
         )
@@ -313,10 +310,10 @@ class MemoryBackend(Backend):
         # we can't.  If we get to the end and there are still joins left in the queue, then repeat, and eventually
         # complain (since the joins may not be a valid object graph)
         for i in range(10):
-            for (index, join) in enumerate(joins):
-                left_table = join['left_table']
-                alias = join['alias']
-                right_table = join['right_table']
+            for index, join in enumerate(joins):
+                left_table = join["left_table"]
+                alias = join["alias"]
+                right_table = join["right_table"]
                 table_name_for_join = alias if alias else right_table
                 if left_table not in joined_tables:
                     continue
@@ -337,9 +334,9 @@ class MemoryBackend(Backend):
 
         if joins:
             raise ValueError(
-                "Unable to fulfill joins for query - perhaps a necessary join is missing? " + \
-                "One way to get this error is if you tried to join on another table which hasn't been " + \
-                "joined itself.  e.g.: SELECT * FROM users JOIN type ON type.id=categories.type_id"
+                "Unable to fulfill joins for query - perhaps a necessary join is missing? "
+                + "One way to get this error is if you tried to join on another table which hasn't been "
+                + "joined itself.  e.g.: SELECT * FROM users JOIN type ON type.id=categories.type_id"
             )
 
         return rows
@@ -358,13 +355,13 @@ class MemoryBackend(Backend):
                 raise KeyError(f"MemoryBackend does not support config '{key}'. You may be using the wrong backend")
         for key in self._required_configs:
             if key not in configuration:
-                raise KeyError(f'Missing required configuration key {key}')
+                raise KeyError(f"Missing required configuration key {key}")
 
         for key in self._allowed_configs:
             if not key in configuration:
-                configuration[key] = [] if key[-1] == 's' else ''
-        if 'pagination' not in configuration or 'start' not in configuration['pagination']:
-            configuration['pagination'] = {'start': 0}
+                configuration[key] = [] if key[-1] == "s" else ""
+        if "pagination" not in configuration or "start" not in configuration["pagination"]:
+            configuration["pagination"] = {"start": 0}
         return configuration
 
     def _wheres_for_table(self, table_name, wheres, is_left=False):
@@ -374,7 +371,7 @@ class MemoryBackend(Backend):
         If you set is_left=True then it assumes this is the "default" table and so will also return conditions
         without a table name.
         """
-        return [where for where in wheres if where['table'] == table_name or (is_left and not where['table'])]
+        return [where for where in wheres if where["table"] == table_name or (is_left and not where["table"])]
 
     def join_rows(self, rows, join_rows, join_config, joined_tables):
         """
@@ -401,23 +398,25 @@ class MemoryBackend(Backend):
 
         which will then get merged into the rows variable properly (which it will return as a new list)
         """
-        join_table_name = join_config['alias'] if join_config['alias'] else join_config['right_table']
-        join_type = join_config['type']
+        join_table_name = join_config["alias"] if join_config["alias"] else join_config["right_table"]
+        join_type = join_config["type"]
 
         # loop through each entry in rows, find a matching table in join_rows, and take action depending on join type
         rows = [*rows]
         matched_right_row_indexes = []
-        left_table = join_config['left_table']
-        left_column = join_config['left_column']
-        for (row_index, row) in enumerate(rows):
+        left_table = join_config["left_table"]
+        left_column = join_config["left_column"]
+        for row_index, row in enumerate(rows):
             matching_row = None
             if left_table not in row:
                 raise ValueError("Attempted to check join data from unjoined table, which should not happen...")
-            left_value = row[left_table][left_column] if (
-                row[left_table] is not None and left_column in row[left_table]
-            ) else None
-            for (join_index, join) in enumerate(join_rows):
-                right_value = join[join_config['right_column']] if join_config['right_column'] in join else None
+            left_value = (
+                row[left_table][left_column]
+                if (row[left_table] is not None and left_column in row[left_table])
+                else None
+            )
+            for join_index, join in enumerate(join_rows):
+                right_value = join[join_config["right_column"]] if join_config["right_column"] in join else None
                 # for now we are assuming the operator for the matching is `=`.  This is mainly because
                 # our join parsing doesn't bother checking for the matching operator, because it is `=` in
                 # 99% of cases.  We can always adjust down the line.
@@ -429,11 +428,11 @@ class MemoryBackend(Backend):
             # next action depends on the join type and match success
             # for left and outer joins we always preserve records in the main table, so just plop in our match
             # (even if it is None)
-            if join_type == 'LEFT' or join_type == 'OUTER':
+            if join_type == "LEFT" or join_type == "OUTER":
                 rows[row_index][join_table_name] = matching_row
 
             # for inner and right joins we delete the row if we don't have a match
-            elif join_type == 'INNER' or join_type == 'RIGHT':
+            elif join_type == "INNER" or join_type == "RIGHT":
                 if matching_row is not None:
                     rows[row_index][join_table_name] = matching_row
                 else:
@@ -444,43 +443,46 @@ class MemoryBackend(Backend):
         rows = [row for row in rows if row is not None]
 
         # now for outer/right rows we add on any unmatched rows
-        if (join_type == 'OUTER' or join_type == 'RIGHT') and len(matched_right_row_indexes) < len(join_rows):
+        if (join_type == "OUTER" or join_type == "RIGHT") and len(matched_right_row_indexes) < len(join_rows):
             for join_index in set(enumerate(join_rows)) - set(matched_right_row_indexes):
-                rows.append({
-                    join_table_name: join_rows[join_index],
-                    **{table_name: None
-                       for table_name in joined_tables},
-                })
+                rows.append(
+                    {
+                        join_table_name: join_rows[join_index],
+                        **{table_name: None for table_name in joined_tables},
+                    }
+                )
 
         return rows
 
     def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
         extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
         if len(extra_keys):
-            key_name = case_mapping('start')
+            key_name = case_mapping("start")
             return "Invalid pagination key(s): '" + "','".join(extra_keys) + f"'.  Only '{key_name}' is allowed"
-        if 'start' not in kwargs:
-            key_name = case_mapping('start')
+        if "start" not in kwargs:
+            key_name = case_mapping("start")
             return f"You must specify '{key_name}' when setting pagination"
-        start = kwargs['start']
+        start = kwargs["start"]
         try:
             start = int(start)
         except:
-            key_name = case_mapping('start')
+            key_name = case_mapping("start")
             return f"Invalid pagination data: '{key_name}' must be a number"
-        return ''
+        return ""
 
     def allowed_pagination_keys(self) -> List[str]:
-        return ['start']
+        return ["start"]
 
     def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
-        return [AutoDocInteger(case_mapping('start'), example=0)]
+        return [AutoDocInteger(case_mapping("start"), example=0)]
 
     def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
-        return {case_mapping('start'): 0}
+        return {case_mapping("start"): 0}
 
     def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
-        return [(
-            AutoDocInteger(case_mapping('start'),
-                           example=0), 'The zero-indexed record number to start listing results from'
-        )]
+        return [
+            (
+                AutoDocInteger(case_mapping("start"), example=0),
+                "The zero-indexed record number to start listing results from",
+            )
+        ]
