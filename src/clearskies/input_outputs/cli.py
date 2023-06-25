@@ -1,6 +1,8 @@
 import json
 from . import exceptions
 from ..handlers.exceptions import ClientError
+
+
 class CLI:
     _sys = None
     _args = None
@@ -40,19 +42,19 @@ class CLI:
 
     def _parse_args(self, argv):
         for arg in argv[1:]:
-            if arg[0] == '-':
-                arg = arg.lstrip('-')
-                if '=' in arg:
-                    name = arg[:arg.index('=')]
-                    value = arg[arg.index('=') + 1:]
+            if arg[0] == "-":
+                arg = arg.lstrip("-")
+                if "=" in arg:
+                    name = arg[: arg.index("=")]
+                    value = arg[arg.index("=") + 1 :]
                 else:
                     name = arg
                     value = True
                 if name in self._kwargs:
                     raise exceptions.CLIInputError(f"Received multiple flags for '{name}'")
-                if name == 'X':
-                    name = 'request_method'
-                if name == 'request_method':
+                if name == "X":
+                    name = "request_method"
+                if name == "request_method":
                     if self._request_method:
                         raise ValueError(
                             "Received multiple flags for the request method (setablve via 'request_method' and 'X')"
@@ -67,13 +69,13 @@ class CLI:
         return sys.argv[0]
 
     def get_path_info(self):
-        return '/'.join(self._args)
+        return "/".join(self._args)
 
     def get_full_path(self):
         return self.get_path_info()
 
     def get_request_method(self):
-        return self._request_method if self._request_method else 'GET'
+        return self._request_method if self._request_method else "GET"
 
     def request_data(self, required=True):
         request_data = self.json_body(False)
@@ -93,30 +95,30 @@ class CLI:
             # isatty() means that someone is piping input into the program
             # however, it behaves unreliably in "alternate" environments in later versions
             # of python, so I'm removing it until I can find a better solution
-            #if not self._sys.stdin.isatty():
-            #self._has_body = True
-            #self._input_type = 'atty'
+            # if not self._sys.stdin.isatty():
+            # self._has_body = True
+            # self._input_type = 'atty'
             # or if the user set 'data' or 'd' keys
-            if 'data' in self._kwargs or 'd' in self._kwargs:
+            if "data" in self._kwargs or "d" in self._kwargs:
                 self._has_body = True
-                self._input_type = 'data' if 'data' in self._kwargs else 'd'
+                self._input_type = "data" if "data" in self._kwargs else "d"
             # or finally if we have kwargs in general
             elif len(self._kwargs):
                 self._has_body = True
-                self._input_type = 'kwargs'
+                self._input_type = "kwargs"
         return self._has_body
 
     def get_body(self):
         if not self.has_body():
-            return ''
+            return ""
 
         if self._cached_body is None:
-            if self._input_type == 'atty':
-                self._cached_body = '\n'.join([line.strip() for line in self._sys.stdin])
-            elif self._input_type == 'data':
-                self._cached_body = self._kwargs['data']
-            elif self._input_type == 'data':
-                self._cached_body = self._kwargs['d']
+            if self._input_type == "atty":
+                self._cached_body = "\n".join([line.strip() for line in self._sys.stdin])
+            elif self._input_type == "data":
+                self._cached_body = self._kwargs["data"]
+            elif self._input_type == "data":
+                self._cached_body = self._kwargs["d"]
             # we don't do anything about self._input_type == 'kwargs' because that only
             # makes sense when trying to interpret the body as JSON, so we cover it
             # in the _get_json_body method
@@ -138,7 +140,7 @@ class CLI:
         if not self.has_body():
             return None
         if not self._body_loaded_as_json:
-            if self._input_type == 'kwargs':
+            if self._input_type == "kwargs":
                 self._body_loaded_as_json = True
                 self._body_as_json = self._kwargs
             elif self.get_body() is None:

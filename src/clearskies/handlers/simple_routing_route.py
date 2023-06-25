@@ -2,6 +2,8 @@ import re
 from ..autodoc.request import URLPath
 from ..autodoc.schema import String
 from . import simple_routing
+
+
 class SimpleRoutingRoute:
     _di = None
     _handler = None
@@ -28,17 +30,17 @@ class SimpleRoutingRoute:
         path_parameter_with_slashes=None,
         bindings=None,
     ):
-        if authentication is not None and not handler_config.get('authentication'):
-            handler_config['authentication'] = authentication
+        if authentication is not None and not handler_config.get("authentication"):
+            handler_config["authentication"] = authentication
         response_headers = response_headers if response_headers is not None else {}
-        if 'response_headers' in handler_config:
-            if type(handler_config['response_headers']) != dict:
+        if "response_headers" in handler_config:
+            if type(handler_config["response_headers"]) != dict:
                 raise ValueError("Invalid configuration: 'response_headers' must be a dictionary")
-            response_headers = {**response_headers, **handler_config['response_headers']}
+            response_headers = {**response_headers, **handler_config["response_headers"]}
         self._path = path
-        if handler_config.get('base_url'):
-            self._path = path.rstrip('/') + '/' + handler_config.get('base_url').lstrip('/')
-        self._path_parts = self._path.strip('/').split('/') if self._path is not None else []
+        if handler_config.get("base_url"):
+            self._path = path.rstrip("/") + "/" + handler_config.get("base_url").lstrip("/")
+        self._path_parts = self._path.strip("/").split("/") if self._path is not None else []
         self._resource_paths = self._extract_resource_paths(self._path_parts)
         self._bindings = bindings if bindings else {}
         self._path_parameter_with_slashes = path_parameter_with_slashes if path_parameter_with_slashes else []
@@ -47,32 +49,32 @@ class SimpleRoutingRoute:
         sub_handler_config = {
             **handler_config,
             **{
-                'base_url': ('/' + path.strip('/')) if path is not None else '/',
-            }
+                "base_url": ("/" + path.strip("/")) if path is not None else "/",
+            },
         }
         if response_headers:
-            sub_handler_config['response_headers'] = response_headers
+            sub_handler_config["response_headers"] = response_headers
         security_headers = security_headers if security_headers is not None else []
-        if 'security_headers' in handler_config:
-            security_headers = [*security_headers, *handler_config['security_headers']]
-        sub_handler_config['security_headers'] = security_headers
+        if "security_headers" in handler_config:
+            security_headers = [*security_headers, *handler_config["security_headers"]]
+        sub_handler_config["security_headers"] = security_headers
         self._handler = self._di.build(handler_class, cache=False)
         self._handler.configure(sub_handler_config)
         self._routes_to_simple_routing = issubclass(handler_class, simple_routing.SimpleRouting)
 
     def _extract_resource_paths(self, path_parts):
         resource_paths = {}
-        for (index, part) in enumerate(path_parts):
+        for index, part in enumerate(path_parts):
             if not part:
                 continue
-            if part[0] != '{':
+            if part[0] != "{":
                 continue
-            if part[-1] != '}':
+            if part[-1] != "}":
                 raise ValueError(
-                    f"Invalid route configuration for URL '{path}': section '{part}'" +
-                    " starts with a '{' but does not end with one"
+                    f"Invalid route configuration for URL '{path}': section '{part}'"
+                    + " starts with a '{' but does not end with one"
                 )
-            match = re.match('{(\\w[\\w\\d_]{0,})\\}', part)
+            match = re.match("{(\\w[\\w\\d_]{0,})\\}", part)
             if not match:
                 raise ValueError(
                     f"Invalid route configuration for URL '{path}', section '{part}': resource identifiers must start with a letter and contain only letters, numbers, and underscores"
@@ -81,7 +83,7 @@ class SimpleRoutingRoute:
         return resource_paths
 
     def matches(self, full_path, request_method, is_cors=False):
-        """ Returns None if the route doesn't match, or a dictionary with route data for a match.
+        """Returns None if the route doesn't match, or a dictionary with route data for a match.
 
         You can't just match true/false against the return value, because of the route matches
         but has no route data, it returns an empty dictionary.  Check explicitly for None
@@ -96,8 +98,8 @@ class SimpleRoutingRoute:
         if self._resource_paths:
             return self._resource_path_match(full_path, self._path_parts, self._resource_paths)
         if self._path is not None:
-            full_path = full_path.strip('/')
-            my_path = self._path.strip('/')
+            full_path = full_path.strip("/")
+            my_path = self._path.strip("/")
             my_path_length = len(my_path)
             full_path_length = len(full_path)
             if my_path_length > full_path_length:
@@ -106,13 +108,13 @@ class SimpleRoutingRoute:
                 return None
             # make sure we don't get confused by partial matches.  `user` should match `user/` and `user/5`,
             # but it shouldn't match `users/`
-            if full_path_length > my_path_length and full_path[my_path_length] != '/':
+            if full_path_length > my_path_length and full_path[my_path_length] != "/":
                 return None
         return {}
 
     def _resource_path_match(self, requested_path, path_parts, resource_paths):
-        """ Returns None if the route doesn't match, or a dictionary with route data for the match."""
-        requested_parts = requested_path.strip('/').split('/')
+        """Returns None if the route doesn't match, or a dictionary with route data for the match."""
+        requested_parts = requested_path.strip("/").split("/")
         route_data = {}
         path_length = len(path_parts)
         # it's okay if the requested path is longer than the configured path, since there may
@@ -147,7 +149,7 @@ class SimpleRoutingRoute:
 
             # do we have any resource paths to document?
             for path_name in self._resource_paths.values():
-                description = f'The {path_name} to show results for'
+                description = f"The {path_name} to show results for"
                 doc.add_parameter(URLPath(String(path_name), description=description, required=True))
 
             docs.append(doc)

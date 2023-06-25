@@ -1,4 +1,6 @@
 from . import memory_backend
+
+
 class ExampleBackend(memory_backend.MemoryBackend):
     _tables = None
     _silent_on_missing_tables = False
@@ -20,7 +22,7 @@ class ExampleBackend(memory_backend.MemoryBackend):
         record_index = 0
         table = memory_backend.MemoryTable(model)
         id_column_name = model.id_column_name
-        for (row_index, data) in enumerate(self.data):
+        for row_index, data in enumerate(self.data):
             record_id = data.get(id_column_name)
             if not record_id:
                 print(

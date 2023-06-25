@@ -1,5 +1,7 @@
 from ... import schema as raw_schema
 from . import schema as formatted_schema
+
+
 class OAI3SchemaResolver:
     class_map = {
         raw_schema.Array: formatted_schema.Array,

@@ -1,13 +1,15 @@
 import json
 from .. import input_outputs
+
+
 class InputOutput(input_outputs.InputOutput):
     _body = None
     _request_method = None
-    _script_name = ''
-    _path_info = ''
-    _query_string = ''
-    _content_type = ''
-    _protocol = ''
+    _script_name = ""
+    _path_info = ""
+    _query_string = ""
+    _content_type = ""
+    _protocol = ""
     _query_parameters = None
     _context_specifics = None
     response = None
@@ -16,13 +18,13 @@ class InputOutput(input_outputs.InputOutput):
         self,
         request_headers=None,
         body=None,
-        request_method='GET',
-        request_url='',
-        script_name='',
-        path_info='',
-        query_string='',
-        content_type='',
-        protocol='',
+        request_method="GET",
+        request_url="",
+        script_name="",
+        path_info="",
+        query_string="",
+        content_type="",
+        protocol="",
         query_parameters=None,
         authorization_data=None,
         context_specifics=None,
@@ -40,7 +42,7 @@ class InputOutput(input_outputs.InputOutput):
         self._context_specifics = context_specifics if context_specifics is not None else {}
 
     def respond(self, body, status_code=200):
-        self.response = {'body': body, 'status_code': status_code, 'headers': self._response_headers}
+        self.response = {"body": body, "status_code": status_code, "headers": self._response_headers}
         return (body, status_code)
 
     def get_body(self):
@@ -54,7 +56,7 @@ class InputOutput(input_outputs.InputOutput):
         if body:
             self._body = body if type(body) == str else json.dumps(body)
 
-    def set_request_url(self, request_url, script_name=''):
+    def set_request_url(self, request_url, script_name=""):
         if request_url and script_name:
             raise ValueError("You cannot specify both request_url and script_name")
         self._script_name = request_url if request_url else script_name
@@ -69,7 +71,7 @@ class InputOutput(input_outputs.InputOutput):
         self._request_headers = {}
         if request_headers is None:
             request_headers = {}
-        for (key, value) in request_headers.items():
+        for key, value in request_headers.items():
             self._request_headers[key.lower()] = value
 
     def set_query_parameters(self, query_parameters):
@@ -100,11 +102,11 @@ class InputOutput(input_outputs.InputOutput):
         if not self.has_request_header(header_name):
             if not silent:
                 raise ValueError(f"Request header '{header_name}' not found in request")
-            return ''
+            return ""
         return self._request_headers[header_name.lower()]
 
     def get_query_parameter(self, key):
-        return self._query_parameters[key] if key in self._query_parameters else ''
+        return self._query_parameters[key] if key in self._query_parameters else ""
 
     def get_query_parameters(self):
         return self._query_parameters

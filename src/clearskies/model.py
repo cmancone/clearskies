@@ -4,12 +4,14 @@ from .column_types import UUID
 from .functional import string
 import re
 from .models import Models
+
+
 class Model(Models):
     _configured_columns = None
     _data = None
     _previous_data = None
     _transformed = None
-    id_column_name = 'id'
+    id_column_name = "id"
 
     def __init__(self, backend, columns):
         super().__init__(backend, columns)
@@ -27,21 +29,21 @@ class Model(Models):
 
     @classmethod
     def table_name(cls):
-        """ Return the name of the table that the model uses for data storage """
+        """Return the name of the table that the model uses for data storage"""
         singular = string.camel_case_to_snake_case(cls.__name__)
-        if singular[-1] == 'y':
-            return singular[:-1] + 'ies'
-        if singular[-1] == 's':
-            return singular + 'es'
-        return f'{singular}s'
+        if singular[-1] == "y":
+            return singular[:-1] + "ies"
+        if singular[-1] == "s":
+            return singular + "es"
+        return f"{singular}s"
 
     @abstractmethod
     def columns_configuration(self):
-        """ Returns an ordered dictionary with the configuration for the columns """
+        """Returns an ordered dictionary with the configuration for the columns"""
         pass
 
     def all_columns(self):
-        default = OrderedDict([(self.id_column_name, {'class': UUID})])
+        default = OrderedDict([(self.id_column_name, {"class": UUID})])
         default.update(self.columns_configuration())
         return default
 
@@ -96,9 +98,11 @@ class Model(Models):
                     raise KeyError(f"Unknown column '{column_name}' requested from model '{self.__class__.__name__}'")
                 return None
         else:
-            value = self._backend.column_from_backend(self.columns()[column_name], data[column_name]) \
-                if column_name in self.columns() \
+            value = (
+                self._backend.column_from_backend(self.columns()[column_name], data[column_name])
+                if column_name in self.columns()
                 else data[column_name]
+            )
 
         if cache:
             self._transformed[column_name] = value
@@ -183,7 +187,7 @@ class Model(Models):
         return self.__getattr__(key)
 
     def was_changed(self, key):
-        """ Returns True/False to denote if a column was changed in the last save """
+        """Returns True/False to denote if a column was changed in the last save"""
         if self._previous_data is None:
             raise ValueError("was_changed was called before a save was finished - you must save something first")
 
@@ -218,12 +222,12 @@ class Model(Models):
         return True
 
     def columns_pre_save(self, data, columns):
-        """ Uses the column information present in the model to make any necessary changes before saving """
+        """Uses the column information present in the model to make any necessary changes before saving"""
         for column in columns.values():
             data = column.pre_save(data, self)
             if data is None:
                 raise ValueError(
-                    f'Column {column.name} of type {column.__class__.__name__} did not return any data for pre_save'
+                    f"Column {column.name} of type {column.__class__.__name__} did not return any data for pre_save"
                 )
         return data
 
@@ -245,7 +249,7 @@ class Model(Models):
             backend_data = self._backend.column_to_backend(column, backend_data)
             if backend_data is None:
                 raise ValueError(
-                    f'Column {column.name} of type {column.__class__.__name__} did not return any data for to_database'
+                    f"Column {column.name} of type {column.__class__.__name__} did not return any data for to_database"
                 )
 
         return backend_data
@@ -254,17 +258,17 @@ class Model(Models):
         return data
 
     def columns_post_save(self, data, id, columns):
-        """ Uses the column information present in the model to make additional changes as needed after saving """
+        """Uses the column information present in the model to make additional changes as needed after saving"""
         for column in columns.values():
             data = column.post_save(data, self, id)
             if data is None:
                 raise ValueError(
-                    f'Column {column.name} of type {column.__class__.__name__} did not return any data for post_save'
+                    f"Column {column.name} of type {column.__class__.__name__} did not return any data for post_save"
                 )
         return data
 
     def columns_save_finished(self, columns):
-        """ Calls the save_finished method on all of our columns """
+        """Calls the save_finished method on all of our columns"""
         for column in columns.values():
             column.save_finished(self)
 
@@ -296,7 +300,7 @@ class Model(Models):
         pass
 
     def columns_pre_delete(self, columns):
-        """ Uses the column information present in the model to make any necessary changes before deleting """
+        """Uses the column information present in the model to make any necessary changes before deleting"""
         for column in columns.values():
             column.pre_delete(self)
 
@@ -307,7 +311,7 @@ class Model(Models):
         pass
 
     def columns_post_delete(self, columns):
-        """ Uses the column information present in the model to make any necessary changes after deleting """
+        """Uses the column information present in the model to make any necessary changes after deleting"""
         for column in columns.values():
             column.post_delete(self)
 

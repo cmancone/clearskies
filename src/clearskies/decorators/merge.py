@@ -3,10 +3,12 @@ from ..handlers import callable as callable_handler
 from ..handlers import simple_routing
 from typing import Any, Dict, Set
 
-routing_kwargs = ['path', 'methods']
-binding_kwargs = ['bindings', 'binding_classes', 'binding_modules']
+routing_kwargs = ["path", "methods"]
+binding_kwargs = ["bindings", "binding_classes", "binding_modules"]
+
+
 def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
-    is_wrapped_application = getattr(function, 'is_wrapped_application', False)
+    is_wrapped_application = getattr(function, "is_wrapped_application", False)
     binding_configs = extract_binding_configs(kwargs)
     callable_configs = extract_callable_configs(kwargs)
     routing_configs = extract_routing_configs(kwargs)
@@ -15,23 +17,21 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
     if not is_wrapped_application and type(function) != Application:
         application = Application(
             callable_handler.Callable,
-            {
-                **callable_configs, 'callable': function
-            },
+            {**callable_configs, "callable": function},
             **binding_configs,
         )
         # and if we have a route then we also want to wrap it in a router. Note that
         # there is a possible future issue in here and things will break if path
         # and methods are not specified at the same time.
-        if 'path' in kwargs:
+        if "path" in kwargs:
             application = Application(
                 simple_routing.SimpleRouting,
                 {
-                    'routes': [
+                    "routes": [
                         {
                             **routing_configs,
-                            'handler_class': application.handler_class,
-                            'handler_config': application.handler_config,
+                            "handler_class": application.handler_class,
+                            "handler_config": application.handler_config,
                         },
                     ],
                 },
@@ -47,11 +47,11 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
         application = function()
     else:
         application = function
-    authentication = application.handler_config.get('authentication')
+    authentication = application.handler_config.get("authentication")
 
     # Next question: is there a path in our kwargs?  If so then we are trying to add routing to
     # the application.
-    if 'path' in kwargs:
+    if "path" in kwargs:
         # before we add routing, make sure we're not double routing
         if application.handler_class == simple_routing.SimpleRouting:
             raise ValueError(
@@ -71,13 +71,12 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
         return Application(
             simple_routing.SimpleRouting,
             {
-                'authentication':
-                authentication,
-                'routes': [
+                "authentication": authentication,
+                "routes": [
                     {
                         **routing_configs,
-                        'handler_class': application.handler_class,
-                        'handler_config': {
+                        "handler_class": application.handler_class,
+                        "handler_config": {
                             **application.handler_config,
                             **callable_configs,
                         },
@@ -90,8 +89,8 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
     # if we got here then we just need to merge in our callable configs.  The only trick is
     # whether or not we have an outer routing application.
     if application.handler_class == simple_routing.SimpleRouting:
-        application.handler_config['routes'][0]['handler_config'] = {
-            **application.handler_config['routes'][0]['handler_config'],
+        application.handler_config["routes"][0]["handler_config"] = {
+            **application.handler_config["routes"][0]["handler_config"],
             **callable_configs,
         }
 
@@ -107,13 +106,19 @@ def merge(function: callable, **kwargs: Dict[str, Any]) -> Application:
             else:
                 setattr(application, binding_name, [*from_application, *from_configs])
     return application
+
+
 def extract_callable_configs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
-    """ Return the configuration settings from the kwargs which are valid for the callable handler. """
+    """Return the configuration settings from the kwargs which are valid for the callable handler."""
     # all configs execpt 'path' and 'methods' go with the callable
     return {key: kwargs[key] for key in kwargs.keys() if key not in routing_kwargs and key not in binding_kwargs}
+
+
 def extract_routing_configs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
-    """ Return the configuration settings from the kwargs which are valid for the routing info. """
+    """Return the configuration settings from the kwargs which are valid for the routing info."""
     return {key: kwargs[key] for key in kwargs.keys() if key in routing_kwargs}
+
+
 def extract_binding_configs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
-    """ Return the configuration settings from the kwargs which are valid for bindings. """
+    """Return the configuration settings from the kwargs which are valid for bindings."""
     return {key: kwargs[key] for key in kwargs.keys() if key in binding_kwargs}

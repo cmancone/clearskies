@@ -4,8 +4,8 @@ class Object:
     value = None
     example = None
     model_name = None
-    _type = 'object'
-    _format = ''
+    _type = "object"
+    _format = ""
 
     def __init__(self, name, children, value=None, example=None, model_name=None):
         self.name = name

@@ -1,5 +1,7 @@
 from .request import Request
 import json
+
+
 class OAI3JSON:
     requests = None
     formatted = None
@@ -17,16 +19,16 @@ class OAI3JSON:
         self.formatted = [self.format_request(request) for request in self.requests]
 
     def set_components(self, components):
-        supported = ['models', 'securitySchemes']
+        supported = ["models", "securitySchemes"]
         for key in components.keys():
             if key not in supported:
                 raise ValueError(
                     f"Attempt to set unsupported OpenAPI3.0 component which is not currently supported: {key}"
                 )
-        if 'models' in components:
-            self.set_models(components['models'])
-        if 'securitySchemes' in components:
-            self.set_security_schemes(components['securitySchemes'])
+        if "models" in components:
+            self.set_models(components["models"])
+        if "securitySchemes" in components:
+            self.set_security_schemes(components["securitySchemes"])
 
     def set_models(self, models):
         self.models = models
@@ -56,29 +58,28 @@ class OAI3JSON:
     def convert(self):
         paths = {}
         for request in self.formatted:
-            absolute_path = '/' + request.relative_path.lstrip('/')
+            absolute_path = "/" + request.relative_path.lstrip("/")
             if absolute_path not in paths:
                 paths[absolute_path] = {}
 
             path_data = request.convert()
-            for (request_method, path_doc) in path_data.items():
+            for request_method, path_doc in path_data.items():
                 if request_method in paths[absolute_path]:
                     raise ValueError(f"Two routes had the same path and method: {absolute_path} - {request_method}")
                 paths[absolute_path][request_method] = path_doc
 
         data = {
-            'openapi': '3.0.0',
-            'paths': paths,
-            'components': {},
+            "openapi": "3.0.0",
+            "paths": paths,
+            "components": {},
         }
 
         if self.models:
-            data['components']['schemas'] = {
-                model_name: self.oai3_schema_resolver(model).convert()
-                for (model_name, model) in self.models.items()
+            data["components"]["schemas"] = {
+                model_name: self.oai3_schema_resolver(model).convert() for (model_name, model) in self.models.items()
             }
 
         if self.security_schemes:
-            data['components']['securitySchemes'] = {name: data for (name, data) in self.security_schemes.items()}
+            data["components"]["securitySchemes"] = {name: data for (name, data) in self.security_schemes.items()}
 
         return data

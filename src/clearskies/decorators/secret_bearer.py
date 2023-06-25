@@ -1,6 +1,8 @@
 from .merge import merge
 from typing import List, Optional
 from ..authentication import secret_bearer as secret_bearer_binding
+
+
 def secret_bearer(
     secret: str = None,
     secret_key: str = None,

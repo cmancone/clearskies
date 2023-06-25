@@ -1,6 +1,8 @@
 from ..handlers.exceptions import ClientError
 import datetime
 from .. import autodoc
+
+
 class Auth0JWKS:
     is_public = False
     can_authorize = True
@@ -38,17 +40,17 @@ class Auth0JWKS:
         if not self._audience:
             raise ValueError("Must set audience in config when using Auth0JWKS for endpoint authorization")
 
-        auth_header = input_output.get_request_header('authorization', True)
+        auth_header = input_output.get_request_header("authorization", True)
         if not auth_header:
             raise ClientError("Missing 'Authorization' header in request")
-        if auth_header[:7].lower() != 'bearer ':
+        if auth_header[:7].lower() != "bearer ":
             raise ClientError("Missing 'Bearer ' prefix in authorization header")
         self.validate_jwt(auth_header[7:])
         input_output.set_authorization_data(self.jwt_claims)
         return True
 
     def set_headers_for_cors(self, cors):
-        cors.add_header('Authorization')
+        cors.add_header("Authorization")
 
     def validate_jwt(self, raw_jwt):
         try:
@@ -57,9 +59,9 @@ class Auth0JWKS:
             raise ClientError(str(e))
         jwks = self._get_jwks()
         # find a matching key in the JWKS for the key in the JWT
-        rsa_key = next((key for key in jwks['keys'] if key['kid'] == unverified_header['kid']), False)
+        rsa_key = next((key for key in jwks["keys"] if key["kid"] == unverified_header["kid"]), False)
         if not rsa_key:
-            raise ClientError('No matching keys found')
+            raise ClientError("No matching keys found")
 
         try:
             self.jwt_claims = self._jose_jwt.decode(
@@ -67,20 +69,20 @@ class Auth0JWKS:
                 rsa_key,
                 algorithms=self._algorithms,
                 audience=self._audience,
-                issuer=f'https://{self._auth0_domain}/'
+                issuer=f"https://{self._auth0_domain}/",
             )
         except self._jose_jwt.ExpiredSignatureError:
-            raise ClientError('JWT is expired')
+            raise ClientError("JWT is expired")
         except self._jose_jwt.JWTClaimsError:
-            raise ClientError('JWT has incorrect claims: double check the audience and issuer')
+            raise ClientError("JWT has incorrect claims: double check the audience and issuer")
         except Exception:
-            raise ClientError('Unable to parse JWT')
+            raise ClientError("Unable to parse JWT")
         return True
 
     def _get_jwks(self):
         now = datetime.datetime.now()
         if self._jwks is None or ((now - self._jwks_fetched).total_seconds() > 86400):
-            self._jwks = self._requests.get(f'https://{self._auth0_domain}/.well-known/jwks.json').json()
+            self._jwks = self._requests.get(f"https://{self._auth0_domain}/.well-known/jwks.json").json()
             self._jwks_fetched = now
 
         return self._jwks
@@ -91,7 +93,7 @@ class Auth0JWKS:
         if callable(authorization):
             return authorization(self.jwt_claims)
 
-        for (key, value) in authorization.items():
+        for key, value in authorization.items():
             if key not in self.jwt_claims:
                 return False
             if value != self.jwt_claims[key]:
@@ -106,15 +108,12 @@ class Auth0JWKS:
             "in": "header",
             "scheme": "bearer",
             "bearerFormat": "JWT",
-            "flows": {
-                "implicit": {
-                    "authorizationUrl": f"https://{self._auth0_domain}/authorize",
-                    "scopes": {}
-                }
-            }
+            "flows": {"implicit": {"authorizationUrl": f"https://{self._auth0_domain}/authorize", "scopes": {}}},
         }
 
     def documentation_security_scheme_name(self):
-        return self._documentation_security_name if self._documentation_security_name is not None else self._auth0_domain.split(
-            '.'
-        )[0]
+        return (
+            self._documentation_security_name
+            if self._documentation_security_name is not None
+            else self._auth0_domain.split(".")[0]
+        )

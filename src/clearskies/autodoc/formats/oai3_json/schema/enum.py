@@ -4,4 +4,4 @@ class Enum:
         self.oai3_schema_resolver = oai3_schema_resolver
 
     def convert(self):
-        return {'nullable': True, 'type': 'string', 'enum': [*self.schema.values, None]}
+        return {"nullable": True, "type": "string", "enum": [*self.schema.values, None]}

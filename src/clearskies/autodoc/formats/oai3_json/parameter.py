@@ -3,9 +3,9 @@ class Parameter:
     parameter = None
     required = None
     location_map = {
-        'url_parameter': 'query',
-        'header': 'header',
-        'url_path': 'path',
+        "url_parameter": "query",
+        "header": "header",
+        "url_path": "path",
     }
 
     def __init__(self, oai3_schema_resolver):
@@ -19,14 +19,14 @@ class Parameter:
     def convert(self):
         if self.parameter.location not in self.location_map:
             raise ValueError(
-                f"Parameter of class {self.parameter.__class__} declares " + \
-                f"an unsupported location: '{self.parameter.location}'"
+                f"Parameter of class {self.parameter.__class__} declares "
+                + f"an unsupported location: '{self.parameter.location}'"
             )
 
         return {
-            'name': self.parameter.definition.name,
-            'description': self.parameter.description,
-            'required': self.required,
-            'in': self.location_map[self.parameter.location],
-            'schema': self.oai3_schema_resolver(self.parameter.definition).convert()
+            "name": self.parameter.definition.name,
+            "description": self.parameter.description,
+            "required": self.required,
+            "in": self.location_map[self.parameter.location],
+            "schema": self.oai3_schema_resolver(self.parameter.definition).convert(),
         }

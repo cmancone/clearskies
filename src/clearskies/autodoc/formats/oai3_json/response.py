@@ -14,12 +14,12 @@ class Response:
 
     def convert(self):
         schema = {
-            'description': self.response.description,
-            'content': {
-                'application/json': {
-                    'schema': self.oai3_schema_resolver(self.response.schema).convert(),
+            "description": self.response.description,
+            "content": {
+                "application/json": {
+                    "schema": self.oai3_schema_resolver(self.response.schema).convert(),
                 }
-            }
+            },
         }
 
         return schema

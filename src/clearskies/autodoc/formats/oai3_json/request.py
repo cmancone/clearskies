@@ -1,6 +1,8 @@
 from .response import Response
 from .parameter import Parameter
 from ...schema import Object, Array
+
+
 class Request:
     formatted_responses = None
     request = None
@@ -32,10 +34,9 @@ class Request:
         data = {}
         for request_method in self.request.request_methods:
             data[request_method.lower()] = {
-                'summary': self.request.description,
-                'parameters': [parameter.convert() for parameter in self.formatted_parameters],
-                'responses': {str(response.status_code): response.convert()
-                              for response in self.formatted_responses},
+                "summary": self.request.description,
+                "parameters": [parameter.convert() for parameter in self.formatted_parameters],
+                "responses": {str(response.status_code): response.convert() for response in self.formatted_responses},
             }
 
             if self.request.root_properties:
@@ -46,18 +47,18 @@ class Request:
                 # object or an array.  If we have an array then wrap it in an object
                 if type(self.json_body_parameters) == list:
                     definitions = [parameter.definition for parameter in self.json_body_parameters]
-                    json_body = Object('body', definitions)
+                    json_body = Object("body", definitions)
                     is_required = len([1 for param in self.json_body_parameters if param.required]) >= 1
                 else:
                     json_body = self.json_body_parameters[0].definition
                     is_required = len([1 for param in json_body.definition.children if param.required]) >= 1
 
-                data[request_method.lower()]['requestBody'] = {
-                    'description': self.request.description,
-                    'required': is_required,
-                    'content': {
-                        'application/json': {
-                            'schema': self.oai3_schema_resolver(json_body).convert(),
+                data[request_method.lower()]["requestBody"] = {
+                    "description": self.request.description,
+                    "required": is_required,
+                    "content": {
+                        "application/json": {
+                            "schema": self.oai3_schema_resolver(json_body).convert(),
                         },
                     },
                 }

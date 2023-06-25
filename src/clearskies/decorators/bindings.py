@@ -1,4 +1,6 @@
 from .merge import merge
+
+
 def bindings(**kwargs):
     def wrap_in_application(function):
         return merge(function, bindings=kwargs)

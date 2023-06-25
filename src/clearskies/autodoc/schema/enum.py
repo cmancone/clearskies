@@ -3,8 +3,8 @@ class Enum:
     values = None
     value_type = None
     example = None
-    _type = 'string'
-    _format = ''
+    _type = "string"
+    _format = ""
 
     def __init__(self, name, values, value_type, example=None):
         self.name = name

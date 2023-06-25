@@ -1,6 +1,8 @@
 from .merge import merge
 from typing import List, Optional
 from ..authentication import jwks as jwks_binding
+
+
 def jwks(
     jwks_url: str,
     audience: Optional[str] = None,
@@ -16,7 +18,7 @@ def jwks(
             issuer=issuer,
             algorithms=algorithms,
             documentation_security_name=documentation_security_name,
-            jwks_cache_time=jwks_cache_time
+            jwks_cache_time=jwks_cache_time,
         )
         return merge(function, authentication=auth0)
 

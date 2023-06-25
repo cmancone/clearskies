@@ -4,6 +4,8 @@ from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.schema import String as AutoDocString
 from collections import OrderedDict
+
+
 class CategoryTree(BelongsTo):
     """
     Builds a tree table for quick lookups in a category heirarchy.
@@ -102,20 +104,21 @@ class CategoryTree(BelongsTo):
     Of course other kinds of databases are better at this (such as graph databases), but it isn't
     always worth managing another database unless performance is becoming a problem.
     """
+
     required_configs = [
-        'tree_models_class',
+        "tree_models_class",
     ]
 
     my_configs = [
-        'model_column_name',
-        'readable_parent_columns',
-        'join_type',
-        'tree_parent_id_column_name',
-        'tree_child_id_column_name',
-        'tree_is_parent_column_name',
-        'tree_level_column_name',
-        'max_iterations',
-        'parent_models_class',
+        "model_column_name",
+        "readable_parent_columns",
+        "join_type",
+        "tree_parent_id_column_name",
+        "tree_child_id_column_name",
+        "tree_is_parent_column_name",
+        "tree_level_column_name",
+        "max_iterations",
+        "parent_models_class",
     ]
 
     def __init__(self, di):
@@ -124,35 +127,37 @@ class CategoryTree(BelongsTo):
     def _check_configuration(self, configuration):
         # our parent class is the BelongsTo which needs to know the parent model class.
         # with a category tree, we _are_ our own parent model class, so no need to ask for it.
-        super()._check_configuration({
-            **configuration,
-            'parent_models_class':
-            configuration.get('parent_models_class', self.model_class),
-        })
+        super()._check_configuration(
+            {
+                **configuration,
+                "parent_models_class": configuration.get("parent_models_class", self.model_class),
+            }
+        )
         self.validate_models_class(
-            configuration['tree_models_class'],
-            config_name='tree_models_class',
+            configuration["tree_models_class"],
+            config_name="tree_models_class",
         )
 
     def _finalize_configuration(self, configuration):
         return {
-            **super()._finalize_configuration({
-                **configuration,
-                'parent_models_class':
-                configuration.get('parent_models_class', self.model_class),
-            }),
+            **super()._finalize_configuration(
+                {
+                    **configuration,
+                    "parent_models_class": configuration.get("parent_models_class", self.model_class),
+                }
+            ),
             **{
-                'tree_parent_id_column_name': configuration.get('tree_parent_id_column_name', 'parent_id'),
-                'tree_child_id_column_name': configuration.get('tree_child_id_column_name', 'child_id'),
-                'tree_is_parent_column_name': configuration.get('tree_is_parent_column_name', 'is_parent'),
-                'tree_level_column_name': configuration.get('tree_level_column_name', 'level'),
-                'max_iterations': configuration.get('max_iterations', 100),
-            }
+                "tree_parent_id_column_name": configuration.get("tree_parent_id_column_name", "parent_id"),
+                "tree_child_id_column_name": configuration.get("tree_child_id_column_name", "child_id"),
+                "tree_is_parent_column_name": configuration.get("tree_is_parent_column_name", "is_parent"),
+                "tree_level_column_name": configuration.get("tree_level_column_name", "level"),
+                "max_iterations": configuration.get("max_iterations", 100),
+            },
         }
 
     @property
     def tree_models(self):
-        return self.di.build(self.config('tree_models_class'), cache=True)
+        return self.di.build(self.config("tree_models_class"), cache=True)
 
     def post_save(self, data, model, id):
         if not model.is_changing(self.name, data):
@@ -167,17 +172,17 @@ class CategoryTree(BelongsTo):
     def update_tree_table(self, model, child_id, direct_parent_id):
         tree_models = self.tree_models
         parent_models = self.parent_models
-        model_column_name = self.config('model_column_name')
-        tree_parent_id_column_name = self.config('tree_parent_id_column_name')
-        tree_child_id_column_name = self.config('tree_child_id_column_name')
-        tree_is_parent_column_name = self.config('tree_is_parent_column_name')
-        tree_level_column_name = self.config('tree_level_column_name')
-        max_iterations = self.config('max_iterations')
+        model_column_name = self.config("model_column_name")
+        tree_parent_id_column_name = self.config("tree_parent_id_column_name")
+        tree_child_id_column_name = self.config("tree_child_id_column_name")
+        tree_is_parent_column_name = self.config("tree_is_parent_column_name")
+        tree_level_column_name = self.config("tree_level_column_name")
+        max_iterations = self.config("max_iterations")
 
         # we're going to be lazy and just delete the data for the current record in the tree table,
         # and then re-insert everything (but we can skip this if creating a new record)
         if model.exists:
-            for tree in tree_models.where(f'{tree_child_id_column_name}={child_id}'):
+            for tree in tree_models.where(f"{tree_child_id_column_name}={child_id}"):
                 tree.delete()
 
         # if we are a root category then we don't have a tree
@@ -186,7 +191,7 @@ class CategoryTree(BelongsTo):
 
         is_root = False
         id_column_name = parent_models.id_column_name
-        next_parent = parent_models.find(f'{id_column_name}={direct_parent_id}')
+        next_parent = parent_models.find(f"{id_column_name}={direct_parent_id}")
         tree = []
         c = 0
         while not is_root:
@@ -199,21 +204,23 @@ class CategoryTree(BelongsTo):
                 is_root = True
             else:
                 next_next_parent_id = next_parent.__getattr__(self.name)
-                next_parent = parent_models.find(f'{id_column_name}={next_next_parent_id}')
+                next_parent = parent_models.find(f"{id_column_name}={next_next_parent_id}")
 
         tree.reverse()
-        for (index, parent_id) in enumerate(tree):
-            tree_models.create({
-                tree_parent_id_column_name: parent_id,
-                tree_child_id_column_name: child_id,
-                tree_is_parent_column_name: 1 if parent_id == direct_parent_id else 0,
-                tree_level_column_name: index,
-            })
+        for index, parent_id in enumerate(tree):
+            tree_models.create(
+                {
+                    tree_parent_id_column_name: parent_id,
+                    tree_child_id_column_name: child_id,
+                    tree_is_parent_column_name: 1 if parent_id == direct_parent_id else 0,
+                    tree_level_column_name: index,
+                }
+            )
 
     def _circular(self, max_iterations):
         raise ValueError(
-            f"Error for column '{self.name}' for model class '{self.model_class.__name__}': " +
-            f"I've climbed through {max_iterations} parents and haven't found the root yet." +
-            "You may have accidentally created a circular cateogry tree.  If not, and your category tree " +
-            "really _is_ that deep, then adjust the 'max_iterations' configuration for this column accordingly. "
+            f"Error for column '{self.name}' for model class '{self.model_class.__name__}': "
+            + f"I've climbed through {max_iterations} parents and haven't found the root yet."
+            + "You may have accidentally created a circular cateogry tree.  If not, and your category tree "
+            + "really _is_ that deep, then adjust the 'max_iterations' configuration for this column accordingly. "
         )
