@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import MagicMock
 from .column import Column
 from ..input_requirements import MinimumLength
 from ..autodoc.schema import String as AutoDocString
@@ -43,3 +44,21 @@ class ColumnTest(unittest.TestCase):
         self.assertEquals("hey", more_doc.name)
         self.assertEquals("sup", more_doc.example)
         self.assertEquals("okay", more_doc.value)
+
+    def test_default(self):
+        self.column.configure("my_name", {"default": "asdf"}, RealColumn)
+
+        model = MagicMock()
+        model.exists = False
+        data = self.column.pre_save({}, model)
+        self.assertDictEqual({"my_name": "asdf"}, data)
+
+        model = MagicMock()
+        model.exists = True
+        data = self.column.pre_save({}, model)
+        self.assertDictEqual({}, data)
+
+        model = MagicMock()
+        model.exists = False
+        data = self.column.pre_save({"my_name": ""}, model)
+        self.assertDictEqual({"my_name": ""}, data)

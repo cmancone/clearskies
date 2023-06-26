@@ -17,6 +17,7 @@ class Column(ABC):
         "is_writeable",
         "is_temporary",
         "on_change",
+        "default",
     ]
 
     def __init__(self, di):
@@ -178,6 +179,8 @@ class Column(ABC):
         The difference between this and post_save is that this happens before the database is updated.
         As a result, if you need the model id to make your changes, it has to happen in post_save, not pre_save
         """
+        if not model.exists and "default" in self.configuration and self.name not in data:
+            data[self.name] = self.configuration["default"]
         return data
 
     def post_save(self, data, model, id):
