@@ -19,12 +19,13 @@ class Test(Context):
     def configure(self, application, cursor_backend_to_memory_backend=True):
         # so for the other contexts, the application is just a way to manage configuration,
         # and so gets promptly thrown away.  We actually want it though
-        self.now = datetime.now().replace(tzinfo=timezone.utc, microsecond=0)
         self.application = convert_to_application(application)
         self.memory_backend = self.di.build(MemoryBackend, cache=False)
         self.memory_backend.silent_on_missing_tables(silent=True)
 
-        self.di.bind("now", self.now)
+        if "now" not in self.di._prepared:
+            self.now = datetime.now().replace(tzinfo=timezone.utc, microsecond=0)
+            self.di.bind("now", self.now)
         if cursor_backend_to_memory_backend:
             self.di.bind("cursor_backend", self.memory_backend)
 
