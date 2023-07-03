@@ -121,15 +121,10 @@ class Audit(has_many.HasMany):
         parent_columns = self.parent_columns
 
         if not old_data:
-            self.child_models.create(
-                {
-                    "class": self.config("parent_class_name"),
-                    "resource_id": model.get(self.config("parent_id_column_name")),
-                    "action": "create",
-                    "data": {
-                        key: parent_columns[key].to_json(model) for key in new_data.keys() if key not in exclude_columns
-                    },
-                }
+            self.record(
+                model,
+                "create",
+                data={key: parent_columns[key].to_json(model) for key in new_data.keys() if key not in exclude_columns},
             )
             return
 
@@ -151,25 +146,15 @@ class Audit(has_many.HasMany):
         if not changes:
             return
 
-        self.child_models.create(
-            {
-                "class": self.config("parent_class_name"),
-                "resource_id": model.get(self.config("parent_id_column_name")),
-                "action": "update",
-                "data": changes,
-            }
-        )
+        self.record(model, "update", data=changes)
 
     def post_delete(self, model):
         super().post_delete(model)
         exclude_columns = self.config("exclude_columns")
-        self.child_models.create(
-            {
-                "class": self.config("parent_class_name"),
-                "resource_id": model.get(self.config("parent_id_column_name")),
-                "action": "delete",
-                "data": {key: value for (key, value) in model.data.items() if key not in exclude_columns},
-            }
+        self.record(
+            model,
+            "delete",
+            data={key: value for (key, value) in model.data.items() if key not in exclude_columns},
         )
 
     @property
@@ -177,6 +162,16 @@ class Audit(has_many.HasMany):
         if self._parent_columns == None:
             self._parent_columns = self.di.build(self.model_class, cache=True).columns()
         return self._parent_columns
+
+    def record(self, model, action, data=None):
+        audit_data = {
+            "class": self.config("parent_class_name"),
+            "resource_id": model.get(self.config("parent_id_column_name")),
+            "action": action,
+        }
+        if data is not None:
+            audit_data["data"] = data
+        self.child_models.create(audit_data)
 
 
 def build_column_config(name, column_class, **kwargs):

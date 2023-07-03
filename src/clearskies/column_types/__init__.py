@@ -12,6 +12,7 @@ from .integer import Integer
 from .json import JSON
 from .many_to_many import ManyToMany
 from .many_to_many_with_data import ManyToManyWithData
+from .select import Select
 from .string import String
 from .updated import Updated
 from .uuid import UUID
@@ -73,6 +74,10 @@ def many_to_many_with_data(name, **kwargs):
     return build_column_config(name, ManyToManyWithData, **kwargs)
 
 
+def select(name, **kwargs):
+    return build_column_config(name, Select, **kwargs)
+
+
 def string(name, **kwargs):
     return build_column_config(name, String, **kwargs)
 
@@ -114,6 +119,8 @@ __all__ = [
     "ManyToMany",
     "many_to_many_with_data",
     "ManyToManyWithData",
+    "select",
+    "Select",
     "string",
     "String",
     "updated",
