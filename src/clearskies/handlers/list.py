@@ -372,7 +372,7 @@ class List(Base):
         ]
 
     def documentation_models(self):
-        schema_model_name = self.camel_case_to_snake_case(self._model.__class__.__name__)
+        schema_model_name = string.camel_case_to_snake_case(self._model.__class__.__name__)
 
         return {
             schema_model_name: autodoc.schema.Object(
