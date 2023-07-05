@@ -180,12 +180,11 @@ class Write(Base, InputProcessing):
                 required=column.is_required,
             )
             for column in self._get_writeable_columns().values()
-            if column.name != id_label
         ]
         if include_id_in_path:
             parameters.append(
                 autodoc.request.URLPath(
-                    autodoc.schema.Integer(id_label),
+                    autodoc.schema.String(id_label),
                     description=f"The {id_label} of the record in question.",
                     required=True,
                 )
