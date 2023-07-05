@@ -1756,8 +1756,7 @@
             "name": "id",
             "required": true,
             "schema": {
-              "format": "int32",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],

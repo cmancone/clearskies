@@ -203,7 +203,8 @@ class UpdateTest(unittest.TestCase):
         update.configure(
             {
                 "model": self.users,
-                "columns": ["id", "name", "email", "age"],
+                "readable_columns": ["id", "name", "email", "age"],
+                "writeable_columns": ["name", "email", "age"],
                 "authentication": Public(),
             }
         )
