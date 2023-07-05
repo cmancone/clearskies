@@ -123,7 +123,7 @@ class Get(Base):
                 relative_path=self.configuration("base_url").rstrip("/") + "/{" + id_label + "}",
                 parameters=[
                     autodoc.request.URLPath(
-                        autodoc.schema.Integer(id_label),
+                        autodoc.schema.String(id_label),
                         description=f"The {id_label} of the record to get",
                         required=True,
                     )
