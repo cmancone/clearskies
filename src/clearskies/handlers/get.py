@@ -27,9 +27,12 @@ class Get(Base):
 
     def fetch_model(self, input_output):
         routing_data = input_output.routing_data()
-        if self.id_column_name not in routing_data:
+        if self.id_column_name in routing_data:
+            id = routing_data[self.id_column_name]
+        elif "id" in routing_data:
+            id = routing_data["id"]
+        else:
             raise ValueError("I didn't receive the ID in my routing data.  I am probably misconfigured.")
-        id = routing_data[self.id_column_name]
         models = self._model.where(f"{self.id_column_name}={id}")
         for where in self.configuration("where"):
             if type(where) == str:

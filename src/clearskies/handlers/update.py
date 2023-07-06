@@ -22,9 +22,12 @@ class Update(Write):
     def handle(self, input_output):
         input_data = self.request_data(input_output)
         routing_data = input_output.routing_data()
-        if self.id_column_name not in routing_data:
+        if self.id_column_name in routing_data:
+            model_id = routing_data[self.id_column_name]
+        elif "id" in routing_data:
+            model_id = routing_data["id"]
+        else:
             raise ValueError("I didn't receive the ID in my routing data.  I am probably misconfigured.")
-        model_id = routing_data[self.id_column_name]
         id_column_name = self.id_column_name
         models = self._model.where(f"{id_column_name}={model_id}")
         for where in self.configuration("where"):
