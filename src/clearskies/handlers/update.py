@@ -16,14 +16,15 @@ class Update(Write):
         "readable_columns": None,
         "where": [],
         "input_error_callable": None,
+        "include_id_in_path": False,
     }
 
     def handle(self, input_output):
         input_data = self.request_data(input_output)
-        external_id_column_name = self.auto_case_internal_column_name("id")
-        if "id" not in input_data:
-            return self.error(input_output, f"Missing '{external_id_column_name}' in request body", 404)
-        model_id = input_data["id"]
+        routing_data = input_output.routing_data()
+        if self.id_column_name not in routing_data:
+            raise ValueError("I didn't receive the ID in my routing data.  I am probably misconfigured.")
+        model_id = routing_data[self.id_column_name]
         id_column_name = self.id_column_name
         models = self._model.where(f"{id_column_name}={model_id}")
         for where in self.configuration("where"):
@@ -39,7 +40,8 @@ class Update(Write):
         model = models.first()
         if not model.exists:
             return self.error(input_output, "Not Found", 404)
-        del input_data["id"]
+        if "id" in input_data:
+            del input_data["id"]
 
         input_errors = {
             **self._extra_column_errors(input_data),
@@ -74,5 +76,5 @@ class Update(Write):
         return self._documentation(
             description="Update the " + nice_model + " with an " + id_label + " of {" + id_label + "}",
             response_description=f"The updated {nice_model}",
-            include_id_in_path=True,
+            include_id_in_path=self.configuration("include_id_in_path"),
         )

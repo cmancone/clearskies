@@ -62,7 +62,7 @@ class UpdateTest(unittest.TestCase):
         self.users_less_columns.create({"id": "5", "name": "", "email": "", "age": 0})
 
     def test_save_flow(self):
-        response = self.update(body={"id": "5", "name": "Conor", "email": "c@example.com", "age": 10})
+        response = self.update(body={"name": "Conor", "email": "c@example.com", "age": 10}, routing_data={"id": 5})
         response_data = response[0]["data"]
         self.assertEquals(200, response[1])
         self.assertEquals("5", response_data["id"])
@@ -95,7 +95,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEquals("c@example.com", response_data["Email"])
 
     def test_input_checks(self):
-        response = self.update(body={"id": 5, "email": "cmancone@example.com", "age": 10})
+        response = self.update(body={"email": "cmancone@example.com", "age": 10}, routing_data={"id": 5})
         self.assertEquals(200, response[1])
         self.assertEquals(
             {"name": "'name' is required.", "email": "'email' must be at most 15 characters long."},
@@ -103,7 +103,7 @@ class UpdateTest(unittest.TestCase):
         )
 
     def test_columns(self):
-        response = self.update_less_columns(body={"id": 5, "name": "Conor", "age": 10})
+        response = self.update_less_columns(body={"name": "Conor", "age": 10}, routing_data={"id": 5})
         response_data = response[0]["data"]
         self.assertEquals(200, response[1])
         self.assertEquals("5", response_data["id"])
@@ -111,7 +111,9 @@ class UpdateTest(unittest.TestCase):
         self.assertTrue("email" not in response_data)
 
     def test_extra_columns(self):
-        response = self.update_less_columns(body={"id": 5, "name": "Conor", "age": 10, "email": "hey", "yo": "sup"})
+        response = self.update_less_columns(
+            body={"name": "Conor", "age": 10, "email": "hey", "yo": "sup"}, routing_data={"id": 5}
+        )
         self.assertEquals(
             {
                 "email": "Input column 'email' is not an allowed column",
@@ -135,7 +137,7 @@ class UpdateTest(unittest.TestCase):
         users = update.build(User)
         users.create({"id": "5", "name": "Bob", "email": "default@email.com", "age": 10})
 
-        response = update(body={"id": 5, "name": "Conor", "age": 10})
+        response = update(body={"name": "Conor", "age": 10}, routing_data={"id": 5})
         response_data = response[0]["data"]
         self.assertEquals(200, response[1])
         self.assertEquals("5", response_data["id"])
@@ -180,21 +182,17 @@ class UpdateTest(unittest.TestCase):
             }
         )
         users = update.build(User)
-        users.create({"id": "5", "name": "Bob", "email": "default@email.com", "age": 10})
+        users.create({"id": 5, "name": "Bob", "email": "default@email.com", "age": 10})
 
         response = update(
-            body={"id": 5, "name": "Conor", "email": "c@example.com", "age": 10},
+            body={"name": "Conor", "email": "c@example.com", "age": 10},
             headers={"Authorization": "Bearer asdfer"},
+            routing_data={"id": "5"},
         )
         self.assertEquals(200, response[1])
 
-    def test_require_id_column(self):
-        response = self.update(body={"name": "Conor", "email": "c@example.com", "age": 10})
-        self.assertEquals(404, response[1])
-        self.assertEquals("Missing 'id' in request body", response[0]["error"])
-
     def test_require_matching_id(self):
-        response = self.update(body={"id": 10, "name": "Conor", "email": "c@example.com", "age": 10})
+        response = self.update(body={"name": "Conor", "email": "c@example.com", "age": 10}, routing_data={"id": 10})
         self.assertEquals(404, response[1])
         self.assertEquals("Not Found", response[0]["error"])
 
@@ -206,12 +204,11 @@ class UpdateTest(unittest.TestCase):
                 "readable_columns": ["id", "name", "email", "age"],
                 "writeable_columns": ["name", "email", "age"],
                 "authentication": Public(),
+                "include_id_in_path": True,
             }
         )
 
         documentation = update.documentation()[0]
-
-        self.assertEquals("{id}", documentation.relative_path)
 
         self.assertEquals(4, len(documentation.parameters))
         self.assertEquals(["name", "email", "age", "id"], [param.definition.name for param in documentation.parameters])
@@ -243,10 +240,10 @@ class UpdateTest(unittest.TestCase):
         users = update.build(User)
         users.create({"id": "5", "name": "", "email": "", "age": 0})
 
-        response = update(body={"id": 5, "name": "Conor", "email": "bob@asdf.com", "age": 10})
+        response = update(body={"name": "Conor", "email": "bob@asdf.com", "age": 10}, routing_data={"id": 5})
         self.assertEquals(200, response[1])
         self.assertEquals({"email": "Bob is not allowed."}, response[0]["input_errors"])
 
-        response = update(body={"id": 5, "name": "Conor", "email": "bob2@asdf.com", "age": 10})
+        response = update(body={"name": "Conor", "email": "bob2@asdf.com", "age": 10}, routing_data={"id": 5})
         self.assertEquals(200, response[1])
         self.assertEquals({}, response[0]["input_errors"])

@@ -125,6 +125,12 @@ class RestfulAPI(Routing):
             self._cached_handlers[cache_key] = self.build_handler(handler_class)
         return self._cached_handlers[cache_key]
 
+    def build_handler(self, handler_class, configuration=None):
+        if not configuration and handler_class == self.configuration("update_handler"):
+            configuration = self._configuration
+            configuration["include_id_in_path"] = True
+        return super().build_handler(handler_class, configuration=configuration)
+
     def _get_handler_class_for_route(self, input_output):
         try:
             [is_search, resource_id] = self._parse_url(input_output)

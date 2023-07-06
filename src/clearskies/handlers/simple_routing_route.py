@@ -124,7 +124,7 @@ class SimpleRoutingRoute:
             return None
         for index in range(path_length):
             if index in resource_paths:
-                if resource_paths[index] == self._path_parameter_with_slashes:
+                if resource_paths[index] in self._path_parameter_with_slashes:
                     route_data[resource_paths[index]] = "/".join(requested_parts[index:])
                 else:
                     route_data[resource_paths[index]] = requested_parts[index]
