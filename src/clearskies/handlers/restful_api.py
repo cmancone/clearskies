@@ -1,3 +1,4 @@
+import urllib.parse
 from .routing import Routing
 from .create import Create
 from .update import Update
@@ -175,7 +176,7 @@ class RestfulAPI(Routing):
             if url == "search" and self.configuration("allow_search"):
                 is_search = True
             else:
-                resource_id = url
+                resource_id = urllib.parse.unquote(url)
         return [is_search, resource_id]
 
     def documentation(self):

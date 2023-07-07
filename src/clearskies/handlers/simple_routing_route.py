@@ -1,3 +1,4 @@
+import urllib.parse
 import re
 from ..autodoc.request import URLPath
 from ..autodoc.schema import String
@@ -125,9 +126,9 @@ class SimpleRoutingRoute:
         for index in range(path_length):
             if index in resource_paths:
                 if resource_paths[index] in self._path_parameter_with_slashes:
-                    route_data[resource_paths[index]] = "/".join(requested_parts[index:])
+                    route_data[resource_paths[index]] = urllib.parse.unquote("/".join(requested_parts[index:]))
                 else:
-                    route_data[resource_paths[index]] = requested_parts[index]
+                    route_data[resource_paths[index]] = urllib.parse.unquote(requested_parts[index])
             else:
                 if requested_parts[index] != path_parts[index]:
                     return None
