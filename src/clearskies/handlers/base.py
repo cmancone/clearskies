@@ -196,6 +196,8 @@ class Base(ABC):
             return self.error(input_output, str(auth_error), 401)
         except exceptions.Authorization as auth_error:
             return self.error(input_output, str(auth_error), 403)
+        except exceptions.NotFound as auth_error:
+            return self.error(input_output, str(auth_error), 404)
 
         try:
             response = self.handle(input_output)
