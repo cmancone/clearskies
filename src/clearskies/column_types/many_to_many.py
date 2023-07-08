@@ -258,7 +258,7 @@ class ManyToMany(String):
                 else:
                     json[column_name] = column_data
             records.append(json)
-        return records
+        return {self.name: records}
 
     def documentation(self, name=None, example=None, value=None):
         columns = self.related_columns

@@ -27,7 +27,7 @@ class DateTimeTest(unittest.TestCase):
         model = type("", (), {"get": MagicMock(return_value=some_day)})()
         date = DateTime("di")
         date.configure("created", {}, int)
-        self.assertEquals("2021-01-07T22:45:13+00:00", date.to_json(model))
+        self.assertEquals({"created": "2021-01-07T22:45:13+00:00"}, date.to_json(model))
         model.get.assert_called_with("created", silent=True)
 
     def test_is_allowed_operator(self):

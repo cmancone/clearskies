@@ -105,15 +105,17 @@ class HasMany(Column):
         for child in model.__getattr__(self.name):
             json = OrderedDict()
             child_id_column_name = child.id_column_name
-            json[child_id_column_name] = columns[child_id_column_name].to_json(child)
+            json = {
+                **json,
+                **columns[child_id_column_name].to_json(child),
+            }
             for column_name in self.config("readable_child_columns"):
-                column_data = columns[column_name].to_json(child)
-                if type(column_data) == dict:
-                    json = {**json, **column_data}
-                else:
-                    json[column_name] = column_data
+                json = {
+                    **json,
+                    **columns[column_name].to_json(child),
+                }
             children.append(json)
-        return children
+        return {self.name: children}
 
     @property
     def child_models(self):

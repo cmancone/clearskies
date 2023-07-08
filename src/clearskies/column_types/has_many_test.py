@@ -116,20 +116,22 @@ class HasManyTest(unittest.TestCase):
 
     def test_as_json(self):
         self.assertEquals(
-            [
-                OrderedDict(
-                    [
-                        ("id", self.john_pending.id),
-                        ("first_name", self.john_pending.first_name),
-                    ]
-                ),
-                OrderedDict(
-                    [
-                        ("id", self.jane_pending.id),
-                        ("first_name", self.jane_pending.first_name),
-                    ]
-                ),
-            ],
+            {
+                "users": [
+                    OrderedDict(
+                        [
+                            ("id", self.john_pending.id),
+                            ("first_name", self.john_pending.first_name),
+                        ]
+                    ),
+                    OrderedDict(
+                        [
+                            ("id", self.jane_pending.id),
+                            ("first_name", self.jane_pending.first_name),
+                        ]
+                    ),
+                ]
+            },
             self.has_many_users.to_json(self.pending),
         )
 

@@ -162,18 +162,12 @@ class BelongsTo(String):
         parent = model.__getattr__(self.config("model_column_name"))
         json = OrderedDict()
         if parent.id_column_name not in self.config("readable_parent_columns"):
-            json[parent.id_column_name] = columns[parent.id_column_name].to_json(parent)
+            json[parent.id_column_name] = list(columns[parent.id_column_name].to_json(parent).values)[0]
         for column_name in self.config("readable_parent_columns"):
-            column_data = columns[column_name].to_json(parent)
-            if type(column_data) == dict:
-                json = {**json, **column_data}
-            else:
-                json[column_name] = column_data
-
-            json[column_name] = columns[column_name].to_json(parent)
+            json = {**json, **columns[column_name].to_json(parent)}
         id_less_name = self.config("model_column_name")
         return {
-            self.name: super().to_json(model),
+            **super().to_json(model),
             id_less_name: json,
         }
 

@@ -20,3 +20,6 @@ class JSON(Column):
         if self.name in data:
             data[self.name] = json.dumps(data[self.name]) if data[self.name] else ""
         return data
+
+    def to_json(self, model):
+        return {self.name: model.get(self.name, silent=True)}

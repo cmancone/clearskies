@@ -28,7 +28,7 @@ class DateTime(Column):
 
     def to_json(self, model):
         datetime = model.get(self.name, silent=True)
-        return datetime.isoformat() if datetime else None
+        return {self.name: datetime.isoformat() if datetime else None}
 
     def build_condition(self, value, operator=None, column_prefix=""):
         date = dateparser.parse(value).astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")

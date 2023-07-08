@@ -121,11 +121,15 @@ class Audit(has_many.HasMany):
         parent_columns = self.parent_columns
 
         if not old_data:
-            self.record(
-                model,
-                "create",
-                data={key: parent_columns[key].to_json(model) for key in new_data.keys() if key not in exclude_columns},
-            )
+            create_data = {}
+            for key in new_data.keys():
+                if key in exclude_columns:
+                    continue
+                create_data = {
+                    **create_data,
+                    **parent_columns[key].to_json(model),
+                }
+            self.record(model, "create", data=create_data)
             return
 
         # note that this is fairly simple logic to get started.  It's not going to detect changes that happen
@@ -133,20 +137,32 @@ class Audit(has_many.HasMany):
         # won't be picked up by this.
         old_model = model.empty_model()
         old_model.data = old_data
-        changes = {}
+        from_data = {}
+        to_data = {}
         for column, new_value in new_data.items():
             if column in exclude_columns or column not in old_data:
                 continue
             if old_data[column] == new_value:
                 continue
-            changes[column] = {
-                "from": parent_columns[column].to_json(old_model),
-                "to": parent_columns[column].to_json(model),
+            from_data = {
+                **from_data,
+                **parent_columns[column].to_json(old_model),
             }
-        if not changes:
+            to_data = {
+                **to_data,
+                **parent_columns[column].to_json(model),
+            }
+        if not from_data and not to_data:
             return
 
-        self.record(model, "update", data=changes)
+        self.record(
+            model,
+            "update",
+            data={
+                "from": from_data,
+                "to": to_data,
+            },
+        )
 
     def post_delete(self, model):
         super().post_delete(model)
