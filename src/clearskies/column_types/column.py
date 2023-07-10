@@ -126,6 +126,15 @@ class Column(ABC):
 
         return self.configuration[key]
 
+    def additional_write_columns(self, is_create=False):
+        additional_write_columns = {}
+        for requirement in self.config("input_requirements"):
+            additional_write_columns = {
+                **additional_write_columns,
+                **requirement.additional_write_columns(is_create=is_create),
+            }
+        return additional_write_columns
+
     def from_backend(self, value):
         """
         Takes the database representation and returns a python representation

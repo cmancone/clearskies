@@ -20,3 +20,6 @@ class Requirement(ABC):
     @abstractmethod
     def check(self, data):
         pass
+
+    def additional_write_columns(self, is_create=False):
+        return {}

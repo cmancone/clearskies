@@ -4,9 +4,16 @@ from abc import abstractmethod
 
 
 class InputProcessing:
+    _is_create = False
+
     def _get_writeable_columns(self):
         if self._writeable_columns is None:
             self._writeable_columns = self._get_rw_columns("writeable")
+            for column in self._writeable_columns.values():
+                more_columns = column.additional_write_columns(is_create=self._is_create)
+                # do it one-at-a-time so we don't lose our OrderedDict
+                for additional_column_name, additional_column in more_columns.items():
+                    self._writeable_columns[additional_column_name] = additional_column
         return self._writeable_columns
 
     def _extra_column_errors(self, input_data):

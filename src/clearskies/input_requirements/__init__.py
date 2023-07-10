@@ -2,6 +2,7 @@ from ..binding_config import BindingConfig
 from .minimum_length import MinimumLength
 from .maximum_length import MaximumLength
 from .required import Required
+from .requirement import Requirement
 from .unique import Unique
 
 

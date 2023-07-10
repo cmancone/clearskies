@@ -6,6 +6,8 @@ import json
 
 
 class Create(Write):
+    _is_create = True
+
     def __init__(self, di, logging):
         super().__init__(di)
         self._logging = logging
