@@ -174,10 +174,10 @@ class SimpleSearchTest(unittest.TestCase):
 
         documentation = simple_search.documentation()
         all_doc = documentation[0]
-        self.assertEquals(1, len(documentation))
+        self.assertEquals(2, len(documentation))
 
-        self.assertEquals([""], [doc.relative_path for doc in documentation])
-        self.assertEquals([["GET"]], [doc.request_methods for doc in documentation])
+        self.assertEquals(["", ""], [doc.relative_path for doc in documentation])
+        self.assertEquals([["GET"], ["POST"]], [doc.request_methods for doc in documentation])
 
         # Check our 'all' endpoint which returns all records
         self.assertEquals(2, len(all_doc.responses))
@@ -190,7 +190,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEquals(["id", "name", "email", "age"], [prop.name for prop in data_response_properties])
         self.assertEquals(["string", "string", "string", "integer"], [prop._type for prop in data_response_properties])
         self.assertEquals(
-            ["limit", "start", "sort", "direction", "name", "email", "name", "email"],
+            ["limit", "start", "sort", "direction", "name", "email"],
             [param.definition.name for param in all_doc.parameters],
         )
         self.assertEquals(
@@ -201,8 +201,6 @@ class SimpleSearchTest(unittest.TestCase):
                 "url_parameter",
                 "url_parameter",
                 "url_parameter",
-                "json_body",
-                "json_body",
             ],
             [param.location for param in all_doc.parameters],
         )

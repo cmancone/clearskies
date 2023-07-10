@@ -186,6 +186,16 @@ class AdvancedSearch(SimpleSearch):
         input["where"] = mapped_wheres
         return input
 
+    def documentation(self):
+        return [
+            self._documentation_request(
+                "POST",
+                [
+                    *self.documentation_request_parameters(),
+                ],
+            ),
+        ]
+
     def documentation_request_parameters(self):
         return [
             *self.documentation_json_parameters(),

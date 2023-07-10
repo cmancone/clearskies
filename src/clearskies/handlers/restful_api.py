@@ -188,7 +188,17 @@ class RestfulAPI(Routing):
             action_docs = handler.documentation()
             for doc in action_docs:
                 request_methods = self.configuration(f"{name}_request_method")
-                doc.set_request_methods(request_methods if type(request_methods) == list else [request_methods])
+
+                # for search, filter down the docs to only the allowed request methods.
+                # for the rest, set the request method to match the allowed one.
+                # this helps with the fact that the searching has different input methods depending
+                # on the request method, and helps with the fact that search has different rules
+                # for different methods.
+                if name == "search":
+                    if not set(request_methods).intersection(set(doc.request_methods)):
+                        continue
+                else:
+                    doc.set_request_methods(request_methods if type(request_methods) == list else [request_methods])
 
                 if name == "search":
                     doc.append_relative_path("search")
