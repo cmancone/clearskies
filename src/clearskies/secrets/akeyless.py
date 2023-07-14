@@ -1,7 +1,6 @@
 import datetime
 from clearskies.di import AdditionalConfig
 from .exceptions import NotFound
-from akeyless.exceptions import ApiException as AkeylessApiException
 
 
 class AKeylessAdditionalConfig(AdditionalConfig):
