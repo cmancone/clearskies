@@ -148,6 +148,10 @@ class InputOutput(ABC):
     def get_query_parameters(self):
         pass
 
+    @abstractmethod
+    def get_client_ip(self):
+        pass
+
     def set_authorization_data(self, data):
         self._authorization_data = data
 

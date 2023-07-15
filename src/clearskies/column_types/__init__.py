@@ -4,6 +4,9 @@ from .boolean import Boolean
 from .category_tree import CategoryTree
 from .column import Column
 from .created import Created
+from .created_by_authorization_data import CreatedByAuthorizationData
+from .created_by_ip import CreatedByIp
+from .created_by_user_agent import CreatedByUserAgent
 from .datetime import DateTime
 from .email import Email
 from .float import Float
@@ -40,6 +43,18 @@ def category_tree(name, **kwargs):
 
 def created(name, **kwargs):
     return build_column_config(name, Created, **kwargs)
+
+
+def created_by_authorization_data(name, **kwargs):
+    return build_column_config(name, CreatedByAuthorizationData, **kwargs)
+
+
+def created_by_ip(name, **kwargs):
+    return build_column_config(name, CreatedByIp, **kwargs)
+
+
+def created_by_user_agent(name, **kwargs):
+    return build_column_config(name, CreatedByUserAgent, **kwargs)
 
 
 def datetime(name, **kwargs):
@@ -100,9 +115,15 @@ __all__ = [
     "Boolean",
     "category_tree",
     "CategoryTree",
-    "created",
     "Column",
+    "created",
     "Created",
+    "created_by_authorization_data",
+    "CreatedByAuthorizationData",
+    "created_by_ip",
+    "CreatedByIp",
+    "created_by_user_agent",
+    "CreatedByUserAgent",
     "datetime",
     "DateTime",
     "email",

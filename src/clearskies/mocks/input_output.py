@@ -12,6 +12,7 @@ class InputOutput(input_outputs.InputOutput):
     _protocol = ""
     _query_parameters = None
     _context_specifics = None
+    _client_ip = None
     response = None
 
     def __init__(
@@ -28,6 +29,7 @@ class InputOutput(input_outputs.InputOutput):
         query_parameters=None,
         authorization_data=None,
         context_specifics=None,
+        client_ip=None,
     ):
         self.set_request_method(request_method)
         self.set_body(body)
@@ -40,6 +42,7 @@ class InputOutput(input_outputs.InputOutput):
         self._query_parameters = query_parameters if query_parameters is not None else {}
         self._authorization_data = authorization_data
         self._context_specifics = context_specifics if context_specifics is not None else {}
+        self._client_ip = client_ip if client_ip is not None else "127.0.0.1"
 
     def respond(self, body, status_code=200):
         self.response = {"body": body, "status_code": status_code, "headers": self._response_headers}
@@ -116,3 +119,6 @@ class InputOutput(input_outputs.InputOutput):
 
     def context_specifics(self):
         return self._context_specifics
+
+    def get_client_ip(self):
+        return self._client_ip

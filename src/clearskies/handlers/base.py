@@ -188,6 +188,7 @@ class Base(ABC):
                 raise exception.Authorization(str(client_error))
 
     def __call__(self, input_output):
+        self._di.bind("input_output", input_output)
         if self._configuration is None:
             raise ValueError("Must configure handler before calling")
         try:

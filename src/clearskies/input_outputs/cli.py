@@ -169,3 +169,6 @@ class CLI:
 
     def context_specifics(self):
         return {}
+
+    def get_client_ip(self):
+        return "cli"
