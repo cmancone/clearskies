@@ -22,7 +22,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def delete(self, id: str) -> bool:
+    def delete(self, id: str, model: model.Model) -> bool:
         """
         Deletes the record with the given id
         """
