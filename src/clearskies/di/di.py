@@ -142,6 +142,7 @@ class DI:
           4. Class via add_classes or add_modules
           5. Things set in "additional_config" classes
           6. Method on DI class called `provide_[name]`
+          7. Already prepared things
         """
         if name == "di":
             return self
@@ -177,6 +178,13 @@ class DI:
             if cache:
                 self._prepared[name] = built_value
             return built_value
+
+        # why twice?  When a "concrete" value is bound directly to a DI name, it is just
+        # put directly in the cache.  Therefore, if cache=False, we won't find it (which is a bug).
+        # Therefore, if we get to the very bottom, haven't found anything, but it is in the
+        # cache: well, it's time to use the cache.
+        if name in self._prepared:
+            return self._prepared[name]
 
         context_note = f" for {context}" if context else ""
         raise ValueError(
