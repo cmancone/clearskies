@@ -75,11 +75,14 @@ def convert_module_to_application(module: types.ModuleType) -> Application:
     if not hasattr(module, "__file__") or not module.__file__:
         raise ValueError("I'm trying to find routed functions in a module but I was passed a python-native module")
     root = os.path.dirname(module.__file__)
-    routes = convert_list_to_application(return_routed_functions(module, root, len(root)))
+    checked = {}
+    routes = convert_list_to_application(return_routed_functions(module, root, len(root), checked))
     return routes
 
 
-def return_routed_functions(module: types.ModuleType, root: str, root_len: int) -> List[Application]:
+def return_routed_functions(
+    module: types.ModuleType, root: str, root_len: int, checked: [str, str]
+) -> List[Application]:
     routed_functions = []
     for name, item in module.__dict__.items():
         if type(item) == Application:
@@ -94,9 +97,10 @@ def return_routed_functions(module: types.ModuleType, root: str, root_len: int) 
             child_root = os.path.dirname(item.__file__)
             if child_root[:root_len] != root:
                 continue
-            if module.__name__ == "clearskies":
+            if item.__file__ in checked:
                 continue
-            routed_functions.extend(return_routed_functions(item, root, root_len))
+            checked[item.__file__] = True
+            routed_functions.extend(return_routed_functions(item, root, root_len, checked))
     return routed_functions
 
 

@@ -116,7 +116,7 @@ class Audit(has_many.HasMany):
     def save_finished(self, model):
         super().save_finished(model)
         old_data = model._previous_data
-        new_data = model.data
+        new_data = model._data
         exclude_columns = self.config("exclude_columns")
         parent_columns = self.parent_columns
 
@@ -167,10 +167,17 @@ class Audit(has_many.HasMany):
     def post_delete(self, model):
         super().post_delete(model)
         exclude_columns = self.config("exclude_columns")
-        self.record(
-            model,
-            "delete",
-            data={key: value for (key, value) in model.data.items() if key not in exclude_columns},
+        parent_columns = self.parent_columns
+
+        self.child_models.create(
+            {
+                "class": self.config("parent_class_name"),
+                "resource_id": model.get(self.config("parent_id_column_name")),
+                "action": "delete",
+                "data": {
+                    key: parent_columns[key].to_json(model) for key in model._data.keys() if key not in exclude_columns
+                },
+            }
         )
 
     @property
