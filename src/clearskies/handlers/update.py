@@ -37,6 +37,12 @@ class Update(Write):
                 models = self._di.call_function(
                     where, models=models, input_output=input_output, routing_data=input_output.routing_data()
                 )
+        models = models.where_for_request(
+            models,
+            input_output.routing_data(),
+            input_output.get_authorization_data(),
+            input_output,
+        )
         authorization = self._configuration.get("authorization", None)
         if authorization and hasattr(authorization, "filter_models"):
             models = authorization.filter_models(models, input_output.get_authorization_data(), input_output)

@@ -289,6 +289,12 @@ class Column(ABC):
     def input_error_for_value(self, value, operator=None):
         return ""
 
+    def where_for_request(self, models, routing_data, authorization_data, input_output):
+        """
+        A hook to automatically apply filtering whenever the column makes an appearance in a get/update/list/search handler.
+        """
+        return models
+
     def validate_models_class(self, models_class, config_name="parent_models_class"):
         if not hasattr(models_class, "model_class"):
             if hasattr(models_class, "columns_configuration"):

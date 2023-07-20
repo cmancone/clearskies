@@ -320,3 +320,11 @@ class Model(Models):
         A hook to extend so you can provide additional post-delete logic as needed
         """
         pass
+
+    def where_for_request(self, models, routing_data, authorization_data, input_output):
+        """
+        A hook to automatically apply filtering whenever the model makes an appearance in a get/update/list/search handler.
+        """
+        for column in self.columns().values():
+            models = column.where_for_request(models, routing_data, authorization_data, input_output)
+        return models
