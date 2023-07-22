@@ -23,7 +23,7 @@ class Create(Write):
         if input_errors:
             self._logging.debug("Request rejected due to input errors: " + json.dumps(input_errors))
             raise InputError(input_errors)
-        model.save(input_data)
+        model.save(input_data, columns=self._columns)
 
         return self.success(input_output, self._model_as_json(model, input_output))
 

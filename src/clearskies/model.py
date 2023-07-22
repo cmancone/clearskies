@@ -120,7 +120,7 @@ class Model(Models):
     def data(self, data):
         self._data = {} if data is None else data
 
-    def save(self, data):
+    def save(self, data, columns=None):
         """
         Save data to the database and update the model!
 
@@ -128,7 +128,8 @@ class Model(Models):
         """
         if not len(data):
             raise ValueError("You have to pass in something to save!")
-        columns = self.columns()
+        if columns is None:
+            columns = self.columns()
 
         old_data = self.data
         data = self.columns_pre_save(data, columns)

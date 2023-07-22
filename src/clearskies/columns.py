@@ -17,18 +17,23 @@ class Columns:
             if name in columns:
                 raise ValueError(f"Duplicate column '{name}' found for model '{model_class.__name__}'")
             column_overrides = overrides[name] if (overrides is not None and name in overrides) else {}
-            configuration = {
-                **configuration,
-                **column_overrides,
-                "input_requirements": self._resolve_input_requirements(
-                    self._merge_input_requirements(
-                        configuration.get("input_requirements"),
-                        column_overrides.get("input_requirements"),
+            # if the overrides changes the class then we need to completely replace the column definition
+            # with what is in the overrides.
+            if "class" in column_overrides and id(column_overrides["class"]) != id(configuration["class"]):
+                configuration = column_overrides
+            else:
+                configuration = {
+                    **configuration,
+                    **column_overrides,
+                    "input_requirements": self._resolve_input_requirements(
+                        self._merge_input_requirements(
+                            configuration.get("input_requirements"),
+                            column_overrides.get("input_requirements"),
+                        ),
+                        name,
+                        model_class.__name__,
                     ),
-                    name,
-                    model_class.__name__,
-                ),
-            }
+                }
             columns[name] = self.build_column(name, configuration, model_class)
 
         # overrides can add columns too - need to handle those separately
