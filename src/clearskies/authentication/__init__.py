@@ -26,8 +26,12 @@ __all__ = [
     "Authorization",
     "BindingConfig",
     "public",
+    "Public",
     "secret_bearer",
+    "SecretBearer",
     "auth0_jwks",
+    "Auth0JWKS",
     "authorization",
     "jwks",
+    "JWKS",
 ]

@@ -49,3 +49,38 @@ class DateTime(Column):
         if not value.tzinfo:
             return "date is missing timezone information"
         return ""
+
+    def values_match(self, value_1, value_2):
+        """
+        Compares two values to see if they are the same
+        """
+        number_values = 0
+        if value_1:
+            number_values += 1
+        if value_2:
+            number_values += 1
+        if number_values == 0:
+            return True
+        if number_values == 1:
+            return False
+
+        if type(value_1) == str:
+            value_1 = dateparser.parse(value_1)
+        if type(value_2) == str:
+            value_2 = dateparser.parse(value_2)
+
+        # we need to make sure we're comparing in the same timezones.  For our purposes, a difference in timezone
+        # is fine as long as they represent the same time (e.g. 16:00EST == 20:00UTC).  For python, same time in different
+        # timezones is treated as different datetime objects.
+        if value_1.tzinfo is not None and value_2.tzinfo is not None:
+            value_1 = value_1.astimezone(value_2.tzinfo)
+
+        # two times can be the same but if one is datetime-aware and one is not, python will treat them as not equal.
+        # we want to treat such times as being the same.  Therefore, check for equality but ignore the timezone.
+        for to_check in ["year", "month", "day", "hour", "minute", "second", "microsecond"]:
+            if getattr(value_1, to_check) != getattr(value_2, to_check):
+                return False
+
+        # and since we already converted the timezones to match (or one has a timezone and one doesn't), we're good to go.
+        # if we passed the above loop then the times are the same.
+        return True

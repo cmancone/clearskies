@@ -192,8 +192,8 @@ class Model(Models):
         if self._previous_data is None:
             raise ValueError("was_changed was called before a save was finished - you must save something first")
 
-        has_old_value = key in self._previous_data
-        has_new_value = key in self._data
+        has_old_value = bool(self._previous_data.get(key))
+        has_new_value = bool(self._data.get(key))
 
         if has_new_value != has_old_value:
             return True
@@ -201,7 +201,12 @@ class Model(Models):
         if not has_old_value:
             return False
 
-        return self.__getattr__(key) != self._previous_data[key]
+        columns = self.columns()
+        new_value = self.__getattr__(key)
+        old_value = self._previous_data[key]
+        if key not in columns:
+            return old_value != new_value
+        return not columns[key].values_match(old_value, new_value)
 
     def previous_value(self, key):
         return self.get_transformed_from_data(key, self._previous_data, cache=False, check_providers=False, silent=True)

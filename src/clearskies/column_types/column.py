@@ -214,6 +214,12 @@ class Column(ABC):
         if on_change_actions and model.was_changed(self.name):
             self.execute_actions(on_change_actions, model)
 
+    def values_match(self, value_1, value_2):
+        """
+        Compares two values to see if they are the same
+        """
+        return value_1 == value_2
+
     def pre_delete(self, model):
         """
         Make any changes needed to the data before starting the delete process

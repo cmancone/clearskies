@@ -15,7 +15,6 @@ class Auth0JWKS:
     _jwks_fetched = None
     _algorithms = None
     _audience = None
-    _jwt_claims = None
     _documentation_security_name = None
 
     def __init__(self, environment, requests, jose_jwt):
