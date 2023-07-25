@@ -54,6 +54,12 @@ class DateTime(Column):
         """
         Compares two values to see if they are the same
         """
+        # in this function we deal with data directly out of the backend, so our date is likely
+        # to be string-ified and we want to look for default (e.g. null) values in string form.
+        if type(value_1) == str and "0000-00-00" in value_1:
+            value_1 = None
+        if type(value_2) == str and "0000-00-00" in value_2:
+            value_2 = None
         number_values = 0
         if value_1:
             number_values += 1

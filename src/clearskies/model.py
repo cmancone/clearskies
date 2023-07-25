@@ -10,6 +10,7 @@ class Model(Models):
     _configured_columns = None
     _data = None
     _previous_data = None
+    _touched_columns = None
     _transformed = None
     id_column_name = "id"
 
@@ -18,6 +19,7 @@ class Model(Models):
         self._transformed = {}
         self._data = {}
         self._previous_data = None
+        self._touched_columns = None
 
     def model_class(self):
         """
@@ -151,6 +153,7 @@ class Model(Models):
         self.data = new_data
         self._transformed = {}
         self._previous_data = old_data
+        self._touched_columns = list(data.keys())
 
         self.columns_save_finished(columns)
         self.save_finished()
@@ -191,6 +194,8 @@ class Model(Models):
         """Returns True/False to denote if a column was changed in the last save"""
         if self._previous_data is None:
             raise ValueError("was_changed was called before a save was finished - you must save something first")
+        if key not in self._touched_columns:
+            return False
 
         has_old_value = bool(self._previous_data.get(key))
         has_new_value = bool(self._data.get(key))
