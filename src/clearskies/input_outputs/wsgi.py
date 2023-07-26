@@ -86,7 +86,7 @@ class WSGI(InputOutput):
         return self._query_parameters
 
     def context_specifics(self):
-        return {"wsgi_environment": self.environment}
+        return {"wsgi_environment": self._environment}
 
     def get_client_ip(self):
         return self.environment.get("REMOTE_ADDR")
