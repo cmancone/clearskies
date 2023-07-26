@@ -1,4 +1,5 @@
 from ..binding_config import BindingConfig
+from .additional_config_auto_import import AdditionalConfigAutoImport
 import inspect
 import re
 import sys
@@ -76,6 +77,16 @@ class DI:
                         # built-ins will end up here
                         continue
                     if class_root[:root_len] != root:
+                        continue
+                    if issubclass(item, AdditionalConfigAutoImport):
+                        init_args = inspect.getfullargspec(item)
+                        if len(init_args.args) - 1 - len(init_args.defaults) > 0:
+                            raise ValueError(
+                                "Error auto-importing additional config "
+                                + item.__name__
+                                + ": auto imported configs can only have keyword arguments."
+                            )
+                        self.add_additional_configs([item()])
                         continue
                     self.add_classes([item])
                 if inspect.ismodule(item):
