@@ -56,7 +56,7 @@ class Routing(Base):
                 raise KeyError(f"Attempt to set unknown configuration setting '{key}' for handler '{class_name}'")
 
         self._check_configuration(configuration)
-        self._configuration = self._finalize_configuration(self.apply_default_configuation(configuration))
+        self._configuration = self._finalize_configuration(self.apply_default_configuration(configuration))
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)

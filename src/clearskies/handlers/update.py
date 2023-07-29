@@ -12,6 +12,7 @@ class Update(Write):
         "model": None,
         "model_class": None,
         "columns": None,
+        "column_overrides": None,
         "writeable_columns": None,
         "readable_columns": None,
         "where": [],
@@ -19,15 +20,19 @@ class Update(Write):
         "include_id_in_path": False,
     }
 
-    def handle(self, input_output):
-        input_data = self.request_data(input_output)
+    def get_model_id(self, input_output, input_data):
         routing_data = input_output.routing_data()
         if self.id_column_name in routing_data:
-            model_id = routing_data[self.id_column_name]
-        elif "id" in routing_data:
-            model_id = routing_data["id"]
-        else:
-            raise ValueError("I didn't receive the ID in my routing data.  I am probably misconfigured.")
+            return routing_data[self.id_column_name]
+        if "id" in routing_data:
+            return routing_data["id"]
+        raise ValueError("I didn't receive the ID in my routing data.  I am probably misconfigured.")
+
+    def handle(self, input_output):
+        input_data = self.request_data(input_output)
+        model_id = self.get_model_id(input_output, input_data)
+        if not model_id:
+            return self.error(input_output, "Not Found", 404)
         id_column_name = self.id_column_name
         models = self._model.where(f"{id_column_name}={model_id}")
         for where in self.configuration("where"):
@@ -42,6 +47,7 @@ class Update(Write):
             input_output.routing_data(),
             input_output.get_authorization_data(),
             input_output,
+            overrides=self.configuration("column_overrides"),
         )
         authorization = self._configuration.get("authorization", None)
         if authorization and hasattr(authorization, "filter_models"):
@@ -58,7 +64,7 @@ class Update(Write):
         }
         if input_errors:
             raise InputError(input_errors)
-        model.save(input_data, columns=self._columns)
+        model.save(input_data, columns=self._get_writeable_columns())
 
         return self.success(input_output, self._model_as_json(model, input_output))
 

@@ -130,24 +130,26 @@ class Model(Models):
         """
         if not len(data):
             raise ValueError("You have to pass in something to save!")
-        if columns is None:
-            columns = self.columns()
+        save_columns = self.columns()
+        if columns is not None:
+            for column in columns.values():
+                save_columns[column.name] = column
 
         old_data = self.data
-        data = self.columns_pre_save(data, columns)
+        data = self.columns_pre_save(data, save_columns)
         data = self.pre_save(data)
         if data is None:
             raise ValueError("pre_save forgot to return the data array!")
 
-        to_save = self.columns_to_backend(data, columns)
-        to_save = self.to_backend(to_save, columns)
+        to_save = self.columns_to_backend(data, save_columns)
+        to_save = self.to_backend(to_save, save_columns)
         if self.exists:
             new_data = self._backend.update(self._data[self.id_column_name], to_save, self)
         else:
             new_data = self._backend.create(to_save, self)
-        id = self._backend.column_from_backend(columns[self.id_column_name], new_data[self.id_column_name])
+        id = self._backend.column_from_backend(save_columns[self.id_column_name], new_data[self.id_column_name])
 
-        data = self.columns_post_save(data, id, columns)
+        data = self.columns_post_save(data, id, save_columns)
         self.post_save(data, id)
 
         self.data = new_data
@@ -155,7 +157,7 @@ class Model(Models):
         self._previous_data = old_data
         self._touched_columns = list(data.keys())
 
-        self.columns_save_finished(columns)
+        self.columns_save_finished(save_columns)
         self.save_finished()
 
         return True
@@ -332,10 +334,10 @@ class Model(Models):
         """
         pass
 
-    def where_for_request(self, models, routing_data, authorization_data, input_output):
+    def where_for_request(self, models, routing_data, authorization_data, input_output, overrides=None):
         """
         A hook to automatically apply filtering whenever the model makes an appearance in a get/update/list/search handler.
         """
-        for column in self.columns().values():
+        for column in self.columns(overrides=overrides).values():
             models = column.where_for_request(models, routing_data, authorization_data, input_output)
         return models

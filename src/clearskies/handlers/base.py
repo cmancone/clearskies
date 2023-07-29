@@ -48,7 +48,7 @@ class Base(ABC):
                 raise KeyError(f"Attempt to set unknown configuration setting '{key}' for handler '{class_name}'")
 
         self._check_configuration(configuration)
-        self._configuration = self._finalize_configuration(self.apply_default_configuation(configuration))
+        self._configuration = self._finalize_configuration(self.apply_default_configuration(configuration))
 
     def _check_configuration(self, configuration):
         if not "authentication" in configuration:
@@ -113,7 +113,7 @@ class Base(ABC):
                 f"Configuration error for handler '{self.__class__.__name__}': if provided, base_url must be a string"
             )
 
-    def apply_default_configuation(self, configuration):
+    def apply_default_configuration(self, configuration):
         return {
             **self._global_configuration_defaults,
             **self._configuration_defaults,
