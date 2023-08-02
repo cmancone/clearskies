@@ -1,8 +1,12 @@
+import logging
 import urllib.parse
 import re
+import json
 from ..autodoc.request import URLPath
 from ..autodoc.schema import String
 from . import simple_routing
+
+logger = logging.getLogger(__name__)
 
 
 class SimpleRoutingRoute:
@@ -91,26 +95,45 @@ class SimpleRoutingRoute:
         to understand if there was no route match at all.
         """
         # if we're routing to a simple router then defer to it
+        incoming = f"Incoming request: [{request_method}] {full_path}.  Check against route with url '{self._path}' "
+        if not self._methods:
+            incoming += " configured for any method except OPTIONS"
+        elif isinstance(self._methods, str):
+            incoming += f" with method '{self._methods}'"
+        else:
+            incoming += " with any of the following methods: " + ", ".join(self._methods)
         if self._routes_to_simple_routing:
             return self._handler.can_handle(full_path, request_method, is_cors=is_cors)
         # If we're routing for CORS then ignore the request method (since it won't match)
         if not is_cors and self._methods is not None and request_method not in self._methods:
+            logger.debug(
+                f"{incoming} Skipped because this route is not specifically configured for CORS, and this is an OPTIONS request."
+            )
             return None
         if self._resource_paths:
-            return self._resource_path_match(full_path, self._path_parts, self._resource_paths)
+            results = self._resource_path_match(full_path, self._path_parts, self._resource_paths)
+            if not results:
+                logger.debug(f"{incoming} Not a match.")
+            else:
+                logger.debug(f"{incoming} Matched and extracted route data: " + json.dumps(results))
+            return results
         if self._path is not None:
             full_path = full_path.strip("/")
             my_path = self._path.strip("/")
             my_path_length = len(my_path)
             full_path_length = len(full_path)
             if my_path_length > full_path_length:
+                logger.debug(f"{incoming} Not a match. I'm too long to bother checking.")
                 return None
             if full_path[:my_path_length] != my_path:
+                logger.debug(f"{incoming} Not a match.  Our prefixes just don't match.")
                 return None
             # make sure we don't get confused by partial matches.  `user` should match `user/` and `user/5`,
             # but it shouldn't match `users/`
             if full_path_length > my_path_length and full_path[my_path_length] != "/":
+                logger.debug(f"{incoming} Not a match.  I only partially matched the URL but not as a sub-directory.")
                 return None
+        logger.debug(f"{incoming} Match!")
         return {}
 
     def _resource_path_match(self, requested_path, path_parts, resource_paths):
