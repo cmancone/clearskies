@@ -31,6 +31,9 @@ class CursorBackend(Backend):
     def configure(self):
         pass
 
+    def _finalize_table_name(self, table_name):
+        return f"`{table_name}`"
+
     def update(self, id, data, model):
         query_parts = []
         parameters = []
@@ -39,14 +42,14 @@ class CursorBackend(Backend):
             parameters.append(val)
         updates = ", ".join(query_parts)
 
-        table_name = model.table_name()
+        table_name = self._finalize_table_name(model.table_name())
         self._cursor.execute(
-            f"UPDATE `{table_name}` SET {updates} WHERE {model.id_column_name}=%s", tuple([*parameters, id])
+            f"UPDATE {table_name} SET {updates} WHERE {model.id_column_name}=%s", tuple([*parameters, id])
         )
 
         results = self.records(
             {
-                "table_name": table_name,
+                "table_name": model.table_name(),
                 "select_all": True,
                 "wheres": [{"parsed": f"{model.id_column_name}=%s", "values": [id]}],
             },
@@ -58,8 +61,8 @@ class CursorBackend(Backend):
         columns = "`" + "`, `".join(data.keys()) + "`"
         placeholders = ", ".join(["%s" for i in range(len(data))])
 
-        table_name = model.table_name()
-        self._cursor.execute(f"INSERT INTO `{table_name}` ({columns}) VALUES ({placeholders})", tuple(data.values()))
+        table_name = self._finalize_table_name(model.table_name())
+        self._cursor.execute(f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})", tuple(data.values()))
         new_id = data.get(model.id_column_name)
         if not new_id:
             new_id = self._cursor.lastrowid
@@ -68,7 +71,7 @@ class CursorBackend(Backend):
 
         results = self.records(
             {
-                "table_name": table_name,
+                "table_name": model.table_name(),
                 "select_all": True,
                 "wheres": [{"parsed": f"{model.id_column_name}=%s", "values": [new_id]}],
             },
@@ -77,8 +80,8 @@ class CursorBackend(Backend):
         return results[0]
 
     def delete(self, id, model):
-        table_name = model.table_name()
-        self._cursor.execute(f"DELETE FROM `{table_name}` WHERE {model.id_column_name}=%s", (id,))
+        table_name = self._finalize_table_name(model.table_name())
+        self._cursor.execute(f"DELETE FROM {table_name} WHERE {model.id_column_name}=%s", (id,))
         return True
 
     def count(self, configuration, model):
@@ -109,7 +112,7 @@ class CursorBackend(Backend):
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration["wheres"])
         select_parts = []
         if configuration["select_all"]:
-            select_parts.append(f"`{configuration['table_name']}`.*")
+            select_parts.append(self._finalize_table_name(configuration["table_name"]) + ".*")
         if configuration["selects"]:
             select_parts.extend(configuration["selects"])
         select = ", ".join(select_parts)
@@ -123,7 +126,7 @@ class CursorBackend(Backend):
                 table_name = sort.get("table")
                 column_name = sort["column"]
                 direction = sort["direction"]
-                prefix = f"`{table_name}`." if table_name else ""
+                prefix = self._finalize_table_name(table_name) + "." if table_name else ""
                 sort_parts.append(f"{prefix}`{column_name}` {direction}")
             order_by = " ORDER BY " + ", ".join(sort_parts)
         else:
@@ -136,8 +139,9 @@ class CursorBackend(Backend):
                 start = int(configuration["pagination"]["start"])
             limit = f' LIMIT {start}, {configuration["limit"]}'
 
+        table_name = self._finalize_table_name(configuration["table_name"])
         return [
-            f'SELECT {select} FROM `{configuration["table_name"]}`{joins}{wheres}{group_by}{order_by}{limit}'.strip(),
+            f"SELECT {select} FROM {table_name}{joins}{wheres}{group_by}{order_by}{limit}".strip(),
             parameters,
         ]
 
@@ -151,10 +155,11 @@ class CursorBackend(Backend):
             joins = " " + " ".join([join["raw"] for join in configuration["joins"]])
         else:
             joins = ""
+        table_name = self._finalize_table_name(configuration["table_name"])
         if not configuration["group_by_column"]:
-            query = f'SELECT COUNT(*) AS count FROM `{configuration["table_name"]}`{joins}{wheres}'
+            query = f"SELECT COUNT(*) AS count FROM {table_name}{joins}{wheres}"
         else:
-            query = f'SELECT COUNT(SELECT 1 FROM `{configuration["table_name"]}`{joins}{wheres} GROUP BY `{configuration["group_by_column"]}`) AS count'
+            query = f'SELECT COUNT(SELECT 1 FROM {table_name}{joins}{wheres} GROUP BY `{configuration["group_by_column"]}`) AS count'
         return [query, parameters]
 
     def _conditions_as_wheres_and_parameters(self, conditions):
