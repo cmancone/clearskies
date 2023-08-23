@@ -28,17 +28,29 @@ class CursorBackend(Backend):
     def __init__(self, cursor):
         self._cursor = cursor
 
+    def _table_escape_character(self) -> str:
+        """Return the character to use to escape table names in queries."""
+        return "`"
+
+    def _column_escape_character(self) -> str:
+        """Return the character to use to escape column names in queries."""
+        return "`"
+
     def configure(self):
         pass
 
     def _finalize_table_name(self, table_name):
-        return f"`{table_name}`"
+        escape = self._table_escape_character()
+        if "." not in table_name:
+            return f"{escape}{table_name}{escape}"
+        return escape + f"{escape}.{escape}".join(table_name.split(".")) + escape
 
     def update(self, id, data, model):
         query_parts = []
         parameters = []
+        escape = self._column_escape_character()
         for key, val in data.items():
-            query_parts.append(f"`{key}`=%s")
+            query_parts.append(f"{escape}{key}{escape}=%s")
             parameters.append(val)
         updates = ", ".join(query_parts)
 
@@ -58,7 +70,8 @@ class CursorBackend(Backend):
         return results[0]
 
     def create(self, data, model):
-        columns = "`" + "`, `".join(data.keys()) + "`"
+        escape = self._column_escape_character()
+        columns = escape + f"{escape}, {escape}".join(data.keys()) + escape
         placeholders = ", ".join(["%s" for i in range(len(data))])
 
         table_name = self._finalize_table_name(model.table_name())
@@ -109,6 +122,7 @@ class CursorBackend(Backend):
         return records
 
     def as_sql(self, configuration):
+        escape = self._column_escape_character()
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration["wheres"])
         select_parts = []
         if configuration["select_all"]:
@@ -127,11 +141,15 @@ class CursorBackend(Backend):
                 column_name = sort["column"]
                 direction = sort["direction"]
                 prefix = self._finalize_table_name(table_name) + "." if table_name else ""
-                sort_parts.append(f"{prefix}`{column_name}` {direction}")
+                sort_parts.append(f"{prefix}{escape}{column_name}{escape} {direction}")
             order_by = " ORDER BY " + ", ".join(sort_parts)
         else:
             order_by = ""
-        group_by = " GROUP BY `" + configuration["group_by_column"] + "`" if configuration["group_by_column"] else ""
+        group_by = (
+            f" GROUP BY {escape}" + configuration["group_by_column"] + escape
+            if configuration["group_by_column"]
+            else ""
+        )
         limit = ""
         if configuration["limit"]:
             start = 0
@@ -146,6 +164,7 @@ class CursorBackend(Backend):
         ]
 
     def as_count_sql(self, configuration):
+        escape = self._column_escape_character()
         # note that this won't work if we start including a HAVING clause
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration["wheres"])
         # we also don't currently support parameters in the join clause - I'll probably need that though
@@ -159,7 +178,7 @@ class CursorBackend(Backend):
         if not configuration["group_by_column"]:
             query = f"SELECT COUNT(*) AS count FROM {table_name}{joins}{wheres}"
         else:
-            query = f'SELECT COUNT(SELECT 1 FROM {table_name}{joins}{wheres} GROUP BY `{configuration["group_by_column"]}`) AS count'
+            query = f'SELECT COUNT(SELECT 1 FROM {table_name}{joins}{wheres} GROUP BY {escape}{configuration["group_by_column"]}{escape}) AS count'
         return [query, parameters]
 
     def _conditions_as_wheres_and_parameters(self, conditions):
