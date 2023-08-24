@@ -275,8 +275,11 @@ class Base(ABC):
         json = OrderedDict()
         for output_name, column in self._as_json_map.items():
             column_data = column.to_json(model)
-            for key, value in column_data.items():
-                json[self.auto_case_column_name(key, True)] = value
+            if len(column_data) == 1:
+                json[output_name] = list(column_data.values())[0]
+            else:
+                for key, value in column_data.items():
+                    json[self.auto_case_column_name(key, True)] = value
         return json
 
     def _build_as_json_map(self, model):
