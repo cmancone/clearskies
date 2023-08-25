@@ -89,4 +89,4 @@ class WSGI(InputOutput):
         return {"wsgi_environment": self._environment}
 
     def get_client_ip(self):
-        return self.environment.get("REMOTE_ADDR")
+        return self._environment.get("REMOTE_ADDR")
