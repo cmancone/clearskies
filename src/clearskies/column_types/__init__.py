@@ -5,6 +5,7 @@ from .category_tree import CategoryTree
 from .column import Column
 from .created import Created
 from .created_by_authorization_data import CreatedByAuthorizationData
+from .created_by_header import CreatedByHeader
 from .created_by_ip import CreatedByIp
 from .created_by_user_agent import CreatedByUserAgent
 from .datetime import DateTime
@@ -47,6 +48,10 @@ def created(name, **kwargs):
 
 def created_by_authorization_data(name, **kwargs):
     return build_column_config(name, CreatedByAuthorizationData, **kwargs)
+
+
+def created_by_header(name, **kwargs):
+    return build_column_config(name, CreatedByHeader, **kwargs)
 
 
 def created_by_ip(name, **kwargs):
