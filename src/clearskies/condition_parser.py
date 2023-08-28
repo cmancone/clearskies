@@ -90,8 +90,8 @@ class ConditionParser:
         # note: this is not very smart and will mess things up if there are single quotes/commas in the data
         return list(map(lambda value: value.strip().strip("'"), value[1:-1].split(",")))
 
-    def _with_placeholders(self, column, operator, values, escape=True):
-        quote = "`" if escape else ""
+    def _with_placeholders(self, column, operator, values, escape=True, escape_character="`"):
+        quote = escape_character if escape else ""
         column = column.replace("`", "")
         upper_case_operator = operator.upper()
         if operator in self.operators_with_simple_placeholders:

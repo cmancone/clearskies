@@ -27,6 +27,9 @@ class CursorBackend(Backend):
 
     def __init__(self, cursor):
         self._cursor = cursor
+        from .. import ConditionParser
+
+        self.condition_parser = ConditionParser()
 
     def _table_escape_character(self) -> str:
         """Return the character to use to escape table names in queries."""
@@ -63,7 +66,14 @@ class CursorBackend(Backend):
             {
                 "table_name": model.table_name(),
                 "select_all": True,
-                "wheres": [{"parsed": f"{model.id_column_name}=%s", "values": [id]}],
+                "wheres": [
+                    {
+                        "column": model.id_column_name,
+                        "operator": "=",
+                        "parsed": f"{model.id_column_name}=%s",
+                        "values": [id],
+                    }
+                ],
             },
             model,
         )
@@ -86,7 +96,14 @@ class CursorBackend(Backend):
             {
                 "table_name": model.table_name(),
                 "select_all": True,
-                "wheres": [{"parsed": f"{model.id_column_name}=%s", "values": [new_id]}],
+                "wheres": [
+                    {
+                        "column": model.id_column_name,
+                        "operator": "=",
+                        "parsed": f"{model.id_column_name}=%s",
+                        "values": [new_id],
+                    }
+                ],
             },
             model,
         )
@@ -189,7 +206,15 @@ class CursorBackend(Backend):
         where_parts = []
         for condition in conditions:
             parameters.extend(condition["values"])
-            where_parts.append(condition["parsed"])
+            where_parts.append(
+                self.condition_parser._with_placeholders(
+                    condition["column"],
+                    condition["operator"],
+                    condition["values"],
+                    escape=True,
+                    escape_character=self._column_escape_character(),
+                )
+            )
         return [" WHERE " + " AND ".join(where_parts), parameters]
 
     def _check_query_configuration(self, configuration):
