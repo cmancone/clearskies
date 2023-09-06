@@ -290,14 +290,27 @@ class DI:
         if hasattr(callable_to_execute, "__self__"):
             call_arguments = call_arguments[1:]
 
-        args = [
-            kwargs[call_argument]
-            if call_argument in kwargs
-            else self.build_from_name(call_argument, context=callable_to_execute.__name__, cache=True)
-            for call_argument in call_arguments
-        ]
+        # separate out args and kwargs.  kwargs for the function are only allowed to come out of the kwargs
+        # we were passed.  If the function has a kwarg that we don't have, then ignore it.
+        # args come out of dependencies or the kwargs passed to us.  If an arg is missing, then throw an error.
+        nargs = len(call_arguments)
+        nkwargs = len(args_data.defaults) if args_data.defaults else 0
+        arg_names = call_arguments[: nargs - nkwargs]
+        kwarg_names = call_arguments[nargs - nkwargs :]
 
-        return callable_to_execute(*args)
+        callable_args = [
+            kwargs[arg]
+            if arg in kwargs
+            else self.build_from_name(arg, context=callable_to_execute.__name__, cache=True)
+            for arg in arg_names
+        ]
+        callable_kwargs = {}
+        for kwarg_name in kwarg_names:
+            if kwarg_name not in kwargs:
+                continue
+            callable_kwargs[kwarg_name] = kwargs[kwarg_name]
+
+        return callable_to_execute(*callable_args, **callable_kwargs)
 
     def _disallow_kwargs(self, action):
         """
