@@ -31,3 +31,8 @@ class Secrets:
         raise NotImplementedError(
             "It looks like you tried to use the secret system in clearskies, but didn't specify a secret manager."
         )
+
+    def list_sub_folders(self, path, value):
+        raise NotImplementedError(
+            "It looks like you tried to use the secret system in clearskies, but didn't specify a secret manager."
+        )

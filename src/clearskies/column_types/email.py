@@ -9,6 +9,10 @@ class Email(String):
     def input_error_for_value(self, value, operator=None):
         if type(value) != str:
             return f"Value must be a string for {self.name}"
+        if operator and operator.lower() == "like":
+            # don't check for an email if doing a fuzzy search, since we may be searching
+            # for a partial email
+            return ""
         if re.search("^[a-z0-9]+[\\._]?[a-z0-9]+[@]\\w+[.]\\w{2,3}$", value):
             return ""
         return "Invalid email address"
