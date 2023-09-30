@@ -36,7 +36,7 @@ class CORS(Base):
     def add_header(self, header):
         if not self.headers:
             self.headers = header
-        else:
+        elif header not in self.headers:
             self.headers += ", " + header
 
     def set_methods(self, methods):
@@ -47,7 +47,7 @@ class CORS(Base):
     def add_method(self, method):
         if not self.methods:
             self.methods = method
-        else:
+        elif method not in self.methods:
             self.methods += ", " + method
 
     def set_headers_for_input_output(self, input_output):
