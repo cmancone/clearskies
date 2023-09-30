@@ -167,6 +167,7 @@ class SimpleRouting(Base):
                 authentication=authentication,
                 response_headers=response_headers,
                 security_headers=security_headers,
+                has_sub_paths=route_config.get("has_sub_paths", True),
             )
             self._routes.append(route)
 

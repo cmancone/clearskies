@@ -19,6 +19,7 @@ class SimpleRoutingRoute:
     _routes_to_simple_routing = False
     _bindings = None
     _path_parameter_with_slashes = None
+    _has_sub_paths = None
 
     def __init__(self, di):
         self._di = di
@@ -34,6 +35,7 @@ class SimpleRoutingRoute:
         security_headers=None,
         path_parameter_with_slashes=None,
         bindings=None,
+        has_sub_paths=True,
     ):
         if authentication is not None and not handler_config.get("authentication"):
             handler_config["authentication"] = authentication
@@ -49,6 +51,7 @@ class SimpleRoutingRoute:
         self._resource_paths = self._extract_resource_paths(self._path_parts)
         self._bindings = bindings if bindings else {}
         self._path_parameter_with_slashes = path_parameter_with_slashes if path_parameter_with_slashes else []
+        self._has_sub_paths = has_sub_paths
         if methods is not None:
             self._methods = [methods.upper()] if isinstance(methods, str) else [met.upper() for met in methods]
         sub_handler_config = {
@@ -127,6 +130,9 @@ class SimpleRoutingRoute:
                 return None
             if full_path[:my_path_length] != my_path:
                 logger.debug(f"{incoming} Not a match.  Our prefixes just don't match.")
+                return None
+            if not self._has_sub_paths and full_path_length > my_path_length:
+                logger.debug(f"{incoming} Not a match.  It's a partial match but I'm not allowed to do that.")
                 return None
             # make sure we don't get confused by partial matches.  `user` should match `user/` and `user/5`,
             # but it shouldn't match `users/`
