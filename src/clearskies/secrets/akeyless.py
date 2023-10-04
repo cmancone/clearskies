@@ -101,12 +101,17 @@ class AKeyless:
             raise e
         return res[path]
 
-    def get_dynamic_secret(self, path):
+    def get_dynamic_secret(self, path, args=None):
         self._configure_guard()
 
-        res = self._api.get_dynamic_secret_value(
-            self._akeyless.GetDynamicSecretValue(name=path, token=self._get_token())
-        )
+        kwargs = {
+            "name": path,
+            "token": self._get_token(),
+        }
+        if args:
+            kwargs["args"] = args
+
+        res = self._api.get_dynamic_secret_value(self._akeyless.GetDynamicSecretValue(**kwargs))
         return res
 
     def list_secrets(self, path):
