@@ -138,8 +138,8 @@ class AKeyless:
 
     def list_sub_folders(self, main_folder: str) -> list[str]:
         """Return the list of secrets/sub folders in the given folder."""
-        items = self._api.list_items(self.akeyless.ListItems(path=main_folder, token=self.token))
-
+        items = self._api.list_items(self._akeyless.ListItems(path=main_folder, token=self._get_token()))
+        
         # akeyless will return the absolute path and end in a slash but we only want the folder name
         main_folder_string_len = len(main_folder)
         return [sub_folder[main_folder_string_len:-1] for sub_folder in items.folders]
