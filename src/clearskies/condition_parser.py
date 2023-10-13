@@ -94,11 +94,12 @@ class ConditionParser:
         quote = escape_character if escape else ""
         column = column.replace("`", "")
         upper_case_operator = operator.upper()
-        if operator in self.operators_with_simple_placeholders:
+        lower_case_operator = operator.lower()
+        if lower_case_operator in self.operators_with_simple_placeholders:
             return f"{quote}{column}{quote}{upper_case_operator}%s"
-        if operator in self.operators_without_placeholders:
+        if lower_case_operator in self.operators_without_placeholders:
             return f"{quote}{column}{quote} {upper_case_operator}"
-        if operator == "is" or operator == "is not" or operator == "like":
+        if lower_case_operator == "is" or lower_case_operator == "is not" or lower_case_operator == "like":
             return f"{quote}{column}{quote} {upper_case_operator} %s"
 
         # the only thing left is "in" which has a variable number of placeholders
