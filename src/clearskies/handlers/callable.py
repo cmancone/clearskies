@@ -62,7 +62,10 @@ class Callable(Base, SchemaHelper):
                 return self.success(input_output, response)
             return
         except InputError as e:
-            return self.input_errors(input_output, str(e))
+            if e.errors:
+                return self.input_errors(input_output, e.errors)
+            else:
+                return self.input_errors(input_output, str(e))
         except ClientError as e:
             return self.error(input_output, str(e), 400)
         except NotFound as e:
