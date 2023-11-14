@@ -129,7 +129,7 @@ class DI:
             instance = self.build_class(thing.object_class, context=context, cache=cache)
             if (thing.args or thing.kwargs) and not hasattr(instance, "configure"):
                 raise ValueError(
-                    f"Cannot build instance of class '{binding.object_class.__name__}' "
+                    f"Cannot build instance of class '{instance.__class__.__name__}' "
                     + "because it is missing the 'configure' method"
                 )
             instance.configure(*thing.args, **thing.kwargs)
@@ -215,7 +215,7 @@ class DI:
         if not inspect.isclass(replacement):
             raise ValueError(
                 "Invalid value passed to 'mock_class' for 'replacement' parameter: a class should be passed but I got a "
-                + type(replacement)
+                + str(type(replacement))
             )
 
         self._class_mocks[name] = replacement

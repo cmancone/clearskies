@@ -114,6 +114,19 @@ class AKeyless:
         res = self._api.get_dynamic_secret_value(self._akeyless.GetDynamicSecretValue(**kwargs))
         return res
 
+    def get_rotated_secret(self, path, args=None):
+        self._configure_guard()
+
+        kwargs = {
+            "names": path,
+            "token": self._get_token(),
+        }
+        if args:
+            kwargs["args"] = args
+
+        res = self._api.get_rotated_secret_value(self._akeyless.GetRotatedSecretValue(**kwargs))
+        return res
+
     def list_secrets(self, path):
         self._configure_guard()
         res = self._api.list_items(self._akeyless.ListItems(path=path, token=self._get_token()))
