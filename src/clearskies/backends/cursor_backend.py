@@ -206,12 +206,15 @@ class CursorBackend(Backend):
         where_parts = []
         for condition in conditions:
             parameters.extend(condition["values"])
+            table = condition.get("table", "")
+            column = condition["column"]
+            column_with_table = f"{table}.{column}" if table else column
             where_parts.append(
                 self.condition_parser._with_placeholders(
-                    condition["column"],
+                    column_with_table,
                     condition["operator"],
                     condition["values"],
-                    escape=True,
+                    escape=False if table else True,
                     escape_character=self._column_escape_character(),
                 )
             )
