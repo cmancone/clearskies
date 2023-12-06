@@ -22,23 +22,33 @@ class AdvancedSearch(SimpleSearch):
             primary_direction = request_data["sort"][0]["direction"]
             secondary_column = None
             secondary_direction = None
+            secondary_table = None
             if len(request_data["sort"]) == 2:
                 secondary_column = request_data["sort"][1]["column"]
                 secondary_direction = request_data["sort"][1]["direction"]
+                # call _add_join first because it's expecting something like table.column_name, and
+                # _resolve_references_for_query will break that up.
+                models = self._add_join(secondary_column, models)
+                [secondary_column, secondary_table] = self._resolve_references_for_query(secondary_column)
+
+            # call _add_join first because it's expecting column_name to be something like 'table.column_name', and
+            # _resolve_references_for_query will break up the table and column name reference.
+            models = self._add_join(primary_column, models)
+            [primary_column, primary_table] = self._resolve_references_for_query(primary_column)
             models = models.sort_by(
                 primary_column,
                 primary_direction,
-                primary_table=models.table_name(),
+                primary_table=primary_table,
                 secondary_column=secondary_column,
                 secondary_direction=secondary_direction,
-                secondary_table=models.table_name(),
+                secondary_table=secondary_table,
             )
         if "where" in request_data:
             for where in request_data["where"]:
                 column_name = where["column"]
                 if column_name == "id":
                     column_name = self.id_column_name
-                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
+                [column_name, relationship_reference] = self._unpack_column_name_with_reference(column_name)
                 column = self._columns[column_name]
                 models = column.add_search(
                     models,
@@ -119,7 +129,7 @@ class AdvancedSearch(SimpleSearch):
                 column_name = where["column"]
                 if column_name not in self.configuration("searchable_columns"):
                     return f"Invalid request: invalid search column specified in where entry #{index+1}"
-                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
+                [column_name, relationship_reference] = self._unpack_column_name_with_reference(column_name)
                 if column_name == "id":
                     column_name = self.id_column_name
                 if "value" not in where:

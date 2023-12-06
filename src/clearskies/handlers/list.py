@@ -3,6 +3,7 @@ from collections import OrderedDict
 from .. import autodoc
 from ..functional import string
 import inspect
+from ..column_types import BelongsTo
 
 
 class List(Base):
@@ -94,7 +95,9 @@ class List(Base):
         sort = query_parameters.get("sort")
         direction = query_parameters.get("direction")
         if sort and direction:
-            models = models.sort_by(sort, direction, primary_table=models.table_name())
+            models = self._add_join(sort, models)
+            [sort_column, sort_table] = self._resolve_references_for_query(sort)
+            models = models.sort_by(sort_column, direction, primary_table=sort_table)
 
         return [models, limit]
 
@@ -184,11 +187,10 @@ class List(Base):
     def check_search_in_request_data(self, request_data, query_parameters):
         return None
 
-    def _unpack_search_column_name(self, column_name):
+    def _unpack_column_name_with_reference(self, column_name):
         if "." not in column_name:
             return [column_name, ""]
-        [parent_name, relationship_reference] = column_name.split(".", 1)
-        return [f"{parent_name}_id", relationship_reference]
+        return column_name.split(".", 1)
 
     def configure(self, configuration):
         super().configure(configuration)
@@ -248,13 +250,8 @@ class List(Base):
                 )
 
         # checks for sortable_columns
-        if "sortable_columns" in configuration:
-            for column_name in configuration["sortable_columns"]:
-                if column_name not in self._columns:
-                    raise ValueError(
-                        f"{error_prefix} 'sortable_columns' references column named {column_name} "
-                        + f"but this column does not exist for model '{model_class_name}'"
-                    )
+        if configuration.get("sortable_columns"):
+            self._check_columns_in_configuration(configuration, "searchable_columns")
 
         # common checks for group_by and default_sort_column
         for config_name in ["group_by", "default_sort_column"]:
@@ -285,18 +282,65 @@ class List(Base):
                 + f", not {str(type(configuration[config_name]))}"
             )
         for column_name in configuration[config_name]:
-            if config_name == "searchable_columns":
-                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
+            relationship_reference = None
+            if config_name == "searchable_columns" or config_name == "sortable_columns":
+                [column_name, relationship_reference] = self._unpack_column_name_with_reference(column_name)
             if column_name not in self._columns:
                 raise ValueError(
                     f"{error_prefix} '{config_name}' references column named {column_name} "
                     + f"but this column does not exist for model '{model_class_name}'"
                 )
-            if config_name == "readable_columns" and not self._columns[column_name].is_readable:
+            column = self._columns[column_name]
+            if config_name == "readable_columns" and not column.is_readable:
                 raise ValueError(
                     f"{error_prefix} '{config_name}' references column named {column_name} "
                     + f"but this column does not exist for model '{model_class_name}'"
                 )
+            if relationship_reference:
+                if not isinstance(column, BelongsTo):
+                    raise ValueError(
+                        f"{error_prefix} '{config_name}' references {column_name}.{relationship_reference}. "
+                        + f"For this to work, {column_name} must be a belongs to relatiionship, but it isn't."
+                    )
+                if relationship_reference not in column.parent_columns:
+                    parent_class = column.config("parent_models_class").__name__
+                    raise ValueError(
+                        f"{error_prefix} '{config_name}' references {column_name}.{relationship_reference}, "
+                        + f"but {relationship_reference} is not a valid column in the BelongsTo model class, {parent_class}."
+                    )
+
+    def _resolve_references_for_query(self, column_name):
+        """
+        Takes the column name and returns the name and table.
+
+        If it's just a column name, we assume the table is the table for our model class.
+        If it's something like `belongs_to_column.column_name`, then it will find the appropriate
+        table reference.
+        """
+        if not column_name:
+            return [None, None]
+        [column_name, relationship_reference] = self._unpack_column_name_with_reference(column_name)
+        if not relationship_reference:
+            return [column_name, self._model.table_name()]
+
+        belongs_to_column = self._columns[column_name]
+        return [relationship_reference, belongs_to_column.join_table_alias()]
+
+    def _add_join(self, column_name, models):
+        """
+        Adds a join to the query for the given column name in the case where it references a column in a belongs to.
+
+        If column_name is something like `belongs_to_column.column_name`, this will add have the belongs to column
+        add it's typical join condition, so that further sorting/searching can work.
+
+        If column_name is empty, or doesn't contain a period, then this does nothing.
+        """
+        if not column_name:
+            return models
+        [column_name, relationship_reference] = self._unpack_column_name_with_reference(column_name)
+        if not relationship_reference:
+            return models
+        return self._columns[column_name].add_join(models)
 
     def _from_either(self, request_data, query_parameters, key, default=None, ignore_none=True):
         """
@@ -314,7 +358,7 @@ class List(Base):
         resolved_columns = OrderedDict()
         for column_name in self.configuration(f"{column_type}_columns"):
             if column_type == "searchable":
-                [column_name, relationship_reference] = self._unpack_search_column_name(column_name)
+                [column_name, relationship_reference] = self._unpack_column_name_with_reference(column_name)
             if column_name not in self._columns:
                 class_name = self.__class__.__name__
                 model_class = self._model.__class__.__name__

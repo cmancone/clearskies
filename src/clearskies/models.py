@@ -139,12 +139,15 @@ class Models(ABC, ConditionParser):
         self.must_recount = True
         return self
 
-    def is_joined(self, table_name):
+    def is_joined(self, table_name, alias=None):
         for join in self.query_joins:
-            if join["right_table"] != table_name:
+            if join["table"] != table_name:
                 continue
 
-            return join["alias"] if join["alias"] else join["right_table"]
+            if alias and join["alias"] != alias:
+                continue
+
+            return join["alias"] if join["alias"] else join["table"]
         return False
 
     def group_by(self, group_column):
@@ -205,7 +208,7 @@ class Models(ABC, ConditionParser):
         direction = sort["direction"].upper().strip()
         if direction != "ASC" and direction != "DESC":
             raise ValueError(f"Invalid sort direction: should be ASC or DESC, not '{direction}'")
-        self._validate_column(sort["column"], "sort")
+        self._validate_column(sort["column"], "sort", table=sort.get("table"))
 
         # down the line we may ask the model class what columns we can sort on, but we're good for now
         return {"column": sort["column"], "direction": sort["direction"], "table": sort.get("table")}

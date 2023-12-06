@@ -107,12 +107,12 @@ class BelongsTo(String):
 
     def provide(self, data, column_name):
         # did we have data parent data loaded up with a query?
-        parent_table = self.parent_models.table_name()
+        alias = self.join_table_alias()
         parent_id_column_name = self.parent_models.get_id_column_name()
-        if f"{parent_table}_{parent_id_column_name}" in data:
-            parent_data = {parent_id_column_name: data[f"{parent_table}_{parent_id_column_name}"]}
+        if f"{alias}_{parent_id_column_name}" in data:
+            parent_data = {parent_id_column_name: data[f"{alias}_{parent_id_column_name}"]}
             for column_name in self.parent_columns.keys():
-                select_alias = f"{parent_table}_{column_name}"
+                select_alias = f"{alias}_{column_name}"
                 parent_data[column_name] = data[select_alias] if select_alias in data else None
             return self.parent_models.model(parent_data)
 
@@ -123,25 +123,20 @@ class BelongsTo(String):
             return self.parent_models.where(f"{parent_id_column_name}={parent_id}").first()
         return self.parent_models.empty_model()
 
+    def join_table_alias(self):
+        return self.parent_models.table_name() + "_" + self.name
+
     def configure_n_plus_one(self, models, columns=None):
         if columns is None:
             columns = self.config("readable_parent_columns", silent=True)
         if not columns:
             return models
 
-        own_table_name = models.table_name()
-        parent_table = self.parent_models.table_name()
+        models = self.add_join(models)
+        alias = self.join_table_alias()
         parent_id_column_name = self.parent_models.get_id_column_name()
-        alias = models.is_joined(parent_table)
-        if not alias:
-            alias = parent_table
-            join_type = "LEFT " if self.config("join_type") == "LEFT" else ""
-            models = models.join(
-                f"{join_type}JOIN {parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}"
-            )
-
-        select_parts = [f"{alias}.{column_name} AS {parent_table}_{column_name}" for column_name in columns]
-        select_parts.append(f"{alias}.{parent_id_column_name} AS {parent_table}_{parent_id_column_name}")
+        select_parts = [f"{alias}.{column_name} AS {alias}_{column_name}" for column_name in columns]
+        select_parts.append(f"{alias}.{parent_id_column_name} AS {alias}_{parent_id_column_name}")
         return models.select(", ".join(select_parts))
 
     @property
@@ -217,6 +212,20 @@ class BelongsTo(String):
             )
         return self.parent_columns[relationship_reference].check_search_value(value, operator=operator)
 
+    def add_join(self, models):
+        parent_table = self.parent_models.table_name()
+        alias = self.join_table_alias()
+
+        if models.is_joined(parent_table, alias=alias):
+            return models
+
+        join_type = "LEFT " if self.config("join_type") == "LEFT" else ""
+        own_table_name = models.table_name()
+        parent_id_column_name = self.parent_models.get_id_column_name()
+        return models.join(
+            f"{join_type}JOIN {parent_table} as {alias} on {alias}.{parent_id_column_name}={own_table_name}.{self.name}"
+        )
+
     def add_search(self, models, value, operator=None, relationship_reference=None):
         if not relationship_reference:
             return super().add_search(models, value, operator=operator)
@@ -227,15 +236,7 @@ class BelongsTo(String):
                 "I was asked to search on a related column that doens't exist.  This shouldn't have happened :("
             )
 
-        own_table_name = models.table_name()
-        parent_table = self.parent_models.table_name()
-        parent_id_column_name = self.parent_models.get_id_column_name()
-        alias = models.is_joined(parent_table)
-        if not alias:
-            models = models.join(
-                f"JOIN {parent_table} on {parent_table}.{parent_id_column_name}={own_table_name}.{self.name}"
-            )
-            alias = parent_table
-
+        models = self.add_join(models)
         related_column = self.parent_columns[relationship_reference]
+        alias = self.join_table_alias()
         return models.where(related_column.build_condition(value, operator=operator, column_prefix=f"{alias}."))
