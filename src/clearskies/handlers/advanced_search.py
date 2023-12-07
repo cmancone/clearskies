@@ -48,6 +48,7 @@ class AdvancedSearch(SimpleSearch):
                 column_name = where["column"]
                 if column_name == "id":
                     column_name = self.id_column_name
+                models = self._add_join(column_name, models)
                 [column_name, relationship_reference] = self._unpack_column_name_with_reference(column_name)
                 column = self._columns[column_name]
                 models = column.add_search(
