@@ -21,5 +21,5 @@ class CreatedByRoutingData(String):
         routing_data = input_output.routing_data()
         return {
             **data,
-            self.name: input_output.routing_data[self.config("routing_data_name")],
+            self.name: routing_data[self.config("routing_data_name")],
         }
