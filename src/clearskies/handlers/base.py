@@ -73,17 +73,6 @@ class Base(ABC):
         if configuration.get("output_map") is not None:
             if not callable(configuration["output_map"]):
                 raise ValueError("'output_map' should be a callable")
-            signature = inspect.getfullargspec(configuration["output_map"])
-            if signature.defaults and len(signature.defaults):
-                raise ValueError(
-                    "'output_map' should be a callable that accepts one parameter: the model. "
-                    + "However, the provided one accepts kwargs"
-                )
-            if len(signature.args) != 1:
-                raise ValueError(
-                    "'output_map' should be a callable that accepts one parameter: the model. "
-                    + f"However, the provided one accepts {len(signature.args)}"
-                )
         number_casings = 0
         internal_casing = configuration.get("internal_casing")
         if internal_casing and internal_casing not in string.casings:
@@ -267,7 +256,7 @@ class Base(ABC):
 
     def _model_as_json(self, model, input_output):
         if self.configuration("output_map"):
-            return self.configuration("output_map")(model)
+            return self._di.call_function(self.configuration("output_map"), model=model)
 
         if self._as_json_map is None:
             self._as_json_map = self._build_as_json_map(model)
