@@ -18,7 +18,8 @@ class CreatedByRoutingData(String):
             return data
 
         input_output = self.di.build("input_output", cache=True)
+        routing_data = input_output.routing_data()
         return {
             **data,
-            self.name: input_output.get_request_header(self.config("routing_data_name")),
+            self.name: input_output.routing_data[self.config("routing_data_name")],
         }
