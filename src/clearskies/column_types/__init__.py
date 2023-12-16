@@ -7,6 +7,7 @@ from .created import Created
 from .created_by_authorization_data import CreatedByAuthorizationData
 from .created_by_header import CreatedByHeader
 from .created_by_ip import CreatedByIp
+from .created_by_routing_data import CreatedByRoutingData
 from .created_by_user_agent import CreatedByUserAgent
 from .datetime import DateTime
 from .email import Email
@@ -56,6 +57,10 @@ def created_by_header(name, **kwargs):
 
 def created_by_ip(name, **kwargs):
     return build_column_config(name, CreatedByIp, **kwargs)
+
+
+def created_by_routing_data(name, **kwargs):
+    return build_column_config(name, CreatedByRoutingData, **kwargs)
 
 
 def created_by_user_agent(name, **kwargs):
