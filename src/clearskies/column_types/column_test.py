@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 from .column import Column
 from ..input_requirements import MinimumLength
 from ..autodoc.schema import String as AutoDocString
+import clearskies
 
 
 class RealColumn(Column):
@@ -62,3 +63,20 @@ class ColumnTest(unittest.TestCase):
         model.exists = False
         data = self.column.pre_save({"my_name": ""}, model)
         self.assertDictEqual({"my_name": ""}, data)
+
+    def test_setable_hardcoded(self):
+        self.column.configure("my_name", {"setable": "asdf"}, RealColumn)
+
+        model = MagicMock()
+        data = self.column.pre_save({}, model)
+        self.assertDictEqual({"my_name": "asdf"}, data)
+
+    def test_setable_callable(self):
+        di = clearskies.di.StandardDependencies()
+        di.bind("some_key", "cool")
+        self.column = RealColumn(di)
+        self.column.configure("my_name", {"setable": lambda some_key: some_key}, RealColumn)
+
+        model = MagicMock()
+        data = self.column.pre_save({}, model)
+        self.assertDictEqual({"my_name": "cool"}, data)

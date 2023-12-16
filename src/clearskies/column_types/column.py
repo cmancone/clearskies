@@ -18,6 +18,7 @@ class Column(ABC):
         "is_temporary",
         "on_change",
         "default",
+        "setable",
     ]
 
     def __init__(self, di):
@@ -190,6 +191,12 @@ class Column(ABC):
         """
         if not model.exists and "default" in self.configuration and self.name not in data:
             data[self.name] = self.configuration["default"]
+        if "setable" in self.configuration:
+            setable = self.configuration["setable"]
+            if callable(setable):
+                data[self.name] = self.di.call_function(setable, data=data, model=model)
+            else:
+                data[self.name] = setable
         return data
 
     def post_save(self, data, model, id):
