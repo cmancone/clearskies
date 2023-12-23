@@ -39,6 +39,7 @@ class Test(Context):
         input_output=None,
         query_parameters=None,
         authorization_data=None,
+        context_specifics=None,
     ):
         if self.application is None:
             raise ValueError("Cannot call the test context without an application")
@@ -59,6 +60,8 @@ class Test(Context):
             input_output.set_query_parameters(query_parameters)
         if authorization_data is not None:
             input_output.set_authorization_data(authorization_data)
+        if context_specifics is not None:
+            input_output.set_context_specifics(context_specifics)
 
         self.handler = self.di.build(self.application.handler_class, cache=False)
         self.handler.configure(
