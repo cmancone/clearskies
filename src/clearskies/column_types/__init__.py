@@ -9,7 +9,9 @@ from .created_by_header import CreatedByHeader
 from .created_by_ip import CreatedByIp
 from .created_by_routing_data import CreatedByRoutingData
 from .created_by_user_agent import CreatedByUserAgent
+from .created_micro import CreatedMicro
 from .datetime import DateTime
+from .datetime_micro import DateTimeMicro
 from .email import Email
 from .float import Float
 from .has_many import HasMany
@@ -20,6 +22,7 @@ from .many_to_many_with_data import ManyToManyWithData
 from .select import Select
 from .string import String
 from .updated import Updated
+from .updated_micro import UpdatedMicro
 from .uuid import UUID
 
 
@@ -67,8 +70,16 @@ def created_by_user_agent(name, **kwargs):
     return build_column_config(name, CreatedByUserAgent, **kwargs)
 
 
+def created_micro(name, **kwargs):
+    return build_column_config(name, CreatedMicro, **kwargs)
+
+
 def datetime(name, **kwargs):
     return build_column_config(name, DateTime, **kwargs)
+
+
+def datetime_micro(name, **kwargs):
+    return build_column_config(name, DateTimeMicro, **kwargs)
 
 
 def email(name, **kwargs):
@@ -111,6 +122,10 @@ def updated(name, **kwargs):
     return build_column_config(name, Updated, **kwargs)
 
 
+def updated_micro(name, **kwargs):
+    return build_column_config(name, UpdatedMicro, **kwargs)
+
+
 def uuid(name, **kwargs):
     return build_column_config(name, UUID, **kwargs)
 
@@ -127,15 +142,21 @@ __all__ = [
     "CategoryTree",
     "Column",
     "created",
+    "created_micro",
     "Created",
+    "CreatdMicro",
     "created_by_authorization_data",
     "CreatedByAuthorizationData",
     "created_by_ip",
     "CreatedByIp",
     "created_by_user_agent",
     "CreatedByUserAgent",
+    "CreatedMicro",
+    "created_micro",
     "datetime",
+    "datetime_micro",
     "DateTime",
+    "DateTimeMicro",
     "email",
     "Email",
     "float",
@@ -155,7 +176,9 @@ __all__ = [
     "string",
     "String",
     "updated",
+    "updated_micro",
     "Updated",
+    "UpdatedMicro",
     "uuid",
     "UUID",
 ]

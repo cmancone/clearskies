@@ -6,7 +6,9 @@ from unittest.mock import MagicMock
 
 class DateTimeTest(unittest.TestCase):
     def test_from_backend(self):
-        date = DateTime("di").from_backend("2020-11-28 12:30:45")
+        datetime_column = DateTime("di")
+        datetime_column.configure("created", {}, int)
+        date = datetime_column.from_backend("2020-11-28 12:30:45")
         self.assertEquals(type(date), datetime)
         self.assertEquals(2020, date.year)
         self.assertEquals(11, date.month)

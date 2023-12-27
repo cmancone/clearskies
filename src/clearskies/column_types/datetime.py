@@ -6,12 +6,28 @@ from ..autodoc.schema import DateTime as AutoDocDateTime
 
 class DateTime(Column):
     _auto_doc_class = AutoDocDateTime
+    _date_format = "%Y-%m-%d %H:%M:%S"
+    _default_date = "0000-00-00 00:00:00"
+
+    my_configs = [
+        "date_format",
+        "default_date",
+    ]
 
     def __init__(self, di):
         super().__init__(di)
 
+    def _finalize_configuration(self, configuration):
+        return {
+            **{
+                "date_format": self._date_format,
+                "default_date": self._default_date,
+            },
+            **super()._finalize_configuration(configuration),
+        }
+
     def from_backend(self, value):
-        if not value or value == "0000-00-00 00:00:00":
+        if not value or value == self.config("default_date"):
             date = None
         elif type(value) == str:
             date = dateparser.parse(value)
@@ -24,14 +40,14 @@ class DateTime(Column):
             return data
 
         # hopefully this is a Python datetime object in UTC timezone...
-        return {**data, **{self.name: data[self.name].strftime("%Y-%m-%d %H:%M:%S")}}
+        return {**data, **{self.name: data[self.name].strftime(self.config("date_format"))}}
 
     def to_json(self, model):
         datetime = model.get(self.name, silent=True)
         return {self.name: datetime.isoformat() if datetime else None}
 
     def build_condition(self, value, operator=None, column_prefix=""):
-        date = dateparser.parse(value).astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        date = dateparser.parse(value).astimezone(timezone.utc).strftime(self.config("date_format"))
         if not operator:
             operator = "="
         return f"{column_prefix}{self.name}{operator}{date}"

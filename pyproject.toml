@@ -2,7 +2,7 @@
 
 [tool.poetry]
 name = "clear-skies"
-version = "1.18.32"
+version = "1.19.0"
 description = "A framework for building backends in the cloud"
 authors = [
     "Conor Mancone <cmancone@gmail.com>",
