@@ -1,4 +1,6 @@
 import unittest
+import datetime
+import dateparser
 from ...contexts import test
 from unittest.mock import MagicMock
 from types import SimpleNamespace
@@ -10,6 +12,12 @@ from collections import OrderedDict
 class UsersApiTest(unittest.TestCase):
     def setUp(self):
         self.api = test(users_api)
+        self.now = dateparser.parse("2021-01-07T22:45:13+00:00")
+        self.now_formatted = self.now.isoformat()
+        self.datetime = MagicMock()
+        self.datetime.datetime = MagicMock()
+        self.datetime.datetime.now = MagicMock(return_value=self.now)
+        self.api.bind("datetime", self.datetime)
 
         # we're also going to switch our cursor backend for an in-memory backend, create a table, and add a record
         self.memory_backend = self.api.memory_backend
@@ -55,8 +63,8 @@ class UsersApiTest(unittest.TestCase):
                     ("status_id", self.active_status.id),
                     ("name", "Conor Active"),
                     ("email", "cmancone_active@example.com"),
-                    ("created", self.api.now.isoformat()),
-                    ("updated", self.api.now.isoformat()),
+                    ("created", self.now_formatted),
+                    ("updated", self.now_formatted),
                 ]
             ),
             response["data"][0],
@@ -68,8 +76,8 @@ class UsersApiTest(unittest.TestCase):
                     ("status_id", self.pending_status.id),
                     ("name", "Conor Pending"),
                     ("email", "cmancone_pending@example.com"),
-                    ("created", self.api.now.isoformat()),
-                    ("updated", self.api.now.isoformat()),
+                    ("created", self.now_formatted),
+                    ("updated", self.now_formatted),
                 ]
             ),
             response["data"][1],
@@ -150,8 +158,8 @@ class UsersApiTest(unittest.TestCase):
         self.assertEquals(self.pending_status.id, response["data"]["status_id"])
         self.assertEquals("Ronoc", response["data"]["name"])
         self.assertEquals("ronoc@example2.com", response["data"]["email"])
-        self.assertEquals(self.api.now.isoformat(), response["data"]["created"])
-        self.assertEquals(self.api.now.isoformat(), response["data"]["updated"])
+        self.assertEquals(self.now_formatted, response["data"]["created"])
+        self.assertEquals(self.now_formatted, response["data"]["updated"])
         self.assertEquals("success", response["status"])
 
     def test_update(self):
@@ -174,8 +182,8 @@ class UsersApiTest(unittest.TestCase):
                     ("status_id", self.active_status.id),
                     ("name", "CMan"),
                     ("email", "cman@example2.com"),
-                    ("created", self.api.now.isoformat()),
-                    ("updated", self.api.now.isoformat()),
+                    ("created", self.now_formatted),
+                    ("updated", self.now_formatted),
                 ]
             ),
             response["data"],
@@ -193,8 +201,8 @@ class UsersApiTest(unittest.TestCase):
                     ("status_id", self.active_status.id),
                     ("name", "CMan"),
                     ("email", "cman@example2.com"),
-                    ("created", self.api.now.isoformat()),
-                    ("updated", self.api.now.isoformat()),
+                    ("created", self.now_formatted),
+                    ("updated", self.now_formatted),
                 ]
             ),
             response["data"][0],
@@ -206,8 +214,8 @@ class UsersApiTest(unittest.TestCase):
                     ("status_id", self.pending_status.id),
                     ("name", "Conor Pending"),
                     ("email", "cmancone_pending@example.com"),
-                    ("created", self.api.now.isoformat()),
-                    ("updated", self.api.now.isoformat()),
+                    ("created", self.now_formatted),
+                    ("updated", self.now_formatted),
                 ]
             ),
             response["data"][1],
