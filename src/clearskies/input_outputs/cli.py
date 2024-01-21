@@ -21,7 +21,7 @@ class CLI:
         self._request_method = None
         self._parse_args(self._sys.argv)
 
-    def respond(self, response, status_code):
+    def respond(self, response, status_code=200):
         if status_code == 404:
             raise exceptions.CLINotFound()
         if status_code != 200:

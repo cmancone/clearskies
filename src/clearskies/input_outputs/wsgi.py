@@ -21,7 +21,7 @@ class WSGI(InputOutput):
     def _from_environment(self, key):
         return self._environment[key] if key in self._environment else ""
 
-    def respond(self, body, status_code):
+    def respond(self, body, status_code=200):
         if not self.has_header("content-type"):
             self.set_header("content-type", "application/json; charset=UTF-8")
 
