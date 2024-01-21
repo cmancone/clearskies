@@ -98,7 +98,15 @@ class BelongsTo(String):
             return integer_check
         parent_models = self.parent_models
         id_column_name = parent_models.get_id_column_name()
-        if not len(parent_models.where(f"{id_column_name}={value}")):
+        matching_parents = parent_models.where(f"{id_column_name}={value}")
+        input_output = self.di.build("input_output", cache=True)
+        matching_parents = matching_parents.where_for_request(
+            matching_parents,
+            input_output.routing_data(),
+            input_output.get_authorization_data(),
+            input_output,
+        )
+        if not len(matching_parents):
             return f"Invalid selection for {self.name}: record does not exist"
         return ""
 
