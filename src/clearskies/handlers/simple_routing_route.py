@@ -98,7 +98,7 @@ class SimpleRoutingRoute:
         to understand if there was no route match at all.
         """
         # if we're routing to a simple router then defer to it
-        incoming = f"Incoming request: [{request_method}] {full_path}.  Check against route with url '{self._path}' "
+        incoming = f"Incoming request: [{request_method}] {full_path}.  Check against route with url '{self._path}'.  Results: "
         if not self._methods:
             incoming += " configured for any method except OPTIONS"
         elif isinstance(self._methods, str):
@@ -136,7 +136,7 @@ class SimpleRoutingRoute:
                 return None
             # make sure we don't get confused by partial matches.  `user` should match `user/` and `user/5`,
             # but it shouldn't match `users/`
-            if full_path_length > my_path_length and full_path[my_path_length] != "/":
+            if full_path_length > my_path_length and full_path[my_path_length] != "/" and my_path != "":
                 logger.debug(f"{incoming} Not a match.  I only partially matched the URL but not as a sub-directory.")
                 return None
         logger.debug(f"{incoming} Match!")
