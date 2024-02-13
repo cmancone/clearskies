@@ -25,14 +25,16 @@ class Get(Base):
             return self.error(input_output, model, 404)
         return self.success(input_output, self._model_as_json(model, input_output))
 
-    def fetch_model(self, input_output):
+    def get_model_id(self, input_output):
         routing_data = input_output.routing_data()
         if self.id_column_name in routing_data:
-            id = routing_data[self.id_column_name]
-        elif "id" in routing_data:
-            id = routing_data["id"]
-        else:
-            raise ValueError("I didn't receive the ID in my routing data.  I am probably misconfigured.")
+            return routing_data[self.id_column_name]
+        if "id" in routing_data:
+            return routing_data["id"]
+        raise ValueError("I didn't receive the ID in my routing data.  I am probably misconfigured.")
+
+    def fetch_model(self, input_output):
+        id = self.get_model_id(input_output)
         models = self._model.where(f"{self.id_column_name}={id}")
         for where in self.configuration("where"):
             if type(where) == str:
