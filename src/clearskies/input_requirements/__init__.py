@@ -1,5 +1,7 @@
 import datetime
 
+from .after import After
+from .before import Before
 from ..binding_config import BindingConfig
 from .minimum_length import MinimumLength
 from .maximum_length import MaximumLength
@@ -13,11 +15,19 @@ from .in_the_past_at_most import InThePastAtMost
 from .time_delta import TimeDelta
 
 
-def minimum_length(minimum_length):
+def after(other_column_name: str, allow_equal: bool = False):
+    return BindingConfig(After, other_column_name=other_column_name, allow_equal=allow_equal)
+
+
+def before(other_column_name: str, allow_equal: bool = False):
+    return BindingConfig(Before, other_column_name=other_column_name, allow_equal=allow_equal)
+
+
+def minimum_length(minimum_length: int):
     return BindingConfig(MinimumLength, minimum_length)
 
 
-def maximum_length(maximum_length):
+def maximum_length(maximum_length: int):
     return BindingConfig(MaximumLength, maximum_length)
 
 

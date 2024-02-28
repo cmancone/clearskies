@@ -4,7 +4,7 @@ import dateparser
 
 
 class After(Requirement):
-    def configure(self, other_column_name: str, allow_equal=False):
+    def configure(self, other_column_name: str, allow_equal: bool = False):
         self.other_column_name = other_column_name
         self.allow_equal = allow_equal
 
