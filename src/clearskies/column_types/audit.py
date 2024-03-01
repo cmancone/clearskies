@@ -186,7 +186,7 @@ class Audit(has_many.HasMany):
             self._parent_columns = self.di.build(self.model_class, cache=True).columns()
         return self._parent_columns
 
-    def record(self, model, action, data=None):
+    def record(self, model, action, data=None, record_data=None):
         audit_data = {
             "class": self.config("parent_class_name"),
             "resource_id": model.get(self.config("parent_id_column_name")),
@@ -194,6 +194,12 @@ class Audit(has_many.HasMany):
         }
         if data is not None:
             audit_data["data"] = data
+        if record_data is not None:
+            audit_data = {
+                **audit_data,
+                **record_data,
+            }
+
         self.child_models.create(audit_data)
 
 
