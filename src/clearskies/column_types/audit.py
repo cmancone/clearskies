@@ -29,6 +29,9 @@ class Audit(has_many.HasMany):
     With `exclude_columns` you can specify some names of columns to ignore.  If an update happens and only columns
     in `exclude_columns` are being set, then a history entry will not be created.  Also, these columns will
     not be included in the audit record.
+
+    With `mask_columns` you can specify the names of columns which should be noted as updated in the audit record,
+    but the actual values (before and after) should not be recorded.
     """
 
     _parent_columns = None
@@ -40,6 +43,7 @@ class Audit(has_many.HasMany):
     my_configs = [
         "child_models_class",
         "exclude_columns",
+        "mask_columns",
         "foreign_column_name",
         "is_readable",
         "readable_child_columns",
@@ -92,21 +96,21 @@ class Audit(has_many.HasMany):
                     + " but it has something else"
                 )
 
-        if "exclude_columns" in configuration:
-            exclude_columns = configuration["exclude_columns"]
-            if not hasattr(exclude_columns, "__iter__"):
+        for config_name in ["exclude_columns", "mask_columns"]:
+            if config_name not in configuration:
+                continue
+
+            config_columns = configuration[config_name]
+            if not hasattr(config_columns, "__iter__"):
+                raise ValueError(f"{error_prefix} '{config_name}' should be an iterable with the list of column names.")
+            if isinstance(config_columns, str):
                 raise ValueError(
-                    f"{error_prefix} 'exclude_columns' should be an iterable " + "with the list of columns to exclude."
+                    f"{error_prefix} '{config_name}' should be an iterable " + "with a list of column names."
                 )
-            if isinstance(exclude_columns, str):
-                raise ValueError(
-                    f"{error_prefix} 'exclude_columns' should be an iterable "
-                    + "with the list of child columns to output."
-                )
-            for column_name in exclude_columns:
+            for column_name in config_columns:
                 if column_name not in parent_columns:
                     raise ValueError(
-                        f"{error_prefix} 'exclude_columns' references column named '{column_name}' but this"
+                        f"{error_prefix} '{config_name}' references column named '{column_name}' but this"
                         + " column does not exist in the original model class."
                     )
 
@@ -118,6 +122,7 @@ class Audit(has_many.HasMany):
         old_data = model._previous_data
         new_data = model._data
         exclude_columns = self.config("exclude_columns")
+        mask_columns = self.config("mask_columns")
         parent_columns = self.parent_columns
 
         if not old_data:
@@ -152,6 +157,9 @@ class Audit(has_many.HasMany):
                 **to_data,
                 **parent_columns[column].to_json(model),
             }
+            if column in mask_columns:
+                to_data[column] = "****"
+                from_data[column] = "****"
         if not from_data and not to_data:
             return
 
