@@ -134,6 +134,8 @@ class Audit(has_many.HasMany):
                     **create_data,
                     **parent_columns[key].to_json(model),
                 }
+                if key in mask_columns and key in create_data:
+                    key[column] = "****"
             self.record(model, "create", data=create_data)
             return
 
@@ -157,7 +159,7 @@ class Audit(has_many.HasMany):
                 **to_data,
                 **parent_columns[column].to_json(model),
             }
-            if column in mask_columns:
+            if column in mask_columns and column in to_data:
                 to_data[column] = "****"
                 from_data[column] = "****"
         if not from_data and not to_data:
@@ -176,15 +178,28 @@ class Audit(has_many.HasMany):
         super().post_delete(model)
         exclude_columns = self.config("exclude_columns")
         parent_columns = self.parent_columns
+        mask_columns = self.config("mask_columns")
+
+        final_data = {}
+        for key in model._data.keys():
+            if key in exclude_columns:
+                continue
+            final_data = {
+                **final_data,
+                **parent_columns[key].to_json(model),
+            }
+
+        for key in mask_columns:
+            if key not in final_data:
+                continue
+            final_data[key] = "****"
 
         self.child_models.create(
             {
                 "class": self.config("parent_class_name"),
                 "resource_id": model.get(self.config("parent_id_column_name")),
                 "action": "delete",
-                "data": {
-                    key: parent_columns[key].to_json(model) for key in model._data.keys() if key not in exclude_columns
-                },
+                "data": final_data,
             }
         )
 
