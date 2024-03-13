@@ -80,3 +80,17 @@ class ColumnTest(unittest.TestCase):
         model = MagicMock()
         data = self.column.pre_save({}, model)
         self.assertDictEqual({"my_name": "cool"}, data)
+
+    def test_created_by_authorization_data(self):
+        input_output = MagicMock()
+        input_output.get_authorization_data = MagicMock(return_value={"user_id": 5})
+        di = clearskies.di.StandardDependencies()
+        di.bind("input_output", input_output)
+        self.column = RealColumn(di)
+        self.column.configure(
+            "my_name", {"created_by_source_type": "authorization_data", "created_by_source_key": "user_id"}, RealColumn
+        )
+
+        model = MagicMock()
+        data = self.column.pre_save({}, model)
+        self.assertDictEqual({"my_name": 5}, data)

@@ -19,6 +19,8 @@ class Column(ABC):
         "on_change",
         "default",
         "setable",
+        "created_by_source_type",
+        "created_by_source_key",
     ]
 
     def __init__(self, di):
@@ -91,11 +93,46 @@ class Column(ABC):
         if configuration.get("on_change"):
             self._check_actions(configuration.get("on_change"), "on_change")
 
+        self._check_created_by_source(configuration)
+
     def _finalize_configuration(self, configuration):
         """Make any changes to the configuration/fill in defaults"""
         if not "input_requirements" in configuration:
             configuration["input_requirements"] = []
         return configuration
+
+    def _check_created_by_source(self, configuration):
+        source_type = configuration.get("created_by_source_type")
+        source_key = configuration.get("created_by_source_key")
+        if not source_type and not source_key:
+            return
+
+        error_prefix = f"Misconfiguration for column '{self.name}' in '{self.model_class.__name__}': "
+        if not source_type or not source_key:
+            raise ValueError(
+                f"{error_prefix} must provide both 'created_by_source_type' and 'created_by_source_key' but only one was provided."
+            )
+
+        if not isinstance(source_type, str):
+            raise ValueError(
+                f"{error_prefix} 'created_by_source_type' must be a string but is a '"
+                + source_type.__class__.__name__
+                + "'"
+            )
+        if not isinstance(source_key, str):
+            raise ValueError(
+                f"{error_prefix} 'created_by_source_key' must be a string but is a '"
+                + source_key.__class__.__name__
+                + "'"
+            )
+
+        allowed_types = ["authorization_data"]
+        if source_type not in allowed_types:
+            raise ValueError(
+                f"{error_prefix} 'created_by_source_type' must be one of '" + "', '".join(allowed_types) + "'"
+            )
+        if configuration.get("setable"):
+            raise ValueError(f"{error_prefix} you cannot set both 'setable' and 'created_by_source_type'")
 
     def _check_actions(self, actions, trigger_name):
         """Check that the given actions are actually understandable by the system"""
@@ -189,14 +226,19 @@ class Column(ABC):
         The difference between this and post_save is that this happens before the database is updated.
         As a result, if you need the model id to make your changes, it has to happen in post_save, not pre_save
         """
-        if not model.exists and "default" in self.configuration and self.name not in data:
-            data[self.name] = self.configuration["default"]
+        source_type = self.configuration.get("created_by_source_type")
+        if source_type:
+            if source_type == "authorization_data":
+                authorization_data = self.di.build("input_output", cache=True).get_authorization_data()
+                data[self.name] = authorization_data.get(self.config("created_by_source_key"), "N/A")
         if "setable" in self.configuration:
             setable = self.configuration["setable"]
             if callable(setable):
                 data[self.name] = self.di.call_function(setable, data=data, model=model)
             else:
                 data[self.name] = setable
+        if not model.exists and "default" in self.configuration and self.name not in data:
+            data[self.name] = self.configuration["default"]
         return data
 
     def post_save(self, data, model, id):
