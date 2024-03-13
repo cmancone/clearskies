@@ -69,6 +69,7 @@ class Audit(has_many.HasMany):
             "readable_child_columns": ["resource_id", "action", "data", "created_at"],
             "parent_class_name": model_class.__name__,
             "exclude_columns": configuration.get("exclude_columns", []),
+            "mask_columns": configuration.get("mask_columns", []),
         }
         super().configure(name, has_many_configuration, model_class)
 
