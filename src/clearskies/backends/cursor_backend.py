@@ -138,6 +138,17 @@ class CursorBackend(Backend):
                 next_page_data["start"] = int(start) + int(limit)
         return records
 
+    def group_by_clause(self, group_by):
+        if not group_by:
+            return ""
+        escape = self._column_escape_character()
+        if "." not in group_by:
+            return f" GROUP BY {escape}{group_by}{escape}"
+        parts = group_by.split(".", 1)
+        table = parts[0]
+        column = parts[1]
+        return f" GROUP BY {escape}{table}{escape}.{escape}{column}{escape}"
+
     def as_sql(self, configuration):
         escape = self._column_escape_character()
         [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration["wheres"])
@@ -162,11 +173,7 @@ class CursorBackend(Backend):
             order_by = " ORDER BY " + ", ".join(sort_parts)
         else:
             order_by = ""
-        group_by = (
-            f" GROUP BY {escape}" + configuration["group_by_column"] + escape
-            if configuration["group_by_column"]
-            else ""
-        )
+        group_by = self.group_by_clause(configuration["group_by_column"])
         limit = ""
         if configuration["limit"]:
             start = 0
@@ -195,7 +202,10 @@ class CursorBackend(Backend):
         if not configuration["group_by_column"]:
             query = f"SELECT COUNT(*) AS count FROM {table_name}{joins}{wheres}"
         else:
-            query = f'SELECT COUNT(SELECT 1 FROM {table_name}{joins}{wheres} GROUP BY {escape}{configuration["group_by_column"]}{escape}) AS count'
+            group_by = self.group_by_clause(configuration["group_by_column"])
+            query = (
+                f"SELECT COUNT(*) AS count FROM (SELECT 1 FROM {table_name}{joins}{wheres}{group_by}) AS count_inner"
+            )
         return [query, parameters]
 
     def _conditions_as_wheres_and_parameters(self, conditions):

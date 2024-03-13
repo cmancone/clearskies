@@ -255,11 +255,13 @@ class List(Base):
 
         # common checks for group_by and default_sort_column
         for config_name in ["group_by", "default_sort_column"]:
-            if (
-                config_name in configuration
-                and configuration[config_name]
-                and configuration[config_name] not in self._columns
-            ):
+            value = configuration.get(config_name)
+            if not value:
+                continue
+            # we're being lazy for now and not checking complicated values
+            if "." in value:
+                continue
+            if value not in self._columns:
                 raise ValueError(
                     f"{error_prefix} '{config_name}' references column named {column_name} "
                     + f"but this column does not exist for model '{model_class_name}'"

@@ -135,7 +135,7 @@ class Audit(has_many.HasMany):
                     **parent_columns[key].to_json(model),
                 }
                 if key in mask_columns and key in create_data:
-                    key[column] = "****"
+                    create_data[key] = "****"
             self.record(model, "create", data=create_data)
             return
 
