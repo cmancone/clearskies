@@ -226,11 +226,12 @@ class Column(ABC):
         The difference between this and post_save is that this happens before the database is updated.
         As a result, if you need the model id to make your changes, it has to happen in post_save, not pre_save
         """
-        source_type = self.configuration.get("created_by_source_type")
-        if source_type:
-            if source_type == "authorization_data":
-                authorization_data = self.di.build("input_output", cache=True).get_authorization_data()
-                data[self.name] = authorization_data.get(self.config("created_by_source_key"), "N/A")
+        if not model.exists:
+            source_type = self.configuration.get("created_by_source_type")
+            if source_type:
+                if source_type == "authorization_data":
+                    authorization_data = self.di.build("input_output", cache=True).get_authorization_data()
+                    data[self.name] = authorization_data.get(self.config("created_by_source_key"), "N/A")
         if "setable" in self.configuration:
             setable = self.configuration["setable"]
             if callable(setable):

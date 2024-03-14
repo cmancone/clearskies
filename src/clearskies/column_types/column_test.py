@@ -92,5 +92,11 @@ class ColumnTest(unittest.TestCase):
         )
 
         model = MagicMock()
+        model.exists = False
         data = self.column.pre_save({}, model)
         self.assertDictEqual({"my_name": 5}, data)
+
+        model = MagicMock()
+        model.exists = True
+        data = self.column.pre_save({"hey": "sup"}, model)
+        self.assertDictEqual({"hey": "sup"}, data)
