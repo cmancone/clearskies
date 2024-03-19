@@ -1,4 +1,5 @@
 import re
+import datetime
 
 
 def camel_case_to_snake_case(string: str) -> str:
@@ -95,3 +96,9 @@ def make_plural(singular: str):
     if singular[-1] == "s":
         return singular + "es"
     return f"{singular}s"
+
+
+def datetime_to_iso(value):
+    if not isinstance(value, datetime.date) and not isinstance(value, datetime.datetime):
+        return value
+    return value.isoformat()

@@ -1,5 +1,6 @@
 import unittest
 from . import string
+import datetime
 
 
 class StringTest(unittest.TestCase):
@@ -27,3 +28,8 @@ class StringTest(unittest.TestCase):
         self.assertEquals("doggies", string.make_plural("doggy"))
         self.assertEquals("dogs", string.make_plural("dog"))
         self.assertEquals("classes", string.make_plural("class"))
+
+    def test_convert_datetime(self):
+        self.assertEquals("hey", string.datetime_to_iso("hey"))
+        self.assertEquals(5, string.datetime_to_iso(5))
+        self.assertEquals("2024-03-19", string.datetime_to_iso(datetime.date(2024, 3, 19)))
