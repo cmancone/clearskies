@@ -23,7 +23,7 @@ class CursorBackendTest(unittest.TestCase):
         self.cursor.execute.assert_has_calls(
             [
                 call("INSERT INTO `my_table` (`dummy`, `hey`) VALUES (%s, %s)", ("data", "people")),
-                call("SELECT `my_table`.* FROM `my_table` WHERE `id`=%s", (10,)),
+                call("SELECT `my_table`.* FROM `my_table` WHERE my_table.id=%s", (10,)),
             ]
         )
         self.assertEquals({"my": "data"}, new_data)
@@ -34,7 +34,7 @@ class CursorBackendTest(unittest.TestCase):
         self.cursor.execute.assert_has_calls(
             [
                 call("UPDATE `my_table` SET `hey`=%s, `qwerty`=%s, `foo`=%s WHERE id=%s", ("sup", "asdf", "bar", 5)),
-                call("SELECT `my_table`.* FROM `my_table` WHERE `id`=%s", (5,)),
+                call("SELECT `my_table`.* FROM `my_table` WHERE my_table.id=%s", (5,)),
             ]
         )
         self.assertEquals({"my": "data"}, new_data)
@@ -89,7 +89,7 @@ class CursorBackendTest(unittest.TestCase):
         self.cursor.execute.assert_called_with(
             "SELECT COUNT(*) AS count FROM ("
             + "SELECT 1 FROM `my_table` LEFT JOIN dogs ON dogs.id=ages.id JOIN peeps AS peeps ON peeps.id=dogs.id "
-            + "WHERE `id`=%s AND `status_id` IN (%s, %s) "
+            + "WHERE my_table.id=%s AND my_table.status_id IN (%s, %s) "
             + "GROUP BY `age`"
             + ") AS count_inner",
             (5, "2", "3"),
@@ -131,7 +131,7 @@ class CursorBackendTest(unittest.TestCase):
         self.assertEquals(10, my_count)
         self.cursor.execute.assert_called_with(
             "SELECT COUNT(*) AS count FROM `my_table` LEFT JOIN dogs ON dogs.id=ages.id JOIN peeps AS peeps ON peeps.id=dogs.id "
-            + "WHERE `id`=%s AND `status_id` IN (%s, %s)",
+            + "WHERE my_table.id=%s AND my_table.status_id IN (%s, %s)",
             (5, "2", "3"),
         )
 
@@ -162,7 +162,7 @@ class CursorBackendTest(unittest.TestCase):
             "SELECT sup FROM `my_table` "
             + "LEFT JOIN dogs ON dogs.id=ages.id "
             + "JOIN peeps AS peeps ON peeps.id=dogs.id "
-            + "WHERE `id`=%s AND `status_id` IN (%s, %s) "
+            + "WHERE my_table.id=%s AND my_table.status_id IN (%s, %s) "
             + "GROUP BY `age` "
             + "ORDER BY `name` ASC, `first` DESC "
             + "LIMIT 5, 10",
@@ -198,7 +198,7 @@ class CursorBackendTest(unittest.TestCase):
             "SELECT `my_table`.*, sup FROM `my_table` "
             + "LEFT JOIN dogs ON dogs.id=ages.id "
             + "JOIN peeps AS peeps ON peeps.id=dogs.id "
-            + "WHERE `id`=%s AND `status_id` IN (%s, %s) "
+            + "WHERE my_table.id=%s AND my_table.status_id IN (%s, %s) "
             + "GROUP BY `age` "
             + "ORDER BY `name` ASC, `first` DESC "
             + "LIMIT 5, 1",

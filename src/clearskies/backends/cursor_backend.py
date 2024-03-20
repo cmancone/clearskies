@@ -151,7 +151,9 @@ class CursorBackend(Backend):
 
     def as_sql(self, configuration):
         escape = self._column_escape_character()
-        [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration["wheres"])
+        [wheres, parameters] = self._conditions_as_wheres_and_parameters(
+            configuration["wheres"], configuration["table_name"]
+        )
         select_parts = []
         if configuration["select_all"]:
             select_parts.append(self._finalize_table_name(configuration["table_name"]) + ".*")
@@ -190,7 +192,9 @@ class CursorBackend(Backend):
     def as_count_sql(self, configuration):
         escape = self._column_escape_character()
         # note that this won't work if we start including a HAVING clause
-        [wheres, parameters] = self._conditions_as_wheres_and_parameters(configuration["wheres"])
+        [wheres, parameters] = self._conditions_as_wheres_and_parameters(
+            configuration["wheres"], configuration["table_name"]
+        )
         # we also don't currently support parameters in the join clause - I'll probably need that though
         if configuration["joins"]:
             # We can ignore left joins because they don't change the count
@@ -208,7 +212,7 @@ class CursorBackend(Backend):
             )
         return [query, parameters]
 
-    def _conditions_as_wheres_and_parameters(self, conditions):
+    def _conditions_as_wheres_and_parameters(self, conditions, default_table_name):
         if not conditions:
             return ["", []]
 
@@ -216,16 +220,17 @@ class CursorBackend(Backend):
         where_parts = []
         for condition in conditions:
             parameters.extend(condition["values"])
-            table = condition.get("table", "")
+            table = condition.get("table", default_table_name)
+            if not table:
+                table = default_table_name
             column = condition["column"]
-            column_with_table = f"{table}.{column}" if table else column
+            column_with_table = f"{table}.{column}"
             where_parts.append(
                 self.condition_parser._with_placeholders(
                     column_with_table,
                     condition["operator"],
                     condition["values"],
-                    escape=False if table else True,
-                    escape_character=self._column_escape_character(),
+                    escape=False,
                 )
             )
         return [" WHERE " + " AND ".join(where_parts), parameters]
