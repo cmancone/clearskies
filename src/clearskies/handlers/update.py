@@ -15,6 +15,7 @@ class Update(Write):
         "column_overrides": None,
         "writeable_columns": None,
         "readable_columns": None,
+        "output_map": None,
         "where": [],
         "input_error_callable": None,
         "include_id_in_path": False,

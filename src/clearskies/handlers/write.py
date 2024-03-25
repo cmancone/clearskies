@@ -22,6 +22,7 @@ class Write(Base, InputProcessing):
         "columns": None,
         "column_overrides": None,
         "writeable_columns": None,
+        "output_map": None,
         "readable_columns": None,
         "input_error_callable": None,
     }

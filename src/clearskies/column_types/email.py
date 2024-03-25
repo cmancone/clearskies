@@ -13,6 +13,6 @@ class Email(String):
             # don't check for an email if doing a fuzzy search, since we may be searching
             # for a partial email
             return ""
-        if re.search("^[^@\s]+@[^@]+\.[^@]+$", value):
+        if re.search(r"^[^@\s]+@[^@]+\.[^@]+$", value):
             return ""
         return "Invalid email address"
