@@ -2,7 +2,7 @@
 
 [tool.poetry]
 name = "clear-skies"
-version = "1.19.19"
+version = "1.19.20"
 description = "A framework for building backends in the cloud"
 authors = [
     "Conor Mancone <cmancone@gmail.com>",
@@ -45,7 +45,7 @@ black = "^23.3.0"
 [tool.poetry.extras]
 secrets = ["akeyless", "akeyless-cloud-id"]
 mysql = ["pymysql"]
-jwt = ["jose"]
+jose = ["jose"]
 
 [tool.black]
 line-length = 120
