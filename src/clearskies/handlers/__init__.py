@@ -16,8 +16,10 @@ from .write import Write
 from .schema_helper import SchemaHelper
 from .simple_routing import SimpleRouting
 from .simple_search import SimpleSearch
+from . import exceptions
 
 __all__ = [
+    "exceptions",
     "AdvancedSearch",
     "Callable",
     "Create",
