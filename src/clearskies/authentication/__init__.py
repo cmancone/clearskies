@@ -4,6 +4,7 @@ from .public import Public
 from .auth0_jwks import Auth0JWKS
 from .authorization import Authorization
 from .jwks import JWKS
+from .jwks_jwcrypto import JWKSJwCrypto
 
 
 def public():
@@ -22,6 +23,10 @@ def jwks(jwks_url, **kwargs):
     return BindingConfig(JWKS, jwks_url=jwks_url, **kwargs)
 
 
+def jwks_jwcrypto(jwks_url, **kwargs):
+    return BindingConfig(JWKSJwCrypto, jwks_url=jwks_url, **kwargs)
+
+
 __all__ = [
     "Authorization",
     "BindingConfig",
@@ -34,4 +39,6 @@ __all__ = [
     "authorization",
     "jwks",
     "JWKS",
+    "jwks_jwcrypto",
+    "JWKSJwCrypto",
 ]
