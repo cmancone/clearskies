@@ -7,6 +7,7 @@ class JWKS(Auth0JWKS):
     _audience = None
     _jwks_url = None
     _jwks_cache_time = None
+    _authorization_url = None
 
     def __init__(self, environment, requests, jose_jwt):
         super().__init__(environment, requests, jose_jwt)
@@ -18,6 +19,7 @@ class JWKS(Auth0JWKS):
         audience=None,
         issuer=None,
         documentation_security_name=None,
+        authorization_url=None,
         jwks_cache_time=86400,
     ):
         self._audience = audience
@@ -28,6 +30,7 @@ class JWKS(Auth0JWKS):
             raise ValueError("Must provide 'jwks_url' when using JWKS authentication")
         self._algorithms = ["RS256"] if algorithms is None else algorithms
         self._documentation_security_name = documentation_security_name
+        self._authorization_url = authorization_url if authorization_url else ""
 
     def authenticate(self, input_output):
         auth_header = input_output.get_request_header("authorization", True)
@@ -73,3 +76,13 @@ class JWKS(Auth0JWKS):
             self._jwks_fetched = now
 
         return self._jwks
+
+    def documentation_security_scheme(self):
+        return {
+            "type": "oauth2",
+            "description": "JWT based authentication",
+            "flows": {"implicit": {"authorizationUrl": self._authorization_url, "scopes": {}}},
+        }
+
+    def documentation_security_scheme_name(self):
+        return self._documentation_security_name if self._documentation_security_name is not None else "jwt"
