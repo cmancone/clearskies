@@ -30,10 +30,22 @@ class JWKSJwCrypto(JWKS):
         except JWException as e:
             raise ClientError(str(e))
 
-        if self._audience and self.jwt_claims.get("aud") != self._audience:
-            raise ClientError("Audience does not match")
-
         if self._issuer and self.jwt_claims.get("iss") != self._issuer:
             raise ClientError("Issuer does not match")
+
+        if self._audience:
+            jwt_audience = self.jwt_claims.get("aud")
+            if not jwt_audience:
+                raise ClientError("Audience does not match")
+            if isinstance(jwt_audience, str):
+                jwt_audience = [jwt_audience]
+            if not isinstance(jwt_audience, list):
+                raise ClientError("I don't understand the audience in that JWT")
+            has_match = False
+            for audience in jwt_audience:
+                if audience == self._audience:
+                    has_match = True
+            if not has_match:
+                raise ClientError("Audience does not match")
 
         return True
