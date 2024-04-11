@@ -195,6 +195,12 @@ class Base(ABC):
             return self.error(input_output, str(client_error), 400)
         except exceptions.InputError as input_error:
             return self.input_errors(input_output, input_error.errors)
+        except exceptions.Authentication as auth_error:
+            return self.error(input_output, str(auth_error), 401)
+        except exceptions.Authorization as auth_error:
+            return self.error(input_output, str(auth_error), 403)
+        except exceptions.NotFound as auth_error:
+            return self.error(input_output, str(auth_error), 404)
 
         return response
 
