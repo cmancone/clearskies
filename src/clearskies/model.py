@@ -141,13 +141,19 @@ class Model(Models):
         if data is None:
             raise ValueError("pre_save forgot to return the data array!")
 
-        to_save = self.columns_to_backend(data, save_columns)
+        [to_save, temporary_data] = self.columns_to_backend(data, save_columns)
         to_save = self.to_backend(to_save, save_columns)
         if self.exists:
             new_data = self._backend.update(self._data[self.id_column_name], to_save, self)
         else:
             new_data = self._backend.create(to_save, self)
         id = self._backend.column_from_backend(save_columns[self.id_column_name], new_data[self.id_column_name])
+
+        # if we had any temporary columns add them back in
+        new_data = {
+            **temporary_data,
+            **new_data,
+        }
 
         data = self.columns_post_save(data, id, save_columns)
         self.post_save(data, id)
@@ -254,8 +260,10 @@ class Model(Models):
 
     def columns_to_backend(self, data, columns):
         backend_data = {**data}
+        temporary_data = {}
         for column in columns.values():
             if column.is_temporary and column.name in backend_data:
+                temporary_data[column.name] = backend_data[column.name]
                 del backend_data[column.name]
                 continue
 
@@ -265,7 +273,7 @@ class Model(Models):
                     f"Column {column.name} of type {column.__class__.__name__} did not return any data for to_database"
                 )
 
-        return backend_data
+        return [backend_data, temporary_data]
 
     def to_backend(self, data, columns):
         return data

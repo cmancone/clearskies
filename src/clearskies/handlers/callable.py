@@ -47,16 +47,18 @@ class Callable(Base, SchemaHelper):
                     return self.input_errors(input_output, input_errors)
                 response = self._di.call_function(
                     self.configuration("callable"),
-                    request_data=request_data,
                     **input_output.routing_data(),
                     **input_output.context_specifics(),
+                    request_data=request_data,
+                    authorization_data=input_output.get_authorization_data(),
                 )
             else:
                 response = self._di.call_function(
                     self.configuration("callable"),
-                    request_data=self.request_data(input_output, required=False),
                     **input_output.routing_data(),
                     **input_output.context_specifics(),
+                    request_data=self.request_data(input_output, required=False),
+                    authorization_data=input_output.get_authorization_data(),
                 )
             if response:
                 return self.success(input_output, response)

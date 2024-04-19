@@ -157,6 +157,8 @@ class SimpleRouting(Base):
                     "Each route must specify the handler configuration via 'handler_config' key, "
                     + f"but 'handler_config' was missing for route #{i+1}"
                 )
+            if route_config.get("authentication"):
+                authentication = self._di.build(route_config.get("authentication"), cache=True)
             route = SimpleRoutingRoute(self._di)
             route.configure(
                 route_config["handler_class"],
