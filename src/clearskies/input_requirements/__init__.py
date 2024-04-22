@@ -4,7 +4,9 @@ from .after import After
 from .before import Before
 from ..binding_config import BindingConfig
 from .minimum_length import MinimumLength
+from .minimum_value import MinimumValue
 from .maximum_length import MaximumLength
+from .maximum_value import MaximumValue
 from .required import Required
 from .requirement import Requirement
 from .unique import Unique
@@ -27,8 +29,16 @@ def minimum_length(minimum_length: int):
     return BindingConfig(MinimumLength, minimum_length)
 
 
+def minimum_value(minimum_value: int):
+    return BindingConfig(MinimumValue, minimum_value)
+
+
 def maximum_length(maximum_length: int):
     return BindingConfig(MaximumLength, maximum_length)
+
+
+def maximum_value(maximum_value: int):
+    return BindingConfig(MaximumValue, maximum_value)
 
 
 def required():
