@@ -13,6 +13,7 @@ class CLI:
     _body_loaded_as_json = None
     _body_as_json = None
     _routing_data = None
+    _authorization_data = None
 
     def __init__(self, sys):
         self._sys = sys
@@ -20,6 +21,7 @@ class CLI:
         self._kwargs = {}
         self._request_method = None
         self._parse_args(self._sys.argv)
+        self._authorization_data = None
 
     def respond(self, response, status_code=200):
         if status_code == 404:
@@ -172,3 +174,9 @@ class CLI:
 
     def get_client_ip(self):
         return "cli"
+
+    def set_authorization_data(self, data):
+        self._authorization_data = data
+
+    def get_authorization_data(self):
+        return self._authorization_data if self._authorization_data else {}
