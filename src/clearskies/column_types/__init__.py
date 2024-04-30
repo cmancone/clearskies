@@ -19,6 +19,7 @@ from .integer import Integer
 from .json import JSON
 from .many_to_many import ManyToMany
 from .many_to_many_with_data import ManyToManyWithData
+from .phone import Phone
 from .select import Select
 from .string import String
 from .updated import Updated
@@ -110,6 +111,10 @@ def many_to_many_with_data(name, **kwargs):
     return build_column_config(name, ManyToManyWithData, **kwargs)
 
 
+def phone(name, **kwargs):
+    return build_column_config(name, Phone, **kwargs)
+
+
 def select(name, **kwargs):
     return build_column_config(name, Select, **kwargs)
 
@@ -171,6 +176,8 @@ __all__ = [
     "ManyToMany",
     "many_to_many_with_data",
     "ManyToManyWithData",
+    "phone",
+    "Phone",
     "select",
     "Select",
     "string",
