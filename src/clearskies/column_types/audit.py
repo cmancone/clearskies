@@ -131,9 +131,14 @@ class Audit(has_many.HasMany):
             for key in new_data.keys():
                 if key in exclude_columns:
                     continue
+                if key in parent_columns:
+                    column_data = parent_columns[key].to_json(model)
+                else:
+                    column_data = {key: new_data[key]}
+
                 create_data = {
                     **create_data,
-                    **parent_columns[key].to_json(model),
+                    **column_data,
                 }
                 if key in mask_columns and key in create_data:
                     create_data[key] = "****"
@@ -154,11 +159,19 @@ class Audit(has_many.HasMany):
                 continue
             from_data = {
                 **from_data,
-                **parent_columns[column].to_json(old_model),
+                **(
+                    parent_columns[column].to_json(old_model)
+                    if column in parent_columns
+                    else {column: old_data.get(column)}
+                ),
             }
             to_data = {
                 **to_data,
-                **parent_columns[column].to_json(model),
+                **(
+                    parent_columns[column].to_json(model)
+                    if column in parent_columns
+                    else {column: model._data.get(column)}
+                ),
             }
             if column in mask_columns and column in to_data:
                 to_data[column] = "****"
@@ -187,7 +200,7 @@ class Audit(has_many.HasMany):
                 continue
             final_data = {
                 **final_data,
-                **parent_columns[key].to_json(model),
+                **(parent_columns[key].to_json(model) if key in parent_columns else {key: model.data.get(key)}),
             }
 
         for key in mask_columns:
