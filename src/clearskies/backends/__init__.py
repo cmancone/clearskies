@@ -1,5 +1,6 @@
 from .. import binding_config
 from .api_backend import ApiBackend
+from .backend import Backend
 from .cursor_backend import CursorBackend
 from .example_backend import ExampleBackend
 from .file_backend import FileBackend
@@ -15,6 +16,7 @@ def example_backend(data):
 
 __all__ = [
     "ApiBackend",
+    "Backend",
     "CursorBackend",
     "ExampleBackend",
     "example_backend",
