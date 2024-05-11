@@ -22,6 +22,7 @@ from .many_to_many_with_data import ManyToManyWithData
 from .phone import Phone
 from .select import Select
 from .string import String
+from .timestamp import Timestamp
 from .updated import Updated
 from .updated_micro import UpdatedMicro
 from .uuid import UUID
@@ -121,6 +122,10 @@ def select(name, **kwargs):
 
 def string(name, **kwargs):
     return build_column_config(name, String, **kwargs)
+
+
+def timestamp(name, **kwargs):
+    return build_column_config(name, Timestamp, **kwargs)
 
 
 def updated(name, **kwargs):
