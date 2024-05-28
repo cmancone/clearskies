@@ -15,6 +15,7 @@ from .datetime_micro import DateTimeMicro
 from .email import Email
 from .float import Float
 from .has_many import HasMany
+from .has_one import HasOne
 from .integer import Integer
 from .json import JSON
 from .many_to_many import ManyToMany
@@ -96,6 +97,10 @@ def has_many(name, **kwargs):
     return build_column_config(name, HasMany, **kwargs)
 
 
+def has_one(name, **kwargs):
+    return build_column_config(name, HasOne, **kwargs)
+
+
 def integer(name, **kwargs):
     return build_column_config(name, Integer, **kwargs)
 
@@ -173,6 +178,8 @@ __all__ = [
     "Float",
     "has_many",
     "HasMany",
+    "has_one",
+    "HasOne",
     "integer",
     "Integer",
     "json",
