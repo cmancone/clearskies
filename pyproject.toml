@@ -29,7 +29,7 @@ classifiers = [
 python = "^3.10"
 dateparser = "^1.1.8"
 requests = "^2.31.0"
-akeyless = {version = "^3.6.2", optional = true}
+akeyless = {version = "^4.0.0", optional = true}
 akeyless-cloud-id = {version = "^0.2.3", optional = true}
 pymysql = {version = "^1.1.0", optional = true}
 jose = {version = "^1.0.0", optional = true}
