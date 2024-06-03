@@ -13,7 +13,7 @@ class TimestampTest(unittest.TestCase):
         self.assertEquals(2024, date.year)
         self.assertEquals(5, date.month)
         self.assertEquals(11, date.day)
-        self.assertEquals(11, date.hour)
+        self.assertEquals(15, date.hour)
         self.assertEquals(19, date.minute)
         self.assertEquals(37, date.second)
         self.assertEquals(timezone.utc, date.tzinfo)

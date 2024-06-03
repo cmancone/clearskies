@@ -1,3 +1,4 @@
+import time
 from .datetime import DateTime
 from datetime import datetime, timezone
 import dateparser
@@ -28,9 +29,9 @@ class Timestamp(DateTime):
                 raise ValueError(
                     f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: a string value was found that is not a timestamp.  It was '{value}'"
                 )
-            date = datetime.fromtimestamp(int(value) / mult)
+            date = datetime.fromtimestamp(int(value) / mult, timezone.utc)
         elif isinstance(value, int):
-            date = datetime.fromtimestamp(value / mult)
+            date = datetime.fromtimestamp(value / mult, timezone.utc)
         else:
             if not isinstance(value, datetime):
                 raise ValueError(
