@@ -47,30 +47,30 @@ class Models(ABC, ConditionParser):
         self.query_select_all = True
 
     @abstractmethod
-    def model_class(self):
+    def model_class(self: Self) -> type[Self]:
         """Return the model class that this models object will find/return instances of"""
         pass
 
-    def clone(self) -> Self:
+    def clone(self: Self) -> Self:
         clone = self.blank()
         clone.query_configuration = self.query_configuration
         return clone
 
-    def blank(self) -> Self:
+    def blank(self: Self) -> Self:
         return self._build_model()
 
-    def get_table_name(self) -> str:
+    def get_table_name(self: Self) -> str:
         if self._table_name is None:
             self._table_name = self.model_class().table_name()
         return self._table_name
 
-    def get_id_column_name(self) -> str:
+    def get_id_column_name(self: Self) -> str:
         if self._id_column_name is None:
             self._id_column_name = self.empty_model().id_column_name
         return self._id_column_name
 
     @property
-    def query_configuration(self) -> Dict[str, Any]:
+    def query_configuration(self: Self) -> Dict[str, Any]:
         return {
             "wheres": [*self.query_wheres],
             "sorts": [*self.query_sorts],
@@ -85,7 +85,7 @@ class Models(ABC, ConditionParser):
         }
 
     @query_configuration.setter
-    def query_configuration(self, configuration: Dict[str, Any]):
+    def query_configuration(self: Self, configuration: Dict[str, Any]):
         self.query_wheres = configuration["wheres"]
         self.query_sorts = configuration["sorts"]
         self.query_group_by_column = configuration["group_by_column"]
@@ -97,34 +97,34 @@ class Models(ABC, ConditionParser):
         self._model_columns = configuration["model_columns"]
 
     @property
-    def model_columns(self):
+    def model_columns(self: Self):
         if self._model_columns is None:
             self._model_columns = self.empty_model().columns()
         return self._model_columns
 
-    def select(self, selects) -> Self:
+    def select(self: Self, selects) -> Self:
         return self.clone().select_in_place(selects)
 
-    def select_in_place(self, selects) -> Self:
+    def select_in_place(self: Self, selects) -> Self:
         self.query_selects.append(selects)
         self.must_rexecute = True
         self._next_page_data = None
         return self
 
-    def select_all(self, select_all=True) -> Self:
+    def select_all(self: Self, select_all=True) -> Self:
         return self.clone().select_all_in_place(select_all=select_all)
 
-    def select_all_in_place(self, select_all=True) -> Self:
+    def select_all_in_place(self: Self, select_all=True) -> Self:
         self.query_select_all = select_all
         self.must_rexecute = True
         self._next_page_data = None
         return self
 
-    def where(self, where: str) -> Self:
+    def where(self: Self, where: str) -> Self:
         """Adds the given condition to the query and returns a new Models object"""
         return self.clone().where_in_place(where)
 
-    def where_in_place(self, where: str) -> Self:
+    def where_in_place(self: Self, where: str) -> Self:
         """Adds the given condition to the query for the current Models object"""
         condition = self.parse_condition(where)
         self._validate_column(condition["column"], "filter", table=condition["table"])
@@ -134,17 +134,17 @@ class Models(ABC, ConditionParser):
         self.must_recount = True
         return self
 
-    def join(self, join: str) -> Self:
+    def join(self: Self, join: str) -> Self:
         return self.clone().join_in_place(join)
 
-    def join_in_place(self, join: str) -> Self:
+    def join_in_place(self: Self, join: str) -> Self:
         self.query_joins.append(self.parse_join(join))
         self.must_rexecute = True
         self._next_page_data = None
         self.must_recount = True
         return self
 
-    def is_joined(self, table_name, alias=None):
+    def is_joined(self: Self, table_name, alias=None):
         for join in self.query_joins:
             if join["table"] != table_name:
                 continue
@@ -155,10 +155,10 @@ class Models(ABC, ConditionParser):
             return join["alias"] if join["alias"] else join["table"]
         return False
 
-    def group_by(self, group_column: str) -> Self:
+    def group_by(self: Self, group_column: str) -> Self:
         return self.clone().group_by_in_place(group_column)
 
-    def group_by_in_place(self, group_column: str) -> Self:
+    def group_by_in_place(self: Self, group_column: str) -> Self:
         self._validate_column(group_column, "group")
         self.query_group_by_column = group_column
         self.must_rexecute = True
@@ -167,7 +167,7 @@ class Models(ABC, ConditionParser):
         return self
 
     def sort_by(
-        self,
+        self: Self,
         primary_column,
         primary_direction,
         primary_table=None,
@@ -185,7 +185,7 @@ class Models(ABC, ConditionParser):
         )
 
     def sort_by_in_place(
-        self,
+        self: Self,
         primary_column,
         primary_direction,
         primary_table=None,
@@ -205,7 +205,7 @@ class Models(ABC, ConditionParser):
         self._next_page_data = None
         return self
 
-    def _normalize_and_validate_sort(self, sort):
+    def _normalize_and_validate_sort(self: Self, sort):
         if "column" not in sort or not sort["column"]:
             raise ValueError("Missing 'column' for sort")
         if "direction" not in sort or not sort["direction"]:
@@ -218,7 +218,7 @@ class Models(ABC, ConditionParser):
         # down the line we may ask the model class what columns we can sort on, but we're good for now
         return {"column": sort["column"], "direction": sort["direction"], "table": sort.get("table")}
 
-    def _validate_column(self, column_name, action, table=None):
+    def _validate_column(self: Self, column_name, action, table=None):
         """
         Down the line we may use the model configuration to check what columns are valid sort/group/search targets
         """
@@ -246,19 +246,19 @@ class Models(ABC, ConditionParser):
                 + "to your model definition"
             )
 
-    def limit(self, limit) -> Self:
+    def limit(self: Self, limit) -> Self:
         return self.clone().limit_in_place(limit)
 
-    def limit_in_place(self, limit) -> Self:
+    def limit_in_place(self: Self, limit) -> Self:
         self.query_limit = limit
         self.must_rexecute = True
         self._next_page_data = None
         return self
 
-    def pagination(self, **kwargs) -> Self:
+    def pagination(self: Self, **kwargs) -> Self:
         return self.clone().pagination_in_place(**kwargs)
 
-    def pagination_in_place(self, **kwargs) -> Self:
+    def pagination_in_place(self: Self, **kwargs) -> Self:
         error = self._backend.validate_pagination_kwargs(kwargs, str)
         if error:
             raise ValueError(
@@ -270,17 +270,17 @@ class Models(ABC, ConditionParser):
         self._next_page_data = None
         return self
 
-    def find(self, where: str) -> Self:
+    def find(self: Self, where: str) -> Self:
         """Returns the first model where condition"""
         return self.clone().where(where).first()
 
-    def __len__(self):
+    def __len__(self: Self):
         if self.must_recount:
             self.count = self._backend.count(self.query_configuration, self.empty_model())
             self.must_recount = False
         return self.count
 
-    def __iter__(self) -> Iterator[Self]:
+    def __iter__(self: Self) -> Iterator[Self]:
         self._next_page_data = {}
         raw_rows = self._backend.records(
             self.query_configuration,
@@ -290,7 +290,7 @@ class Models(ABC, ConditionParser):
         models = iter([self.model(row) for row in raw_rows])
         return models
 
-    def paginate_all(self) -> List[Self]:
+    def paginate_all(self: Self) -> List[Self]:
         next_models = self.clone()
         results = list(next_models.__iter__())
         next_page_data = next_models.next_page_data()
@@ -300,51 +300,51 @@ class Models(ABC, ConditionParser):
             next_page_data = next_models.next_page_data()
         return results
 
-    def model(self, data) -> Self:
+    def model(self: Self, data) -> Self:
         model = self._build_model()
         model.data = data
         return model
 
-    def _build_model(self) -> Self:
+    def _build_model(self: Self) -> Self:
         model_class = self.model_class()
         return model_class(self._backend, self._columns)
 
-    def empty_model(self) -> Self:
+    def empty_model(self: Self) -> Self:
         return self.model({})
 
-    def create(self, data: Dict[str, Any]) -> Self:
+    def create(self: Self, data: Dict[str, Any]) -> Self:
         empty = self.empty_model()
         empty.save(data)
         return empty
 
-    def first(self) -> Self:
+    def first(self: Self) -> Self:
         iter = self.__iter__()
         try:
             return iter.__next__()
         except StopIteration:
             return self.empty_model()
 
-    def columns(self, overrides=None):
+    def columns(self: Self, overrides=None):
         model = self.model({})
         return model.columns(overrides=None)
 
-    def raw_columns_configuration(self):
+    def raw_columns_configuration(self: Self):
         return self.model({}).all_columns()
 
-    def allowed_pagination_keys(self) -> List[str]:
+    def allowed_pagination_keys(self: Self) -> List[str]:
         return self._backend.allowed_pagination_keys()
 
     def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
         return self._backend.validate_pagination_kwargs(kwargs, case_mapping)
 
-    def next_page_data(self):
+    def next_page_data(self: Self):
         return self._next_page_data
 
-    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
+    def documentation_pagination_next_page_response(self: Self, case_mapping: Callable) -> List[Any]:
         return self._backend.documentation_pagination_next_page_response(case_mapping)
 
-    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
+    def documentation_pagination_next_page_example(self: Self, case_mapping: Callable) -> Dict[str, Any]:
         return self._backend.documentation_pagination_next_page_example(case_mapping)
 
-    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+    def documentation_pagination_parameters(self: Self, case_mapping: Callable) -> List[Tuple[Any]]:
         return self._backend.documentation_pagination_parameters(case_mapping)
