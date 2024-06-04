@@ -1,3 +1,5 @@
+import datetime
+
 from .datetime import DateTime
 
 
@@ -8,8 +10,8 @@ class Updated(DateTime):
         "utc",
     ]
 
-    def __init__(self, di, datetime):
-        super().__init__(di)
+    def __init__(self, di, datetime, timezone: datetime.tzinfo):
+        super().__init__(di, timezone)
         self.datetime = datetime
 
     @property
@@ -20,5 +22,5 @@ class Updated(DateTime):
         if self.config("utc", silent=True):
             now = self.datetime.datetime.now(self.datetime.timezone.utc)
         else:
-            now = self.datetime.datetime.now()
+            now = self.datetime.datetime.now(self._timezone)
         return {**data, self.name: now}

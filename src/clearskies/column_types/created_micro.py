@@ -8,8 +8,8 @@ class CreatedMicro(DateTimeMicro):
         "utc",
     ]
 
-    def __init__(self, di, datetime):
-        super().__init__(di)
+    def __init__(self, di, datetime, timezone):
+        super().__init__(di, timezone)
         self.datetime = datetime
 
     @property
@@ -22,5 +22,5 @@ class CreatedMicro(DateTimeMicro):
         if self.config("utc", silent=True):
             now = self.datetime.datetime.now(self.datetime.timezone.utc)
         else:
-            now = self.datetime.datetime.now()
+            now = self.datetime.datetime.now(self._timezone)
         return {**data, self.name: now}

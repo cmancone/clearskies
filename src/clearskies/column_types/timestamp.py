@@ -29,16 +29,16 @@ class Timestamp(DateTime):
                 raise ValueError(
                     f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: a string value was found that is not a timestamp.  It was '{value}'"
                 )
-            date = datetime.fromtimestamp(int(value) / mult, timezone.utc)
+            date = datetime.fromtimestamp(int(value) / mult, self._timezone)
         elif isinstance(value, int):
-            date = datetime.fromtimestamp(value / mult, timezone.utc)
+            date = datetime.fromtimestamp(value / mult, self._timezone)
         else:
             if not isinstance(value, datetime):
                 raise ValueError(
                     f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: the value was neither an integer, a string, nor a datetime object"
                 )
             date = value
-        return date.replace(tzinfo=timezone.utc) if date else None
+        return date.replace(tzinfo=self._timezone) if date else None
 
     def to_backend(self, data):
         if not self.name in data or isinstance(data[self.name], int) or data[self.name] == None:
