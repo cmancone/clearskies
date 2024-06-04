@@ -13,32 +13,32 @@ class RequiredTest(unittest.TestCase):
 
     def test_create(self):
         error = self.required.check(self.does_not_exist, {})
-        self.assertEquals("'name' is required.", error)
+        self.assertEqual("'name' is required.", error)
         error = self.required.check(self.does_not_exist, {"name": " "})
-        self.assertEquals("'name' is required.", error)
+        self.assertEqual("'name' is required.", error)
         error = self.required.check(self.does_not_exist, {"name": 0})
-        self.assertEquals("'name' is required.", error)
+        self.assertEqual("'name' is required.", error)
 
         error = self.required.check(self.does_not_exist, {"name": "sup"})
-        self.assertEquals("", error)
+        self.assertEqual("", error)
         error = self.required.check(self.does_not_exist, {"name": 5})
-        self.assertEquals("", error)
+        self.assertEqual("", error)
 
     def test_update(self):
         # The database already has a value for the required field
         self.does_exist.__getitem__ = MagicMock(return_value="okay")
         error = self.required.check(self.does_exist, {"name": "  "})
-        self.assertEquals("'name' is required.", error)
+        self.assertEqual("'name' is required.", error)
         error = self.required.check(self.does_exist, {"name": "hey"})
-        self.assertEquals("", error)
+        self.assertEqual("", error)
         error = self.required.check(self.does_exist, {})
-        self.assertEquals("", error)
+        self.assertEqual("", error)
 
         # The database does not have a value for the required field
         exists_no_value = type("", (), {"exists": True, "__getitem__": MagicMock(return_value="")})()
         error = self.required.check(self.does_exist, {"name": "   "})
-        self.assertEquals("'name' is required.", error)
+        self.assertEqual("'name' is required.", error)
         error = self.required.check(exists_no_value, {})
-        self.assertEquals("'name' is required.", error)
+        self.assertEqual("'name' is required.", error)
         error = self.required.check(self.does_exist, {"name": "okay"})
-        self.assertEquals("", error)
+        self.assertEqual("", error)

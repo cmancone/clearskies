@@ -41,12 +41,12 @@ class BelongsToTest(unittest.TestCase):
         self.belongs_to.configure(
             "user", {"parent_models_class": TestModel, "model_column_name": "user_model"}, BelongsToTest
         )
-        self.assertEquals("user_model", self.belongs_to.config("model_column_name"))
+        self.assertEqual("user_model", self.belongs_to.config("model_column_name"))
 
     def test_require_parent_models_class(self):
         with self.assertRaises(KeyError) as context:
             self.belongs_to.configure("user_id", {}, BelongsToTest)
-        self.assertEquals(
+        self.assertEqual(
             "\"Missing required configuration 'parent_models_class' for column 'user_id' in 'BelongsToTest'\"",
             str(context.exception),
         )
@@ -54,18 +54,18 @@ class BelongsToTest(unittest.TestCase):
     def test_check_input_no_match(self):
         self.belongs_to.configure("user_id", {"parent_models_class": TestModel}, BelongsToTest)
         error = self.belongs_to.input_errors("model", {"user_id": "5"})
-        self.assertEquals({"user_id": "Invalid selection for user_id: record does not exist"}, error)
+        self.assertEqual({"user_id": "Invalid selection for user_id: record does not exist"}, error)
 
     def test_check_input_match(self):
         self.models.create({"id": "10"})
         self.belongs_to.configure("user_id", {"parent_models_class": TestModel}, BelongsToTest)
         error = self.belongs_to.input_errors("model", {"user_id": "10"})
-        self.assertEquals({}, error)
+        self.assertEqual({}, error)
 
     def test_check_input_null(self):
         self.belongs_to.configure("user_id", {"parent_models_class": TestModel}, BelongsToTest)
         error = self.belongs_to.input_errors("model", {"user_id": None})
-        self.assertEquals({}, error)
+        self.assertEqual({}, error)
 
     def test_provide(self):
         self.models.create({"id": "2", "name": "hey"})
@@ -74,5 +74,5 @@ class BelongsToTest(unittest.TestCase):
         self.assertFalse(self.belongs_to.can_provide("users"))
 
         user = self.belongs_to.provide({"user_id": "2"}, "user_id")
-        self.assertEquals("2", user.id)
-        self.assertEquals("hey", user.name)
+        self.assertEqual("2", user.id)
+        self.assertEqual("hey", user.name)

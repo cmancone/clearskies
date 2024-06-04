@@ -48,11 +48,11 @@ class GetTest(unittest.TestCase):
     def test_get(self):
         response = self.get(routing_data={"id": "5"})
         response_data = response[0]["data"]
-        self.assertEquals(200, response[1])
-        self.assertEquals("5", response_data["id"])
-        self.assertEquals(25, response_data["age"])
-        self.assertEquals("bob", response_data["name"])
-        self.assertEquals("bob@example.com", response_data["email"])
+        self.assertEqual(200, response[1])
+        self.assertEqual("5", response_data["id"])
+        self.assertEqual(25, response_data["age"])
+        self.assertEqual("bob", response_data["name"])
+        self.assertEqual("bob@example.com", response_data["email"])
 
     def test_authz(self):
         get = test(
@@ -71,20 +71,20 @@ class GetTest(unittest.TestCase):
         users.create({"id": "6", "name": "bob", "email": "bob2@example.com", "age": "25"})
         response = get(routing_data={"id": "5"}, authorization_data={"email": "bob@example.com"})
         response_data = response[0]["data"]
-        self.assertEquals(200, response[1])
-        self.assertEquals("5", response_data["id"])
-        self.assertEquals(25, response_data["age"])
-        self.assertEquals("bob", response_data["name"])
-        self.assertEquals("bob@example.com", response_data["email"])
+        self.assertEqual(200, response[1])
+        self.assertEqual("5", response_data["id"])
+        self.assertEqual(25, response_data["age"])
+        self.assertEqual("bob", response_data["name"])
+        self.assertEqual("bob@example.com", response_data["email"])
 
         # double check that if we find nothing for a non-match
         response = get(routing_data={"id": "6"}, authorization_data={"email": "bob@example.com"})
-        self.assertEquals(404, response[1])
+        self.assertEqual(404, response[1])
 
     def test_not_found(self):
         response = self.get(routing_data={"id": "10"})
-        self.assertEquals(404, response[1])
-        self.assertEquals(
+        self.assertEqual(404, response[1])
+        self.assertEqual(
             {"status": "client_error", "error": "Not Found", "data": [], "pagination": {}, "input_errors": {}},
             response[0],
         )
@@ -101,16 +101,16 @@ class GetTest(unittest.TestCase):
 
         documentation = get.documentation()[0]
 
-        self.assertEquals("{id}", documentation.relative_path)
+        self.assertEqual("{id}", documentation.relative_path)
 
-        self.assertEquals(1, len(documentation.parameters))
-        self.assertEquals(2, len(documentation.responses))
-        self.assertEquals([200, 404], [response.status for response in documentation.responses])
+        self.assertEqual(1, len(documentation.parameters))
+        self.assertEqual(2, len(documentation.responses))
+        self.assertEqual([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]
-        self.assertEquals(
+        self.assertEqual(
             ["status", "data", "pagination", "error", "input_errors"],
             [schema.name for schema in success_response.schema.children],
         )
         data_response_properties = success_response.schema.children[1].children
-        self.assertEquals(["id", "name", "email", "age"], [prop.name for prop in data_response_properties])
-        self.assertEquals(["string", "string", "string", "integer"], [prop._type for prop in data_response_properties])
+        self.assertEqual(["id", "name", "email", "age"], [prop.name for prop in data_response_properties])
+        self.assertEqual(["string", "string", "string", "integer"], [prop._type for prop in data_response_properties])

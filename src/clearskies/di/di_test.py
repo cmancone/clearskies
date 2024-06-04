@@ -61,35 +61,35 @@ class ModelTest(unittest.TestCase):
 
     def test_simple_build_from_string(self):
         value = self.di.build("arbitrarily_defined")
-        self.assertEquals(MoreStuff, value.__class__)
-        self.assertEquals(2, value.age)
-        self.assertEquals(SomeClass, value.some_class.__class__)
+        self.assertEqual(MoreStuff, value.__class__)
+        self.assertEqual(2, value.age)
+        self.assertEqual(SomeClass, value.some_class.__class__)
 
     def test_build_everything(self):
         value = self.di.build(AnotherClass)
-        self.assertEquals(AnotherClass, value.__class__)
-        self.assertEquals(SomeClass, value.some_class.__class__)
-        self.assertEquals(more_classes, value.more_classes.__class__)
-        self.assertEquals(MoreStuff, value.more_classes.arbitrarily_defined.__class__)
-        self.assertEquals(SomeClass, value.more_classes.arbitrarily_defined.some_class.__class__)
-        self.assertEquals(2, value.more_classes.arbitrarily_defined.age)
+        self.assertEqual(AnotherClass, value.__class__)
+        self.assertEqual(SomeClass, value.some_class.__class__)
+        self.assertEqual(more_classes, value.more_classes.__class__)
+        self.assertEqual(MoreStuff, value.more_classes.arbitrarily_defined.__class__)
+        self.assertEqual(SomeClass, value.more_classes.arbitrarily_defined.some_class.__class__)
+        self.assertEqual(2, value.more_classes.arbitrarily_defined.age)
 
     def test_module_import(self):
         self.di.add_modules(test_module)
         with_module = self.di.build(RequiresSubModule)
-        self.assertEquals(test_module.another_module.AnotherModuleClass, with_module.another_module_class.__class__)
+        self.assertEqual(test_module.another_module.AnotherModuleClass, with_module.another_module_class.__class__)
 
     def test_additional_config(self):
         self.di.add_additional_configs(MoreAdditionalConfig)
         awesome = self.di.build("really_awesome_stuff")
-        self.assertEquals("hey", awesome.blahblah)
-        self.assertEquals(SomeClass, awesome.some_class.__class__)
+        self.assertEqual("hey", awesome.blahblah)
+        self.assertEqual(SomeClass, awesome.some_class.__class__)
 
     def test_circular(self):
         self.di.add_classes([Circular, WillBeCircular])
         with self.assertRaises(ValueError) as context:
             self.di.build(Circular)
-        self.assertEquals(
+        self.assertEqual(
             "Circular dependencies detected while building 'Circular' because 'Circular "
             + "is a dependency of both 'WillBeCircular' and itself",
             str(context.exception),

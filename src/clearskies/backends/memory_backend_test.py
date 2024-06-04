@@ -18,7 +18,7 @@ class MemoryBackendTest(unittest.TestCase):
     def test_create(self):
         self.memory_backend.create({"id": "1-2-3-4", "name": "Conor", "email": "cmancone@example.com"}, self.user_model)
         self.memory_backend.create({"id": "1-2-3-5", "name": "Ronoc", "email": "rmancone@example.com"}, self.user_model)
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"id": "1-2-3-4", "name": "Conor", "email": "cmancone@example.com"},
                 {"id": "1-2-3-5", "name": "Ronoc", "email": "rmancone@example.com"},
@@ -29,14 +29,14 @@ class MemoryBackendTest(unittest.TestCase):
     def test_create_check_columns(self):
         with self.assertRaises(ValueError) as context:
             self.memory_backend.create({"name": "Conor", "emails": "cmancone@example.com"}, self.user_model)
-        self.assertEquals(
+        self.assertEqual(
             "Cannot create record: column 'emails' does not exist in table 'users'", str(context.exception)
         )
 
     def test_update(self):
         self.memory_backend.create({"id": "1-2-3-4", "name": "Conor", "email": "cmancone@example.com"}, self.user_model)
         self.memory_backend.update("1-2-3-4", {"name": "Ronoc", "email": "rmancone@example.com"}, self.user_model)
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"id": "1-2-3-4", "name": "Ronoc", "email": "rmancone@example.com"},
             ],
@@ -47,7 +47,7 @@ class MemoryBackendTest(unittest.TestCase):
         self.memory_backend.create({"id": "1-2-3-4", "name": "Conor", "email": "cmancone@example.com"}, self.user_model)
         with self.assertRaises(ValueError) as context:
             self.memory_backend.update("1-2-3-4", {"name": "Conor", "emails": "cmancone@example.com"}, self.user_model)
-        self.assertEquals(
+        self.assertEqual(
             "Cannot update record: column 'emails' does not exist in table 'users'", str(context.exception)
         )
 
@@ -55,26 +55,26 @@ class MemoryBackendTest(unittest.TestCase):
         self.memory_backend.create({"id": "1-2-3-4", "name": "Conor", "email": "cmancone@example.com"}, self.user_model)
         with self.assertRaises(ValueError) as context:
             self.memory_backend.update("1-2-3-5", {"name": "Conor", "emails": "cmancone@example.com"}, self.user_model)
-        self.assertEquals("Attempt to update non-existent record with 'id' of '1-2-3-5'", str(context.exception))
+        self.assertEqual("Attempt to update non-existent record with 'id' of '1-2-3-5'", str(context.exception))
 
     def test_delete(self):
         self.memory_backend.create({"id": "1-2-3-4", "name": "Conor", "email": "cmancone@example.com"}, self.user_model)
         self.memory_backend.delete("1-2-3-4", self.user_model)
-        self.assertEquals([], self.memory_backend.records({"table_name": "users"}, self.user_model))
+        self.assertEqual([], self.memory_backend.records({"table_name": "users"}, self.user_model))
 
     def test_multiple_tables(self):
         self.memory_backend.create({"id": "1-2-3-4", "name": "Conor", "email": "cmancone@example.com"}, self.user_model)
         self.memory_backend.create({"id": "1-2-3-4", "review": "cool"}, self.reviews_model)
         self.memory_backend.create({"id": "1-2-3-5", "review": "bad"}, self.reviews_model)
         self.memory_backend.update("1-2-3-5", {"review": "okay"}, self.reviews_model)
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"id": "1-2-3-4", "review": "cool", "email": None},
                 {"id": "1-2-3-5", "review": "okay", "email": None},
             ],
             self.memory_backend.records({"table_name": "reviews"}, self.reviews_model),
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"id": "1-2-3-4", "name": "Conor", "email": "cmancone@example.com"},
             ],
@@ -95,7 +95,7 @@ class MemoryBackendTest(unittest.TestCase):
             },
             self.user_model,
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"id": "1-2-3-5", "name": "Zeb", "email": "b@example.com"},
                 {"id": "1-2-3-4", "name": "Zeb", "email": "a@example.com"},
@@ -113,7 +113,7 @@ class MemoryBackendTest(unittest.TestCase):
             },
             self.user_model,
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"id": "1-2-3-6", "name": "A", "email": "c@example.com"},
                 {"id": "1-2-3-5", "name": "Zeb", "email": "b@example.com"},
@@ -131,7 +131,7 @@ class MemoryBackendTest(unittest.TestCase):
             },
             self.user_model,
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"id": "1-2-3-4", "name": "Zeb", "email": "a@example.com"},
             ],
@@ -148,7 +148,7 @@ class MemoryBackendTest(unittest.TestCase):
             },
             self.user_model,
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"id": "1-2-3-6", "name": "A", "email": "c@example.com"},
                 {"id": "1-2-3-5", "name": "Zeb", "email": "b@example.com"},
@@ -169,7 +169,7 @@ class MemoryBackendTest(unittest.TestCase):
             },
             self.user_model,
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"id": "1-2-3-5", "name": "Zeb", "email": "b@example.com"},
             ],
@@ -180,7 +180,7 @@ class MemoryBackendTest(unittest.TestCase):
         self.memory_backend.create({"id": "1-2-3-4", "name": "Zeb", "email": "a@example.com"}, self.user_model)
         self.memory_backend.create({"id": "1-2-3-5", "name": "Zeb", "email": "b@example.com"}, self.user_model)
         self.memory_backend.create({"id": "1-2-3-6", "name": "A", "email": "c@example.com"}, self.user_model)
-        self.assertEquals(
+        self.assertEqual(
             2,
             self.memory_backend.count(
                 {
@@ -226,7 +226,7 @@ class MemoryBackendTest(unittest.TestCase):
             self.user_model,
         )
 
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"name": "A", "email": "c@example.com", "id": "1-2-3-6"},
                 {"name": "Zeb", "email": "b@example.com", "id": "1-2-3-5"},
@@ -257,7 +257,7 @@ class MemoryBackendTest(unittest.TestCase):
             self.user_model,
         )
 
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"name": "A", "email": "c@example.com", "id": "1-2-3-6"},
                 {"name": "Zeb", "email": "b@example.com", "id": "1-2-3-5"},
@@ -297,7 +297,7 @@ class MemoryBackendTest(unittest.TestCase):
             self.user_model,
         )
 
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"name": "Zeb", "email": "b@example.com", "id": "1-2-3-5"},
             ],

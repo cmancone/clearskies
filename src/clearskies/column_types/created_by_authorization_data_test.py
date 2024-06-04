@@ -17,8 +17,8 @@ class CreatedByAuthorizationDataTest(unittest.TestCase):
         di.build = MagicMock(return_value=input_output)
         created_by = CreatedByAuthorizationData(di)
         created_by.configure("name", {"authorization_data_key_name": "name"}, int)
-        self.assertEquals({"hey": "sup", "name": "bob"}, created_by.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup", "name": "bob"}, created_by.pre_save({"hey": "sup"}, model))
         di.build.assert_called_with("input_output", cache=True)
 
         model.exists = True
-        self.assertEquals({"hey": "sup"}, created_by.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup"}, created_by.pre_save({"hey": "sup"}, model))

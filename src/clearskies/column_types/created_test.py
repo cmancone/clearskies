@@ -14,30 +14,30 @@ class CreatedTest(unittest.TestCase):
         self.datetime.timezone.utc = datetime.timezone.utc
 
     def test_is_writeable(self):
-        created = Created("di", self.datetime)
+        created = Created("di", self.datetime, datetime.timezone.utc)
         self.assertFalse(created.is_writeable)
 
     def test_pre_save(self):
         model = type("", (), {})
         model.exists = False
-        created = Created("di", self.datetime)
+        created = Created("di", self.datetime, datetime.timezone.utc)
         created.configure("created", {}, int)
         new_data = created.pre_save({"hey": "sup"}, model)
-        self.assertEquals({"hey": "sup", "created": self.now}, new_data)
-        self.assertEquals(None, new_data["created"].tzinfo)
-        self.assertEquals(self.datetime.datetime.now.call_args.args, ())
+        self.assertEqual({"hey": "sup", "created": self.now}, new_data)
+        self.assertEqual(None, new_data["created"].tzinfo)
+        self.assertEqual(self.datetime.datetime.now.call_args.args, (datetime.timezone.utc,))
 
         model.exists = True
-        self.assertEquals({"hey": "sup"}, created.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup"}, created.pre_save({"hey": "sup"}, model))
 
     def test_pre_save_utc(self):
         model = type("", (), {})
         model.exists = False
-        created = Created("di", self.datetime)
+        created = Created("di", self.datetime, datetime.timezone.utc )
         created.configure("created", {"utc": True}, int)
         new_data = created.pre_save({"hey": "sup"}, model)
-        self.assertEquals({"hey": "sup", "created": self.now}, new_data)
-        self.assertEquals(self.datetime.datetime.now.call_args.args, (datetime.timezone.utc,))
+        self.assertEqual({"hey": "sup", "created": self.now}, new_data)
+        self.assertEqual(self.datetime.datetime.now.call_args.args, (datetime.timezone.utc,))
 
         model.exists = True
-        self.assertEquals({"hey": "sup"}, created.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup"}, created.pre_save({"hey": "sup"}, model))

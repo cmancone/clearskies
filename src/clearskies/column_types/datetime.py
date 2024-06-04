@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 import dateparser
 from ..autodoc.schema import DateTime as AutoDocDateTime
 
-
 class DateTime(Column):
     _auto_doc_class = AutoDocDateTime
     _date_format = "%Y-%m-%d %H:%M:%S"
@@ -14,8 +13,9 @@ class DateTime(Column):
         "default_date",
     ]
 
-    def __init__(self, di):
+    def __init__(self, di, timezone: datetime.tzinfo):
         super().__init__(di)
+        self._timezone = timezone
 
     def _finalize_configuration(self, configuration):
         return {
@@ -33,7 +33,7 @@ class DateTime(Column):
             date = dateparser.parse(value)
         else:
             date = value
-        return date.replace(tzinfo=timezone.utc) if date else None
+        return date.replace(tzinfo=self._timezone) if date else None
 
     def to_backend(self, data):
         if not self.name in data or type(data[self.name]) == str or data[self.name] == None:
@@ -47,7 +47,7 @@ class DateTime(Column):
         return {self.name: datetime.isoformat() if datetime else None}
 
     def build_condition(self, value, operator=None, column_prefix=""):
-        date = dateparser.parse(value).astimezone(timezone.utc).strftime(self.config("date_format"))
+        date = dateparser.parse(value).astimezone(self._timezone).strftime(self.config("date_format"))
         if not operator:
             operator = "="
         return f"{column_prefix}{self.name}{operator}{date}"

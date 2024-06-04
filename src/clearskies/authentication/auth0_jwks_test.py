@@ -40,7 +40,7 @@ class Auth0JWKSTest(unittest.TestCase):
         input_output = SimpleNamespace(get_request_header=MagicMock(return_value="Bearer asdfqwer"))
         with self.assertRaises(ClientError) as context:
             auth0_jwks.authenticate(input_output)
-        self.assertEquals("No matching keys found", str(context.exception))
+        self.assertEqual("No matching keys found", str(context.exception))
 
     def test_missing_bearer(self):
         self.jose_jwt.get_unverified_header = lambda jwt: {"kid": 5}
@@ -49,7 +49,7 @@ class Auth0JWKSTest(unittest.TestCase):
         input_output = SimpleNamespace(get_request_header=MagicMock(return_value="asdfqwer"))
         with self.assertRaises(ClientError) as context:
             auth0_jwks.authenticate(input_output)
-        self.assertEquals("Missing 'Bearer ' prefix in authorization header", str(context.exception))
+        self.assertEqual("Missing 'Bearer ' prefix in authorization header", str(context.exception))
 
     def test_doc(self):
         auth0_jwks = Auth0JWKS("environment", self.requests, self.jose_jwt)
@@ -67,4 +67,4 @@ class Auth0JWKSTest(unittest.TestCase):
             },
             auth0_jwks.documentation_security_scheme(),
         )
-        self.assertEquals("example", auth0_jwks.documentation_security_scheme_name())
+        self.assertEqual("example", auth0_jwks.documentation_security_scheme_name())

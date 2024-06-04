@@ -115,7 +115,7 @@ class HasManyTest(unittest.TestCase):
         )
 
     def test_as_json(self):
-        self.assertEquals(
+        self.assertEqual(
             {
                 "users": [
                     OrderedDict(
@@ -138,7 +138,7 @@ class HasManyTest(unittest.TestCase):
     def test_auto_foreign_column(self):
         has_many = HasMany(self.di)
         has_many.configure("users", {"child_models_class": Users}, Status)
-        self.assertEquals("status_id", has_many.config("foreign_column_name"))
+        self.assertEqual("status_id", has_many.config("foreign_column_name"))
 
     def test_require_child_model_class(self):
         has_many = HasMany(self.di)
@@ -200,21 +200,21 @@ class HasManyTest(unittest.TestCase):
         )
         doc = has_many.documentation()
 
-        self.assertEquals(AutoDocArray, doc.__class__)
-        self.assertEquals("users", doc.name)
-        self.assertEquals(AutoDocObject, doc.item_definition.__class__)
-        self.assertEquals("user", doc.item_definition.name)
-        self.assertEquals(5, len(doc.item_definition.children))
-        self.assertEquals(
+        self.assertEqual(AutoDocArray, doc.__class__)
+        self.assertEqual("users", doc.name)
+        self.assertEqual(AutoDocObject, doc.item_definition.__class__)
+        self.assertEqual("user", doc.item_definition.name)
+        self.assertEqual(5, len(doc.item_definition.children))
+        self.assertEqual(
             ["id", "status_id", "status", "first_name", "last_name"],
             [child.name for child in doc.item_definition.children],
         )
-        self.assertEquals(
+        self.assertEqual(
             [AutoDocString, AutoDocString, AutoDocObject, AutoDocString, AutoDocString],
             [child.__class__ for child in doc.item_definition.children],
         )
 
         status = doc.item_definition.children[2]
-        self.assertEquals(2, len(status.children))
-        self.assertEquals(["id", "name"], [child.name for child in status.children])
-        self.assertEquals([AutoDocString, AutoDocString], [child.__class__ for child in status.children])
+        self.assertEqual(2, len(status.children))
+        self.assertEqual(["id", "name"], [child.name for child in status.children])
+        self.assertEqual([AutoDocString, AutoDocString], [child.__class__ for child in status.children])

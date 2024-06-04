@@ -26,7 +26,7 @@ class CursorBackendTest(unittest.TestCase):
                 call("SELECT `my_table`.* FROM `my_table` WHERE my_table.id=%s", (10,)),
             ]
         )
-        self.assertEquals({"my": "data"}, new_data)
+        self.assertEqual({"my": "data"}, new_data)
 
     def test_update(self):
         to_save = OrderedDict([("hey", "sup"), ("qwerty", "asdf"), ("foo", "bar")])
@@ -37,7 +37,7 @@ class CursorBackendTest(unittest.TestCase):
                 call("SELECT `my_table`.* FROM `my_table` WHERE my_table.id=%s", (5,)),
             ]
         )
-        self.assertEquals({"my": "data"}, new_data)
+        self.assertEqual({"my": "data"}, new_data)
 
     def test_delete(self):
         status = self.backend.delete(5, self.model)
@@ -46,7 +46,7 @@ class CursorBackendTest(unittest.TestCase):
                 call("DELETE FROM `my_table` WHERE id=%s", (5,)),
             ]
         )
-        self.assertEquals(True, status)
+        self.assertEqual(True, status)
 
     def test_count_group(self):
         self.cursor = type(
@@ -85,7 +85,7 @@ class CursorBackendTest(unittest.TestCase):
             },
             "model",
         )
-        self.assertEquals(10, my_count)
+        self.assertEqual(10, my_count)
         self.cursor.execute.assert_called_with(
             "SELECT COUNT(*) AS count FROM ("
             + "SELECT 1 FROM `my_table` LEFT JOIN dogs ON dogs.id=ages.id JOIN peeps AS peeps ON peeps.id=dogs.id "
@@ -128,7 +128,7 @@ class CursorBackendTest(unittest.TestCase):
             },
             "model",
         )
-        self.assertEquals(10, my_count)
+        self.assertEqual(10, my_count)
         self.cursor.execute.assert_called_with(
             "SELECT COUNT(*) AS count FROM `my_table` LEFT JOIN dogs ON dogs.id=ages.id JOIN peeps AS peeps ON peeps.id=dogs.id "
             + "WHERE my_table.id=%s AND my_table.status_id IN (%s, %s)",
@@ -168,8 +168,8 @@ class CursorBackendTest(unittest.TestCase):
             + "LIMIT 5, 10",
             (5, "2", "3"),
         )
-        self.assertEquals([{"my": "data"}], results)
-        self.assertEquals({}, next_page_data)
+        self.assertEqual([{"my": "data"}], results)
+        self.assertEqual({}, next_page_data)
 
     def test_iterate_with_next_page(self):
         next_page_data = {}
@@ -204,5 +204,5 @@ class CursorBackendTest(unittest.TestCase):
             + "LIMIT 5, 1",
             (5, "2", "3"),
         )
-        self.assertEquals([{"my": "data"}], results)
-        self.assertEquals({"start": 6}, next_page_data)
+        self.assertEqual([{"my": "data"}], results)
+        self.assertEqual({"start": 6}, next_page_data)

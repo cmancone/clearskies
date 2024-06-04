@@ -44,8 +44,8 @@ class CallableTest(unittest.TestCase):
             }
         )
         response = callable_handler()
-        self.assertEquals(200, response[1])
-        self.assertEquals("CONSTANT!", response[0]["data"])
+        self.assertEqual(200, response[1])
+        self.assertEqual("CONSTANT!", response[0]["data"])
 
     def test_with_schema(self):
         callable_handler = test(
@@ -59,8 +59,8 @@ class CallableTest(unittest.TestCase):
             }
         )
         response = callable_handler(body={"name": "hey", "email": "sup@sup.com", "age": 10})
-        self.assertEquals(200, response[1])
-        self.assertEquals({"name": "hey", "email": "sup@sup.com", "age": 10}, response[0]["data"])
+        self.assertEqual(200, response[1])
+        self.assertEqual({"name": "hey", "email": "sup@sup.com", "age": 10}, response[0]["data"])
 
     def test_with_input_errors(self):
         test_callable = MagicMock(return_value=None)
@@ -75,8 +75,8 @@ class CallableTest(unittest.TestCase):
             }
         )
         response = callable_handler(body={"name": "hey", "age": "asfd", "bob": "sup"})
-        self.assertEquals(200, response[1])
-        self.assertEquals(
+        self.assertEqual(200, response[1])
+        self.assertEqual(
             {
                 "bob": "Input column 'bob' is not an allowed column",
                 "email": "'email' is required.",
@@ -84,7 +84,7 @@ class CallableTest(unittest.TestCase):
             },
             response[0]["input_errors"],
         )
-        self.assertEquals([], response[0]["data"])
+        self.assertEqual([], response[0]["data"])
         test_callable.assert_not_called()
 
     def test_with_selectable_columns(self):
@@ -100,8 +100,8 @@ class CallableTest(unittest.TestCase):
             }
         )
         response = callable_handler(body={"name": "hey", "age": 10})
-        self.assertEquals(200, response[1])
-        self.assertEquals(
+        self.assertEqual(200, response[1])
+        self.assertEqual(
             {
                 "name": "hey",
                 "age": 10,
@@ -123,8 +123,8 @@ class CallableTest(unittest.TestCase):
             }
         )
         response = callable_handler(body={"Name": "hey", "Age": 10, "Email": "bob@bob.com"})
-        self.assertEquals(200, response[1])
-        self.assertEquals(
+        self.assertEqual(200, response[1])
+        self.assertEqual(
             {
                 "name": "hey",
                 "age": 10,
@@ -148,17 +148,17 @@ class CallableTest(unittest.TestCase):
 
         documentation = callable_handler.documentation()[0]
 
-        self.assertEquals(2, len(documentation.parameters))
-        self.assertEquals(["Name", "Age"], [param.definition.name for param in documentation.parameters])
-        self.assertEquals([True, False], [param.required for param in documentation.parameters])
+        self.assertEqual(2, len(documentation.parameters))
+        self.assertEqual(["Name", "Age"], [param.definition.name for param in documentation.parameters])
+        self.assertEqual([True, False], [param.required for param in documentation.parameters])
 
-        self.assertEquals(2, len(documentation.responses))
-        self.assertEquals([200, 404], [response.status for response in documentation.responses])
+        self.assertEqual(2, len(documentation.responses))
+        self.assertEqual([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]
-        self.assertEquals(
+        self.assertEqual(
             ["Status", "Data", "Pagination", "Error", "InputErrors"],
             [schema.name for schema in success_response.schema.children],
         )
         data_response_properties = success_response.schema.children[1].children
-        self.assertEquals([], [prop.name for prop in data_response_properties])
-        self.assertEquals([], [prop._type for prop in data_response_properties])
+        self.assertEqual([], [prop.name for prop in data_response_properties])
+        self.assertEqual([], [prop._type for prop in data_response_properties])

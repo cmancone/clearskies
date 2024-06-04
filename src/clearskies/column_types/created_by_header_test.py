@@ -17,9 +17,9 @@ class CreatedByHeaderTest(unittest.TestCase):
         di.build = MagicMock(return_value=input_output)
         created_by = CreatedByHeader(di)
         created_by.configure("name", {"header_name": "my-header"}, int)
-        self.assertEquals({"hey": "sup", "name": "my-header-value"}, created_by.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup", "name": "my-header-value"}, created_by.pre_save({"hey": "sup"}, model))
         di.build.assert_called_with("input_output", cache=True)
         input_output.get_request_header.assert_called_with("my-header")
 
         model.exists = True
-        self.assertEquals({"hey": "sup"}, created_by.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup"}, created_by.pre_save({"hey": "sup"}, model))

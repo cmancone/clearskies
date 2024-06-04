@@ -66,12 +66,12 @@ class CreateTest(unittest.TestCase):
     def test_save_flow(self):
         response = self.create(body={"name": "Conor", "email": "c@example.com", "age": 10})
         response_data = response[0]["data"]
-        self.assertEquals(200, response[1])
-        self.assertEquals(36, len(response_data["id"]))
-        self.assertEquals(10, response_data["age"])
-        self.assertEquals("Conor", response_data["name"])
-        self.assertEquals("c@example.com", response_data["email"])
-        self.assertEquals(1, len(self.users))
+        self.assertEqual(200, response[1])
+        self.assertEqual(36, len(response_data["id"]))
+        self.assertEqual(10, response_data["age"])
+        self.assertEqual("Conor", response_data["name"])
+        self.assertEqual("c@example.com", response_data["email"])
+        self.assertEqual(1, len(self.users))
         id = response_data["id"]
         self.assertTrue(self.users.find(f"id={id}").exists)
 
@@ -93,19 +93,19 @@ class CreateTest(unittest.TestCase):
 
         response = create(body={"Name": "Conor", "Email": "c@example.com", "Age": 10})
         response_data = response[0]["Data"]
-        self.assertEquals(200, response[1])
-        self.assertEquals(36, len(response_data["Id"]))
-        self.assertEquals(10, response_data["Age"])
-        self.assertEquals("Conor", response_data["Name"])
-        self.assertEquals("c@example.com", response_data["Email"])
-        self.assertEquals(1, len(users))
+        self.assertEqual(200, response[1])
+        self.assertEqual(36, len(response_data["Id"]))
+        self.assertEqual(10, response_data["Age"])
+        self.assertEqual("Conor", response_data["Name"])
+        self.assertEqual("c@example.com", response_data["Email"])
+        self.assertEqual(1, len(users))
         id = response_data["Id"]
         self.assertTrue(users.find(f"id={id}").exists)
 
     def test_input_checks(self):
         response = self.create(body={"email": "cmancone@example.com", "age": 10})
-        self.assertEquals(200, response[1])
-        self.assertEquals(
+        self.assertEqual(200, response[1])
+        self.assertEqual(
             {"name": "'name' is required.", "email": "'email' must be at most 15 characters long."},
             response[0]["input_errors"],
         )
@@ -113,14 +113,14 @@ class CreateTest(unittest.TestCase):
     def test_columns(self):
         response = self.create_no_email(body={"name": "Conor", "age": 10})
         response_data = response[0]["data"]
-        self.assertEquals(200, response[1])
-        self.assertEquals(36, len(response_data["id"]))
-        self.assertEquals(10, response_data["age"])
+        self.assertEqual(200, response[1])
+        self.assertEqual(36, len(response_data["id"]))
+        self.assertEqual(10, response_data["age"])
         self.assertTrue("email" not in response_data)
 
     def test_extra_columns(self):
         response = self.create_no_email(body={"name": "Conor", "age": 10, "email": "hey", "yo": "sup"})
-        self.assertEquals(
+        self.assertEqual(
             {
                 "email": "Input column 'email' is not an allowed column",
                 "yo": "Input column 'yo' is not an allowed column",
@@ -143,23 +143,23 @@ class CreateTest(unittest.TestCase):
 
         response = create(body={"name": "Conor", "age": 10})
         response_data = response[0]["data"]
-        self.assertEquals(200, response[1])
-        self.assertEquals(36, len(response_data["id"]))
-        self.assertEquals(10, response_data["age"])
-        self.assertEquals(None, response_data["email"])
+        self.assertEqual(200, response[1])
+        self.assertEqual(36, len(response_data["id"]))
+        self.assertEqual(10, response_data["age"])
+        self.assertEqual(None, response_data["email"])
 
     def test_auth_failure(self):
         response = self.create_secret_bearer(
             body={"name": "Conor", "email": "c@example.com", "age": 10},
             headers={"Authorization": "Bearer qwerty"},
         )
-        self.assertEquals(401, response[1])
-        self.assertEquals("client_error", response[0]["status"])
-        self.assertEquals("Not Authenticated", response[0]["error"])
+        self.assertEqual(401, response[1])
+        self.assertEqual("client_error", response[0]["status"])
+        self.assertEqual("Not Authenticated", response[0]["error"])
 
     def test_auth_success(self):
         response = self.create_secret_bearer(
             body={"name": "Conor", "email": "c@example.com", "age": 10},
             headers={"Authorization": "Bearer asdfer"},
         )
-        self.assertEquals(200, response[1])
+        self.assertEqual(200, response[1])

@@ -53,10 +53,10 @@ class UsersApiTest(unittest.TestCase):
         result = self.api(url="/users")
         status_code = result[1]
         response = result[0]
-        self.assertEquals(200, status_code)
-        self.assertEquals(2, len(response["data"]))
+        self.assertEqual(200, status_code)
+        self.assertEqual(2, len(response["data"]))
 
-        self.assertEquals(
+        self.assertEqual(
             OrderedDict(
                 [
                     ("id", self.conor_active.id),
@@ -69,7 +69,7 @@ class UsersApiTest(unittest.TestCase):
             ),
             response["data"][0],
         )
-        self.assertEquals(
+        self.assertEqual(
             OrderedDict(
                 [
                     ("id", self.conor_pending.id),
@@ -82,17 +82,17 @@ class UsersApiTest(unittest.TestCase):
             ),
             response["data"][1],
         )
-        self.assertEquals({"number_results": 2, "next_page": {}, "limit": 100}, response["pagination"])
-        self.assertEquals("success", response["status"])
+        self.assertEqual({"number_results": 2, "next_page": {}, "limit": 100}, response["pagination"])
+        self.assertEqual("success", response["status"])
 
     def test_list_statuses(self):
         result = self.api(url="/statuses")
         status_code = result[1]
         response = result[0]
-        self.assertEquals(200, status_code)
-        self.assertEquals(2, len(response["data"]))
+        self.assertEqual(200, status_code)
+        self.assertEqual(2, len(response["data"]))
 
-        self.assertEquals(
+        self.assertEqual(
             OrderedDict(
                 [
                     ("id", self.active_status.id),
@@ -114,7 +114,7 @@ class UsersApiTest(unittest.TestCase):
             ),
             response["data"][0],
         )
-        self.assertEquals(
+        self.assertEqual(
             OrderedDict(
                 [
                     ("id", self.pending_status.id),
@@ -136,8 +136,8 @@ class UsersApiTest(unittest.TestCase):
             ),
             response["data"][1],
         )
-        self.assertEquals({"number_results": 2, "next_page": {}, "limit": 100}, response["pagination"])
-        self.assertEquals("success", response["status"])
+        self.assertEqual({"number_results": 2, "next_page": {}, "limit": 100}, response["pagination"])
+        self.assertEqual("success", response["status"])
 
     def test_create(self):
         result = self.api(
@@ -152,15 +152,15 @@ class UsersApiTest(unittest.TestCase):
 
         status_code = result[1]
         response = result[0]
-        self.assertEquals(200, status_code)
-        self.assertEquals(6, len(response["data"]))
-        self.assertEquals(36, len(response["data"]["id"]))
-        self.assertEquals(self.pending_status.id, response["data"]["status_id"])
-        self.assertEquals("Ronoc", response["data"]["name"])
-        self.assertEquals("ronoc@example2.com", response["data"]["email"])
-        self.assertEquals(self.now_formatted, response["data"]["created"])
-        self.assertEquals(self.now_formatted, response["data"]["updated"])
-        self.assertEquals("success", response["status"])
+        self.assertEqual(200, status_code)
+        self.assertEqual(6, len(response["data"]))
+        self.assertEqual(36, len(response["data"]["id"]))
+        self.assertEqual(self.pending_status.id, response["data"]["status_id"])
+        self.assertEqual("Ronoc", response["data"]["name"])
+        self.assertEqual("ronoc@example2.com", response["data"]["email"])
+        self.assertEqual(self.now_formatted, response["data"]["created"])
+        self.assertEqual(self.now_formatted, response["data"]["updated"])
+        self.assertEqual("success", response["status"])
 
     def test_update(self):
         result = self.api(
@@ -174,8 +174,8 @@ class UsersApiTest(unittest.TestCase):
         )
         status_code = result[1]
         response = result[0]
-        self.assertEquals(200, status_code)
-        self.assertEquals(
+        self.assertEqual(200, status_code)
+        self.assertEqual(
             OrderedDict(
                 [
                     ("id", self.conor_active.id),
@@ -188,13 +188,13 @@ class UsersApiTest(unittest.TestCase):
             ),
             response["data"],
         )
-        self.assertEquals("success", response["status"])
+        self.assertEqual("success", response["status"])
 
         result = self.api(url="/users")
-        self.assertEquals(200, result[1])
+        self.assertEqual(200, result[1])
         response = result[0]
 
-        self.assertEquals(
+        self.assertEqual(
             OrderedDict(
                 [
                     ("id", self.conor_active.id),
@@ -207,7 +207,7 @@ class UsersApiTest(unittest.TestCase):
             ),
             response["data"][0],
         )
-        self.assertEquals(
+        self.assertEqual(
             OrderedDict(
                 [
                     ("id", self.conor_pending.id),
@@ -220,16 +220,16 @@ class UsersApiTest(unittest.TestCase):
             ),
             response["data"][1],
         )
-        self.assertEquals({"number_results": 2, "next_page": {}, "limit": 100}, response["pagination"])
+        self.assertEqual({"number_results": 2, "next_page": {}, "limit": 100}, response["pagination"])
 
     def test_list_users_v1(self):
         result = self.api(url="/v1/users")
         status_code = result[1]
         response = result[0]
-        self.assertEquals(200, status_code)
-        self.assertEquals(2, len(response["data"]))
+        self.assertEqual(200, status_code)
+        self.assertEqual(2, len(response["data"]))
 
-        self.assertEquals(
+        self.assertEqual(
             OrderedDict(
                 [
                     ("id", self.conor_active.id),
@@ -239,7 +239,7 @@ class UsersApiTest(unittest.TestCase):
             ),
             response["data"][0],
         )
-        self.assertEquals(
+        self.assertEqual(
             OrderedDict(
                 [
                     ("id", self.conor_pending.id),
@@ -249,12 +249,12 @@ class UsersApiTest(unittest.TestCase):
             ),
             response["data"][1],
         )
-        self.assertEquals({"number_results": 2, "next_page": {}, "limit": 100}, response["pagination"])
-        self.assertEquals("success", response["status"])
+        self.assertEqual({"number_results": 2, "next_page": {}, "limit": 100}, response["pagination"])
+        self.assertEqual("success", response["status"])
 
     def test_restart_user(self):
         result = self.api(url="/users/34383/restart")
         status_code = result[1]
         response = result[0]
-        self.assertEquals(200, status_code)
-        self.assertEquals({"user_id": "34383"}, response["data"])
+        self.assertEqual(200, status_code)
+        self.assertEqual({"user_id": "34383"}, response["data"])

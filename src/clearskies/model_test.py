@@ -69,10 +69,10 @@ class ModelTest(unittest.TestCase):
         birth_date = datetime.strptime("2020-11-28 12:30:45", "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
         user = User(backend, self.columns)
         user.save({"name": "Conor", "birth_date": birth_date, "age": "1"})
-        self.assertEquals("Conor", user.name)
-        self.assertEquals(birth_date, user.birth_date)
-        self.assertEquals(1, user.age)
-        self.assertEquals("5", user.id)
+        self.assertEqual("Conor", user.name)
+        self.assertEqual(birth_date, user.birth_date)
+        self.assertEqual(1, user.age)
+        self.assertEqual("5", user.id)
         backend.create.assert_called_with(
             {
                 "id": "1-2-3-4",
@@ -83,11 +83,11 @@ class ModelTest(unittest.TestCase):
             },
             user,
         )
-        self.assertEquals(
+        self.assertEqual(
             {"id": "1-2-3-4", "name": "Conor", "birth_date": birth_date, "age": "1", "test": "thingy"},
             user.post_save_data,
         )
-        self.assertEquals("5", user.post_save_id)
+        self.assertEqual("5", user.post_save_id)
         self.assertTrue(user.was_changed("id"))
         self.assertTrue(user.was_changed("name"))
         self.assertTrue(user.was_changed("birth_date"))
@@ -111,10 +111,10 @@ class ModelTest(unittest.TestCase):
         user = User(backend, self.columns)
         user.data = old_user
         user.save({"name": "Conor", "birth_date": birth_date, "age": "1"})
-        self.assertEquals("Conor", user.name)
-        self.assertEquals(birth_date, user.birth_date)
-        self.assertEquals(1, user.age)
-        self.assertEquals("5", user.id)
+        self.assertEqual("Conor", user.name)
+        self.assertEqual(birth_date, user.birth_date)
+        self.assertEqual(1, user.age)
+        self.assertEqual("5", user.id)
         backend.update.assert_called_with(
             "5",
             {
@@ -125,10 +125,10 @@ class ModelTest(unittest.TestCase):
             },
             user,
         )
-        self.assertEquals(
+        self.assertEqual(
             {"name": "Conor", "birth_date": birth_date, "age": "1", "test": "thingy"}, user.post_save_data
         )
-        self.assertEquals("5", user.post_save_id)
+        self.assertEqual("5", user.post_save_id)
         self.assertFalse(user.was_changed("id"))
         self.assertFalse(user.was_changed("blahblah"))
         self.assertTrue(user.was_changed("name"))
@@ -149,30 +149,30 @@ class ModelTest(unittest.TestCase):
         user.data = user_data
         user.delete()
         # for now, the model isn't cleared (in case the information is needed for reference)
-        self.assertEquals(True, user.exists)
-        self.assertEquals("Ronoc", user.name)
+        self.assertEqual(True, user.exists)
+        self.assertEqual("Ronoc", user.name)
         backend.delete.assert_called_with("5", user)
 
     def test_column_provide(self):
         user = User("cursor", self.columns)
         user.data = {"id": 5, "name": "hey"}
-        self.assertEquals("hey blahblah", user.blahbblah)
+        self.assertEqual("hey blahblah", user.blahbblah)
 
     def test_get_simple(self):
         backend = type("", (), {"column_from_backend": lambda self, column, value: column.from_backend(value)})()
         user = User(backend, self.columns)
         user.data = {"id": 5, "name": "hey"}
-        self.assertEquals(5, user.id)
-        self.assertEquals("hey", user.name)
-        self.assertEquals(True, user.exists)
+        self.assertEqual(5, user.id)
+        self.assertEqual("hey", user.name)
+        self.assertEqual(True, user.exists)
         with self.assertRaises(KeyError) as context:
             user.blah
-        self.assertEquals("\"Unknown column 'blah' requested from model 'User'\"", str(context.exception))
+        self.assertEqual("\"Unknown column 'blah' requested from model 'User'\"", str(context.exception))
 
     def test_get_simple_empty(self):
         user = User("cursor", self.columns)
-        self.assertEquals(False, user.exists)
-        self.assertEquals(None, user.id)
+        self.assertEqual(False, user.exists)
+        self.assertEqual(None, user.id)
 
     def test_on_change(self):
         old_user = {"id": "5", "name": "Ronoc"}

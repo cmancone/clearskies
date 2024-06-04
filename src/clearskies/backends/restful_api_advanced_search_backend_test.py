@@ -42,7 +42,7 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
             headers={"Authorization": "Bearer: asdfer"},
             json={"hey": "sup"},
         )
-        self.assertEquals({"id": 5}, response)
+        self.assertEqual({"id": 5}, response)
 
     def test_create(self):
         response = self.backend.create({"hey": "sup"}, self.model)
@@ -52,7 +52,7 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
             headers={"Authorization": "Bearer: asdfer"},
             json={"hey": "sup"},
         )
-        self.assertEquals({"id": 5}, response)
+        self.assertEqual({"id": 5}, response)
 
     def test_delete(self):
         response = self.backend.delete(5, self.model)
@@ -62,7 +62,7 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
             headers={"Authorization": "Bearer: asdfer"},
         )
 
-        self.assertEquals(True, response)
+        self.assertEqual(True, response)
 
     def test_count(self):
         response = type("", (), {"ok": True, "json": lambda: {"total_matches": 10}})
@@ -79,7 +79,7 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
             },
             self.model,
         )
-        self.assertEquals(10, count)
+        self.assertEqual(10, count)
         self.requests.request.assert_called_with(
             "POST",
             "https://example.com/search",
@@ -126,8 +126,8 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
             },
         )
 
-        self.assertEquals({"id": 5}, records[0])
-        self.assertEquals({"id": 10}, records[1])
+        self.assertEqual({"id": 5}, records[0])
+        self.assertEqual({"id": 10}, records[1])
 
     def test_query_empty(self):
         response = type("", (), {"ok": True, "json": lambda: {"data": [{"id": 5}, {"id": 10}]}})
@@ -147,5 +147,5 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
             headers={"Authorization": "Bearer: asdfer"},
         )
 
-        self.assertEquals({"id": 5}, records[0])
-        self.assertEquals({"id": 10}, records[1])
+        self.assertEqual({"id": 5}, records[0])
+        self.assertEqual({"id": 10}, records[1])

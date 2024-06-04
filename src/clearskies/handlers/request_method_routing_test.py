@@ -44,26 +44,26 @@ class RequestMethodRoutingTest(unittest.TestCase):
         handle = self.di.build(Router)
         handle.configure({"authentication": Public()})
         result = handle(self._input_output)
-        self.assertEquals(5, result[0]["data"])
+        self.assertEqual(5, result[0]["data"])
 
     def test_route_non_method(self):
         self._input_output.set_request_method("OPTIONS")
         handle = self.di.build(Router)
         handle.configure({"authentication": Public()})
         result = handle(self._input_output)
-        self.assertEquals(400, result[1])
-        self.assertEquals("client_error", result[0]["status"])
-        self.assertEquals("Invalid request method", result[0]["error"])
+        self.assertEqual(400, result[1])
+        self.assertEqual("client_error", result[0]["status"])
+        self.assertEqual("Invalid request method", result[0]["error"])
 
     def test_can_configure(self):
         handle = self.di.build(Router)
         handle.configure({"age": "10", "authentication": Public()})
-        self.assertEquals("10", handle.configuration("age"))
+        self.assertEqual("10", handle.configuration("age"))
 
     def test_configure_errors(self):
         handle = self.di.build(Router)
         with self.assertRaises(KeyError) as context:
             handle.configure({"bob": "sup", "authentication": Public()})
-        self.assertEquals(
+        self.assertEqual(
             "\"Attempt to set unknown configuration setting 'bob' for handler 'Router'\"", str(context.exception)
         )

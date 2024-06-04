@@ -7,12 +7,12 @@ class SelectTest(unittest.TestCase):
         select = Select("di")
         select.configure("status", {"values": ["hey", "bob"]}, SelectTest)
         error = select.input_errors("model", {"status": "cool"})
-        self.assertEquals({"status": "Invalid value for status"}, error)
+        self.assertEqual({"status": "Invalid value for status"}, error)
 
     def test_check_input_good(self):
         select = Select("di")
         select.configure("status", {"values": ["hey", "bob"]}, SelectTest)
-        self.assertEquals({}, select.input_errors("model", {"status": "hey"}))
-        self.assertEquals({}, select.input_errors("model", {"status": ""}))
-        self.assertEquals({}, select.input_errors("model", {"status": None}))
-        self.assertEquals({}, select.input_errors("model", {}))
+        self.assertEqual({}, select.input_errors("model", {"status": "hey"}))
+        self.assertEqual({}, select.input_errors("model", {"status": ""}))
+        self.assertEqual({}, select.input_errors("model", {"status": None}))
+        self.assertEqual({}, select.input_errors("model", {}))
