@@ -18,7 +18,7 @@ class DecoratorsTest(unittest.TestCase):
     def test_simple(self):
         call_function = clearskies.contexts.test(example_callable)
         result = call_function(url="/users/5")
-        self.assertEquals(
+        self.assertEqual(
             {
                 "price": 27.50,
                 "user_id": "5",

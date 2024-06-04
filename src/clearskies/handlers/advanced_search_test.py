@@ -48,14 +48,14 @@ class AdvancedSearchTest(unittest.TestCase):
         response = self.advanced_search()
         json_response = response[0]
         response_data = json_response["data"]
-        self.assertEquals(200, response[1])
-        self.assertEquals("success", json_response["status"])
-        self.assertEquals({"number_results": 5, "next_page": {}, "limit": 100}, json_response["pagination"])
-        self.assertEquals({"id": "1", "name": "ronoc", "email": "cmancone1@example.com", "age": 6}, response_data[0])
-        self.assertEquals({"id": "2", "name": "conor", "email": "cmancone2@example.com", "age": 8}, response_data[1])
-        self.assertEquals({"id": "5", "name": "conor", "email": "cmancone3@example.com", "age": 15}, response_data[2])
-        self.assertEquals({"id": "8", "name": "ronoc", "email": "cmancone4@example.com", "age": 25}, response_data[3])
-        self.assertEquals({"id": "12", "name": "ronoc", "email": "cmancone5@example.com", "age": 35}, response_data[4])
+        self.assertEqual(200, response[1])
+        self.assertEqual("success", json_response["status"])
+        self.assertEqual({"number_results": 5, "next_page": {}, "limit": 100}, json_response["pagination"])
+        self.assertEqual({"id": "1", "name": "ronoc", "email": "cmancone1@example.com", "age": 6}, response_data[0])
+        self.assertEqual({"id": "2", "name": "conor", "email": "cmancone2@example.com", "age": 8}, response_data[1])
+        self.assertEqual({"id": "5", "name": "conor", "email": "cmancone3@example.com", "age": 15}, response_data[2])
+        self.assertEqual({"id": "8", "name": "ronoc", "email": "cmancone4@example.com", "age": 25}, response_data[3])
+        self.assertEqual({"id": "12", "name": "ronoc", "email": "cmancone5@example.com", "age": 35}, response_data[4])
 
     def test_case_switch(self):
         advanced_search = test(
@@ -86,9 +86,9 @@ class AdvancedSearchTest(unittest.TestCase):
 
         json_response = response[0]
         response_data = json_response["Data"]
-        self.assertEquals("Success", json_response["Status"])
-        self.assertEquals({"NumberResults": 1, "NextPage": {}, "Limit": 100}, json_response["Pagination"])
-        self.assertEquals({"Id": "1", "Name": "ronoc", "Email": "cmancone1@example.com", "Age": 6}, response_data[0])
+        self.assertEqual("Success", json_response["Status"])
+        self.assertEqual({"NumberResults": 1, "NextPage": {}, "Limit": 100}, json_response["Pagination"])
+        self.assertEqual({"Id": "1", "Name": "ronoc", "Email": "cmancone1@example.com", "Age": 6}, response_data[0])
 
     def test_fancy_search(self):
         response = self.advanced_search(
@@ -100,12 +100,12 @@ class AdvancedSearchTest(unittest.TestCase):
         )
         json_response = response[0]
         response_data = json_response["data"]
-        self.assertEquals(200, response[1])
-        self.assertEquals("success", json_response["status"])
-        self.assertEquals({"number_results": 3, "next_page": {}, "limit": 100}, json_response["pagination"])
-        self.assertEquals({"id": "1", "name": "ronoc", "email": "cmancone1@example.com", "age": 6}, response_data[0])
-        self.assertEquals({"id": "8", "name": "ronoc", "email": "cmancone4@example.com", "age": 25}, response_data[1])
-        self.assertEquals({"id": "12", "name": "ronoc", "email": "cmancone5@example.com", "age": 35}, response_data[2])
+        self.assertEqual(200, response[1])
+        self.assertEqual("success", json_response["status"])
+        self.assertEqual({"number_results": 3, "next_page": {}, "limit": 100}, json_response["pagination"])
+        self.assertEqual({"id": "1", "name": "ronoc", "email": "cmancone1@example.com", "age": 6}, response_data[0])
+        self.assertEqual({"id": "8", "name": "ronoc", "email": "cmancone4@example.com", "age": 25}, response_data[1])
+        self.assertEqual({"id": "12", "name": "ronoc", "email": "cmancone5@example.com", "age": 35}, response_data[2])
 
     def test_column_name_search_check(self):
         response = self.advanced_search(
@@ -117,9 +117,9 @@ class AdvancedSearchTest(unittest.TestCase):
             }
         )
         json_response = response[0]
-        self.assertEquals(400, response[1])
-        self.assertEquals("client_error", json_response["status"])
-        self.assertEquals("Invalid request: invalid search column specified in where entry #2", json_response["error"])
+        self.assertEqual(400, response[1])
+        self.assertEqual("client_error", json_response["status"])
+        self.assertEqual("Invalid request: invalid search column specified in where entry #2", json_response["error"])
 
     def test_doc(self):
         advanced_search = AdvancedSearch(StandardDependencies())
@@ -134,33 +134,33 @@ class AdvancedSearchTest(unittest.TestCase):
         )
 
         documentation = advanced_search.documentation()
-        self.assertEquals(1, len(documentation))
+        self.assertEqual(1, len(documentation))
         search_doc = documentation[0]
 
-        self.assertEquals([""], [doc.relative_path for doc in documentation])
-        self.assertEquals([["POST"]], [doc.request_methods for doc in documentation])
+        self.assertEqual([""], [doc.relative_path for doc in documentation])
+        self.assertEqual([["POST"]], [doc.request_methods for doc in documentation])
 
         # Check our 'search' endpoint which returns all records with fancy search options
-        self.assertEquals(2, len(search_doc.responses))
-        self.assertEquals([200, 400], [response.status for response in search_doc.responses])
-        self.assertEquals(
+        self.assertEqual(2, len(search_doc.responses))
+        self.assertEqual([200, 400], [response.status for response in search_doc.responses])
+        self.assertEqual(
             ["status", "data", "pagination", "error", "input_errors"],
             [schema.name for schema in search_doc.responses[0].schema.children],
         )
         data_response_properties = search_doc.responses[0].schema.children[1].item_definition
-        self.assertEquals(["id", "name", "email", "age"], [prop.name for prop in data_response_properties.children])
-        self.assertEquals(
+        self.assertEqual(["id", "name", "email", "age"], [prop.name for prop in data_response_properties.children])
+        self.assertEqual(
             ["string", "string", "string", "integer"], [prop._type for prop in data_response_properties.children]
         )
-        self.assertEquals(
+        self.assertEqual(
             ["where", "sort", "limit", "start"], [param.definition.name for param in search_doc.parameters]
         )
-        self.assertEquals(3, len(search_doc.parameters[0].definition.item_definition.children))
-        self.assertEquals(
+        self.assertEqual(3, len(search_doc.parameters[0].definition.item_definition.children))
+        self.assertEqual(
             ["column", "operator", "value"],
             [child.name for child in search_doc.parameters[0].definition.item_definition.children],
         )
-        self.assertEquals(["name", "email"], search_doc.parameters[0].definition.item_definition.children[0].values)
+        self.assertEqual(["name", "email"], search_doc.parameters[0].definition.item_definition.children[0].values)
 
     def test_doc_with_casing(self):
         advanced_search = AdvancedSearch(StandardDependencies())
@@ -177,30 +177,30 @@ class AdvancedSearchTest(unittest.TestCase):
         )
 
         documentation = advanced_search.documentation()
-        self.assertEquals(1, len(documentation))
+        self.assertEqual(1, len(documentation))
         search_doc = documentation[0]
 
-        self.assertEquals([""], [doc.relative_path for doc in documentation])
-        self.assertEquals([["POST"]], [doc.request_methods for doc in documentation])
+        self.assertEqual([""], [doc.relative_path for doc in documentation])
+        self.assertEqual([["POST"]], [doc.request_methods for doc in documentation])
 
         # Check our 'search' endpoint which returns all records with fancy search options
-        self.assertEquals(2, len(search_doc.responses))
-        self.assertEquals([200, 400], [response.status for response in search_doc.responses])
-        self.assertEquals(
+        self.assertEqual(2, len(search_doc.responses))
+        self.assertEqual([200, 400], [response.status for response in search_doc.responses])
+        self.assertEqual(
             ["Status", "Data", "Pagination", "Error", "InputErrors"],
             [schema.name for schema in search_doc.responses[0].schema.children],
         )
         data_response_properties = search_doc.responses[0].schema.children[1].item_definition
-        self.assertEquals(["Id", "Name", "Email", "Age"], [prop.name for prop in data_response_properties.children])
-        self.assertEquals(
+        self.assertEqual(["Id", "Name", "Email", "Age"], [prop.name for prop in data_response_properties.children])
+        self.assertEqual(
             ["string", "string", "string", "integer"], [prop._type for prop in data_response_properties.children]
         )
-        self.assertEquals(
+        self.assertEqual(
             ["Where", "Sort", "Limit", "Start"], [param.definition.name for param in search_doc.parameters]
         )
-        self.assertEquals(3, len(search_doc.parameters[0].definition.item_definition.children))
-        self.assertEquals(
+        self.assertEqual(3, len(search_doc.parameters[0].definition.item_definition.children))
+        self.assertEqual(
             ["Column", "Operator", "Value"],
             [child.name for child in search_doc.parameters[0].definition.item_definition.children],
         )
-        self.assertEquals(["Name", "Email"], search_doc.parameters[0].definition.item_definition.children[0].values)
+        self.assertEqual(["Name", "Email"], search_doc.parameters[0].definition.item_definition.children[0].values)

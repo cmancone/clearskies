@@ -12,19 +12,19 @@ class MinimumValueTest(unittest.TestCase):
         self.minimum_value.configure(1)
 
         error = self.minimum_value.check("model", {"age": "10"})
-        self.assertEquals("", error)
+        self.assertEqual("", error)
         error = self.minimum_value.check("model", {"age": 10})
-        self.assertEquals("", error)
+        self.assertEqual("", error)
         error = self.minimum_value.check("model", {"age": ""})
-        self.assertEquals("", error)
+        self.assertEqual("", error)
         error = self.minimum_value.check("model", {})
-        self.assertEquals("", error)
+        self.assertEqual("", error)
         error = self.minimum_value.check("model", {"age": -1})
-        self.assertEquals("'age' must be at least 1.", error)
+        self.assertEqual("'age' must be at least 1.", error)
 
     def test_check_configuration_value_not_int(self):
         with self.assertRaises(ValueError) as context:
             self.minimum_value.configure("10")
-        self.assertEquals(
+        self.assertEqual(
             "Minimum value must be an int to use the MinimumValue class for column 'age'", str(context.exception)
         )

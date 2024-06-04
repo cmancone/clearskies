@@ -108,7 +108,7 @@ class HasOneTest(unittest.TestCase):
 
     def test_as_json(self):
         value = self.has_one_user.to_json(self.pending)
-        self.assertEquals(
+        self.assertEqual(
             {
                 "user": OrderedDict(
                     [
@@ -123,7 +123,7 @@ class HasOneTest(unittest.TestCase):
     def test_auto_foreign_column(self):
         has_one = HasOne(self.di)
         has_one.configure("user", {"child_models_class": Users}, Status)
-        self.assertEquals("status_id", has_one.config("foreign_column_name"))
+        self.assertEqual("status_id", has_one.config("foreign_column_name"))
 
     def test_require_child_model_class(self):
         has_one = HasOne(self.di)
@@ -185,14 +185,14 @@ class HasOneTest(unittest.TestCase):
         )
         doc = has_one.documentation()
 
-        self.assertEquals(AutoDocObject, doc.__class__)
-        self.assertEquals("user", doc.name)
-        self.assertEquals(5, len(doc.children))
-        self.assertEquals(
+        self.assertEqual(AutoDocObject, doc.__class__)
+        self.assertEqual("user", doc.name)
+        self.assertEqual(5, len(doc.children))
+        self.assertEqual(
             ["id", "status_id", "status", "first_name", "last_name"],
             [child.name for child in doc.children],
         )
-        self.assertEquals(
+        self.assertEqual(
             [AutoDocString, AutoDocString, AutoDocObject, AutoDocString, AutoDocString],
             [child.__class__ for child in doc.children],
         )

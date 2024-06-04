@@ -17,9 +17,9 @@ class CreatedByUserAgentTest(unittest.TestCase):
         di.build = MagicMock(return_value=input_output)
         created_by = CreatedByUserAgent(di)
         created_by.configure("name", {}, int)
-        self.assertEquals({"hey": "sup", "name": "apple-firefox"}, created_by.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup", "name": "apple-firefox"}, created_by.pre_save({"hey": "sup"}, model))
         di.build.assert_called_with("input_output", cache=True)
         input_output.get_request_header.assert_called_with("user-agent")
 
         model.exists = True
-        self.assertEquals({"hey": "sup"}, created_by.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup"}, created_by.pre_save({"hey": "sup"}, model))

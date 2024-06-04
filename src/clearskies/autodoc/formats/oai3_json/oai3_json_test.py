@@ -111,4 +111,4 @@ class SimpleRoutingTest(unittest.TestCase):
         with open(os.path.dirname(__file__) + "/test.json") as test_file:
             desired_contents = test_file.read().strip()
 
-        self.assertEquals(desired_contents, doc)
+        self.assertEqual(desired_contents, doc)

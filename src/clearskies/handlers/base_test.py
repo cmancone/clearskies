@@ -69,10 +69,10 @@ class BaseTest(unittest.TestCase):
     def test_configure(self):
         handle = Handle(self.di)
         handle.configure({"test": "okay", "authentication": public()})
-        self.assertEquals("okay", handle.configuration("test"))
-        self.assertEquals(5, handle.configuration("age"))
-        self.assertEquals("yes", handle.configuration("global"))
-        self.assertEquals(True, handle.configuration("is_awesome"))
+        self.assertEqual("okay", handle.configuration("test"))
+        self.assertEqual(5, handle.configuration("age"))
+        self.assertEqual("yes", handle.configuration("global"))
+        self.assertEqual(True, handle.configuration("is_awesome"))
         self.assertRaises(KeyError, lambda: handle.configuration("sup"))
 
     def test_require_config(self):
@@ -84,7 +84,7 @@ class BaseTest(unittest.TestCase):
         handle.configure({"authentication": public()})
         with self.assertRaises(KeyError) as context:
             handle.configure({"whatev": "hey", "authentication": public()})
-        self.assertEquals(
+        self.assertEqual(
             "\"Attempt to set unknown configuration setting 'whatev' for handler 'Handle'\"", str(context.exception)
         )
 
@@ -92,7 +92,7 @@ class BaseTest(unittest.TestCase):
         handle = Handle(self.di)
         handle.configure({"authentication": public()})
         (data, code) = handle.success(self.reflect_output, [1, 2, 3])
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "success",
                 "error": "",
@@ -102,7 +102,7 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(200, code)
+        self.assertEqual(200, code)
 
     def test_pagination(self):
         handle = Handle(self.di)
@@ -110,7 +110,7 @@ class BaseTest(unittest.TestCase):
         (data, code) = handle.success(
             self.reflect_output, [1, 2, 3], number_results=3, limit=10, next_page={"start": 1}
         )
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "success",
                 "error": "",
@@ -120,13 +120,13 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(200, code)
+        self.assertEqual(200, code)
 
     def test_error(self):
         handle = Handle(self.di)
         handle.configure({"authentication": public()})
         (data, code) = handle.error(self.reflect_output, "bah", 400)
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "client_error",
                 "error": "bah",
@@ -136,13 +136,13 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(400, code)
+        self.assertEqual(400, code)
 
     def test_input_errors(self):
         handle = Handle(self.di)
         handle.configure({"authentication": public()})
         (data, code) = handle.input_errors(self.reflect_output, {"age": "required", "date": "tomorrow"})
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "input_errors",
                 "error": "",
@@ -155,7 +155,7 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(200, code)
+        self.assertEqual(200, code)
 
     def test_handle(self):
         authentication = type("", (), {"authenticate": MagicMock(return_value=True)})
@@ -166,7 +166,7 @@ class BaseTest(unittest.TestCase):
             }
         )
         (data, code) = handle(self.reflect_output)
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "success",
                 "error": "",
@@ -176,7 +176,7 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(200, code)
+        self.assertEqual(200, code)
         authentication.authenticate.assert_called_with(self.reflect_output)
 
     def test_error(self):
@@ -189,7 +189,7 @@ class BaseTest(unittest.TestCase):
         )
         handle.handle = lambda input_output: raise_exception(ClientError("sup"))
         (data, code) = handle(self.reflect_output)
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "client_error",
                 "error": "sup",
@@ -199,7 +199,7 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(400, code)
+        self.assertEqual(400, code)
 
     def test_input_error(self):
         authentication = type("", (), {"authenticate": MagicMock(return_value=True)})
@@ -211,7 +211,7 @@ class BaseTest(unittest.TestCase):
         )
         handle.handle = lambda input_output: raise_exception(InputError({"id": "required"}))
         (data, code) = handle(self.reflect_output)
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "input_errors",
                 "error": "",
@@ -221,14 +221,14 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(200, code)
+        self.assertEqual(200, code)
 
     def test_security_headers(self):
         authentication = type("", (), {"authenticate": MagicMock(return_value=True)})
         handle = Handle(self.di)
         handle.configure({"authentication": authentication, "security_headers": hsts()})
         (data, code) = handle.success(self.reflect_output, [1, 2, 3])
-        self.assertEquals(200, code)
+        self.assertEqual(200, code)
         self.reflect_output.set_header.assert_called_with("strict-transport-security", "max-age=31536000 ;")
 
     def test_cors(self):
@@ -243,8 +243,8 @@ class BaseTest(unittest.TestCase):
         handle = Handle(self.di)
         handle.configure({"authentication": authentication, "security_headers": cors(origin="*")})
         (data, code) = handle.cors(self.reflect_output)
-        self.assertEquals(200, code)
-        self.assertEquals("", data)
+        self.assertEqual(200, code)
+        self.assertEqual("", data)
         self.reflect_output.set_header.assert_has_calls(
             [
                 call("access-control-allow-origin", "*"),
@@ -261,7 +261,7 @@ class BaseTest(unittest.TestCase):
             }
         )
         (data, code) = handle(self.reflect_output)
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "client_error",
                 "error": "Not Authenticated",
@@ -271,14 +271,14 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(401, code)
+        self.assertEqual(401, code)
 
     def test_authz_gate_reject(self):
         authentication = type("", (), {"authenticate": MagicMock(return_value=True)})
         handle = Handle(self.di)
         handle.configure({"authentication": authentication, "authorization": RejectAuth()})
         (data, code) = handle(self.reflect_output)
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "client_error",
                 "error": "Not Authorized",
@@ -288,14 +288,14 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(403, code)
+        self.assertEqual(403, code)
 
     def test_authz_gate_allow(self):
         authentication = type("", (), {"authenticate": MagicMock(return_value=True)})
         handle = Handle(self.di)
         handle.configure({"authentication": authentication, "authorization": AllowAuth()})
         (data, code) = handle(self.reflect_output)
-        self.assertEquals(
+        self.assertEqual(
             {
                 "status": "success",
                 "error": "",
@@ -305,4 +305,4 @@ class BaseTest(unittest.TestCase):
             },
             data,
         )
-        self.assertEquals(200, code)
+        self.assertEqual(200, code)

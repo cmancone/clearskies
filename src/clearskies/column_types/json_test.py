@@ -16,5 +16,5 @@ class JSONTest(unittest.TestCase):
                 "more_data": {"okay": "hey"},
             }
         )
-        self.assertEquals('{"peeps": [1, 2, 3], "more_peeps": "okay"}', for_database["some_data"])
+        self.assertEqual('{"peeps": [1, 2, 3], "more_peeps": "okay"}', for_database["some_data"])
         self.assertDictEqual({"okay": "hey"}, for_database["more_data"])

@@ -153,8 +153,8 @@ class SimpleRoutingTest(unittest.TestCase):
         self.input_output.set_request_method("ANY")
         result = self.handler(self.input_output)
 
-        self.assertEquals(200, result[1])
-        self.assertEquals(
+        self.assertEqual(200, result[1])
+        self.assertEqual(
             {
                 "status": "success",
                 "data": [
@@ -189,8 +189,8 @@ class SimpleRoutingTest(unittest.TestCase):
         self.input_output.set_request_method("ANY")
         result = self.handler(self.input_output)
 
-        self.assertEquals(200, result[1])
-        self.assertEquals(
+        self.assertEqual(200, result[1])
+        self.assertEqual(
             {
                 "status": "success",
                 "data": [
@@ -223,8 +223,8 @@ class SimpleRoutingTest(unittest.TestCase):
         self.input_output.set_request_method("secret")
         result = self.handler(self.input_output)
 
-        self.assertEquals(200, result[1])
-        self.assertEquals(
+        self.assertEqual(200, result[1])
+        self.assertEqual(
             {
                 "status": "success",
                 "data": [
@@ -258,8 +258,8 @@ class SimpleRoutingTest(unittest.TestCase):
         self.input_output.set_request_url("my_function")
         result = self.handler(self.input_output)
 
-        self.assertEquals(200, result[1])
-        self.assertEquals(
+        self.assertEqual(200, result[1])
+        self.assertEqual(
             {
                 "status": "success",
                 "data": "some thing",
@@ -274,8 +274,8 @@ class SimpleRoutingTest(unittest.TestCase):
         self.input_output.set_request_url("my/test/application")
         result = self.handler(self.input_output)
 
-        self.assertEquals(200, result[1])
-        self.assertEquals(
+        self.assertEqual(200, result[1])
+        self.assertEqual(
             {
                 "status": "success",
                 "data": "some thing",
@@ -290,8 +290,8 @@ class SimpleRoutingTest(unittest.TestCase):
         self.input_output.set_request_url("schema")
         result = self.handler(self.input_output)
 
-        self.assertEquals(401, result[1])
-        self.assertEquals(
+        self.assertEqual(401, result[1])
+        self.assertEqual(
             {
                 "status": "client_error",
                 "data": [],
@@ -304,7 +304,7 @@ class SimpleRoutingTest(unittest.TestCase):
 
     def test_documentation(self):
         docs = self.handler.documentation()
-        self.assertEquals(
+        self.assertEqual(
             ["my_function", "my/test/application", "", "users", "statuses"], [doc.relative_path for doc in docs]
         )
-        self.assertEquals(["GET", "GET", "SECRET", "GET", "GET"], [doc.request_methods[0] for doc in docs])
+        self.assertEqual(["GET", "GET", "SECRET", "GET", "GET"], [doc.request_methods[0] for doc in docs])

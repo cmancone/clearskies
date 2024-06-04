@@ -111,7 +111,7 @@ class HasManyTest(unittest.TestCase):
             {"user_id": pivot.user_id, "status_id": pivot.status_id, "blah": pivot.blah}
             for pivot in self.users_statuses
         ]
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"user_id": self.john.id, "status_id": self.approved.id, "blah": "i am john"},
                 {"user_id": self.jane.id, "status_id": self.pending.id, "blah": "okay"},
@@ -119,8 +119,8 @@ class HasManyTest(unittest.TestCase):
             ],
             pivot_records,
         )
-        self.assertEquals("Green", self.jane.last_name)
-        self.assertEquals("Jane", self.jane.first_name)
+        self.assertEqual("Green", self.jane.last_name)
+        self.assertEqual("Jane", self.jane.first_name)
 
     def test_create_update(self):
         self.john.save(
@@ -136,7 +136,7 @@ class HasManyTest(unittest.TestCase):
             {"user_id": pivot.user_id, "status_id": pivot.status_id, "blah": pivot.blah}
             for pivot in self.users_statuses
         ]
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"user_id": self.john.id, "status_id": self.approved.id, "blah": "new value"},
                 {"user_id": self.john.id, "status_id": self.pending.id, "blah": "also new"},
@@ -145,7 +145,7 @@ class HasManyTest(unittest.TestCase):
         )
 
         # double check that we didn't change the id of the approved pivot record (e.g. we updated, not create/delete)
-        self.assertEquals(1, len(self.users_statuses.where(f"id={self.john_status.id}")))
+        self.assertEqual(1, len(self.users_statuses.where(f"id={self.john_status.id}")))
 
     def test_delete(self):
         self.john.save(
@@ -160,7 +160,7 @@ class HasManyTest(unittest.TestCase):
             {"user_id": pivot.user_id, "status_id": pivot.status_id, "blah": pivot.blah}
             for pivot in self.users_statuses
         ]
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"user_id": self.john.id, "status_id": self.pending.id, "blah": "just pending now"},
             ],
@@ -168,7 +168,7 @@ class HasManyTest(unittest.TestCase):
         )
 
         # double check that the original is gone
-        self.assertEquals(0, len(self.users_statuses.where(f"id={self.john_status.id}")))
+        self.assertEqual(0, len(self.users_statuses.where(f"id={self.john_status.id}")))
 
     def test_update_by_unique_column(self):
         self.jane.save(
@@ -184,7 +184,7 @@ class HasManyTest(unittest.TestCase):
             {"user_id": pivot.user_id, "status_id": pivot.status_id, "blah": pivot.blah}
             for pivot in self.users_statuses
         ]
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"user_id": self.john.id, "status_id": self.approved.id, "blah": "i am john"},
                 {"user_id": self.jane.id, "status_id": self.approved.id, "blah": "i am approved!"},

@@ -14,15 +14,15 @@ class CreatedTest(unittest.TestCase):
         self.datetime.timezone.utc = datetime.timezone.utc
 
     def test_is_writeable(self):
-        created = CreatedMicro("di", self.datetime)
+        created = CreatedMicro("di", self.datetime, datetime.timezone.utc)
         self.assertFalse(created.is_writeable)
 
     def test_pre_save(self):
         model = type("", (), {})
         model.exists = False
-        created = CreatedMicro("di", self.datetime)
+        created = CreatedMicro("di", self.datetime, datetime.timezone.utc)
         created.configure("created", {}, int)
-        self.assertEquals({"hey": "sup", "created": self.now}, created.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup", "created": self.now}, created.pre_save({"hey": "sup"}, model))
 
         model.exists = True
-        self.assertEquals({"hey": "sup"}, created.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup"}, created.pre_save({"hey": "sup"}, model))

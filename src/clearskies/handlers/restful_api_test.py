@@ -51,59 +51,59 @@ class RestfulAPITest(unittest.TestCase):
 
     def test_get_record(self):
         result = self.api(url=f"/{self.first_user.id}")
-        self.assertEquals(200, result[1])
-        self.assertEquals(
+        self.assertEqual(200, result[1])
+        self.assertEqual(
             {"id": self.first_user.id, "name": "conor", "email": "cmancone1@example.com", "age": 8},
             dict(result[0]["data"]),
         )
-        self.assertEquals({}, result[0]["pagination"])
+        self.assertEqual({}, result[0]["pagination"])
 
     def test_get_record_not_found(self):
         result = self.api(url="/343433433")
-        self.assertEquals(404, result[1])
+        self.assertEqual(404, result[1])
 
     def test_update_record(self):
         result = self.api(url=f"/{self.first_user.id}", method="PUT", body={"name": "jane"})
-        self.assertEquals(200, result[1])
-        self.assertEquals(
+        self.assertEqual(200, result[1])
+        self.assertEqual(
             {"id": self.first_user.id, "name": "jane", "email": "cmancone1@example.com", "age": 8},
             dict(result[0]["data"]),
         )
-        self.assertEquals({}, result[0]["pagination"])
+        self.assertEqual({}, result[0]["pagination"])
 
     def test_list(self):
         result = self.api()
-        self.assertEquals(200, result[1])
-        self.assertEquals(
+        self.assertEqual(200, result[1])
+        self.assertEqual(
             {"id": self.first_user.id, "name": "conor", "email": "cmancone1@example.com", "age": 8},
             dict(result[0]["data"][0]),
         )
-        self.assertEquals({"limit": 100, "number_results": 4, "next_page": {}}, result[0]["pagination"])
+        self.assertEqual({"limit": 100, "number_results": 4, "next_page": {}}, result[0]["pagination"])
 
     def test_create(self):
         result = self.api(method="POST", body={"name": "another", "email": "another@example.com", "age": 123})
-        self.assertEquals(200, result[1])
+        self.assertEqual(200, result[1])
         new_user = self.users.find("age=123")
         self.assertTrue(new_user.exists)
-        self.assertEquals(
+        self.assertEqual(
             {"id": new_user.id, "name": "another", "email": "another@example.com", "age": 123}, dict(result[0]["data"])
         )
-        self.assertEquals({}, result[0]["pagination"])
+        self.assertEqual({}, result[0]["pagination"])
 
     def test_get_record(self):
         result = self.api(url=f"/{self.first_user.id}", method="DELETE")
-        self.assertEquals(200, result[1])
-        self.assertEquals({}, dict(result[0]["data"]))
-        self.assertEquals({}, result[0]["pagination"])
-        self.assertEquals(0, len(self.users.where(f"id={self.first_user.id}")))
+        self.assertEqual(200, result[1])
+        self.assertEqual({}, dict(result[0]["data"]))
+        self.assertEqual({}, result[0]["pagination"])
+        self.assertEqual(0, len(self.users.where(f"id={self.first_user.id}")))
 
     def test_search(self):
         model = self.users.find("age=15")
         result = self.api(
             body={"where": [{"column": "age", "operator": "=", "value": 15}]}, url="/search", method="POST"
         )
-        self.assertEquals(200, result[1])
-        self.assertEquals(
+        self.assertEqual(200, result[1])
+        self.assertEqual(
             {"id": model.id, "name": "conor", "email": "cmancone3@example.com", "age": 15}, dict(result[0]["data"][0])
         )
-        self.assertEquals({"limit": 100, "number_results": 1, "next_page": {}}, result[0]["pagination"])
+        self.assertEqual({"limit": 100, "number_results": 1, "next_page": {}}, result[0]["pagination"])

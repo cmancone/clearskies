@@ -12,7 +12,7 @@ class WSGITest(unittest.TestCase):
         wsgi.set_header("hey", "sup")
         wsgi.clear_header("bob")
         response = wsgi.respond("okay!", 200)
-        self.assertEquals(["okay!".encode("utf8")], response)
+        self.assertEqual(["okay!".encode("utf8")], response)
         start_response.assert_called_with(
             "200 Ok", [("JANE", "kay"), ("HEY", "sup"), ("CONTENT-TYPE", "application/json; charset=UTF-8")]
         )
@@ -29,15 +29,15 @@ class WSGITest(unittest.TestCase):
             },
             start_response,
         )
-        self.assertEquals("POST", wsgi.get_request_method())
-        self.assertEquals("sup", wsgi.get_path_info())
-        self.assertEquals("age=2&bob=hey&sup=1&sup=2", wsgi.get_query_string())
-        self.assertEquals("application/json", wsgi.get_content_type())
-        self.assertEquals("https", wsgi.get_protocol())
-        self.assertEquals("2", wsgi.get_query_parameter("age"))
-        self.assertEquals("hey", wsgi.get_query_parameter("bob"))
-        self.assertEquals(["1", "2"], wsgi.get_query_parameter("sup"))
-        self.assertEquals({"age": "2", "bob": "hey", "sup": ["1", "2"]}, wsgi.get_query_parameters())
+        self.assertEqual("POST", wsgi.get_request_method())
+        self.assertEqual("sup", wsgi.get_path_info())
+        self.assertEqual("age=2&bob=hey&sup=1&sup=2", wsgi.get_query_string())
+        self.assertEqual("application/json", wsgi.get_content_type())
+        self.assertEqual("https", wsgi.get_protocol())
+        self.assertEqual("2", wsgi.get_query_parameter("age"))
+        self.assertEqual("hey", wsgi.get_query_parameter("bob"))
+        self.assertEqual(["1", "2"], wsgi.get_query_parameter("sup"))
+        self.assertEqual({"age": "2", "bob": "hey", "sup": ["1", "2"]}, wsgi.get_query_parameters())
 
     def test_headers(self):
         start_response = MagicMock()
@@ -53,8 +53,8 @@ class WSGITest(unittest.TestCase):
             },
             start_response,
         )
-        self.assertEquals("hey", wsgi.get_request_header("authorizatiON"))
-        self.assertEquals("asdf", wsgi.get_request_header("x-auth"))
+        self.assertEqual("hey", wsgi.get_request_header("authorizatiON"))
+        self.assertEqual("asdf", wsgi.get_request_header("x-auth"))
         self.assertTrue(wsgi.has_request_header("authorization"))
         self.assertTrue(wsgi.has_request_header("x-auth"))
         self.assertFalse(wsgi.has_request_header("bearer"))
@@ -67,8 +67,8 @@ class WSGITest(unittest.TestCase):
             },
             start_response,
         )
-        self.assertEquals({"person": "sup"}, wsgi.json_body())
-        self.assertEquals('{"person":"sup"}', wsgi.get_body())
+        self.assertEqual({"person": "sup"}, wsgi.json_body())
+        self.assertEqual('{"person":"sup"}', wsgi.get_body())
         self.assertTrue(wsgi.has_body())
 
     def test_non_json_body(self):
@@ -79,5 +79,5 @@ class WSGITest(unittest.TestCase):
             },
             start_response,
         )
-        self.assertEquals("OKAY!", wsgi.get_body())
+        self.assertEqual("OKAY!", wsgi.get_body())
         self.assertTrue(wsgi.has_body())

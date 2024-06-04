@@ -44,14 +44,14 @@ class DeleteTest(unittest.TestCase):
 
     def test_delete_flow(self):
         response = self.delete(routing_data={"id": "5"})
-        self.assertEquals("success", response[0]["status"])
-        self.assertEquals(200, response[1])
+        self.assertEqual("success", response[0]["status"])
+        self.assertEqual(200, response[1])
         self.assertFalse(self.users.find("id=5").exists)
 
     def test_not_found(self):
         response = self.delete(routing_data={"id": "10"})
-        self.assertEquals("client_error", response[0]["status"])
-        self.assertEquals(404, response[1])
+        self.assertEqual("client_error", response[0]["status"])
+        self.assertEqual(404, response[1])
         self.assertTrue(self.users.find("id=5").exists)
 
     def test_auth_failure(self):
@@ -71,9 +71,9 @@ class DeleteTest(unittest.TestCase):
             body={"id": 5},
             headers={"Authorization": "Bearer qwerty"},
         )
-        self.assertEquals(401, response[1])
-        self.assertEquals("client_error", response[0]["status"])
-        self.assertEquals("Not Authenticated", response[0]["error"])
+        self.assertEqual(401, response[1])
+        self.assertEqual("client_error", response[0]["status"])
+        self.assertEqual("Not Authenticated", response[0]["error"])
         self.assertTrue(users.find("id=5").exists)
 
     def test_auth_success(self):
@@ -93,7 +93,7 @@ class DeleteTest(unittest.TestCase):
             routing_data={"id": 5},
             headers={"Authorization": "Bearer asdfer"},
         )
-        self.assertEquals(200, response[1])
+        self.assertEqual(200, response[1])
         self.assertFalse(users.find("id=5").exists)
 
     def test_documentation(self):
@@ -107,11 +107,11 @@ class DeleteTest(unittest.TestCase):
 
         documentation = delete.documentation()[0]
 
-        self.assertEquals(1, len(documentation.parameters))
-        self.assertEquals(2, len(documentation.responses))
-        self.assertEquals([200, 404], [response.status for response in documentation.responses])
+        self.assertEqual(1, len(documentation.parameters))
+        self.assertEqual(2, len(documentation.responses))
+        self.assertEqual([200, 404], [response.status for response in documentation.responses])
         success_response = documentation.responses[0]
-        self.assertEquals(
+        self.assertEqual(
             ["status", "data", "pagination", "error", "input_errors"],
             [schema.name for schema in success_response.schema.children],
         )

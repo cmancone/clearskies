@@ -18,18 +18,18 @@ class EnvironmentTest(unittest.TestCase):
         )
 
     def test_get_from_env(self):
-        self.assertEquals("yup", self.environment.get("env_in_environment"))
+        self.assertEqual("yup", self.environment.get("env_in_environment"))
 
     def test_get_from_file(self):
-        self.assertEquals("sup", self.environment.get("anothervalue"))
+        self.assertEqual("sup", self.environment.get("anothervalue"))
 
     def test_get_from_env_resolve_secret(self):
-        self.assertEquals("my_secret", self.environment.get("also"))
+        self.assertEqual("my_secret", self.environment.get("also"))
         self.secrets.get.assert_called_with("/another/secret/path")
 
     def test_get_from_file_resolve_secret(self):
-        self.assertEquals("my_secret", self.environment.get("to_secrets"))
+        self.assertEqual("my_secret", self.environment.get("to_secrets"))
         self.secrets.get.assert_called_with("/path/to/secret")
 
     def test_no_crash_for_ints(self):
-        self.assertEquals(5, self.environment.get("an_integer"))
+        self.assertEqual(5, self.environment.get("an_integer"))

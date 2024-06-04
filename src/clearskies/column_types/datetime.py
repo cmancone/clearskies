@@ -2,8 +2,6 @@ from .column import Column
 from datetime import datetime, timezone
 import dateparser
 from ..autodoc.schema import DateTime as AutoDocDateTime
-from ..di.di import DI 
-
 
 class DateTime(Column):
     _auto_doc_class = AutoDocDateTime
@@ -15,7 +13,7 @@ class DateTime(Column):
         "default_date",
     ]
 
-    def __init__(self, di: DI, timezone: datetime.tzinfo):
+    def __init__(self, di, timezone: datetime.tzinfo):
         super().__init__(di)
         self._timezone = timezone
 

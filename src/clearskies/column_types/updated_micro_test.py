@@ -12,17 +12,19 @@ class UpdatedMicroTest(unittest.TestCase):
         self.datetime.datetime.now = MagicMock(return_value=self.now)
         self.datetime.timezone = MagicMock()
         self.datetime.timezone.utc = datetime.timezone.utc
+        self.timezone = datetime.timezone.utc
+
 
     def test_is_writeable(self):
-        updated = UpdatedMicro("di", self.datetime)
+        updated = UpdatedMicro("di", self.datetime, self.timezone)
         self.assertFalse(updated.is_writeable)
 
     def test_pre_save(self):
         model = type("", (), {})
         model.exists = False
-        updated = UpdatedMicro("di", self.datetime)
+        updated = UpdatedMicro("di", self.datetime, self.timezone)
         updated.configure("updated", {}, int)
-        self.assertEquals({"hey": "sup", "updated": self.now}, updated.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup", "updated": self.now}, updated.pre_save({"hey": "sup"}, model))
 
         model.exists = True
-        self.assertEquals({"hey": "sup", "updated": self.now}, updated.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup", "updated": self.now}, updated.pre_save({"hey": "sup"}, model))

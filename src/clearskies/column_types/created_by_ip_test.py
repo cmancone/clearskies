@@ -17,9 +17,9 @@ class CreatedByIpTest(unittest.TestCase):
         di.build = MagicMock(return_value=input_output)
         created_by = CreatedByIp(di)
         created_by.configure("name", {}, int)
-        self.assertEquals({"hey": "sup", "name": "192.168.0.1"}, created_by.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup", "name": "192.168.0.1"}, created_by.pre_save({"hey": "sup"}, model))
         di.build.assert_called_with("input_output", cache=True)
         input_output.get_client_ip.assert_called()
 
         model.exists = True
-        self.assertEquals({"hey": "sup"}, created_by.pre_save({"hey": "sup"}, model))
+        self.assertEqual({"hey": "sup"}, created_by.pre_save({"hey": "sup"}, model))

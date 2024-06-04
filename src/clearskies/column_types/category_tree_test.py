@@ -51,7 +51,7 @@ class CategoryTreeTest(unittest.TestCase):
         subsubsubtree = [
             tree.parent_id for tree in self.category_tree.where(f"child_id={subsubsubsub.id}").sort_by("level", "asc")
         ]
-        self.assertEquals(
+        self.assertEqual(
             [root.id, sub.id, subsub.id, subsubsub.id],
             subsubsubtree,
         )
@@ -62,7 +62,7 @@ class CategoryTreeTest(unittest.TestCase):
         subsubsubtree = [
             tree.parent_id for tree in self.category_tree.where(f"child_id={subsubsubsub.id}").sort_by("level", "asc")
         ]
-        self.assertEquals(
+        self.assertEqual(
             [root.id, sub.id, altsubsub.id],
             subsubsubtree,
         )

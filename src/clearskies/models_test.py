@@ -61,7 +61,7 @@ class TestModels(unittest.TestCase):
             .limit(10)
             .select("*")
         )
-        self.assertEquals(
+        self.assertEqual(
             {
                 "table": "",
                 "column": "age",
@@ -71,7 +71,7 @@ class TestModels(unittest.TestCase):
             },
             users.query_configuration["wheres"][0],
         )
-        self.assertEquals(
+        self.assertEqual(
             {
                 "table": "",
                 "column": "age",
@@ -81,20 +81,20 @@ class TestModels(unittest.TestCase):
             },
             users.query_configuration["wheres"][1],
         )
-        self.assertEquals(
+        self.assertEqual(
             {"column": "created", "direction": "desc", "table": None}, users.query_configuration["sorts"][0]
         )
-        self.assertEquals("last_name", users.query_configuration["group_by_column"])
-        self.assertEquals("LEFT JOIN posts ON posts.user_id=users.id", users.query_configuration["joins"][0]["raw"])
-        self.assertEquals(10, users.query_configuration["limit"])
-        self.assertEquals(["*"], users.query_configuration["selects"])
+        self.assertEqual("last_name", users.query_configuration["group_by_column"])
+        self.assertEqual("LEFT JOIN posts ON posts.user_id=users.id", users.query_configuration["joins"][0]["raw"])
+        self.assertEqual(10, users.query_configuration["limit"])
+        self.assertEqual(["*"], users.query_configuration["selects"])
 
     def test_table_name(self):
-        self.assertEquals("users", Users("cursor", self.columns).get_table_name())
+        self.assertEqual("users", Users("cursor", self.columns).get_table_name())
 
     def test_build_model(self):
         user = Users("cursor", self.columns).model({"id": 2, "age": 5})
-        self.assertEquals(User, type(user))
+        self.assertEqual(User, type(user))
 
     def test_as_sql(self):
         users = (
@@ -112,14 +112,14 @@ class TestModels(unittest.TestCase):
 
         self.backend.records.assert_called_once()
         call_configuration = self.backend.records.call_args[0][0]
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"table": "", "column": "age", "operator": ">", "values": ["5"], "parsed": "`age`>%s"},
                 {"table": "", "column": "age", "operator": "<", "values": ["10"], "parsed": "`age`<%s"},
             ],
             call_configuration["wheres"],
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {
                     "column": "created",
@@ -129,8 +129,8 @@ class TestModels(unittest.TestCase):
             ],
             call_configuration["sorts"],
         )
-        self.assertEquals("last_name", call_configuration["group_by_column"])
-        self.assertEquals(
+        self.assertEqual("last_name", call_configuration["group_by_column"])
+        self.assertEqual(
             [
                 {
                     "alias": "",
@@ -145,12 +145,12 @@ class TestModels(unittest.TestCase):
             ],
             call_configuration["joins"],
         )
-        self.assertEquals(["bob"], call_configuration["selects"])
-        self.assertEquals({"start": 5}, call_configuration["pagination"])
-        self.assertEquals("users", call_configuration["table_name"])
+        self.assertEqual(["bob"], call_configuration["selects"])
+        self.assertEqual({"start": 5}, call_configuration["pagination"])
+        self.assertEqual("users", call_configuration["table_name"])
         user = iterator.__next__()
-        self.assertEquals(User, user.__class__)
-        self.assertEquals({"id": 5, "my": "data"}, user._data)
+        self.assertEqual(User, user.__class__)
+        self.assertEqual({"id": 5, "my": "data"}, user._data)
 
     def test_as_sql_empty(self):
         users = Users(self.backend, self.columns)
@@ -189,17 +189,17 @@ class TestModels(unittest.TestCase):
             .select_all(False)
         )
         count = len(users)
-        self.assertEquals(10, count)
+        self.assertEqual(10, count)
         self.backend.count.assert_called_once()
         call_configuration = self.backend.count.call_args[0][0]
-        self.assertEquals(
+        self.assertEqual(
             [
                 {"table": "", "column": "age", "operator": ">", "values": ["5"], "parsed": "`age`>%s"},
                 {"table": "", "column": "age", "operator": "<", "values": ["10"], "parsed": "`age`<%s"},
             ],
             call_configuration["wheres"],
         )
-        self.assertEquals(
+        self.assertEqual(
             [
                 {
                     "column": "created",
@@ -209,8 +209,8 @@ class TestModels(unittest.TestCase):
             ],
             call_configuration["sorts"],
         )
-        self.assertEquals(None, call_configuration["group_by_column"])
-        self.assertEquals(
+        self.assertEqual(None, call_configuration["group_by_column"])
+        self.assertEqual(
             [
                 {
                     "alias": "",
@@ -235,5 +235,5 @@ class TestModels(unittest.TestCase):
             ],
             call_configuration["joins"],
         )
-        self.assertEquals({"start": 5}, call_configuration["pagination"])
-        self.assertEquals("users", call_configuration["table_name"])
+        self.assertEqual({"start": 5}, call_configuration["pagination"])
+        self.assertEqual("users", call_configuration["table_name"])
