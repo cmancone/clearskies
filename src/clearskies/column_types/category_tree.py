@@ -119,6 +119,10 @@ class CategoryTree(BelongsTo):
         "tree_level_column_name",
         "max_iterations",
         "parent_models_class",
+        "children_column_name",
+        "descendents_column_name",
+        "ancestors_column_name",
+        "load_relatives_strategy",
     ]
 
     def __init__(self, di):
@@ -137,6 +141,11 @@ class CategoryTree(BelongsTo):
             configuration["tree_models_class"],
             config_name="tree_models_class",
         )
+        load_relatives_strategy = configuration.get("load_relatives_strategy", None)
+        if load_relatives_strategy and load_relatives_strategy not in ["join", "where_in", "individual"]:
+            raise ValueError(
+                f"Configuration error for category_tree column '{self.name} in model class '{self.model_class.__name__}': load_relatives_strategy must be one of ['join', 'where_in', or 'individual']"
+            )
 
     def _finalize_configuration(self, configuration):
         return {
@@ -152,6 +161,10 @@ class CategoryTree(BelongsTo):
                 "tree_is_parent_column_name": configuration.get("tree_is_parent_column_name", "is_parent"),
                 "tree_level_column_name": configuration.get("tree_level_column_name", "level"),
                 "max_iterations": configuration.get("max_iterations", 100),
+                "children_column_name": configuration.get("children_column_name", "children"),
+                "descendents_column_name": configuration.get("descendents_column_name", "descendents"),
+                "ancestors_column_name": configuration.get("ancestors_column_name", "ancestors"),
+                "load_relatives_strategy": configuration.get("load_relatives_strategy", "join"),
             },
         }
 
@@ -167,7 +180,7 @@ class CategoryTree(BelongsTo):
         return data
 
     def force_tree_update(self, model):
-        self.update_tree_table(model, model.id, model.__getattr__(self.name))
+        self.update_tree_table(model, model.get(self.id_column_name), model.__getattr__(self.name))
 
     def update_tree_table(self, model, child_id, direct_parent_id):
         tree_models = self.tree_models
@@ -224,3 +237,68 @@ class CategoryTree(BelongsTo):
             + "You may have accidentally created a circular cateogry tree.  If not, and your category tree "
             + "really _is_ that deep, then adjust the 'max_iterations' configuration for this column accordingly. "
         )
+
+    def can_provide(self, column_name):
+        return column_name in [
+            self.config("model_column_name"),
+            self.config("children_column_name"),
+            self.config("descendents_column_name"),
+            self.config("ancestors_column_name"),
+        ]
+
+    def provide(self, data, column_name):
+        if column_name == self.config("model_column_name"):
+            return super().provide(data, column_name)
+
+        if column_name == self.config("children_column_name"):
+            return self.relatives(data)
+
+        if column_name == self.config("descendents_column_name"):
+            return self.relatives(data, include_all=True)
+
+        if column_name == self.config("ancestors_column_name"):
+            return self.relatives(data, find_parents=True)
+
+    def relatives(self, data, include_all=False, find_parents=False):
+        id_column_name = self.model_class.id_column_name
+        model_id = data[self.model_class.id_column_name]
+        model_table_name = self.model_class.table_name()
+        tree_table_name = self.config("tree_models_class").table_name()
+        parent_id_column_name = self.config("tree_parent_id_column_name")
+        child_id_column_name = self.config("tree_child_id_column_name")
+        is_parent_column_name = self.config("is_parent_column_name")
+        level_column_name = self.config("tree_level_column_name")
+
+        if find_parents:
+            join_on = parent_id_column_name
+            search_on = child_id_column_name
+        else:
+            join_on = child_id_column_name
+            search_on = parent_id_column_name
+
+        # if we can join then use a join.
+        if self.config("load_relatives_strategy") == "join":
+            relatives = self.parent_models.join(
+                f"{tree_table_name} as tree on tree.{join_on}={model_table_name}.{id_column_name}"
+            )
+            relatives = relatives.where(f"tree.{search_on}={model_id}")
+            if not include_all:
+                relatives = relatives.where(f"tree.{is_parent_column_name}=1")
+            if find_parents:
+                relatives = relatives.sort_by(level_column_name, "asc")
+            return relatives
+
+        # joins only work for SQL-like backends.  Otherwise, we have to pull out our list of ids
+        branches = self.tree_models.where(f"{search_on}={model_id}")
+        if not include_all:
+            branches = branches.where(f"tree.{is_parent_column_name}=1")
+        if find_parents:
+            branches = branches.sort_by(level_column_name, "asc")
+        ids = [str(branch.get(child_id_column_name)) for branch in branches]
+
+        # Can we search with a WHERE IN() clause?  If the backend supports it, it is probably faster
+        if self.config("load_relatives_strategy") == "where_in":
+            return self.parent_models.where(f"{id_column_name} IN ('" + "','".join(ids) + "')")
+
+        # otherwise we have to load each model individually which is SLOW....
+        return [self.parent_models.find(f"{id_column_name}={id}") for id in ids]

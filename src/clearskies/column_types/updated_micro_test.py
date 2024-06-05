@@ -14,7 +14,6 @@ class UpdatedMicroTest(unittest.TestCase):
         self.datetime.timezone.utc = datetime.timezone.utc
         self.timezone = datetime.timezone.utc
 
-
     def test_is_writeable(self):
         updated = UpdatedMicro("di", self.datetime, self.timezone)
         self.assertFalse(updated.is_writeable)

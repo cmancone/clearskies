@@ -25,7 +25,7 @@ class TimestampTest(unittest.TestCase):
         self.assertEqual(1715440777, data["created"])
 
     def test_check_search_value(self):
-        date = Timestamp("di",timezone.utc)
+        date = Timestamp("di", timezone.utc)
         date.configure("created", {}, int)
         self.assertEqual("'created' must be an integer", date.check_search_value("1715440777"))
         self.assertEqual("", date.check_search_value(1715440777))

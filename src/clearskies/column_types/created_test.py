@@ -33,7 +33,7 @@ class CreatedTest(unittest.TestCase):
     def test_pre_save_utc(self):
         model = type("", (), {})
         model.exists = False
-        created = Created("di", self.datetime, datetime.timezone.utc )
+        created = Created("di", self.datetime, datetime.timezone.utc)
         created.configure("created", {"utc": True}, int)
         new_data = created.pre_save({"hey": "sup"}, model)
         self.assertEqual({"hey": "sup", "created": self.now}, new_data)

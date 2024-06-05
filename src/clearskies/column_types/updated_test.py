@@ -15,13 +15,13 @@ class UpdatedTest(unittest.TestCase):
         self.timezone = datetime.timezone.utc
 
     def test_is_writeable(self):
-        updated = Updated("di", self.datetime,self.timezone)
+        updated = Updated("di", self.datetime, self.timezone)
         self.assertFalse(updated.is_writeable)
 
     def test_pre_save(self):
         model = type("", (), {})
         model.exists = False
-        updated = Updated("di", self.datetime,self.timezone)
+        updated = Updated("di", self.datetime, self.timezone)
         updated.configure("updated", {}, int)
         self.assertEqual({"hey": "sup", "updated": self.now}, updated.pre_save({"hey": "sup"}, model))
 

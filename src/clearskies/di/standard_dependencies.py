@@ -138,8 +138,9 @@ class StandardDependencies(DI):
 
     def provide_uuid(self):
         return uuid
-  
+
     def provide_timezone(self):
         """Set the default timezone."""
         import datetime
+
         return datetime.UTC
