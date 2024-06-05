@@ -257,7 +257,7 @@ class CategoryTree(BelongsTo):
             return self.relatives(data, include_all=True)
 
         if column_name == self.config("ancestors_column_name"):
-            return self.relatives(data, find_parents=True)
+            return self.relatives(data, find_parents=True, include_all=True)
 
     def relatives(self, data, include_all=False, find_parents=False):
         id_column_name = self.model_class.id_column_name
@@ -266,7 +266,7 @@ class CategoryTree(BelongsTo):
         tree_table_name = self.config("tree_models_class").table_name()
         parent_id_column_name = self.config("tree_parent_id_column_name")
         child_id_column_name = self.config("tree_child_id_column_name")
-        is_parent_column_name = self.config("is_parent_column_name")
+        is_parent_column_name = self.config("tree_is_parent_column_name")
         level_column_name = self.config("tree_level_column_name")
 
         if find_parents:
@@ -291,10 +291,10 @@ class CategoryTree(BelongsTo):
         # joins only work for SQL-like backends.  Otherwise, we have to pull out our list of ids
         branches = self.tree_models.where(f"{search_on}={model_id}")
         if not include_all:
-            branches = branches.where(f"tree.{is_parent_column_name}=1")
+            branches = branches.where(f"{is_parent_column_name}=1")
         if find_parents:
             branches = branches.sort_by(level_column_name, "asc")
-        ids = [str(branch.get(child_id_column_name)) for branch in branches]
+        ids = [str(branch.get(join_on)) for branch in branches]
 
         # Can we search with a WHERE IN() clause?  If the backend supports it, it is probably faster
         if self.config("load_relatives_strategy") == "where_in":
