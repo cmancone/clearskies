@@ -199,7 +199,7 @@ class ManyToMany(String):
             pivot_models = self.pivot_models
             foreign_column_name = self.config("foreign_column_name_in_pivot")
             for model_to_delete in pivot_models.where(
-                f"{foreign_column_name} IN (" + ",".join(map(str, to_delete)) + ")"
+                f"{foreign_column_name} IN ({",".join(map(str, to_delete))})"
             ):
                 model_to_delete.delete()
         if to_create:
