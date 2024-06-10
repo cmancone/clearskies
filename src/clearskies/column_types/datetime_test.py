@@ -43,9 +43,7 @@ class DateTimeTest(unittest.TestCase):
         date = DateTime("di", timezone.utc)
         date.configure("created", {}, int)
         self.assertEqual("created=2021-01-07 22:45:13", date.build_condition("2021-01-07 22:45:13 UTC"))
-        self.assertEqual(
-            "created<2021-01-07 21:45:13", date.build_condition("2021-01-07 22:45:13 UTC+1", operator="<")
-        )
+        self.assertEqual("created<2021-01-07 21:45:13", date.build_condition("2021-01-07 22:45:13 UTC+1", operator="<"))
 
     def test_check_search_value(self):
         date = DateTime("di", timezone.utc)

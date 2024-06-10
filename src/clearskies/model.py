@@ -10,6 +10,7 @@ try:
 except ModuleNotFoundError:
     from typing import Self
 
+
 class Model(Models):
     _configured_columns = None
     _data = None
@@ -202,7 +203,7 @@ class Model(Models):
             return data[key]
         return self.__getattr__(key)
 
-    def was_changed(self: Self, key) -> bool: 
+    def was_changed(self: Self, key) -> bool:
         """Returns True/False to denote if a column was changed in the last save"""
         if self._previous_data is None:
             raise ValueError("was_changed was called before a save was finished - you must save something first")

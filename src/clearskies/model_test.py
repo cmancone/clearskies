@@ -125,9 +125,7 @@ class ModelTest(unittest.TestCase):
             },
             user,
         )
-        self.assertEqual(
-            {"name": "Conor", "birth_date": birth_date, "age": "1", "test": "thingy"}, user.post_save_data
-        )
+        self.assertEqual({"name": "Conor", "birth_date": birth_date, "age": "1", "test": "thingy"}, user.post_save_data)
         self.assertEqual("5", user.post_save_id)
         self.assertFalse(user.was_changed("id"))
         self.assertFalse(user.was_changed("blahblah"))

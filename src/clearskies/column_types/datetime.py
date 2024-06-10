@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import dateparser
 from ..autodoc.schema import DateTime as AutoDocDateTime
 
+
 class DateTime(Column):
     _auto_doc_class = AutoDocDateTime
     _date_format = "%Y-%m-%d %H:%M:%S"
