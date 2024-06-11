@@ -143,4 +143,7 @@ class StandardDependencies(DI):
         """Set the default timezone."""
         import datetime
 
-        return datetime.UTC
+        try:
+            return datetime.UTC
+        except AttributeError as e:
+            return datetime.timezone.utc
