@@ -46,7 +46,7 @@ class ApiBackendTest(unittest.TestCase):
         self.assertEqual({"id": 5}, response)
 
     def test_delete(self):
-        model = SimpleNamespace(id_column_name="id")
+        model = SimpleNamespace(id_column_name="id", data={})
         response = self.backend.delete(5, model)
         self.requests.request.assert_called_with(
             "DELETE",
@@ -113,6 +113,41 @@ class ApiBackendTest(unittest.TestCase):
                 "where": [
                     {"column": "age", "operator": "<=", "values": [10]},
                     {"column": "id", "operator": "=", "values": [123]},
+                ],
+                "sort": [{"column": "age", "direction": "desc"}],
+                "start": 200,
+                "limit": 100,
+            },
+        )
+
+        self.assertEqual({"id": 5}, records[0])
+        self.assertEqual({"id": 10}, records[1])
+
+    def test_query_with_url_params(self):
+        self.backend.configure(url="https://example.com/{id}/:category_id", auth=self.auth)
+        response = type("", (), {"ok": True, "json": lambda: {"data": [{"id": 5}, {"id": 10}]}})
+        self.requests.request = MagicMock(return_value=response)
+        records = self.backend.records(
+            {
+                "wheres": [
+                    {"column": "age", "operator": "<=", "values": [10], "parsed": ""},
+                    {"column": "id", "operator": "=", "values": [123], "parsed": ""},
+                    {"column": "category_id", "operator": "=", "values": ["asdfer"], "parsed": ""},
+                ],
+                "sorts": [{"column": "age", "direction": "desc"}],
+                "pagination": {"start": 200},
+                "select_all": True,
+                "limit": 100,
+            },
+            "model",
+        )
+        self.requests.request.assert_called_with(
+            "GET",
+            "https://example.com/123/asdfer",
+            headers={"Authorization": "Bearer: asdfer"},
+            json={
+                "where": [
+                    {"column": "age", "operator": "<=", "values": [10]},
                 ],
                 "sort": [{"column": "age", "direction": "desc"}],
                 "start": 200,

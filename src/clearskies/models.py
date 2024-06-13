@@ -81,7 +81,7 @@ class Models(ABC, ConditionParser):
             "selects": self.query_selects,
             "select_all": self.query_select_all,
             "table_name": self.get_table_name(),
-            "model_columns": self._model_columns,
+            "model_columns": self.model_columns,
         }
 
     @query_configuration.setter

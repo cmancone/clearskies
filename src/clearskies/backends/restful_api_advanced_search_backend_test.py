@@ -31,6 +31,7 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
                 "id_column_name": "id",
                 "table_name": MagicMock(return_value="https://example.com"),
                 "columns": MagicMock(return_value={}),
+                "data": {},
             },
         )
 
@@ -76,6 +77,7 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
                 "sorts": [{"column": "age", "direction": "desc"}],
                 "pagination": {"start": 200},
                 "limit": 100,
+                "table_name": self.model.table_name(),
             },
             self.model,
         )
@@ -108,6 +110,7 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
                 "sorts": [{"column": "age", "direction": "desc"}],
                 "pagination": {"start": 200},
                 "limit": 100,
+                "table_name": self.model.table_name(),
             },
             self.model,
         )
@@ -138,6 +141,7 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
                 "sorts": [],
                 "pagination": {"start": 0},
                 "limit": 0,
+                "table_name": self.model.table_name(),
             },
             self.model,
         )

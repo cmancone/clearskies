@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, List, Tuple
 from ..autodoc.schema import Integer as AutoDocInteger
 from .. import model
 from ..column_types import JSON, DateTime
+import re
 
 
 class ApiBackend(Backend):
@@ -34,6 +35,36 @@ class ApiBackend(Backend):
         self.url = url
         self._auth = auth
 
+    def records_url(self, configuration: Dict[str, Any]) -> str:
+        return self.url
+
+    def count_url(self, configuration: Dict[str, Any]) -> str:
+        return self.records_url(configuration)
+
+    def delete_url(self, id: str, model: model.Model) -> str:
+        return self.url
+
+    def update_url(self, id: str, model: model.Model) -> str:
+        return self.url
+
+    def create_url(self, data: Dict[str, Any], model: model.Model) -> str:
+        return self.url
+
+    def records_method(self, configuration: Dict[str, Any]) -> str:
+        return "GET"
+
+    def count_method(self, configuration: Dict[str, Any]) -> str:
+        return "GET"
+
+    def delete_method(self, id: str, model: model.Model) -> str:
+        return "DELETE"
+
+    def update_method(self, id: str, model: model.Model) -> str:
+        return "PATCH"
+
+    def create_method(self, data: Dict[str, Any], model: model.Model) -> str:
+        return "POST"
+
     def update(self, id, data, model):
         [url, method, json_data, headers] = self._build_update_request(id, data, model)
         response = self._execute_request(url, method, json=json_data, headers=headers)
@@ -42,7 +73,8 @@ class ApiBackend(Backend):
         return self._map_update_response(response.json())
 
     def _build_update_request(self, id, data, model):
-        return [self.url, "PATCH", data, {}]
+        (url, data) = self._finalize_url_and_data(self.update_url(id, model), data)
+        return [url, self.update_method(id, model), data, {}]
 
     def _map_update_response(self, json):
         if not "data" in json:
@@ -55,7 +87,8 @@ class ApiBackend(Backend):
         return self._map_create_response(response.json())
 
     def _build_create_request(self, data, model):
-        return [self.url, "POST", data, {}]
+        (url, data) = self._finalize_url_and_data(self.create_url(data, model), data)
+        return [url, self.create_method(data, model), data, {}]
 
     def _map_create_response(self, json):
         if not "data" in json:
@@ -68,7 +101,9 @@ class ApiBackend(Backend):
         return self._validate_delete_response(response.json())
 
     def _build_delete_request(self, id, model):
-        return [self.url, "DELETE", {model.id_column_name: id}, {}]
+        data = model.data
+        (url, data) = self._finalize_url_and_data(self.delete_url(id, model), data)
+        return [url, self.delete_method(id, model), {model.id_column_name: id}, {}]
 
     def _validate_delete_response(self, json):
         if "status" not in json:
@@ -82,7 +117,13 @@ class ApiBackend(Backend):
         return self._map_count_response(response.json())
 
     def _build_count_request(self, configuration):
-        return [self.url, "GET", {**{"count_only": True}, **self._as_post_data(configuration)}, {}]
+        (url, configuration) = self._finalize_url_and_configuration(self.count_url(configuration), configuration)
+        return [
+            url,
+            self.count_method(configuration),
+            {**{"count_only": True}, **self._as_post_data(configuration)},
+            {},
+        ]
 
     def _map_count_response(self, json):
         if not "total_matches" in json:
@@ -102,7 +143,8 @@ class ApiBackend(Backend):
         return records
 
     def _build_records_request(self, configuration):
-        return [self.url, "GET", self._as_post_data(configuration), {}]
+        (url, configuration) = self._finalize_url_and_configuration(self.records_url(configuration), configuration)
+        return [url, self.records_method(configuration), self._as_post_data(configuration), {}]
 
     def _map_records_response(self, json):
         if not "data" in json:
@@ -224,3 +266,85 @@ class ApiBackend(Backend):
             )
             return {**backend_data, **{column.name: as_date}}
         return column.to_backend(backend_data)
+
+    def _finalize_url_and_data(self, url: str, data: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+        (url, used_columns) = self._finalize_url(url, data, model)
+        for used_column in used_columns:
+            del data[used_column]
+        return (url, data)
+
+    def _finalize_url_and_configuration(self, url: str, configuration: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+        # we need to convert the wheres in the configuration to a dictionary of key/values, but
+        # *only* for cases where we have performed an equals search.
+        filters_by_equals = {}
+        index_lookup = {}
+        for index, where in enumerate(configuration["wheres"]):
+            if where["operator"] != "=":
+                continue
+            filters_by_equals[where["column"]] = where["values"][0]
+            index_lookup[where["column"]] = index
+
+        # always call _finalize_url, even if we don't have any search columns,
+        # because if there are placeholders in the URL but we don't have any values,
+        # then we need to throw an exception.
+        (url, used_columns) = self._finalize_url(url, filters_by_equals, model)
+        # we need to remove the used entries from the wheres but in doing so we start at the end
+        # of the array so our indexes stay valid.
+        to_delete = [index_lookup[used_column] for used_column in used_columns]
+        to_delete.sort(reverse=True)
+        for index_to_delete in to_delete:
+            del configuration["wheres"][index_to_delete]
+
+        return (url, configuration)
+
+    def _finalize_url(self, url: str, data: Dict[str, Any], model: model.Models) -> Tuple[str, List[str]]:
+        """
+        This function is what gives support for placeholders in URLs.  We support two formats:
+
+         1. /some/path/{some_field}/blah
+         2. /some/path/:some_field/blah
+
+        The url comes from the `my_url` function, which (by default) is just self.url.  You can
+        always extend `my_url` to pull the URL from something else (the `model.table_name()` for instance).
+
+        You would then:
+
+        ```
+        models.where("some_field=some_value")
+        ```
+
+        and when the API backend makes the call it will then build the appropriate URL.  Naturally,
+        you'll want to add a corresponding column to your model, otherwise the model will complain
+        that "some_field is not an allowed column in model class 'BLAH'" (since all search columns
+        used in a `where` query go through strict input validation).
+        """
+        # many Snyk API calls require a resource id in the URL.  Let's check if that is the case here,
+        # and if so, get  it out of the query configuration
+        used_columns = []
+        resource_references = self._find_resource_references_in_url(url)
+        for resource_reference in resource_references:
+            resource_name = resource_reference["name"]
+            placeholder = resource_reference["placeholder"]
+            if not data.get(resource_name):
+                raise ValueError(
+                    f"Error building a request with {self.__class__.__name__}: my url, '{url}', has a URL resource named '{resource_name}' but a request was made without providing a value for this resource.  All URL parameters are implicitly required.  Also note that only where clauses with an 'equals' operator will be used when providing search terms for the URL.  So, make sure you add an appropriate: `models.where('{resource_name}=some_value')` search when using the corresponding models class.  Alternatively, if executing a create/delete/update operation, make sure the model and/or save has a value for this column"
+                )
+
+            url = url.replace(placeholder, str(data.get(resource_name)))
+            used_columns.append(resource_name)
+        return (url, used_columns)
+
+    def _find_resource_references_in_url(self, url: str) -> list[str]:
+        if not url:
+            return []
+        # To help with the regexp matching, it helps if the URL both starts and ends with a "/".
+        # We don't need to modify the URL at all - we just need it for our matching, so it's fine
+        # that our changes aren't propogated back to the calling function.
+        if url[-1] != "/":
+            url += "/"
+        if url[0] != "/":
+            url = f"/{url}"
+        return [
+            *[{"name": reference, "placeholder": "{" + reference + "}"} for reference in re.findall(r"{(\w+)}", url)],
+            *[{"name": reference, "placeholder": f":{reference}"} for reference in re.findall(r"/:([^/]+)/", url)],
+        ]
