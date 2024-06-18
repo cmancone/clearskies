@@ -5,6 +5,7 @@ from .auth0_jwks import Auth0JWKS
 from .authorization import Authorization
 from .jwks import JWKS
 from .jwks_jwcrypto import JWKSJwCrypto
+from .authorization_pass_through import AuthorizationPassThrough
 
 
 def public():
@@ -29,6 +30,7 @@ def jwks_jwcrypto(jwks_url, **kwargs):
 
 __all__ = [
     "Authorization",
+    "AuthorizationPassThrough",
     "BindingConfig",
     "public",
     "Public",
