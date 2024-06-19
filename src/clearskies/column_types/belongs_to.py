@@ -34,6 +34,7 @@ class BelongsTo(String):
         "model_column_name",
         "readable_parent_columns",
         "join_type",
+        "where",
     ]
 
     def __init__(self, di):
@@ -43,6 +44,7 @@ class BelongsTo(String):
         super()._check_configuration(configuration)
         self.validate_models_class(configuration["parent_models_class"])
 
+        error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
         if not configuration.get("model_column_name") and self.name[-3:] != "_id":
             raise ValueError(
                 f"Invalid name for column '{self.name}' in '{self.model_class.__name__}' - "
@@ -50,19 +52,14 @@ class BelongsTo(String):
                 + "that the parent model can be fetched from."
             )
         if configuration.get("model_column_name") and type(configuration.get("model_column_name")) != str:
-            raise ValueError(
-                f"Configuration error for '{self.name}' in '{self.model_class.__name__}': 'model_column_name' must be a string."
-            )
+            raise ValueError(f"{error_prefix} 'model_column_name' must be a string.")
 
         join_type = configuration.get("join_type")
         if join_type and join_type.upper() not in ["LEFT", "INNER"]:
-            raise ValueError(
-                f"Configuration error for '{self.name}' in '{self.model_class.__name__}': join_type must be INNER or LEFT"
-            )
+            raise ValueError(f"{error_prefix} join_type must be INNER or LEFT")
 
         if configuration.get("readable_parent_columns"):
             parent_columns = self.di.build(configuration["parent_models_class"], cache=True).raw_columns_configuration()
-            error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             readable_parent_columns = configuration["readable_parent_columns"]
             if not hasattr(readable_parent_columns, "__iter__"):
                 raise ValueError(
@@ -81,6 +78,19 @@ class BelongsTo(String):
                         + "column does not exist in the model class."
                     )
 
+        wheres = configuration.get("where")
+        if wheres:
+            if not isinstance(wheres, list):
+                raise ValueError(
+                    f"{error_prefix} 'where' must be a list of where conditions or callables that return where conditions"
+                )
+            for index, where in enumerate(wheres):
+                if callable(where) or isinstance(where, str):
+                    continue
+                raise ValueError(
+                    f"{error_prefix} 'where' must be a list of where conditions or callables that return where conditions, but the item in entry #${index+1} was neither a string nor a callable"
+                )
+
     def _finalize_configuration(self, configuration):
         return {
             **super()._finalize_configuration(configuration),
@@ -89,6 +99,7 @@ class BelongsTo(String):
                 if configuration.get("model_column_name")
                 else self.name[:-3],
                 "join_type": configuration.get("join_type", "INNER").upper(),
+                "where": configuration.get("where", []),
             },
         }
 
@@ -149,7 +160,17 @@ class BelongsTo(String):
 
     @property
     def parent_models(self):
-        return self.di.build(self.config("parent_models_class"), cache=True)
+        parents = self.di.build(self.config("parent_models_class"), cache=True)
+        for where in self.config("where"):
+            if callable(where):
+                parents = self.di.call_function(where, model=parents)
+                if not parents:
+                    raise ValueError(
+                        f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index+1} was called, it did not return the models class"
+                    )
+            else:
+                parents = parents.where(where)
+        return parents
 
     @property
     def parent_columns(self):

@@ -27,6 +27,7 @@ class HasMany(Column):
         "is_readable",
         "readable_child_columns",
         "parent_id_column_name",
+        "where",
     ]
 
     def __init__(self, di):
@@ -63,9 +64,10 @@ class HasMany(Column):
 
     def _check_configuration(self, configuration):
         super()._check_configuration(configuration)
+        error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
+
         if configuration.get("is_readable"):
             child_columns = self.di.build(configuration["child_models_class"], cache=True).raw_columns_configuration()
-            error_prefix = f"Configuration error for '{self.name}' in '{self.model_class.__name__}':"
             if not "readable_child_columns" in configuration:
                 raise ValueError(f"{error_prefix} must provide 'readable_child_columns' if is_readable is set")
             readable_child_columns = configuration["readable_child_columns"]
@@ -85,6 +87,19 @@ class HasMany(Column):
                         f"{error_prefix} 'readable_child_columns' references column named '{column_name}' but this"
                         + "column does not exist in the model class."
                     )
+
+        wheres = configuration.get("where")
+        if wheres:
+            if not isinstance(wheres, list):
+                raise ValueError(
+                    f"{error_prefix} 'where' must be a list of where conditions or callables that return where conditions"
+                )
+            for index, where in enumerate(wheres):
+                if callable(where) or isinstance(where, str):
+                    continue
+                raise ValueError(
+                    f"{error_prefix} 'where' must be a list of where conditions or callables that return where conditions, but the item in entry #${index+1} was neither a string nor a callable"
+                )
 
     def get_child_columns(self):
         if "child_columns" not in self.configuration:
@@ -119,7 +134,17 @@ class HasMany(Column):
 
     @property
     def child_models(self):
-        return self.di.build(self.config("child_models_class"), cache=True)
+        children = self.di.build(self.config("child_models_class"), cache=True)
+        for index, where in enumerate(self.config("where")):
+            if callable(where):
+                children = self.di.call_function(where, model=children)
+                if not children:
+                    raise ValueError(
+                        f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index+1} was called, it did not return the models class"
+                    )
+            else:
+                children = children.where(where)
+        return children
 
     def documentation(self, name=None, example=None, value=None):
         columns = self.get_child_columns()
