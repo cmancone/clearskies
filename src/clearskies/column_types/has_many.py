@@ -101,6 +101,14 @@ class HasMany(Column):
                     f"{error_prefix} 'where' must be a list of where conditions or callables that return where conditions, but the item in entry #${index+1} was neither a string nor a callable"
                 )
 
+    def _finalize_configuration(self, configuration):
+        return {
+            **super()._finalize_configuration(configuration),
+            **{
+                "where": configuration.get("where", []),
+            },
+        }
+
     def get_child_columns(self):
         if "child_columns" not in self.configuration:
             self.configuration["child_columns"] = self.child_models.columns()

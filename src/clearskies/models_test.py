@@ -168,7 +168,7 @@ class TestModels(unittest.TestCase):
                         "selects": [],
                         "select_all": True,
                         "table_name": "users",
-                        "model_columns": None,
+                        "model_columns": self.backend.records.call_args[0][0]["model_columns"],
                     },
                     users.empty_model(),
                     next_page_data={},
