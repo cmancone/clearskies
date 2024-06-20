@@ -267,9 +267,10 @@ class Model(Models):
         backend_data = {**data}
         temporary_data = {}
         for column in columns.values():
-            if column.is_temporary and column.name in backend_data:
-                temporary_data[column.name] = backend_data[column.name]
-                del backend_data[column.name]
+            if column.is_temporary:
+                if column.name in backend_data:
+                    temporary_data[column.name] = backend_data[column.name]
+                    del backend_data[column.name]
                 continue
 
             backend_data = self._backend.column_to_backend(column, backend_data)
