@@ -143,7 +143,11 @@ class HasMany(Column):
     @property
     def child_models(self):
         children = self.di.build(self.config("child_models_class"), cache=True)
-        for index, where in enumerate(self.config("where")):
+        wheres = self.config("where", silent=True)
+        if not wheres:
+            return children
+
+        for index, where in enumerate(wheres):
             if callable(where):
                 children = self.di.call_function(where, model=children)
                 if not children:
