@@ -49,6 +49,7 @@ class Audit(has_many.HasMany):
         "readable_child_columns",
         "parent_class_name",
         "parent_id_column_name",
+        "where",
     ]
 
     def __init__(self, di):
