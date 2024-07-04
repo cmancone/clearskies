@@ -180,7 +180,7 @@ class DI:
             if not additional_config.can_build(name):
                 continue
             built_value = additional_config.build(name, self, context=context)
-            if cache:
+            if cache and self.call_function(additional_config.can_cache, name=name, context=context):
                 self._prepared[name] = built_value
             return built_value
 

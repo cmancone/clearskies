@@ -4,6 +4,9 @@ class AdditionalConfig:
     def __init__(self, config=None):
         self.config = config if config else {}
 
+    def can_cache(self, name, context=None):
+        return True
+
     def can_build(self, name):
         return hasattr(self, f"provide_{name}")
 
