@@ -4,6 +4,7 @@ from collections import OrderedDict
 from ..autodoc.schema import Array as AutoDocArray
 from ..autodoc.schema import Object as AutoDocObject
 from ..autodoc.schema import String as AutoDocString
+from ..functional import validations
 
 
 class HasMany(Column):
@@ -50,7 +51,8 @@ class HasMany(Column):
                 + f"'{model_class.__name__}'"
             )
         self.validate_models_class(configuration["child_models_class"])
-        configuration["parent_id_column_name"] = model_class.id_column_name
+        if not configuration.get("parent_id_column_name"):
+            configuration["parent_id_column_name"] = model_class.id_column_name
 
         # if readable_child_columns is set then load up the child models/columns now, because we'll need it in the
         # _check_configuration step, but we don't want to load it there because we can't save it back into the config
@@ -129,7 +131,7 @@ class HasMany(Column):
         for index, where in enumerate(wheres):
             if callable(where):
                 children = self.di.call_function(where, model=children, children=children, parent_data=data)
-                if not children:
+                if not validations.is_model(children):
                     raise ValueError(
                         f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index+1} was called, it did not return the models class"
                     )
