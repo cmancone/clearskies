@@ -120,7 +120,22 @@ class HasMany(Column):
     def provide(self, data, column_name):
         foreign_column_name = self.config("foreign_column_name")
         id_column_name = self.config("parent_id_column_name")
-        return self.child_models.where(f"{foreign_column_name}={data[id_column_name]}")
+        children = self.child_models.where(f"{foreign_column_name}={data[id_column_name]}")
+
+        wheres = self.config("where", silent=True)
+        if not wheres:
+            return children
+
+        for index, where in enumerate(wheres):
+            if callable(where):
+                children = self.di.call_function(where, model=children, children=children, parent_data=data)
+                if not children:
+                    raise ValueError(
+                        f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index+1} was called, it did not return the models class"
+                    )
+            else:
+                children = children.where(where)
+        return children
 
     def to_json(self, model):
         children = []
@@ -142,21 +157,7 @@ class HasMany(Column):
 
     @property
     def child_models(self):
-        children = self.di.build(self.config("child_models_class"), cache=True)
-        wheres = self.config("where", silent=True)
-        if not wheres:
-            return children
-
-        for index, where in enumerate(wheres):
-            if callable(where):
-                children = self.di.call_function(where, model=children)
-                if not children:
-                    raise ValueError(
-                        f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index+1} was called, it did not return the models class"
-                    )
-            else:
-                children = children.where(where)
-        return children
+        return self.di.build(self.config("child_models_class"), cache=True)
 
     def documentation(self, name=None, example=None, value=None):
         columns = self.get_child_columns()

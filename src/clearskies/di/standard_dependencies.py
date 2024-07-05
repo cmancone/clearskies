@@ -123,7 +123,9 @@ class StandardDependencies(DI):
         return datetime.datetime.now(datetime.timezone.utc)
 
     def provide_input_output(self):
-        raise AttributeError("The dependency injector requested an InputOutput but none has been configured")
+        raise AttributeError(
+            "The dependency injector requested an InputOutput but none has been configured.  Alternatively, if you directly called `di.build('input_output')` then try again with `di.build('input_output', cache=True)`"
+        )
 
     def provide_authentication(self):
         raise AttributeError("The dependency injector requested an Authenticaiton method but none has been configured")
