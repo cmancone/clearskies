@@ -80,7 +80,9 @@ class DI:
                         continue
                     if issubclass(item, AdditionalConfigAutoImport):
                         init_args = inspect.getfullargspec(item)
-                        if len(init_args.args) - 1 - len(init_args.defaults) > 0:
+                        nargs = len(init_args.args) if init_args.args else 0
+                        nkwargs = len(init_args.defaults) if init_args.defaults else 0
+                        if nargs - 1 - nkwargs > 0:
                             raise ValueError(
                                 "Error auto-importing additional config "
                                 + item.__name__
