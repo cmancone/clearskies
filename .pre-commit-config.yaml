@@ -16,3 +16,10 @@ repos:
         types: [python]
         pass_filenames: false
         files: ^src/clearskies/
+    -   id: pytest
+        name: pytest
+        entry: bash -c 'cd src && poetry run pytest'
+        require_serial: true
+        language: system
+        types: [python]
+        pass_filenames: false
