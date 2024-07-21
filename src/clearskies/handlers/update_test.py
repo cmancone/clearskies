@@ -6,7 +6,7 @@ from ..authentication import Public, SecretBearer
 from ..di import StandardDependencies
 from .. import Model
 from collections import OrderedDict
-from ..contexts import test
+from ..contexts import test as context
 import logging
 
 
@@ -33,7 +33,7 @@ def no_bob(input_data):
 
 class UpdateTest(unittest.TestCase):
     def setUp(self):
-        self.update = test(
+        self.update = context(
             {
                 "handler_class": Update,
                 "handler_config": {
@@ -48,7 +48,7 @@ class UpdateTest(unittest.TestCase):
 
         # since this is a separate build, it will have a separate backend, which
         # is why we fetch a seperate users model.
-        self.update_less_columns = test(
+        self.update_less_columns = context(
             {
                 "handler_class": Update,
                 "handler_config": {
@@ -71,7 +71,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEqual("c@example.com", response_data["email"])
 
     def test_casing(self):
-        update = test(
+        update = context(
             {
                 "handler_class": Update,
                 "handler_config": {
@@ -123,7 +123,7 @@ class UpdateTest(unittest.TestCase):
         )
 
     def test_readable_writeable(self):
-        update = test(
+        update = context(
             {
                 "handler_class": Update,
                 "handler_config": {
@@ -147,7 +147,7 @@ class UpdateTest(unittest.TestCase):
     def test_auth_failure(self):
         secret_bearer = SecretBearer("secrets", "environment", logging)
         secret_bearer.configure(secret="asdfer", header_prefix="Bearer ")
-        update = test(
+        update = context(
             {
                 "handler_class": Update,
                 "handler_config": {
@@ -170,7 +170,7 @@ class UpdateTest(unittest.TestCase):
     def test_auth_success(self):
         secret_bearer = SecretBearer("secrets", "environment", logging)
         secret_bearer.configure(secret="asdfer", header_prefix="Bearer ")
-        update = test(
+        update = context(
             {
                 "handler_class": Update,
                 "handler_config": {
@@ -226,7 +226,7 @@ class UpdateTest(unittest.TestCase):
         self.assertEqual(["string", "string", "string", "integer"], [prop._type for prop in data_response_properties])
 
     def test_custom_input_errors(self):
-        update = test(
+        update = context(
             {
                 "handler_class": Update,
                 "handler_config": {

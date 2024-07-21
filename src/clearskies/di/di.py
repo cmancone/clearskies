@@ -232,13 +232,14 @@ class DI:
             name = string.camel_case_to_snake_case(class_to_build.__name__)
         if name in self._prepared and cache:
             return self._prepared[name]
+        my_class_name = class_to_build.__name__
 
         if name in self._class_mocks:
             class_to_build = self._class_mocks[name]
 
         init_args = inspect.getfullargspec(class_to_build)
         if init_args.defaults is not None:
-            self._disallow_kwargs(f"build class '{class_to_build.__name__}'")
+            self._disallow_kwargs(f"build class '{my_class_name}'")
 
         # ignore the first argument because that is just `self`
         build_arguments = init_args.args[1:]
@@ -259,16 +260,32 @@ class DI:
                 f"'{self._building[class_id]}'" if self._building[class_id] is not None else "itself"
             )
             raise ValueError(
-                f"Circular dependencies detected while building '{class_to_build.__name__}' because '"
-                + f"{class_to_build.__name__} is a dependency of both '{context}' and {original_context_label}"
+                f"Circular dependencies detected while building '{my_class_name}' because '"
+                + f"{my_class_name} is a dependency of both '{context}' and {original_context_label}"
             )
 
         self._building[class_id] = context
         # Turn on caching when building the automatic dependencies that get injected into a class constructor
-        args = [
-            self.build_from_name(build_argument, context=class_to_build.__name__, cache=True)
-            for build_argument in build_arguments
-        ]
+        args = []
+        for build_argument in build_arguments:
+            typed_class = init_args.annotations.get(build_argument, None)
+            # I'm probably going to have to pull this conditional off into its own function and make it smarter over time.
+            # The idea is that we want to decide what to inject based on either the type hinting itself of the variable name.
+            # However, dependency injection via type hinting is actually rather tricky because there are plenty of cases
+            # where the type doesn't actually specify what needs to be injected.  If we're lucky, I have already taken
+            # care of all the edge cases, but we'll see...
+            if (
+                typed_class
+                and callable(typed_class)
+                and not inspect.isabstract(typed_class)
+                and not isinstance(typed_class, type)
+            ):
+                print(my_class_name)
+                print(typed_class)
+                args.append(self.build_class(typed_class, context=my_class_name, cache=True))
+                continue
+            args.append(self.build_from_name(build_argument, context=my_class_name, cache=True))
+
         del self._building[class_id]
 
         built_value = class_to_build(*args)

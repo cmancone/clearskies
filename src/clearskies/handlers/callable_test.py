@@ -4,7 +4,7 @@ from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
 from ..model import Model
-from ..contexts import test
+from ..contexts import test as context
 from collections import OrderedDict
 from unittest.mock import MagicMock
 from ..di import StandardDependencies
@@ -34,7 +34,7 @@ def return_contstant():
 
 class CallableTest(unittest.TestCase):
     def test_without_schema(self):
-        callable_handler = test(
+        callable_handler = context(
             {
                 "handler_class": Callable,
                 "handler_config": {
@@ -48,7 +48,7 @@ class CallableTest(unittest.TestCase):
         self.assertEqual("CONSTANT!", response[0]["data"])
 
     def test_with_schema(self):
-        callable_handler = test(
+        callable_handler = context(
             {
                 "handler_class": Callable,
                 "handler_config": {
@@ -64,7 +64,7 @@ class CallableTest(unittest.TestCase):
 
     def test_with_input_errors(self):
         test_callable = MagicMock(return_value=None)
-        callable_handler = test(
+        callable_handler = context(
             {
                 "handler_class": Callable,
                 "handler_config": {
@@ -88,7 +88,7 @@ class CallableTest(unittest.TestCase):
         test_callable.assert_not_called()
 
     def test_with_selectable_columns(self):
-        callable_handler = test(
+        callable_handler = context(
             {
                 "handler_class": Callable,
                 "handler_config": {
@@ -110,7 +110,7 @@ class CallableTest(unittest.TestCase):
         )
 
     def test_with_mapping(self):
-        callable_handler = test(
+        callable_handler = context(
             {
                 "handler_class": Callable,
                 "handler_config": {

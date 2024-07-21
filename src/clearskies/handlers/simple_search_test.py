@@ -4,7 +4,7 @@ from ..column_types import String, Integer
 from ..di import StandardDependencies
 from ..authentication import Public, SecretBearer
 from ..model import Model
-from ..contexts import test
+from ..contexts import test as context
 from collections import OrderedDict
 
 
@@ -25,7 +25,7 @@ class User(Model):
 
 class SimpleSearchTest(unittest.TestCase):
     def setUp(self):
-        self.simple_search = test(
+        self.simple_search = context(
             {
                 "handler_class": SimpleSearch,
                 "handler_config": {
@@ -44,7 +44,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.users.create({"id": "8", "name": "ronoc", "email": "cmancone4@example.com", "age": "25"})
         self.users.create({"id": "12", "name": "ronoc", "email": "cmancone5@example.com", "age": "35"})
 
-        self.simple_search_with_wheres = test(
+        self.simple_search_with_wheres = context(
             {
                 "handler_class": SimpleSearch,
                 "handler_config": {
@@ -109,7 +109,7 @@ class SimpleSearchTest(unittest.TestCase):
         self.assertEqual({"id": "5", "name": "conor", "email": "cmancone3@example.com", "age": 15}, response_data[0])
 
     def test_case_map(self):
-        simple_search = test(
+        simple_search = context(
             {
                 "handler_class": SimpleSearch,
                 "handler_config": {

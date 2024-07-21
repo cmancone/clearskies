@@ -43,6 +43,7 @@ priority = "primary"
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.2.2"
 black = "^23.3.0"
+pytest = "^8.3.1"
 
 [tool.poetry.extras]
 secrets = ["akeyless", "akeyless-cloud-id"]
@@ -52,6 +53,9 @@ jwcrypto = ["jwcrypto"]
 
 [tool.black]
 line-length = 120
+
+[tool.pytest]
+addopts = "--ignore=src/clearskies/contexts/test.py"
 
 [build-system]
 requires = ["poetry-core"]

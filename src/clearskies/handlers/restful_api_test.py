@@ -4,7 +4,7 @@ from .restful_api import RestfulAPI
 from ..column_types import String, Integer
 from ..authentication import Public
 from ..model import Model
-from ..contexts import test
+from ..contexts import test as context
 from ..column_types import String, Integer
 from collections import OrderedDict
 from ..di import StandardDependencies
@@ -26,7 +26,7 @@ class User(Model):
 
 class RestfulAPITest(unittest.TestCase):
     def setUp(self):
-        self.api = test(
+        self.api = context(
             {
                 "handler_class": RestfulAPI,
                 "handler_config": {

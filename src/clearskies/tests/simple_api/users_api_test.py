@@ -1,7 +1,7 @@
 import unittest
 import datetime
 import dateparser
-from ...contexts import test
+from ...contexts import test as context
 from unittest.mock import MagicMock
 from types import SimpleNamespace
 from . import models
@@ -11,7 +11,7 @@ from collections import OrderedDict
 
 class UsersApiTest(unittest.TestCase):
     def setUp(self):
-        self.api = test(users_api)
+        self.api = context(users_api)
         self.now = dateparser.parse("2021-01-07T22:45:13+00:00")
         self.now_formatted = self.now.isoformat()
         self.datetime = MagicMock()

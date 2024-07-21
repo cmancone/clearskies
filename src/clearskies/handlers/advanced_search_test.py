@@ -4,7 +4,7 @@ from ..column_types import String, Integer
 from ..di import StandardDependencies
 from ..authentication import Public, SecretBearer
 from ..model import Model
-from ..contexts import test
+from ..contexts import test as context
 from collections import OrderedDict
 
 
@@ -25,7 +25,7 @@ class User(Model):
 
 class AdvancedSearchTest(unittest.TestCase):
     def setUp(self):
-        self.advanced_search = test(
+        self.advanced_search = context(
             {
                 "handler_class": AdvancedSearch,
                 "handler_config": {
@@ -58,7 +58,7 @@ class AdvancedSearchTest(unittest.TestCase):
         self.assertEqual({"id": "12", "name": "ronoc", "email": "cmancone5@example.com", "age": 35}, response_data[4])
 
     def test_case_switch(self):
-        advanced_search = test(
+        advanced_search = context(
             {
                 "handler_class": AdvancedSearch,
                 "handler_config": {

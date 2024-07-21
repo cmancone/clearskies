@@ -4,7 +4,7 @@ from ..column_types import String, Integer
 from ..di import StandardDependencies
 from ..authentication import Public, SecretBearer, Authorization
 from ..model import Model
-from ..contexts import test
+from ..contexts import test as context
 from collections import OrderedDict
 
 
@@ -31,7 +31,7 @@ class FilterAuth(Authorization):
 
 class ListTest(unittest.TestCase):
     def setUp(self):
-        self.list = test(
+        self.list = context(
             {
                 "handler_class": List,
                 "handler_config": {
@@ -77,7 +77,7 @@ class ListTest(unittest.TestCase):
         self.assertEqual({"id": "5", "name": "conor", "email": "cmancone3@example.com", "age": 15}, response_data[4])
 
     def test_configure(self):
-        list = test(
+        list = context(
             {
                 "handler_class": List,
                 "handler_config": {
@@ -113,7 +113,7 @@ class ListTest(unittest.TestCase):
         self.assertEqual({"NumberResults": 2, "NextPage": {}, "Limit": 50}, json_response["Pagination"])
 
     def test_where_function(self):
-        list = test(
+        list = context(
             {
                 "handler_class": List,
                 "handler_config": {
@@ -149,7 +149,7 @@ class ListTest(unittest.TestCase):
         self.assertEqual({"NumberResults": 2, "NextPage": {}, "Limit": 50}, json_response["Pagination"])
 
     def test_output_map(self):
-        list = test(
+        list = context(
             {
                 "handler_class": List,
                 "handler_config": {
@@ -176,7 +176,7 @@ class ListTest(unittest.TestCase):
         self.assertEqual({"id": "2", "awesome": "conor"}, response_data[1])
 
     def test_authorization(self):
-        list = test(
+        list = context(
             {
                 "handler_class": List,
                 "handler_config": {

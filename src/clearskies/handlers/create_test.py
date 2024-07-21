@@ -5,7 +5,7 @@ from ..column_types import String, Integer
 from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
 from ..model import Model
-from ..contexts import test
+from ..contexts import test as context
 from collections import OrderedDict
 
 
@@ -25,7 +25,7 @@ class User(Model):
 
 class CreateTest(unittest.TestCase):
     def setUp(self):
-        self.create = test(
+        self.create = context(
             {
                 "handler_class": Create,
                 "handler_config": {
@@ -38,7 +38,7 @@ class CreateTest(unittest.TestCase):
         )
         self.users = self.create.build(User)
 
-        self.create_no_email = test(
+        self.create_no_email = context(
             {
                 "handler_class": Create,
                 "handler_config": {
@@ -52,7 +52,7 @@ class CreateTest(unittest.TestCase):
 
         secret_bearer = SecretBearer("secrets", "environment", logging)
         secret_bearer.configure(secret="asdfer", header_prefix="Bearer ")
-        self.create_secret_bearer = test(
+        self.create_secret_bearer = context(
             {
                 "handler_class": Create,
                 "handler_config": {
@@ -63,7 +63,7 @@ class CreateTest(unittest.TestCase):
             }
         )
 
-    def test_save_flow(self):
+    def context_save_flow(self):
         response = self.create(body={"name": "Conor", "email": "c@example.com", "age": 10})
         response_data = response[0]["data"]
         self.assertEqual(200, response[1])
@@ -75,8 +75,8 @@ class CreateTest(unittest.TestCase):
         id = response_data["id"]
         self.assertTrue(self.users.find(f"id={id}").exists)
 
-    def test_casing(self):
-        create = test(
+    def context_casing(self):
+        create = context(
             {
                 "handler_class": Create,
                 "handler_config": {
@@ -102,7 +102,7 @@ class CreateTest(unittest.TestCase):
         id = response_data["Id"]
         self.assertTrue(users.find(f"id={id}").exists)
 
-    def test_input_checks(self):
+    def context_input_checks(self):
         response = self.create(body={"email": "cmancone@example.com", "age": 10})
         self.assertEqual(200, response[1])
         self.assertEqual(
@@ -110,7 +110,7 @@ class CreateTest(unittest.TestCase):
             response[0]["input_errors"],
         )
 
-    def test_columns(self):
+    def context_columns(self):
         response = self.create_no_email(body={"name": "Conor", "age": 10})
         response_data = response[0]["data"]
         self.assertEqual(200, response[1])
@@ -118,7 +118,7 @@ class CreateTest(unittest.TestCase):
         self.assertEqual(10, response_data["age"])
         self.assertTrue("email" not in response_data)
 
-    def test_extra_columns(self):
+    def context_extra_columns(self):
         response = self.create_no_email(body={"name": "Conor", "age": 10, "email": "hey", "yo": "sup"})
         self.assertEqual(
             {
@@ -128,8 +128,8 @@ class CreateTest(unittest.TestCase):
             response[0]["input_errors"],
         )
 
-    def test_readable_writeable(self):
-        create = test(
+    def context_readable_writeable(self):
+        create = context(
             {
                 "handler_class": Create,
                 "handler_config": {
@@ -148,7 +148,7 @@ class CreateTest(unittest.TestCase):
         self.assertEqual(10, response_data["age"])
         self.assertEqual(None, response_data["email"])
 
-    def test_auth_failure(self):
+    def context_auth_failure(self):
         response = self.create_secret_bearer(
             body={"name": "Conor", "email": "c@example.com", "age": 10},
             headers={"Authorization": "Bearer qwerty"},
@@ -157,7 +157,7 @@ class CreateTest(unittest.TestCase):
         self.assertEqual("client_error", response[0]["status"])
         self.assertEqual("Not Authenticated", response[0]["error"])
 
-    def test_auth_success(self):
+    def context_auth_success(self):
         response = self.create_secret_bearer(
             body={"name": "Conor", "email": "c@example.com", "age": 10},
             headers={"Authorization": "Bearer asdfer"},

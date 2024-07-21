@@ -1,4 +1,5 @@
 import unittest
+import abc
 from unittest.mock import MagicMock, call
 from .di import DI
 from .. import BindingConfig
@@ -54,7 +55,23 @@ class MoreAdditionalConfig(AdditionalConfig):
         return MoreStuff(some_class, "hey")
 
 
-class ModelTest(unittest.TestCase):
+class IsABC:
+    @abc.abstractmethod
+    def nothing(self):
+        pass
+
+
+class UsesABC:
+    def __init__(self, thing: IsABC):
+        self.thing = thing
+
+
+class NoABC:
+    def __init__(self, thing: SomeClass):
+        self.thing = SomeClass
+
+
+class DiTest(unittest.TestCase):
     def setUp(self):
         self.di = HasProvides(classes=[SomeClass, more_classes, AnotherClass])
         self.di.bind("arbitrarily_defined", BindingConfig(MoreStuff, age=2))
@@ -94,3 +111,6 @@ class ModelTest(unittest.TestCase):
             + "is a dependency of both 'WillBeCircular' and itself",
             str(context.exception),
         )
+
+    # def test_build_by_type(self):
+    # no_abc = self.di.build(NoABC)

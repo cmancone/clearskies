@@ -6,7 +6,7 @@ from ..authentication import Public, SecretBearer, Authorization
 from ..di import StandardDependencies
 from .. import Model
 from collections import OrderedDict
-from ..contexts import test
+from ..contexts import test as context
 
 
 class User(Model):
@@ -32,7 +32,7 @@ class FilterAuth(Authorization):
 
 class GetTest(unittest.TestCase):
     def setUp(self):
-        self.get = test(
+        self.get = context(
             {
                 "handler_class": Get,
                 "handler_config": {
@@ -55,7 +55,7 @@ class GetTest(unittest.TestCase):
         self.assertEqual("bob@example.com", response_data["email"])
 
     def test_authz(self):
-        get = test(
+        get = context(
             {
                 "handler_class": Get,
                 "handler_config": {

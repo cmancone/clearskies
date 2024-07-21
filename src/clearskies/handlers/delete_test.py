@@ -6,7 +6,7 @@ from ..input_requirements import Required, MaximumLength
 from ..authentication import Public, SecretBearer
 from ..di import StandardDependencies
 from ..model import Model
-from ..contexts import test
+from ..contexts import test as context
 from collections import OrderedDict
 
 
@@ -27,7 +27,7 @@ class User(Model):
 
 class DeleteTest(unittest.TestCase):
     def setUp(self):
-        self.delete = test(
+        self.delete = context(
             {
                 "handler_class": Delete,
                 "handler_config": {
@@ -55,7 +55,7 @@ class DeleteTest(unittest.TestCase):
         self.assertTrue(self.users.find("id=5").exists)
 
     def test_auth_failure(self):
-        delete = test(
+        delete = context(
             {
                 "handler_class": Delete,
                 "handler_config": {
@@ -77,7 +77,7 @@ class DeleteTest(unittest.TestCase):
         self.assertTrue(users.find("id=5").exists)
 
     def test_auth_success(self):
-        delete = test(
+        delete = context(
             {
                 "handler_class": Delete,
                 "handler_config": {
