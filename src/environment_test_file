@@ -1,7 +1,0 @@
-myvalue = hey
-anothervalue = sup
-# okay
-
-
-yes = 1
-to_secrets = secret://path/to/secret

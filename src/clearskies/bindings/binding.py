@@ -1,7 +1,7 @@
 import inspect
 
 
-class BindingConfig:
+class Binding:
     object_class = None
     args = None
     kwargs = None

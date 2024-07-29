@@ -1,42 +1,56 @@
+from typing import Any, Dict
+
 from abc import abstractmethod
 from collections import OrderedDict
-from .column_types import UUID
 from .functional import string
 import re
-from .models import Models
 
 try:
     from typing_extensions import Self
 except ModuleNotFoundError:
     from typing import Self
 
+from .columns import column_config
 
-class Model(Models):
-    _configured_columns = None
-    _data = None
-    _previous_data = None
-    _touched_columns = None
-    _transformed = None
-    id_column_name = "id"
+class Model:
+    _columns = None
+    _column_configs: Dict[str, column_config.ColumnConfig] = {}
+    _previous_data: Dict[str, Any] = {}
+    _data: Dict[str, Any] = {}
+    _next_data: Dict[str, Any] = None
+    _transformed_data: Dict[str, Any] = None
+    _touched_columns: Dict[str, bool] = None
+    id_column_name: str = ""
 
     def __init__(self: Self, backend, columns):
-        super().__init__(backend, columns)
-        self._transformed = {}
+        self._backend = backend
+        self._columns = columns
+        self._transformed_data = {}
+        self._previous_data = {}
         self._data = {}
-        self._previous_data = None
-        self._touched_columns = None
+        self._next_data = {}
+        self._touched_columns = {}
 
-    def model_class(self: Self) -> type[Self]:
-        """
-        Return the model class that this models object will find/return instances of
-
-        This is needed by the models class
-        """
-        return self.__class__
+        model_class = self.__class__
+        if not self.id_column_name:
+            raise ValueError(f"Error for model class '{model_class.__name__}': no value was specified for the 'id_column_name' property.  This is a required property.")
+        column_configs = self.__class__.column_configs()
+        if self.id_column_name not in column_configs:
+            raise ValueError(f"Error for model class '{model_class.__name__}': the provided id_column_name, '{self.id_column_name}' does not correspond to a column for the model")
 
     @classmethod
-    def table_name(cls: type[Self]) -> str:
-        """Return the name of the table that the model uses for data storage"""
+    def destination_name(cls: type[Self]) -> str:
+        """
+        Return the name of the destination that the model uses for data storage
+
+        For SQL backends, this would return the table name.  Other backends will use this
+        same function but interpret it in whatever way it makes sense.  For instance, an
+        API backend may treat it as a URL (or URL path), an SQS backend may expect a queue
+        URL, etc...
+
+        By default this takes the class name, converts from title case to snake case, and then
+        makes it plural.
+        """
         singular = string.camel_case_to_snake_case(cls.__name__)
         if singular[-1] == "y":
             return singular[:-1] + "ies"
@@ -44,17 +58,37 @@ class Model(Models):
             return singular + "es"
         return f"{singular}s"
 
-    @abstractmethod
-    def columns_configuration(self: Self):
+    @classmethod
+    def column_configs(cls: type[Self]) -> Dict[str, column_config.ColumnConfig]:
         """Returns an ordered dictionary with the configuration for the columns"""
-        pass
+        if cls._column_configs:
+            return cls._column_configs
 
-    def all_columns(self: Self):
-        default = OrderedDict([(self.id_column_name, {"class": UUID})])
-        default.update(self.columns_configuration())
-        return default
+        column_configs: Dict[str, column_config.ColumnConfig] = {}
+        for attribute_name in dir(cls):
+            attribute = getattr(cls, attribute_name)
+            if not isinstance(attribute, column_config.ColumnConfig):
+                continue
 
-    def columns(self: Self, overrides=None):
+            if attribute_name == "data":
+                raise KeyError(f"Column configuration error for model class '{cls.__name__}': a column is named 'data' but this is a reserved attribute name for models.  You'll have to choose (literally) anything else.  Sorry.")
+
+            column_configs[attribute_name] = column_config
+
+        cls._column_configs = column_configs
+        return cls.column_configs
+
+    def columns(self: Self, overrides=None) -> Dict[str, Any]:
+        """
+        Returns a dictionary with the column implementors.
+
+        The difference between this function and model.column_configs is that this returns
+        the column implementors (e.g. clearskies.columns.implementors) rather than the column
+        config objects (which are defined via model parameters).
+
+        The column implementors are used throughout the save/load cycle.
+        """
+        model_class = self.__class__
         # no caching if we have overrides
         if overrides is not None:
             return self._columns.configure(self.all_columns(), self.__class__, overrides=overrides)
@@ -65,17 +99,6 @@ class Model(Models):
 
     def supports_n_plus_one(self: Self):
         return self._backend.supports_n_plus_one
-
-    def __getitem__(self: Self, column_name):
-        return self.__getattr__(column_name)
-
-    def __getattr__(self: Self, column_name):
-        # this should be adjusted to only return None for empty records if the column name corresponds
-        # to an actual column in the table.
-        if not self.exists:
-            return None
-
-        return self.get_transformed_from_data(column_name, self._data)
 
     def get(self: Self, column_name, silent=False):
         if not self.exists:
@@ -127,7 +150,7 @@ class Model(Models):
     def data(self: Self, data) -> None:
         self._data = {} if data is None else data
 
-    def save(self: Self, data, columns=None) -> bool:
+    def save(self: Self, data=None, columns=None) -> bool:
         """
         Save data to the database and update the model!
 

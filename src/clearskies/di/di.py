@@ -1,4 +1,4 @@
-from ..binding_config import BindingConfig
+from ..bindings import Binding as BindingConfig
 from .additional_config_auto_import import AdditionalConfigAutoImport
 import inspect
 import re
