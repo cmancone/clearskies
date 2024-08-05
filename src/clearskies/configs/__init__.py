@@ -54,15 +54,13 @@ class MyConfigurableClass(configs.Configurable):
     age = configs.Integer(required=True)
     property_with_default = configs.String(default='some value')
 
-    @clearskies.configs.parameters_to_properties()
+    @clearskies.parameters_to_properties()
     def __init__(self, name: str, age: int, optional: string=None):
         self.finalize_and_validate_configuration()
 ```
 
 """
 import inspect
-
-import wrapt
 
 from .actions import Actions
 from .any import Any
@@ -74,21 +72,6 @@ from .select import Select
 from .string import String
 from .validators import Validators
 
-
-@wrapt.decorator
-def parameters_to_properties(wrapped, instance, args, kwargs):
-    if not instance:
-        raise ValueError("The parameters_to_properties decorator only works for methods in classes, not plain functions")
-
-    if args:
-        wrapped_args = inspect.getfullargspec(wrapped)
-        for (key, value) in zip(wrapped_args.args[1:], args):
-            setattr(instance, key, value)
-
-    for (key, value) in kwargs.items():
-        setattr(instance, key, value)
-
-    wrapped(*args, **kwargs)
 
 __all__ = [
     "Actions",

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
 
 from abc import abstractmethod
 from collections import OrderedDict
@@ -10,7 +10,8 @@ try:
 except ModuleNotFoundError:
     from typing import Self
 
-from .columns import column_config
+from . import column_config
+
 
 class Model:
     _columns = None
@@ -33,10 +34,14 @@ class Model:
 
         model_class = self.__class__
         if not self.id_column_name:
-            raise ValueError(f"Error for model class '{model_class.__name__}': no value was specified for the 'id_column_name' property.  This is a required property.")
+            raise ValueError(
+                f"Error for model class '{model_class.__name__}': no value was specified for the 'id_column_name' property.  This is a required property."
+            )
         column_configs = self.__class__.column_configs()
         if self.id_column_name not in column_configs:
-            raise ValueError(f"Error for model class '{model_class.__name__}': the provided id_column_name, '{self.id_column_name}' does not correspond to a column for the model")
+            raise ValueError(
+                f"Error for model class '{model_class.__name__}': the provided id_column_name, '{self.id_column_name}' does not correspond to a column for the model"
+            )
 
     @classmethod
     def destination_name(cls: type[Self]) -> str:
@@ -71,7 +76,9 @@ class Model:
                 continue
 
             if attribute_name == "data":
-                raise KeyError(f"Column configuration error for model class '{cls.__name__}': a column is named 'data' but this is a reserved attribute name for models.  You'll have to choose (literally) anything else.  Sorry.")
+                raise KeyError(
+                    f"Column configuration error for model class '{cls.__name__}': a column is named 'data' but this is a reserved attribute name for models.  You'll have to choose (literally) anything else.  Sorry."
+                )
 
             column_configs[attribute_name] = column_config
 
@@ -143,21 +150,46 @@ class Model:
         return True if (self.id_column_name in self._data and self._data[self.id_column_name]) else False
 
     @property
-    def data(self: Self):
+    def data(self: Self) -> Dict[str, Any]:
         return self._data
 
     @data.setter
-    def data(self: Self, data) -> None:
+    def data(self: Self, data: Dict[str, Any]) -> None:
         self._data = {} if data is None else data
 
-    def save(self: Self, data=None, columns=None) -> bool:
+    def save(self: Self, data: Optional[Dict[str, Any]]=None, columns=None) -> bool:
         """
         Save data to the database and update the model!
 
-        Executes an update if the model corresponds to a record already, or an insert if not
+        Executes an update if the model corresponds to a record already, or an insert if not.
+
+        There are two supported flows.  One is to pass in a dictionary of data to save:
+
+        ```
+        model.save({
+            "some_column": "New Value",
+            "another_column": 5,
+        })
+        ```
+
+        And the other is to set new values on the columns attributes and then call save without data:
+
+        ```
+        model.some_column = "New Value"
+        model.another_column = 5
+        model.save()
+        ```
+
+        You cannot combine these methods.  If you set a value on a column attribute and also pass
+        in a dictionary of data to the save, then an exception will be raised.
         """
-        if not len(data):
+        if not len(data) and not len(self._next_data):
             raise ValueError("You have to pass in something to save!")
+        if len(data) and len(self._next_data):
+            raise ValueError("Save data was provided to the model class by both passing in a dictionary and setting new values on the column attributes.  This is not allowed.  You will have to use just one method of specifying save data.")
+        if not len(data):
+            data = {**self._next_data}
+
         save_columns = self.columns()
         if columns is not None:
             for column in columns.values():
@@ -196,7 +228,7 @@ class Model:
 
         return True
 
-    def is_changing(self: Self, key, data) -> bool:
+    def is_changing(self: Self, key: str, data: Dict[str, Any]) -> bool:
         """
         Returns True/False to denote if the given column is being modified by the active save operation
 
@@ -212,7 +244,7 @@ class Model:
 
         return self.__getattr__(key) != data[key]
 
-    def latest(self: Self, key, data):
+    def latest(self: Self, key: str, data: Dict[str, Any]) -> Any:
         """
         Returns the 'latest' value for a column during the save operation
 
@@ -224,9 +256,9 @@ class Model:
         """
         if key in data:
             return data[key]
-        return self.__getattr__(key)
+        return getattr(self, key)
 
-    def was_changed(self: Self, key) -> bool:
+    def was_changed(self: Self, key: str) -> bool:
         """Returns True/False to denote if a column was changed in the last save"""
         if self._previous_data is None:
             raise ValueError("was_changed was called before a save was finished - you must save something first")
@@ -243,13 +275,13 @@ class Model:
             return False
 
         columns = self.columns()
-        new_value = self.__getattr__(key)
+        new_value = self._data[key]
         old_value = self._previous_data[key]
         if key not in columns:
             return old_value != new_value
         return not columns[key].values_match(old_value, new_value)
 
-    def previous_value(self: Self, key):
+    def previous_value(self: Self, key: str):
         return self.get_transformed_from_data(key, self._previous_data, cache=False, check_providers=False, silent=True)
 
     def delete(self: Self, except_if_not_exists=True) -> bool:
@@ -268,7 +300,7 @@ class Model:
         self.post_delete()
         return True
 
-    def columns_pre_save(self: Self, data, columns):
+    def columns_pre_save(self: Self, data: Dict[str, Any], columns) -> Dict[str, Any]:
         """Uses the column information present in the model to make any necessary changes before saving"""
         for column in columns.values():
             data = column.pre_save(data, self)
@@ -278,7 +310,7 @@ class Model:
                 )
         return data
 
-    def pre_save(self, data):
+    def pre_save(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         A hook to extend so you can provide additional pre-save logic as needed
 
@@ -286,7 +318,7 @@ class Model:
         """
         return data
 
-    def columns_to_backend(self: Self, data, columns):
+    def columns_to_backend(self: Self, data: Dict[str, Any], columns) -> Any:
         backend_data = {**data}
         temporary_data = {}
         for column in columns.values():
@@ -304,10 +336,10 @@ class Model:
 
         return [backend_data, temporary_data]
 
-    def to_backend(self: Self, data, columns):
+    def to_backend(self: Self, data: Dict[str, Any], columns) -> Dict[str, Any]:
         return data
 
-    def columns_post_save(self: Self, data, id, columns):
+    def columns_post_save(self: Self, data: Dict[str, Any], id: Union[str, int], columns) -> Dict[str, Any]:
         """Uses the column information present in the model to make additional changes as needed after saving"""
         for column in columns.values():
             data = column.post_save(data, self, id)
@@ -317,12 +349,12 @@ class Model:
                 )
         return data
 
-    def columns_save_finished(self: Self, columns):
+    def columns_save_finished(self: Self, columns) -> None:
         """Calls the save_finished method on all of our columns"""
         for column in columns.values():
             column.save_finished(self)
 
-    def post_save(self: Self, data, id):
+    def post_save(self: Self, data: Dict[str, Any], id: Union[str, int]) -> None:
         """
         A hook to extend so you can provide additional pre-save logic as needed
 
@@ -331,7 +363,7 @@ class Model:
         """
         pass
 
-    def pre_save(self: Self, data):
+    def pre_save(self: Self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         A hook to extend so you can provide additional pre-save logic as needed
 
@@ -339,7 +371,7 @@ class Model:
         """
         return data
 
-    def save_finished(self: Self):
+    def save_finished(self: Self) -> None:
         """
         A hook to extend so you can provide additional logic after a save operation has fully completed
 
@@ -349,29 +381,29 @@ class Model:
         """
         pass
 
-    def columns_pre_delete(self: Self, columns):
+    def columns_pre_delete(self: Self, columns) -> None:
         """Uses the column information present in the model to make any necessary changes before deleting"""
         for column in columns.values():
             column.pre_delete(self)
 
-    def pre_delete(self: Self):
+    def pre_delete(self: Self) -> None:
         """
         A hook to extend so you can provide additional pre-delete logic as needed
         """
         pass
 
-    def columns_post_delete(self: Self, columns):
+    def columns_post_delete(self: Self, columns) -> None:
         """Uses the column information present in the model to make any necessary changes after deleting"""
         for column in columns.values():
             column.post_delete(self)
 
-    def post_delete(self: Self):
+    def post_delete(self: Self) -> None:
         """
         A hook to extend so you can provide additional post-delete logic as needed
         """
         pass
 
-    def where_for_request(self: Self, models, routing_data, authorization_data, input_output, overrides=None):
+    def where_for_request(self: Self, models: Self, routing_data: Dict[str, str], authorization_data: Dict[str, Any], input_output: Any, overrides=None) -> Self:
         """
         A hook to automatically apply filtering whenever the model makes an appearance in a get/update/list/search handler.
         """

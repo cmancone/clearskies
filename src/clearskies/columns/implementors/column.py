@@ -1,71 +1,14 @@
 from abc import ABC
 import re
-from ..autodoc.schema import String as AutoDocString
-from .. import input_requirements
 from .. import binding_config
 import inspect
 
 
 class Column(ABC):
     _auto_doc_class = AutoDocString
-    _is_unique = None
-    _is_required = None
-    configuration = None
-    common_configs = [
-        "input_requirements",
-        "class",
-        "is_writeable",
-        "is_temporary",
-        "on_change",
-        "default",
-        "setable",
-        "created_by_source_type",
-        "created_by_source_key",
-    ]
 
     def __init__(self, di):
         self.di = di
-
-    my_configs = []
-    required_configs = []
-
-    @property
-    def is_writeable(self):
-        is_writeable = self.config("is_writeable", True)
-        return True if (is_writeable or is_writeable is None) else False
-
-    @property
-    def is_readable(self):
-        return True
-
-    @property
-    def is_unique(self):
-        if self._is_unique is None:
-            requirements = self.config("input_requirements")
-            self._is_unique = False
-            for requirement in requirements:
-                if isinstance(requirement, input_requirements.Unique):
-                    self._is_unique = True
-        return self._is_unique
-
-    @property
-    def is_temporary(self):
-        return bool(self.config("is_temporary", silent=True))
-
-    @property
-    def is_required(self):
-        if self._is_required is None:
-            requirements = self.config("input_requirements")
-            self._is_required = False
-            for requirement in requirements:
-                if isinstance(requirement, input_requirements.Required):
-                    self._is_required = True
-        return self._is_required
-
-    def model_column_configurations(self):
-        nargs = len(inspect.getfullargspec(self.model_class.__init__).args) - 1
-        fake_model = self.model_class(*([""] * nargs))
-        return fake_model.all_columns()
 
     def configure(self, name, configuration, model_class):
         if not name:
@@ -75,94 +18,6 @@ class Column(ABC):
         self._check_configuration(configuration)
         configuration = self._finalize_configuration(configuration)
         self.configuration = configuration
-
-    def _check_configuration(self, configuration):
-        """Check the configuration and throw exceptions as needed"""
-        for key in self.required_configs:
-            if key not in configuration:
-                raise KeyError(
-                    f"Missing required configuration '{key}' for column '{self.name}' in '{self.model_class.__name__}'"
-                )
-        for key in configuration.keys():
-            if key not in self.common_configs and key not in self.my_configs and key not in self.required_configs:
-                raise KeyError(
-                    f"Configuration '{key}' not allowed for column '{self.name}' in '{self.model_class.__name__}'"
-                )
-        if "is_writeable" in configuration and type(configuration["is_writeable"]) != bool:
-            raise ValueError("'is_writeable' must be a boolean")
-        if configuration.get("on_change"):
-            self._check_actions(configuration.get("on_change"), "on_change")
-
-        self._check_created_by_source(configuration)
-
-    def _finalize_configuration(self, configuration):
-        """Make any changes to the configuration/fill in defaults"""
-        if not "input_requirements" in configuration:
-            configuration["input_requirements"] = []
-        return configuration
-
-    def _check_created_by_source(self, configuration):
-        source_type = configuration.get("created_by_source_type")
-        source_key = configuration.get("created_by_source_key")
-        if not source_type and not source_key:
-            return
-
-        error_prefix = f"Misconfiguration for column '{self.name}' in '{self.model_class.__name__}': "
-        if not source_type or not source_key:
-            raise ValueError(
-                f"{error_prefix} must provide both 'created_by_source_type' and 'created_by_source_key' but only one was provided."
-            )
-
-        if not isinstance(source_type, str):
-            raise ValueError(
-                f"{error_prefix} 'created_by_source_type' must be a string but is a '"
-                + source_type.__class__.__name__
-                + "'"
-            )
-        if not isinstance(source_key, str):
-            raise ValueError(
-                f"{error_prefix} 'created_by_source_key' must be a string but is a '"
-                + source_key.__class__.__name__
-                + "'"
-            )
-
-        allowed_types = ["authorization_data"]
-        if source_type not in allowed_types:
-            raise ValueError(
-                f"{error_prefix} 'created_by_source_type' must be one of '" + "', '".join(allowed_types) + "'"
-            )
-        if configuration.get("setable"):
-            raise ValueError(f"{error_prefix} you cannot set both 'setable' and 'created_by_source_type'")
-
-    def _check_actions(self, actions, trigger_name):
-        """Check that the given actions are actually understandable by the system"""
-        if type(actions) != list:
-            raise ValueError(
-                "The actions provided to a trigger should be a list of callables/binding configs, but something "
-                + f"else was provided for the '{trigger_name}' trigger in '{self.model_class.__name__}'"
-            )
-        for index, action in enumerate(actions):
-            # if it's callable we're good.  This includes functions, lambdas, callable objects,
-            # and classes that will be callable when instantiated
-            if callable(action):
-                continue
-            # the above pretty much covers everything.  The only thing that we support otherwise
-            # is a binding config containing a callable class.
-            if type(action) == binding_config.BindingConfig:
-                if callable(action.object_class):
-                    continue
-
-            raise ValueError(
-                f"Invalid action: action #{index+1} for trigger '{trigger_name} in '{self.model_class.__name__}'"
-            )
-
-    def config(self, key, silent=False):
-        if not key in self.configuration:
-            if silent:
-                return None
-            raise KeyError(f"column '{self.__class__.__name__}' does not have a configuration named '{key}'")
-
-        return self.configuration[key]
 
     def additional_write_columns(self, is_create=False):
         additional_write_columns = {}
@@ -350,24 +205,6 @@ class Column(ABC):
         A hook to automatically apply filtering whenever the column makes an appearance in a get/update/list/search handler.
         """
         return models
-
-    def validate_models_class(self, models_class, config_name="parent_models_class"):
-        if not hasattr(models_class, "model_class"):
-            if hasattr(models_class, "columns_configuration"):
-                raise ValueError(
-                    f"'{config_name}' in configuration for column '{self.name}' in model class "
-                    + f"'{self.model_class.__name__}' appears to be a Model class, but it should be a Models class"
-                )
-            else:
-                raise ValueError(
-                    f"'{config_name}' in configuration for column '{self.name}' should be a Models class, "
-                    + f"but it appears to be something unknown."
-                )
-
-    def camel_to_nice(self, string):
-        string = re.sub("(.)([A-Z][a-z]+)", r"\1 \2", string)
-        string = re.sub("([a-z0-9])([A-Z])", r"\1 \2", string).lower()
-        return string
 
     def documentation(self, name=None, example=None, value=None):
         return self._auto_doc_class(name if name is not None else self.name, example=example, value=value)

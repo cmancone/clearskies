@@ -1,5 +1,5 @@
-from .column_config import ColumnConfig
+from .. import column_config
 
 
-class String(ColumnConfig):
+class String(column_config.ColumnConfig):
     pass

@@ -12,7 +12,6 @@
 # from .in_the_past_at_least import InThePastAtLeast
 # from .in_the_past_at_most import InThePastAtMost
 # from .time_delta import TimeDelta
-from .validator import Validator
 
 
 # def after(other_column_name: str, allow_equal: bool = False):
@@ -73,5 +72,4 @@ __all__ = [
     # "required",
     # "TimeDelta",
     # "unique",
-    "Validator"
 ]

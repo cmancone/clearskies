@@ -44,7 +44,12 @@ class Configurable:
 
     def finalize_and_validate_configuration(self):
         my_class = self.__class__
-        for attribute_name in self.get_descriptor_config_map().values():
+        if not self._config:
+            self._config = {}
+
+        # now it's time to check for required values and provide defaults
+        attribute_names = self.get_descriptor_config_map().values()
+        for attribute_name in attribute_names:
             config = getattr(my_class, attribute_name)
             if config.default is not None and attribute_name not in self._config:
                 self._config[attribute_name] = config.default
@@ -53,3 +58,9 @@ class Configurable:
                 raise ValueError(
                     f"Missing required configuration property '{attribute_name}' for class '{my_class.__name__}'"
                 )
+
+        # loop through a second time to have the configs check their values
+        # we do this as a separate step because we want to make sure required and default
+        # values are specified before we have the configs do their validation.
+        for attribute_name in attribute_names:
+            getattr(my_class, attribute_name).finalize_and_validate_configuration(self)

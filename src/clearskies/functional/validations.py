@@ -1,20 +1,25 @@
 from typing import Any
-from .. import model
 import inspect
 
 
 def is_model(to_check: Any) -> bool:
     """
     Returns True/False to denote if the given value is a model instance
+
+    Uses ducktyping rather than checking the type, mostly to minimize the risk of circular imports
     """
-    return isinstance(to_check, model.Model)
+    if not hasattr(to_check, "destination_name"):
+        return False
+    if not hasattr(to_check, "column_configs"):
+        return False
+    return True
 
 
 def is_model_class(to_check: Any) -> bool:
     """
     Returns True/False to denote if the given value is a model class
     """
-    return inspect.isclass(to_check) and issubclass(to_check, model.Model)
+    return inspect.isclass(to_check) and is_model(to_check)
 
 
 def is_model_or_class(to_check: Any) -> bool:

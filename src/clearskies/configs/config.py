@@ -6,4 +6,7 @@ class Config:
     def _error_prefix(self, instance) -> str:
         name = instance._descriptor_to_name(self)
         class_name = instance.__class__.__name__
-        return f"Error with '{class_name}.{name}': "
+        return f"Error with '{class_name}.{name}':"
+
+    def finalize_and_validate_configuration(self, instance):
+        pass
