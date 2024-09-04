@@ -4,11 +4,12 @@ from ..autodoc.schema import Integer as AutoDocInteger
 from .. import model
 from ..column_types import JSON, DateTime
 import re
+from requests import Session
 
 
 class ApiBackend(Backend):
-    url = None
-    _requests = None
+    url: str
+    _requests: Session
     _auth = None
     _records = None
 
@@ -151,13 +152,9 @@ class ApiBackend(Backend):
             raise ValueError("Unexpected response from records request")
         return json["data"]
 
-    def _execute_request(self, url, method, json=None, headers=None, is_retry=False):
-        if json is None:
-            json = {}
-        if headers is None:
-            headers = {}
-
-        headers = {**headers, **self._auth.headers(retry_auth=is_retry)}
+    def _execute_request(self, url: str, method: str, json: dict[str,Any]= {}, headers: dict[str,Any]= {}, is_retry: bool = False):
+        if self._auth:
+            headers = {**headers, **self._auth.headers(retry_auth=is_retry)}
         # the requests library seems to build a slightly different request if you specify the json parameter,
         # even if it is null, and this causes trouble for some picky servers
         if not json:
@@ -175,10 +172,10 @@ class ApiBackend(Backend):
             )
 
         if not response.ok:
-            if self._auth.has_dynamic_credentials and not is_retry:
+            if self._auth and self._auth.has_dynamic_credentials and not is_retry:
                 return self._execute_request(url, method, json=json, headers=headers, is_retry=True)
             if not response.ok:
-                raise ValueError(f"Failed request.  Status code: {response.status_code}, message: {response.content}")
+                raise ValueError(f"Failed request.  Status code: {response.status_code}, message: {response.content!r}")
 
         return response
 
