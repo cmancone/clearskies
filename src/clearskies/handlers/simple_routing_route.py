@@ -179,6 +179,11 @@ class SimpleRoutingRoute:
 
             # do we have any resource paths to document?
             for path_name in self._resource_paths.values():
+                # we can get duplicates because of our hierarchical nature. This is mildly kludgy, but we'll go
+                # with it for now.
+                if len([True for parameter in doc.parameters if isinstance(parameter, URLPath) and parameter.definition.name == path_name]):
+                    continue
+
                 description = f"The {path_name} to show results for"
                 doc.add_parameter(URLPath(String(path_name), description=description, required=True))
 
