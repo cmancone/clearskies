@@ -60,7 +60,7 @@ class Callable(Base, SchemaHelper):
                     request_data=self.request_data(input_output, required=False),
                     authorization_data=input_output.get_authorization_data(),
                 )
-            if response:
+            if response is not None:
                 return self.success(input_output, response)
             return
         except InputError as e:
