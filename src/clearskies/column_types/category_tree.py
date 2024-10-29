@@ -180,7 +180,7 @@ class CategoryTree(BelongsTo):
         return data
 
     def force_tree_update(self, model):
-        self.update_tree_table(model, model.get(self.id_column_name), model.__getattr__(self.name))
+        self.update_tree_table(model, model.get(model.id_column_name), model.__getattr__(self.name))
 
     def update_tree_table(self, model, child_id, direct_parent_id):
         tree_models = self.tree_models
