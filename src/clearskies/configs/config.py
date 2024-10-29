@@ -9,4 +9,13 @@ class Config:
         return f"Error with '{class_name}.{name}':"
 
     def finalize_and_validate_configuration(self, instance):
-        pass
+        if self.default:
+            try:
+                instance._get_config(self)
+            except KeyError:
+                instance._set_config(self.default)
+
+        if self.required and not instance._get_config(self):
+            name = instance._descriptor_to_name(self)
+            prefix = self._error_prefix(instance)
+            raise ValueError("{prefix} {name} is a required configuration setting, but no value was set")

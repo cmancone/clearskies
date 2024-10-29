@@ -1,1 +1,5 @@
-from .column_config import ColumnConfig
+from clearskies.columns import has_many
+
+
+class Audit(has_many.HasMany):
+    pass

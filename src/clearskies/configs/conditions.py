@@ -1,6 +1,6 @@
 from typing import Callable, List, Union
 
-from . import config
+from clearskies.configs import config
 
 
 class Conditions(config.Config):

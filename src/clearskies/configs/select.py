@@ -1,6 +1,6 @@
 from typing import List
 
-from . import string
+from clearskies.configs import string
 
 
 class Select(string.String):
@@ -8,6 +8,9 @@ class Select(string.String):
         self.allowed_values = allowed_values
 
     def __set__(self, instance, value: str):
+        if value is None:
+            return
+
         if not isinstance(value, str):
             error_prefix = self._error_prefix(instance)
             raise TypeError(

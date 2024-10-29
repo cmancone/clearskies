@@ -9,20 +9,18 @@ from .string import String
 
 
 class BelongsToString(ColumnConfig):
+
     parent_models_class = configs.ModelClass(required=True)
-
     model_column_name = configs.String()
-
     readable_parent_columns = configs.ReadableModelColumns("parent_models_class")
-
     join_type = configs.select(["LEFT", "INNER", "RIGHT"], default="LEFT")
-
     where = configs.Conditions()
 
     @configs.parameters_to_properties
     def __init__(
         self,
         validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
+        is_readable: bool = True,
         is_writeable: bool = False,
         is_temporary: bool = False,
         on_change_pre_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
@@ -39,14 +37,4 @@ class BelongsToString(ColumnConfig):
         join_type: Optional[str] = None,
         where: Optional[Union[str, Callable, List[Union[str, Callable]]]] = None
     ):
-        super().__init__(
-            validators=validators,
-            is_writeable=is_writeable,
-            is_temporary=is_temporary,
-            on_change_pre_save=on_change_pre_save,
-            on_change_post_save=on_change_post_save,
-            on_change_save_finished=on_change_save_finished,
-            default=default,
-            created_by_source_type=created_by_source_type,
-            created_by_source_key=created_by_source_key,
-        )
+        pass

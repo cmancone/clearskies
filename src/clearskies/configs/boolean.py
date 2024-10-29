@@ -1,4 +1,4 @@
-from . import config
+from clearskies.configs import config
 
 
 class Boolean(config.Config):

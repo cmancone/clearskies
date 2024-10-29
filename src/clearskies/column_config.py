@@ -1,9 +1,9 @@
 from typing import Any, Callable, List, Optional, Union
 
 from clearskies.bindings import Action as BindingAction
-from . import configs
-from .action import Action
-from .validator import Validator
+from clearskies import configs
+from clearskies.action import Action
+from clearskies.validator import Validator
 from clearskies.bindings import Validator as BindingValidator
 
 
@@ -21,6 +21,7 @@ class ColumnConfig(configs.Configurable):
     all instances of that model.
     """
     validators = configs.Validators(default=[])
+    is_readable = configs.Boolean(default=True)
     is_writeable = configs.Boolean(default=False)
     is_temporary = configs.Boolean(default=False)
     on_change_pre_save = configs.Actions(default=[])
@@ -31,9 +32,11 @@ class ColumnConfig(configs.Configurable):
     created_by_source_key = configs.String(default="")
     created_by_source_type = configs.Select(["authorization_data"])
 
+    @configs.parameters_to_properties
     def __init__(
         self,
         validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
+        is_readable: bool = True,
         is_writeable: bool = False,
         is_temporary: bool = False,
         on_change_pre_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
@@ -46,10 +49,7 @@ class ColumnConfig(configs.Configurable):
         created_by_source_type: str = "",
         created_by_source_key: str = "",
     ):
-        self.validators = validators
-        self.is_writeable = is_writeable
-        self.is_temporary = is_temporary
-        self.finalize_and_validate_configuration()
+        pass
 
     def __get__(self, instance, parent) -> str:
         if not instance:

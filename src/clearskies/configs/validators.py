@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from . import config
+from clearskies.configs import config
 from clearskies.validator import Validator
 from clearskies.bindings import Validator as BindingValidator
 

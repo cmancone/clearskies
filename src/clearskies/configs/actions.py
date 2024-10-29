@@ -1,7 +1,7 @@
 from typing import Callable, List, Union
 
-from . import config
-from .. import action
+from clearskies.configs import config
+from clearskies import action
 from clearskies.bindings import Action as BindingAction
 
 

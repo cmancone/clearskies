@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from . import config
+from clearskies.configs import config
 
 
 class Configurable:
