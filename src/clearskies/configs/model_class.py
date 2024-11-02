@@ -1,3 +1,4 @@
+import inspect
 from clearskies.functional import validations
 from clearskies.configs import config
 
@@ -16,12 +17,14 @@ class ModelClass(config.Config):
         except TypeError as e:
             error_prefix = self._error_prefix(instance)
             raise TypeError(
-                f"{error_prefix}.  {str(e)}"
+                f"{error_prefix} {str(e)}"
             )
 
         # reference or model class?
         if validations.is_model_class_reference(value):
-            instance._set_config(self, value().get_model_class())
+            if inspect.isclass(value):
+                value = value()
+            instance._set_config(self, value.get_model_class())
         else:
             instance._set_config(self, value)
 

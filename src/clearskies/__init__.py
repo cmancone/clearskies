@@ -1,6 +1,3 @@
-import wrapt
-import inspect
-
 from .column_config import ColumnConfig
 
 from . import (
@@ -20,6 +17,9 @@ from . import (
     # security_headers,
 )
 
+from . import parameters_to_properties as parameters_to_properties_module
+parameters_to_properties = parameters_to_properties_module.parameters_to_properties
+
 from .action import Action
 from .model import Model
 from .validator import Validator
@@ -29,21 +29,6 @@ from .validator import Validator
 # from .models import Models
 # from .model import Model
 # from .application import Application
-
-@wrapt.decorator
-def parameters_to_properties(wrapped, instance, args, kwargs):
-    if not instance:
-        raise ValueError("The parameters_to_properties decorator only works for methods in classes, not plain functions")
-
-    if args:
-        wrapped_args = inspect.getfullargspec(wrapped)
-        for (key, value) in zip(wrapped_args.args[1:], args):
-            setattr(instance, key, value)
-
-    for (key, value) in kwargs.items():
-        setattr(instance, key, value)
-
-    wrapped(*args, **kwargs)
 
 __all__ = [
     "Action",

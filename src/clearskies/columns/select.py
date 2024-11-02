@@ -1,24 +1,18 @@
-from typing import Callable, List, Optional, Union
+from typing import List
 
 
-from clearskies import configs, parameters_to_properties, ColumnConfig
-from clearskies.bindings import Action as BindingAction
-from clearskies.actions import Action
-from clearskies.bindings import Validator as BindingValidator
-from clearskies.columns.validators import Validator
+from clearskies import configs, parameters_to_properties
+from clearskies.columns import String
 
 
-class BelongsTo(ColumnConfig):
-    parent_model_class = configs.ModelClass(required=True)
-    model_column_name = configs.String()
-    readable_parent_columns = configs.ReadableModelColumns("parent_model_class")
-    join_type = configs.select(["LEFT", "INNER", "RIGHT"], default="LEFT")
-    where = configs.Conditions()
+class Select(String):
+    """ The allowed values. """
+    allowed_values = clearskies.configs.StringList(default=True)
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        parent_model_class,
+        allowed_values: List[str] = [],
         validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
         is_readable: bool = True,
         is_writeable: bool = True,

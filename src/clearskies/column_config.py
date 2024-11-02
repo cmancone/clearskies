@@ -1,7 +1,7 @@
 from typing import Any, Callable, List, Optional, Union
 
 from clearskies.bindings import Action as BindingAction
-from clearskies import configs
+from clearskies import configs, parameters_to_properties
 from clearskies.action import Action
 from clearskies.validator import Validator
 from clearskies.bindings import Validator as BindingValidator
@@ -22,7 +22,7 @@ class ColumnConfig(configs.Configurable):
     """
     validators = configs.Validators(default=[])
     is_readable = configs.Boolean(default=True)
-    is_writeable = configs.Boolean(default=False)
+    is_writeable = configs.Boolean(default=True)
     is_temporary = configs.Boolean(default=False)
     on_change_pre_save = configs.Actions(default=[])
     on_change_post_save = configs.Actions(default=[])
@@ -32,7 +32,7 @@ class ColumnConfig(configs.Configurable):
     created_by_source_key = configs.String(default="")
     created_by_source_type = configs.Select(["authorization_data"])
 
-    @configs.parameters_to_properties
+    @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
@@ -50,6 +50,18 @@ class ColumnConfig(configs.Configurable):
         created_by_source_key: str = "",
     ):
         pass
+
+    def finalize_configuration(self, model_class) -> None:
+        """
+        Finalize and check the configuration.
+
+        This is an external trigger called by the model class when the model class is ready.
+        The reason it exists here instead of in the constructor is because some columns are tightly
+        connected to the model class, and can't validate configuration until they know what the model is.
+        Therefore, we need the model involved, and the only way for a property to know what class it is
+        in is if the parent class checks in (which is what happens here).
+        """
+        self.finalize_and_validate_configuration()
 
     def __get__(self, instance, parent) -> str:
         if not instance:

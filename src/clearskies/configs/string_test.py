@@ -32,7 +32,6 @@ class StringTest(unittest.TestCase):
         assert has_configs.my_string == "asdf"
 
     def test_required(self):
-        has_configs=HasConfigs()
-        with self.assertRaises(Exception) as context:
-            has_configs = HasConfigs(my_string="")
-        assert "Error with 'HasConfigs.my_string': attempt to set a value of type 'int' to a string parameter" == str(context.exception)
+        with self.assertRaises(ValueError) as context:
+            has_configs=HasConfigsRequired()
+        assert "Missing required configuration property 'my_string' for class 'HasConfigsRequired'" == str(context.exception)

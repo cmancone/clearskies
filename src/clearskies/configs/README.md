@@ -99,3 +99,7 @@ context = clearskies.contexts.cli(
     }
 )
 ```
+
+The primary example of classes that implement this pattern are the column config classes (`clearskies.columns.*`, but excluding `clearskies.columns.implementors`).  In this case the config and implementation are completely separated, so the configuration is set in the constructor instead of a separate `configure` method.
+
+Validators, actions, and handlers also use the above config pattern, but those use the `Binding` pattern and so make use of a `configure` method.

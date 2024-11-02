@@ -1,24 +1,15 @@
-from typing import Callable, List, Optional, Union
+from clearskies import configs, parameters_to_properties
+from clearskies.columns import String
 
 
-from clearskies import configs, parameters_to_properties, ColumnConfig
-from clearskies.bindings import Action as BindingAction
-from clearskies.actions import Action
-from clearskies.bindings import Validator as BindingValidator
-from clearskies.columns.validators import Validator
-
-
-class BelongsTo(ColumnConfig):
-    parent_model_class = configs.ModelClass(required=True)
-    model_column_name = configs.String()
-    readable_parent_columns = configs.ReadableModelColumns("parent_model_class")
-    join_type = configs.select(["LEFT", "INNER", "RIGHT"], default="LEFT")
-    where = configs.Conditions()
+class Phone(String):
+    """ Whether or not to allow non-USA numbers. """
+    usa_only = clearskies.configs.Boolean(default=True)
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        parent_model_class,
+        usa_only: bool = True,
         validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
         is_readable: bool = True,
         is_writeable: bool = True,

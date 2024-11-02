@@ -37,7 +37,7 @@ class Model:
             raise ValueError(
                 f"Error for model class '{model_class.__name__}': no value was specified for the 'id_column_name' property.  This is a required property."
             )
-        column_configs = self.__class__.column_configs()
+        column_configs = self.__class__.get_column_configs()
         if self.id_column_name not in column_configs:
             raise ValueError(
                 f"Error for model class '{model_class.__name__}': the provided id_column_name, '{self.id_column_name}' does not correspond to a column for the model"
@@ -64,7 +64,7 @@ class Model:
         return f"{singular}s"
 
     @classmethod
-    def column_configs(cls: type[Self]) -> Dict[str, column_config.ColumnConfig]:
+    def get_column_configs(cls: type[Self]) -> Dict[str, column_config.ColumnConfig]:
         """Returns an ordered dictionary with the configuration for the columns"""
         if cls._column_configs:
             return cls._column_configs
@@ -75,11 +75,7 @@ class Model:
             if not isinstance(attribute, column_config.ColumnConfig):
                 continue
 
-            if attribute_name == "data":
-                raise KeyError(
-                    f"Column configuration error for model class '{cls.__name__}': a column is named 'data' but this is a reserved attribute name for models.  You'll have to choose (literally) anything else.  Sorry."
-                )
-
+            column_config.finalize_configuration(cls)
             column_configs[attribute_name] = column_config
 
         cls._column_configs = column_configs
@@ -145,16 +141,13 @@ class Model:
             self._transformed[column_name] = value
         return value
 
-    @property
-    def exists(self: Self) -> bool:
+    def __bool__(self: Self) -> bool:
         return True if (self.id_column_name in self._data and self._data[self.id_column_name]) else False
 
-    @property
-    def data(self: Self) -> Dict[str, Any]:
+    def get_raw_data(self: Self) -> Dict[str, Any]:
         return self._data
 
-    @data.setter
-    def data(self: Self, data: Dict[str, Any]) -> None:
+    def set_raw_data(self: Self, data: Dict[str, Any]) -> None
         self._data = {} if data is None else data
 
     def save(self: Self, data: Optional[Dict[str, Any]]=None, columns=None) -> bool:

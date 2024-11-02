@@ -1,24 +1,38 @@
 from typing import Callable, List, Optional, Union
 
 
-from clearskies import configs, parameters_to_properties, ColumnConfig
+from clearskies import configs, parameters_to_properties
+from clearskies.columns import ManyToMany
 from clearskies.bindings import Action as BindingAction
 from clearskies.actions import Action
 from clearskies.bindings import Validator as BindingValidator
 from clearskies.columns.validators import Validator
 
 
-class BelongsTo(ColumnConfig):
-    parent_model_class = configs.ModelClass(required=True)
-    model_column_name = configs.String()
-    readable_parent_columns = configs.ReadableModelColumns("parent_model_class")
-    join_type = configs.select(["LEFT", "INNER", "RIGHT"], default="LEFT")
-    where = configs.Conditions()
+class ManyToManyWithData(ManyToMany):
+    """ The list of columns in the pivot model that can be set when saving data. """
+    setable_columns = configs.ReadableModelColumns("pivot_model_class")
+
+    """
+    Complicated, but probably should be false.
+
+    Sometimes you have to provide data from the related model class in your save data so that
+    clearskies can find the right record.  Normally, this lookup column is not persisted to the
+    pivot table, because it is assumed to only exist in the related table.  In some cases though,
+    you may want it in both, in which case you can set this to true.
+    """
+    persist_unique_lookup_column_to_pivot_table = configs.Boolean(default=False)
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        parent_model_class,
+        related_model_class,
+        pivot_model_class,
+        own_column_name_in_pivot: str = "",
+        foreign_column_name_in_pivot: str = "",
+        readable_related_columns: List[str] = [],
+        setable_columns: List[str] = [],
+        persist_unique_lookup_column_to_pivot_table: bool = False,
         validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
         is_readable: bool = True,
         is_writeable: bool = True,
