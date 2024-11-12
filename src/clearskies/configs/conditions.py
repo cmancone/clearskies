@@ -1,10 +1,9 @@
-from typing import Callable, List, Union
-
+from clearskies import typing
 from clearskies.configs import config
 
 
 class Conditions(config.Config):
-    def __set__(self, instance, value: Union[str, Callable, List[Union[str, Callable]]]):
+    def __set__(self, instance, value: typing.condition | list[typing.condition]):
         if not isinstance(value, list):
             value = [value]
 
@@ -19,7 +18,7 @@ class Conditions(config.Config):
 
         instance._set_config(self, value)
 
-    def __get__(self, instance, parent) -> List[Union[str, Callable]]:
+    def __get__(self, instance, parent) -> list[typing.condition]:
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)

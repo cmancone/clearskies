@@ -65,9 +65,15 @@ import inspect
 from .actions import Actions
 from .any import Any
 from .boolean import Boolean
+from .boolean_or_callable import BooleanOrCallable
 from .config import Config
 from .configurable import Configurable
+from .datetime import Datetime
+from .datetime_or_callable import DatetimeOrCallable
+from .float import Float
+from .float_or_callable import FloatOrCallable
 from .integer import Integer
+from .integer_or_callable import IntegerOrCallable
 from .model_class import ModelClass
 from .model_column import ModelColumn
 from .model_columns import ModelColumns
@@ -79,6 +85,8 @@ from .select import Select
 from .select_list import SelectList
 from .string import String
 from .string_list import StringList
+from .string_list_or_callable import StringListOrCallable
+from .string_or_callable import StringOrCallable
 from .validators import Validators
 from .writeable_model_column import WriteableModelColumn
 from .writeable_model_columns import WriteableModelColumns
@@ -88,8 +96,11 @@ __all__ = [
     "Actions",
     "Any",
     "Boolean",
+    "BooleanOrCallable",
     "Config",
     "Configurable",
+    "Integer",
+    "IntegerOrCallable",
     "ModelClass",
     "ModelColumn",
     "ModelColumns",
@@ -101,6 +112,7 @@ __all__ = [
     "SelectList",
     "String",
     "StringList",
+    "StringOrCallable",
     "Validators",
     "WriteableModelColumn",
     "WriteableModelColumns",

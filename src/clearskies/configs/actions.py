@@ -1,8 +1,5 @@
-from typing import Callable, List, Union
-
+import clearskies import typing
 from clearskies.configs import config
-from clearskies import action
-from clearskies.bindings import Action as BindingAction
 
 
 class Actions(config.Config):
@@ -18,7 +15,7 @@ class Actions(config.Config):
     """
 
     def __set__(
-        self, instance, value: Union[Callable, action.Action, BindingAction, List[Union[Callable, action.Action, BindingAction]]]
+        self, instance, value: typing.action | list[typing.action]
     ):
         if not isinstance(value, list):
             value = [value]
@@ -34,7 +31,7 @@ class Actions(config.Config):
 
         instance._set_config(self, [*value])
 
-    def __get__(self, instance, parent) -> List[Union[Callable, action.Action, BindingAction]]:
+    def __get__(self, instance, parent) -> list[typing.action]:
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)

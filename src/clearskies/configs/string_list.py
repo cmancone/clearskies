@@ -8,7 +8,7 @@ class StringList(config.Config):
     This is different than SelectList, which also accepts a list of strings, but
     valdiates that all of those values match against an allow list.
     """
-    def __set__(self, instance, value: List[str]):
+    def __set__(self, instance, value: list[str]):
         if value is None:
             return
 
@@ -25,7 +25,7 @@ class StringList(config.Config):
                 )
         instance._set_config(self, value)
 
-    def __get__(self, instance, parent) -> List[str]:
+    def __get__(self, instance, parent) -> list[str]:
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)

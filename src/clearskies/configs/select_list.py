@@ -1,5 +1,3 @@
-from typing import List
-
 from clearskies.configs import string
 
 
@@ -12,12 +10,12 @@ class SelectList(string.String):
 
     This is different than StringList, which also accepts a list of any strings.
     """
-    def __init__(self, allowed_values: List[str], required=False, default=None):
+    def __init__(self, allowed_values: list[str], required=False, default=None):
         self.allowed_values = allowed_values
         self.required = required
         self.default = default
 
-    def __set__(self, instance, value: List[str]):
+    def __set__(self, instance, value: list[str]):
         if value is None:
             return
 

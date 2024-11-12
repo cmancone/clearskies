@@ -1,5 +1,12 @@
+"""
+Notes:
+Audit: Needs a way to fill in the actual model class on some of the configs
+Belongs to: Hook up the parent_reference column (or can we have a generic one for all the relationships?)
+"""
+
 from .audit import Audit
 from .belongs_to import BelongsTo
+from .belongs_to_self import BelongsToSelf
 from .boolean import Boolean
 from .category_tree import CategoryTree
 from .columns import Columns
@@ -12,6 +19,7 @@ from .datetime import Datetime
 from .email import Email
 from .float import Float
 from .has_many import HasMany
+from .has_many_self import HasManySelf
 from .has_one import HasOne
 from .integer import Integer
 from .json import Json
@@ -20,10 +28,13 @@ from .many_to_many_with_data import ManyToManyWithData
 from .phone import Phone
 from .select import Select
 from .string import String
+from .timestamp import Timestamp
+from .uuid import Uuid
 
 __all__ = [
     "Audit",
     "BelongsTo",
+    "BelongsToSelf",
     "Boolean",
     "CategoryTree",
     "Columns",
@@ -36,6 +47,7 @@ __all__ = [
     "Email",
     "Float",
     "HasMany",
+    "HasManySelf",
     "HasOne",
     "Integer",
     "Json",
@@ -44,4 +56,6 @@ __all__ = [
     "Phone",
     "Select",
     "String",
+    "Timestamp",
+    "Uuid",
 ]

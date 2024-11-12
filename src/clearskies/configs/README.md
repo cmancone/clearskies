@@ -19,9 +19,9 @@ However, our example above is missing one important thing: actually setting thes
 
 ```
 configruable_thing = ConfigurableThing()
-my_name = "Jane Doe"
-is_required = True
-some_option = "option 2"
+configruable_thing.my_name = "Jane Doe"
+configruable_thing.is_required = True
+configruable_thing.some_option = "option 2"
 ```
 
 Typically though you need a well defined way to set these values **AND** the class must call `super().finalize_and_validate_configuration()` once the configuration is set.  This is because many of the validations are only possible after all the configs are set, so the configurable class treats the process of setting the configuration as a one-time, monolithic process: you set the configs, validate everything, and then use the config.  It's *NOT* the goal to continually change the configuration for an object after creation.  The simplest way to do this would be in the constructor:

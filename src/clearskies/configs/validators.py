@@ -1,5 +1,4 @@
-from typing import List, Union
-
+import clearskies import typing
 from clearskies.configs import config
 from clearskies.validator import Validator
 from clearskies.bindings import Validator as BindingValidator
@@ -19,7 +18,7 @@ class Validators(config.Config):
     def __set__(
         self,
         instance,
-        value: Union[Validator, BindingValidator, List[Union[Validator, BindingValidator]]],
+        value: typing.validator | list[typing.validator],
     ):
         if not isinstance(value, list):
             value = [value]
@@ -35,7 +34,7 @@ class Validators(config.Config):
 
         instance._set_config(self, [*value])
 
-    def __get__(self, instance, parent) -> List[Union[Validator, BindingValidator]]:
+    def __get__(self, instance, parent) -> list[typing.validator]:
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)

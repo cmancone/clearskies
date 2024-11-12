@@ -1,11 +1,11 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from clearskies.configs import config
 
 
 class Configurable:
-    _config: Optional[Dict[str, Any]] = None
-    _descriptor_config_map: Optional[Dict[int, str]] = None
+    _config: dict[str, Any] | None = None
+    _descriptor_config_map: dict[int, str] | None = None
 
     def _set_config(self, descriptor, value):
         if not self._config:

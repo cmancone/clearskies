@@ -1,15 +1,26 @@
-from typing import Callable, List, Optional, Union
-
-
+import clearskies.typing
 from clearskies import configs, parameters_to_properties
-from clearskies.bindings import Action as BindingAction
-from clearskies.actions import Action
-from clearskies.bindings import Validator as BindingValidator
-from clearskies.columns.validators import Validator
 from clearskies import column_config
 
 
 class HasMany(column_config.ColumnConfig):
+    """
+    A column to manage a "has many" relationship.
+
+    In order to manage a has-many relationship, the child model needs a column that stores the
+    id of the parent record it belongs to.  Also remember that the reverse of a has-many relationship
+    is a belongs-to relationship the parent has many children, the child belongs to a parent.
+
+    There's an automatic standard where the name of the column in thie child table that stores the
+    parent id is made by converting the parent model class name into snake case and then appending
+    `_id`.  For instance, if the parent model is called the `DooHicky` class, the child model is
+    expected to have a column named `doo_hicky_id`.  If you use a different column name for the
+    id in your child model, then just update the `foreign_column_name` proeprty on the `HasMany`
+    column accordingly.
+
+    See the BelongsTo class for additional background and usage examples.
+    """
+
     """
     HasMany columns are not currently writeable.
     """
@@ -34,29 +45,16 @@ class HasMany(column_config.ColumnConfig):
     """ Additional queries to add to searches on the child table. """
     where = configs.Conditions()
 
-    """ The name of the id column in the model class we belong to (automatically set) """
-    parent_id_column_name = configs.ModelColumn()
-
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         child_model_class,
-        foreign_column_name: Optional[str] = None,
-        readable_child_columns: Optional[List[str]] = []
-        validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
+        foreign_column_name: str | None = None,
+        readable_child_columns: list[str] = [],
+        where: clearskies.typing.condition | list[clearskies.typing.condition] = [],
         is_readable: bool = True,
-        is_temporary: bool = False,
-        on_change_pre_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
-        on_change_post_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
-        on_change_save_finished: Union[
-            Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]
-        ] = [],
-        default: Str = None,
-        created_by_source_type: str = '',
-        created_by_source_key: str = '',
-        model_column_name: Optional[str] = None,
-        readable_parent_columns: Optional[list[str]] = None,
-        join_type: Optional[str] = None,
-        where: Optional[Union[str, Callable, List[Union[str, Callable]]]] = None
+        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
     ):
         pass

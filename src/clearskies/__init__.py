@@ -1,4 +1,5 @@
 from .column_config import ColumnConfig
+from . import typing
 
 from . import (
     # authentication,
@@ -39,6 +40,7 @@ __all__ = [
     "functional",
     "Model",
     "parameters_to_properties",
+    "typing",
     "Validator",
     # "authentication",
     # "autodoc",
