@@ -1,3 +1,4 @@
+from typing import Callable
 import datetime
 
 from clearskies.configs import config

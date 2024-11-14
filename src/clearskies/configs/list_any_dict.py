@@ -9,13 +9,13 @@ class ListAnyDict(config.Config):
             raise TypeError(
                 f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' to a parameter that requries a list."
             )
-        for (index, list_item) in enumerate(value):
+        for index, list_item in enumerate(value):
             if not isinstance(list_item, dict):
                 error_prefix = self._error_prefix(instance)
                 raise TypeError(
                     f"{error_prefix} I was expecting a list of dictionaries, but item # {index+1} has type '{list_item.__class__.__name__}."
                 )
-            for (key, val) in list_item.items():
+            for key, val in list_item.items():
                 if not isinstance(key, str):
                     error_prefix = self._error_prefix(instance)
                     raise TypeError(

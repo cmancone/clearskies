@@ -2,8 +2,9 @@ import datetime
 from typing import Optional
 
 import clearskies.typing
-from clearskies.columns import Datetime
+from clearskies.columns.datetime import Datetime
 from clearskies import configs, parameters_to_properties
+
 
 class Created(Datetime):
     """
@@ -46,8 +47,8 @@ class Created(Datetime):
         backend_default: str = "0000-00-00 00:00:00",
         is_readable: bool = True,
         is_temporary: bool = False,
-        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
         pass

@@ -1,4 +1,4 @@
-import clearskies import typing
+from clearskies import typing
 from clearskies.configs import config
 
 
@@ -14,13 +14,11 @@ class Actions(config.Config):
     Incoming values are normalized to a list so that a list always comes out even if a non-list is provided.
     """
 
-    def __set__(
-        self, instance, value: typing.action | list[typing.action]
-    ):
+    def __set__(self, instance, value: typing.action | list[typing.action]):
         if not isinstance(value, list):
             value = [value]
 
-        for (index, item) in enumerate(value):
+        for index, item in enumerate(value):
             if callable(item) or isinstance(item, action.Action) or isinstance(item, BindingAction):
                 continue
 

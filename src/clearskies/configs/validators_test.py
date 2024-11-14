@@ -5,9 +5,11 @@ from clearskies import configs, parameters_to_properties
 from .. import validator
 from clearskies.bindings import Validator as BindingValidator
 
+
 class FakeValidator(validator.Validator):
     def check(self, data):
         pass
+
 
 class HasConfigs(configs.Configurable):
     validators = configs.Validators()
@@ -15,6 +17,7 @@ class HasConfigs(configs.Configurable):
     @parameters_to_properties
     def __init__(self, validators):
         self.finalize_and_validate_configuration()
+
 
 class ValidatorsTest(unittest.TestCase):
     def test_allow(self):
@@ -31,4 +34,7 @@ class ValidatorsTest(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             fake_validator = FakeValidator()
             has_configs = HasConfigs([fake_validator, "sup"])
-        assert "Error with 'HasConfigs.validators': attempt to set a value of type 'str' for item #2 when a Validator or BindingValidator is required" == str(context.exception)
+        assert (
+            "Error with 'HasConfigs.validators': attempt to set a value of type 'str' for item #2 when a Validator or BindingValidator is required"
+            == str(context.exception)
+        )

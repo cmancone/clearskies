@@ -7,7 +7,7 @@ class ModelColumns(select_list.SelectList):
         self.default = default
         self.model_column_config_name = model_column_config_name
 
-    def __set__(self, instance, value: List[str]):
+    def __set__(self, instance, value: list[str]):
         if value is None:
             return
 
@@ -47,5 +47,7 @@ class ModelColumns(select_list.SelectList):
                 error_prefix = self._error_prefix(instance)
                 my_description = self.my_description()
                 raise ValueError(
-                    f"{error_prefix} attempt to set a value of '{value}' but this is not a {my_description} in the specified model class, '{model_class.__name__}.  Expected values are: '" + "', '".join(allowed_columns) + "'"
+                    f"{error_prefix} attempt to set a value of '{value}' but this is not a {my_description} in the specified model class, '{model_class.__name__}.  Expected values are: '"
+                    + "', '".join(allowed_columns)
+                    + "'"
                 )

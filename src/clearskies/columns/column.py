@@ -4,7 +4,7 @@ import clearskies.typing
 from clearskies import configs, parameters_to_properties
 
 
-class ColumnConfig(configs.Configurable):
+class Column(configs.Configurable):
     """
     The base column config.
 
@@ -155,10 +155,10 @@ class ColumnConfig(configs.Configurable):
         is_readable: bool = True,
         is_writeable: bool = True,
         is_temporary: bool = False,
-        validators: clearskies.typing.validators | list[clearskies.typing.validators] = [],
-        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        validators: clearskies.typing.validator | list[clearskies.typing.validator] = [],
+        on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
         created_by_source_type: str = "",
         created_by_source_key: str = "",
     ):
@@ -191,7 +191,13 @@ class ColumnConfig(configs.Configurable):
         super().finalize_and_validate_configuration()
 
         if self.setable is not None and self.created_by_source_type:
-            raise ValueError("You attempted to set both 'setable' and 'created_by_source_type', but these configurations are mutually exclusive.  You can only set one for a given column")
+            raise ValueError(
+                "You attempted to set both 'setable' and 'created_by_source_type', but these configurations are mutually exclusive.  You can only set one for a given column"
+            )
 
-        if (self.created_by_source_type and not self.created_by_source_key) or (not self.created_by_source_type and self.created_by_source_key):
-            raise ValueError("You only set one of 'created_by_source_type' and 'created_by_source_key'.  You have to either set both of them (which enables the 'created_by' feature of the column) or you must set neither of them.")
+        if (self.created_by_source_type and not self.created_by_source_key) or (
+            not self.created_by_source_type and self.created_by_source_key
+        ):
+            raise ValueError(
+                "You only set one of 'created_by_source_type' and 'created_by_source_key'.  You have to either set both of them (which enables the 'created_by' feature of the column) or you must set neither of them."
+            )

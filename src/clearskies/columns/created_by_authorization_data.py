@@ -42,8 +42,8 @@ class CreatedByAuthorizationData(Column):
         strict: bool = True,
         is_readable: bool = True,
         is_temporary: bool = False,
-        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
         pass

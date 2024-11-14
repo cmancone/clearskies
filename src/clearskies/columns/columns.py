@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from collections.abc import Sequence
 import inspect
-from .binding_config import BindingConfig
 
 
 class Columns:
@@ -95,8 +94,8 @@ class Columns:
         """
         if inspect.isclass(requirement):
             return [requirement, [], {}]
-        elif isinstance(requirement, BindingConfig):
-            return [requirement.object_class, requirement.args, requirement.kwargs]
+        #elif isinstance(requirement, BindingConfig):
+            #return [requirement.object_class, requirement.args, requirement.kwargs]
         elif isinstance(requirement, Sequence) and type(requirement) != str:
             if not inspect.isclass(requirement[0]):
                 raise ValueError(

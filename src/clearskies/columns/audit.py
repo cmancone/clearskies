@@ -1,6 +1,6 @@
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
-from clearskies.columns import HasMany
+from clearskies.columns.has_many import HasMany
 
 
 class Audit(HasMany):
@@ -48,7 +48,9 @@ class Audit(HasMany):
     mask_columns = configs.ModelColumns()
 
     """ Columns from the child table that should be included when converting this column to JSON. """
-    readable_child_columns = configs.ReadableModelColumns("audit_model_class", default=["resource_id", "action", "data", "created_at"])
+    readable_child_columns = configs.ReadableModelColumns(
+        "audit_model_class", default=["resource_id", "action", "data", "created_at"]
+    )
 
     """
     Since this column is always populated automatically, it is never directly writeable.
@@ -63,12 +65,12 @@ class Audit(HasMany):
         mask_columns: list[str] = [],
         foreign_column_name: str | None = None,
         readable_child_columns: list[str] = [],
-        where: clearskies.typing.condition | list[clearskies.typing.condition] = None
+        where: clearskies.typing.condition | list[clearskies.typing.condition] = None,
         default: str | None = None,
         is_readable: bool = True,
         is_temporary: bool = False,
-        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
         self.child_model_class = self.audit_model_class

@@ -1,4 +1,4 @@
-import clearskies import typing
+from clearskies import typing
 from clearskies.configs import config
 from clearskies.validator import Validator
 from clearskies.bindings import Validator as BindingValidator
@@ -23,7 +23,7 @@ class Validators(config.Config):
         if not isinstance(value, list):
             value = [value]
 
-        for (index, item) in enumerate(value):
+        for index, item in enumerate(value):
             if isinstance(item, Validator) or isinstance(item, BindingValidator):
                 continue
 

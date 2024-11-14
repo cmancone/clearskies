@@ -1,5 +1,3 @@
-from typing import list
-
 from clearskies.configs import string
 
 

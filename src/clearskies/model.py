@@ -10,12 +10,12 @@ try:
 except ModuleNotFoundError:
     from typing import Self
 
-from . import column_config
+from clearskies.columns.column import Column
 
 
 class Model:
     _columns = None
-    _column_configs: Dict[str, column_config.ColumnConfig] = {}
+    _column_configs: Dict[str, Column] = {}
     _previous_data: Dict[str, Any] = {}
     _data: Dict[str, Any] = {}
     _next_data: Dict[str, Any] = None
@@ -64,15 +64,15 @@ class Model:
         return f"{singular}s"
 
     @classmethod
-    def get_column_configs(cls: type[Self]) -> Dict[str, column_config.ColumnConfig]:
+    def get_column_configs(cls: type[Self]) -> Dict[str, Column]:
         """Returns an ordered dictionary with the configuration for the columns"""
         if cls._column_configs:
             return cls._column_configs
 
-        column_configs: Dict[str, column_config.ColumnConfig] = {}
+        column_configs: Dict[str, Column] = {}
         for attribute_name in dir(cls):
             attribute = getattr(cls, attribute_name)
-            if not isinstance(attribute, column_config.ColumnConfig):
+            if not isinstance(attribute, Column):
                 continue
 
             column_config.finalize_configuration(cls, attribute_name)
@@ -147,10 +147,10 @@ class Model:
     def get_raw_data(self: Self) -> Dict[str, Any]:
         return self._data
 
-    def set_raw_data(self: Self, data: Dict[str, Any]) -> None
+    def set_raw_data(self: Self, data: Dict[str, Any]) -> None:
         self._data = {} if data is None else data
 
-    def save(self: Self, data: Optional[Dict[str, Any]]=None, columns=None) -> bool:
+    def save(self: Self, data: Optional[Dict[str, Any]] = None, columns=None) -> bool:
         """
         Save data to the database and update the model!
 
@@ -179,7 +179,9 @@ class Model:
         if not len(data) and not len(self._next_data):
             raise ValueError("You have to pass in something to save!")
         if len(data) and len(self._next_data):
-            raise ValueError("Save data was provided to the model class by both passing in a dictionary and setting new values on the column attributes.  This is not allowed.  You will have to use just one method of specifying save data.")
+            raise ValueError(
+                "Save data was provided to the model class by both passing in a dictionary and setting new values on the column attributes.  This is not allowed.  You will have to use just one method of specifying save data."
+            )
         if not len(data):
             data = {**self._next_data}
 
@@ -396,7 +398,14 @@ class Model:
         """
         pass
 
-    def where_for_request(self: Self, models: Self, routing_data: Dict[str, str], authorization_data: Dict[str, Any], input_output: Any, overrides=None) -> Self:
+    def where_for_request(
+        self: Self,
+        models: Self,
+        routing_data: Dict[str, str],
+        authorization_data: Dict[str, Any],
+        input_output: Any,
+        overrides=None,
+    ) -> Self:
         """
         A hook to automatically apply filtering whenever the model makes an appearance in a get/update/list/search handler.
         """

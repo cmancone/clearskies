@@ -1,6 +1,6 @@
 import clearskies.typing
 from clearskies import parameters_to_properties
-from clearskies.columns import HasMany
+from clearskies.columns.has_many import HasMany
 
 
 class HasManySelf(HasMany):
@@ -22,9 +22,9 @@ class HasManySelf(HasMany):
         readable_child_columns: list[str] = [],
         where: clearskies.typing.condition | list[clearskies.typing.condition] = [],
         is_readable: bool = True,
-        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
         pass
 

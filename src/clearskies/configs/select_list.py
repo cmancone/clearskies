@@ -10,6 +10,7 @@ class SelectList(string.String):
 
     This is different than StringList, which also accepts a list of any strings.
     """
+
     def __init__(self, allowed_values: list[str], required=False, default=None):
         self.allowed_values = allowed_values
         self.required = required
@@ -24,7 +25,7 @@ class SelectList(string.String):
             raise TypeError(
                 f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' to a list parameter"
             )
-        for (index, item) in enumerate(value):
+        for index, item in enumerate(value):
             if not isinstance(item, str):
                 error_prefix = self._error_prefix(instance)
                 raise TypeError(
@@ -40,7 +41,7 @@ class SelectList(string.String):
                 )
         instance._set_config(self, value)
 
-    def __get__(self, instance, parent) -> List[str]:
+    def __get__(self, instance, parent) -> list[str]:
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)

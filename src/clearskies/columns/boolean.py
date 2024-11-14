@@ -1,6 +1,7 @@
 from typing import Callable
 
 import clearskies.typing
+from clearskies import configs, parameters_to_properties
 from clearskies.columns.column import Column
 
 
@@ -31,14 +32,14 @@ class Boolean(Column):
     def __init__(
         self,
         default: bool | None = None,
-        setable: bool| Callable[..., bool] | None = None,
+        setable: bool | Callable[..., bool] | None = None,
         is_readable: bool = True,
         is_writeable: bool = True,
         is_temporary: bool = False,
-        validators: clearskies.typing.validators | list[clearskies.typing.validators] = [],
-        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        validators: clearskies.typing.validator | list[clearskies.typing.validator] = [],
+        on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
         created_by_source_type: str = "",
         created_by_source_key: str = "",
     ):

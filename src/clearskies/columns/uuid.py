@@ -1,6 +1,6 @@
 import clearskies.typing
 from clearskies.columns.column import Column
-from clearskies import parameters_to_properties
+from clearskies import configs, parameters_to_properties
 
 
 class Uuid(Column):
@@ -26,6 +26,7 @@ class Uuid(Column):
         # prints 36
     ```
     """
+
     is_writeable = configs.Boolean(default=False)
 
     @parameters_to_properties.parameters_to_properties
@@ -33,9 +34,8 @@ class Uuid(Column):
         self,
         is_readable: bool = True,
         is_temporary: bool = False,
-        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
-        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
+        on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
         pass
-

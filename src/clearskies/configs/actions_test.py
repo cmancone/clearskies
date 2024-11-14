@@ -4,9 +4,11 @@ from clearskies import configs, parameters_to_properties
 from .. import action
 from clearskies.bindings import Action as BindingAction
 
+
 class FakeAction(action.Action):
     def __call__(self):
         pass
+
 
 class HasConfigs(configs.Configurable):
     actions = configs.Actions()
@@ -14,6 +16,7 @@ class HasConfigs(configs.Configurable):
     @parameters_to_properties
     def __init__(self, actions):
         self.finalize_and_validate_configuration()
+
 
 class ActionsTest(unittest.TestCase):
     def test_allow(self):
@@ -29,4 +32,7 @@ class ActionsTest(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             fake_action = FakeAction()
             has_configs = HasConfigs([self.test_allow, fake_action, "sup"])
-        assert "Error with 'HasConfigs.actions': attempt to set a value of type 'str' for item #3 when a callable, Action, or BindingAction is required" == str(context.exception)
+        assert (
+            "Error with 'HasConfigs.actions': attempt to set a value of type 'str' for item #3 when a callable, Action, or BindingAction is required"
+            == str(context.exception)
+        )

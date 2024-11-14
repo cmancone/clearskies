@@ -10,6 +10,7 @@ class StringListOrCallable(config.Config):
     This is different than SelectList, which also accepts a list of strings, but
     valdiates that all of those values match against an allow list.
     """
+
     def __set__(self, instance, value: list[str] | Callable[..., list[str]]):
         if value is None:
             return
@@ -20,7 +21,7 @@ class StringListOrCallable(config.Config):
                 f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' to a parameter that should be a list or a callable"
             )
         if isinstance(value, list):
-            for (index, item) in enumerate(value):
+            for index, item in enumerate(value):
                 if not isinstance(item, str):
                     error_prefix = self._error_prefix(instance)
                     raise TypeError(

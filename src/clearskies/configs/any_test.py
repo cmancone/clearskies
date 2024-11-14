@@ -3,12 +3,14 @@ from unittest.mock import MagicMock
 
 from clearskies import configs, parameters_to_properties
 
+
 class HasConfigs(configs.Configurable):
     anything = configs.Any()
 
     @parameters_to_properties
     def __init__(self, anything):
         self.finalize_and_validate_configuration()
+
 
 class AnyTest(unittest.TestCase):
     def test_allow(self):
