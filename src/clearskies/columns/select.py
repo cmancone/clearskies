@@ -1,33 +1,32 @@
-from typing import List
+from typing import Callable
 
-
+import clearskies.typing
 from clearskies import configs, parameters_to_properties
-from clearskies.columns import String
+from clearskies.columns.string import String
 
 
 class Select(String):
+    """
+    A string column but, when writeable via an API, only specific values are allowed.
+    """
+
     """ The allowed values. """
-    allowed_values = clearskies.configs.StringList(default=True)
+    allowed_values = configs.StringList(required=True)
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        allowed_values: List[str] = [],
-        validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
+        allowed_values: list[str],
+        default: str | None = None,
+        setable: str | Callable[..., str] | None = None,
         is_readable: bool = True,
         is_writeable: bool = True,
         is_temporary: bool = False,
-        on_change_pre_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
-        on_change_post_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
-        on_change_save_finished: Union[
-            Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]
-        ] = [],
-        default: Str = None,
-        created_by_source_type: str = '',
-        created_by_source_key: str = '',
-        model_column_name: Optional[str] = None,
-        readable_parent_columns: Optional[list[str]] = None,
-        join_type: Optional[str] = None,
-        where: Optional[Union[str, Callable, List[Union[str, Callable]]]] = None
+        validators: clearskies.typing.validators | list[clearskies.typing.validators] = [],
+        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        created_by_source_type: str = "",
+        created_by_source_key: str = "",
     ):
         pass

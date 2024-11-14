@@ -1,8 +1,11 @@
 from typing import Any
-from clearskies import column_config
+
+import clearskies.typing
+from clearskies import parameters_to_properties
+from clearskies.columns.column import Column
 
 
-class Json(column_config.ColumnConfig):
+class Json(Column):
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,

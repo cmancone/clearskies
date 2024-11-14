@@ -1,13 +1,19 @@
 import datetime
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties, ColumnConfig
+from clearskies import configs, parameters_to_properties
+from clearskies.columns.column import Column
 
 
-class Datetime(ColumnConfig):
+class Datetime(Column):
     """
     Stores date+time data in a column.
     """
+
+    """
+    Whether or not to use UTC for the timezone.
+    """
+    in_utc = configs.Boolean(default=True)
 
     """
     The format string to use when sending to the backend (default: %Y-%m-%d %H:%M:%S)
@@ -43,6 +49,7 @@ class Datetime(ColumnConfig):
         self,
         date_format: str = "%Y-%m-%d %H:%M:%S",
         backend_default: str = "0000-00-00 00:00:00",
+        in_utc: bool = True,
         default: datetime.datetime | None = None,
         setable: datetime.datetime | Callable[..., datetime.datetime] | None = None,
         is_readable: bool = True,

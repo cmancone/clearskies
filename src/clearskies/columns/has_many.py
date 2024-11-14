@@ -1,9 +1,9 @@
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
-from clearskies import column_config
+from clearskies.columns.column import Column
 
 
-class HasMany(column_config.ColumnConfig):
+class HasMany(Column):
     """
     A column to manage a "has many" relationship.
 
@@ -58,3 +58,22 @@ class HasMany(column_config.ColumnConfig):
         on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
     ):
         pass
+
+    def finalize_configuration(self, model_class, name) -> None:
+        """
+        Finalize and check the configuration.
+
+        This is an external trigger called by the model class when the model class is ready.
+        The reason it exists here instead of in the constructor is because some columns are tightly
+        connected to the model class, and can't validate configuration until they know what the model is.
+        Therefore, we need the model involved, and the only way for a property to know what class it is
+        in is if the parent class checks in (which is what happens here).
+        """
+
+        # this is where we auto-calculate the expected name of our id column in the child model.
+        # we can't do it until now because it comes from the model class we are connected to, and
+        # we only just get it.
+        foreign_column_name_config = self._get_config_object("foreign_column_name")
+        foreign_column_name_config.set_model_class(model_class)
+
+        super().finalize_configuration(model_class, name)

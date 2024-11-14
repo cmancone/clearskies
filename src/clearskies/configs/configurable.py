@@ -23,6 +23,10 @@ class Configurable:
         return self._config[name]
 
     @classmethod
+    def _get_config_object(cls, attribute_name):
+        return getattr(cls, attribute_name)
+
+    @classmethod
     def get_descriptor_config_map(cls):
         if cls._descriptor_config_map:
             return cls._descriptor_config_map

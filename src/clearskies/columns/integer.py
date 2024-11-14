@@ -2,10 +2,10 @@ from typing import Callable
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
-from clearskies import column_config
+from clearskies.columns.column import Column
 
 
-class Integer(column_config.ColumnConfig):
+class Integer(Column):
     """
     A column that stores integer data
     """

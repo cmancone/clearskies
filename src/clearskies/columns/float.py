@@ -1,9 +1,11 @@
 from typing import Callable
 
-from clearskies import column_config
+import clearskies.typing
+from clearskies import configs, parameters_to_properties
+from clearskies.columns.column import Column
 
 
-class Float(column_config.ColumnConfig):
+class Float(Column):
     """
     A column that stores a float
     """

@@ -1,4 +1,3 @@
-from .column_config import ColumnConfig
 from . import typing
 
 from . import (
@@ -34,7 +33,6 @@ from .validator import Validator
 __all__ = [
     "Action",
     "bindings",
-    "ColumnConfig",
     "columns",
     "configs",
     "functional",

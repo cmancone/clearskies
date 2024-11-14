@@ -1,12 +1,8 @@
-from typing import Callable, List, Optional, Union
+from typing import Callable
 
 
 from clearskies import configs, parameters_to_properties
 from clearskies.columns import ManyToMany
-from clearskies.bindings import Action as BindingAction
-from clearskies.actions import Action
-from clearskies.bindings import Validator as BindingValidator
-from clearskies.columns.validators import Validator
 
 
 class ManyToManyWithData(ManyToMany):
@@ -39,7 +35,6 @@ class ManyToManyWithData(ManyToMany):
         thingy_id = clearskies.columns.BelongsTo(ThingyReference)
         widget_id = clearskies.columns.BelongsTo(WidgetReference)
         some_info = clearskies.columns.String()
-        some_ref = clearskies.columns.String(validators=clearskies.validators.Unique())
 
     class Widget(clearskies.Model):
         id_column_name = "id"
@@ -56,6 +51,7 @@ class ManyToManyWithData(ManyToMany):
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         name = clearskies'columns.String()
+        some_ref = clearskies.columns.String(validators=clearskies.validators.Unique())
         widgets = clearskies.columns.ManyToMany(
             related_model_class=WidgetReference,
             pivot_model_class=ThingyToWidgetReference,
@@ -64,13 +60,13 @@ class ManyToManyWithData(ManyToMany):
         thingy_widgets = clearskies.columns.ManyToManyPivotReference("widgets")
 
     def my_application(widgets, thingies):
-        thing_1 = thingies.create({"name": "Thing 1"})
-        thing_2 = thingies.create({"name": "Thing 2"})
+        thing_1 = thingies.create({"name": "Thing 1", "some_ref": "ASDFER"})
+        thing_2 = thingies.create({"name": "Thing 2", "some_ref": "QWERTY"})
         widget = widgets.create({
             "name": "Widget 1",
             "thingies": [
-                {"thingy_id": thing_1.id, "some_info": "hey", "some_ref": "ASDFER"},
-                {"thingy_id": thing_2.id, "some_info": "sup", "some_ref": "QWERTY"},
+                {"thingy_id": thing_1.id, "some_info": "hey"},
+                {"thingy_id": thing_2.id, "some_info": "sup"},
             ],
         })
 
@@ -117,31 +113,42 @@ class ManyToManyWithData(ManyToMany):
     """
     persist_unique_lookup_column_to_pivot_table = configs.Boolean(default=False)
 
+    """
+    A default value to set for this column.
+
+    The default is only used when creating a record for the first time, and only if
+    a value for this column has not been set.
+    """
+    default = configs.ListAnyDict(default=None)
+
+    """
+    A value to set for this column during a save operation.
+
+    Unlike the default value, a setable value is always set during a save.
+    """
+    setable = configs.ListAnyDictOrCallable(default=None)
+
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         related_model_class,
         pivot_model_class,
         own_column_name_in_pivot: str = "",
-        foreign_column_name_in_pivot: str = "",
-        readable_related_columns: List[str] = [],
-        setable_columns: List[str] = [],
+        related_column_name_in_pivot: str = "",
+        readable_related_columns: list[str] = [],
+        setable_columns: list[str] = [],
         persist_unique_lookup_column_to_pivot_table: bool = False,
-        validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
+        default: list[dict[str, Any]] = [],
+        setable: list[dict[str, Any]] | Callable[..., list[dict[str, Any]]] = [],
         is_readable: bool = True,
         is_writeable: bool = True,
         is_temporary: bool = False,
-        on_change_pre_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
-        on_change_post_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
-        on_change_save_finished: Union[
-            Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]
-        ] = [],
-        default: Str = None,
-        created_by_source_type: str = '',
-        created_by_source_key: str = '',
-        model_column_name: Optional[str] = None,
-        readable_parent_columns: Optional[list[str]] = None,
-        join_type: Optional[str] = None,
-        where: Optional[Union[str, Callable, List[Union[str, Callable]]]] = None
+        validators: clearskies.typing.validators | list[clearskies.typing.validators] = [],
+        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        created_by_source_type: str = "",
+        created_by_source_key: str = "",
     ):
         pass

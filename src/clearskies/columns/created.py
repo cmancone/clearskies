@@ -1,6 +1,7 @@
 import datetime
 from typing import Optional
 
+import clearskies.typing
 from clearskies.columns import Datetime
 from clearskies import configs, parameters_to_properties
 
@@ -33,16 +34,6 @@ class Created(Datetime):
     """
 
     """
-    Whether or not to use UTC for the timezone.
-    """
-    in_utc = configs.Boolean(default=True)
-
-    """
-    Whether or not to include microseconds in the time
-    """
-    include_microseconds = configs.Boolean(default=False)
-
-    """
     Created fields are never writeable because they always set the created time automatically.
     """
     is_writeable = configs.Boolean(default=False)
@@ -50,15 +41,13 @@ class Created(Datetime):
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
+        date_format: str = "%Y-%m-%d %H:%M:%S",
         in_utc: bool = True,
-        date_format: str | None = None,
-        default_date: str | None = None,
-        include_microseconds: bool = False,
-        validators: Callable | Validator | BindingValidator | list[Callable | Validator | BindingValidator] = [],
+        backend_default: str = "0000-00-00 00:00:00",
         is_readable: bool = True,
         is_temporary: bool = False,
-        on_change_pre_save: Callable | Action | BindingAction | list[Callable | Action | BindingAction] = [],
-        on_change_post_save: Callable | Action | BindingAction | list[Callable | Action | BindingAction] = [],
-        on_change_save_finished: Callable | Action | BindingAction | list[Callable | Action | BindingAction] = [],
+        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
     ):
         pass

@@ -141,6 +141,12 @@ class ColumnConfig(configs.Configurable):
     """
     created_by_source_type = configs.Select(["authorization_data", "http_header", "routing_data"])
 
+    """ The model class this column is associated with. """
+    model_class = configs.ModelClass()
+
+    """ The name of this column. """
+    name = configs.String()
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -158,7 +164,7 @@ class ColumnConfig(configs.Configurable):
     ):
         pass
 
-    def finalize_configuration(self, model_class) -> None:
+    def finalize_configuration(self, model_class, name) -> None:
         """
         Finalize and check the configuration.
 
@@ -168,31 +174,18 @@ class ColumnConfig(configs.Configurable):
         Therefore, we need the model involved, and the only way for a property to know what class it is
         in is if the parent class checks in (which is what happens here).
         """
+        self.model_class = model_class
+        self.name = name
         self.finalize_and_validate_configuration()
 
     def __get__(self, instance, parent) -> str:
         if not instance:
             return self  # type: ignore
 
-        return instance._data[self._my_name(instance)]
+        return instance._data[self.name]
 
     def __set__(self, instance, value: str) -> None:
-        instance._next_data[self._my_name(instance)] = value
-
-    def _my_name(self, instance) -> str:
-        """
-        Returns the name of this column
-
-        We don't know what our name is because it's determined by the attribute we are assigned
-        to in the model, and we don't have the context to know what that is.  We could have the model
-        tell us our name, but it's slightly lazier to simply ask the model when it actually matters.
-        It only matters during __get__ and __set__, and in both of those cases we are passed the model.
-        Therefore, we'll ask the model what our name is then.
-        """
-        if not self.name:
-            self.name = instance.lookup_column_name(self)
-
-        return self.name
+        instance._next_data[self.name] = value
 
     def finalize_and_validate_configuration(self):
         super().finalize_and_validate_configuration()

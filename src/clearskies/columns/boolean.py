@@ -1,10 +1,10 @@
 from typing import Callable
 
 import clearskies.typing
-from clearskies import column_config
+from clearskies.columns.column import Column
 
 
-class Boolean(column_config.ColumnConfig):
+class Boolean(Column):
     """
     Represents a column with a true/false type.
 

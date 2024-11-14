@@ -1,9 +1,9 @@
 import clearskies.typing
-from clearskies import column_config
+from clearskies.columns.column import Column
 from clearskies import configs, parameters_to_properties
 
 
-class CreatedByUserAgent(column_config.ColumnConfig):
+class CreatedByUserAgent(Column):
     """
     This column will automatically take user agent from the client and store it in the model upon creation.
 

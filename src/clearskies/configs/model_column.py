@@ -33,6 +33,9 @@ class ModelColumn(select.Select):
             model_class = getattr(instance, self.model_column_config_name)
         return model_class
 
+    def set_model_class(self, model_class):
+        self.model_class = model_class
+
     def finalize_and_validate_configuration(self, instance):
         super().finalize_and_validate_configuration(instance)
 

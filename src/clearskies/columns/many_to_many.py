@@ -1,10 +1,11 @@
 from typing import Callable
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties, ColumnConfig
+from clearskies import configs, parameters_to_properties
+from clearskies.columns.column import Column
 
 
-class ManyToMany(ColumnConfig):
+class ManyToMany(Column):
     """
     A column to represent a many-to-many relationship.
 

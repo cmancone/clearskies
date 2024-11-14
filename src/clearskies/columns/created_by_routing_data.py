@@ -1,9 +1,9 @@
 import clearskies.typing
-from clearskies import column_config
+from clearskies.columns.column import Column
 from clearskies import configs, parameters_to_properties
 
 
-class CreatedByRoutingData(column_config.ColumnConfig):
+class CreatedByRoutingData(Column):
     """
     This column will automatically take data from the route path in the request and store it in the model upon creation.
 

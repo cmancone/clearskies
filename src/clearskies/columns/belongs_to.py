@@ -1,10 +1,11 @@
 from typing import Callable
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties, ColumnConfig
+from clearskies import configs, parameters_to_properties
+from clearskies.columns.column import Column
 
 
-class BelongsTo(ColumnConfig):
+class BelongsTo(Column):
     """
     Declares that this model belongs to another - that it has a parent.
 

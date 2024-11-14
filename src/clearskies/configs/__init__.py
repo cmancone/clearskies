@@ -64,6 +64,8 @@ import inspect
 
 from .actions import Actions
 from .any import Any
+from .any_dict import AnyDict
+from .any_dict_or_callable import AnyDictOrCallable
 from .boolean import Boolean
 from .boolean_or_callable import BooleanOrCallable
 from .config import Config
@@ -74,6 +76,8 @@ from .float import Float
 from .float_or_callable import FloatOrCallable
 from .integer import Integer
 from .integer_or_callable import IntegerOrCallable
+from .list_any_dict import ListAnyDict
+from .list_any_dict_or_callable import ListAnyDictOrCallable
 from .model_class import ModelClass
 from .model_column import ModelColumn
 from .model_columns import ModelColumns
@@ -95,6 +99,8 @@ from .writeable_model_columns import WriteableModelColumns
 __all__ = [
     "Actions",
     "Any",
+    "AnyDict",
+    "AnyDictOrCallable",
     "Boolean",
     "BooleanOrCallable",
     "Config",

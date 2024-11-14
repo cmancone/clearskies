@@ -75,7 +75,7 @@ class Model:
             if not isinstance(attribute, column_config.ColumnConfig):
                 continue
 
-            column_config.finalize_configuration(cls)
+            column_config.finalize_configuration(cls, attribute_name)
             column_configs[attribute_name] = column_config
 
         cls._column_configs = column_configs

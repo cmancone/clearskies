@@ -1,5 +1,8 @@
-from clearskies import column_config
+from clearskies.columns.column import Column
 
 
-class String(column_config.ColumnConfig):
+class String(Column):
+    """
+    A simple string column
+    """
     pass

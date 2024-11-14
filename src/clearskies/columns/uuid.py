@@ -1,24 +1,41 @@
-from clearskies import column_config
+import clearskies.typing
+from clearskies.columns.column import Column
+from clearskies import parameters_to_properties
 
 
-class Uuid(column_config.ColumnConfig):
+class Uuid(Column):
+    """
+    Populates the column with a UUID upon record creation.
+
+    This column really just has a very specific purpose: ids!
+
+    When used, it will automatically populate the column with a random UUID upon record creation.
+    It is not a writeable column, which means that you cannot expose it for write operations via the API.
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        id_column_name = "id"
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+
+    def my_application(my_models):
+        model = my_models.create({"name": "hey"})
+        print(len(model.id))
+        # prints 36
+    ```
+    """
     is_writeable = configs.Boolean(default=False)
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        validators: Union[Callable, Validator, BindingValidator, List[Union[Callable, Action, BindingAction]]] = [],
         is_readable: bool = True,
         is_temporary: bool = False,
-        on_change_pre_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
-        on_change_post_save: Union[Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]] = [],
-        on_change_save_finished: Union[
-            Callable, Action, BindingAction, List[Union[Callable, Action, BindingAction]]
-        ] = [],
-        default: Optional[str] = None,
-        setable: Optional[str] = None,
-        created_by_source_type: str = "",
-        created_by_source_key: str = "",
+        on_change_pre_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_post_save: clearskies.typing.actions | list[clearskies.typing.actions] = [],
+        on_change_save_finished: clearskies.typing.actions | list[clearskies.typing.actions] = [],
     ):
         pass
 

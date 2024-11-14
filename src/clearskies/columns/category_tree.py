@@ -131,6 +131,15 @@ class CategoryTree(BelongsTo):
     ):
         pass
 
-    def finalize_configuration(self, model_class) -> None:
+    def finalize_configuration(self, model_class, name) -> None:
+        """
+        Finalize and check the configuration.
+
+        This is an external trigger called by the model class when the model class is ready.
+        The reason it exists here instead of in the constructor is because some columns are tightly
+        connected to the model class, and can't validate configuration until they know what the model is.
+        Therefore, we need the model involved, and the only way for a property to know what class it is
+        in is if the parent class checks in (which is what happens here).
+        """
         self.parent_model_class = model_class
-        self.finalize_and_validate_configuration()
+        super().finalize_configuration(model_class, name)

@@ -1,9 +1,9 @@
 import clearskies.typing
-from clearskies import column_config
+from clearskies.columns.column import Column
 from clearskies import configs, parameters_to_properties
 
 
-class CreatedByAuthorizationData(column_config.ColumnConfig):
+class CreatedByAuthorizationData(Column):
     """
     This column will automatically take data from the authorization data attached to a request and store it in the model upon creation.
 
