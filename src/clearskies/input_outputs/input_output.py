@@ -5,6 +5,13 @@ import json
 
 
 class InputOutput(ABC):
+    """
+    ######IMPORTANT!!!!
+
+    clearskies.columns.column.Column is now using this in some new ways,
+    but our definition here hasn't been updated.  Check that out, make adjustments as needed,
+    but most of all make sure that the final definition makes sense.
+    """
     _response_headers = None
     _body_as_json = None
     _body_loaded_as_json = False

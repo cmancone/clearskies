@@ -3,7 +3,7 @@ from . import typing
 from . import (
     # authentication,
     # autodoc,
-    # backends,
+    backends,
     bindings,
     columns,
     configs,
@@ -18,6 +18,8 @@ from . import (
 )
 
 from . import parameters_to_properties as parameters_to_properties_module
+from .configurable import Configurable
+from .column import Column
 
 parameters_to_properties = parameters_to_properties_module.parameters_to_properties
 
@@ -34,8 +36,10 @@ from .validator import Validator
 __all__ = [
     "Action",
     "bindings",
+    "Column",
     "columns",
     "configs",
+    "Configurable",
     "functional",
     "Model",
     "parameters_to_properties",

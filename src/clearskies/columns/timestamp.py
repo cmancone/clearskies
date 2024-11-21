@@ -34,5 +34,6 @@ class Timestamp(Datetime):
         on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
         created_by_source_type: str = "",
         created_by_source_key: str = "",
+        created_by_source_strict: bool = True,
     ):
         pass

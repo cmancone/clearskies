@@ -2,9 +2,9 @@ from .backend import Backend
 from collections import OrderedDict
 from functools import cmp_to_key
 import inspect
-from typing import Any, Callable, Dict, List, Tuple
-from ..autodoc.schema import Integer as AutoDocInteger
-from .. import model
+from typing import Any, Callable, Dict
+from clearskies.autodoc.schema import Integer as AutoDocInteger
+import clearskies.model
 
 
 class Null:
@@ -73,7 +73,7 @@ class MemoryTable:
         "in": lambda column, values, null: lambda row: row.get(column, null) in values,
     }
 
-    def __init__(self, model):
+    def __init__(self, model: clearskies.model.Model) -> None:
         self.null = Null()
         self._column_names = []
         self._rows = []

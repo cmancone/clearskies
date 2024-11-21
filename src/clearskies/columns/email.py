@@ -1,4 +1,4 @@
-from clearskies.columns.column import Column
+from clearskies.column import Column
 
 
 class Email(Column):

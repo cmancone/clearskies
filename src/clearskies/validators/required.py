@@ -2,6 +2,8 @@ from .requirement import Requirement
 
 
 class Required(Requirement):
+    is_required = True
+
     def check(self, model, data):
         # you'd think that "required" is straight forward and we want an input error if it isn't found.
         # this isn't strictly true though.  If the model already exists, the column has a value in the model already,

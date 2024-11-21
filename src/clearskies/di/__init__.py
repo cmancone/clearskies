@@ -1,11 +1,11 @@
-from .additional_config_auto_import import AdditionalConfigAutoImport
-from .di import DI
-from .standard_dependencies import StandardDependencies
-from .additional_config import AdditionalConfig
+from clearskies.di.di import Di
+from clearskies.di.additional_config import AdditionalConfig
+from clearskies.di.additional_config_auto_import import AdditionalConfigAutoImport
+#from .standard_dependencies import StandardDependencies
 
 __all__ = [
-    "AdditionalConfigAutoImport",
-    "DI",
-    "StandardDependencies",
     "AdditionalConfig",
+    "AdditionalConfigAutoImport",
+    "Di",
+    #"StandardDependencies",
 ]

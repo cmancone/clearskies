@@ -3,6 +3,9 @@ from typing import Dict, Any
 
 
 class Validator(ABC):
+    is_unique = False
+    is_required = False
+
     @property
     def column_name(self) -> str:
         if self._column_name is None:

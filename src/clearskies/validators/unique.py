@@ -2,6 +2,8 @@ from .requirement import Requirement
 
 
 class Unique(Requirement):
+    is_unique = True
+
     def check(self, model, data):
         # Unique is mildly tricky.  We obviously want to search the backend for the new value,
         # but we need to first skip this if our column is not being set, or if we're editing

@@ -70,7 +70,6 @@ from .boolean import Boolean
 from .boolean_or_callable import BooleanOrCallable
 from .conditions import Conditions
 from .config import Config
-from .configurable import Configurable
 from .datetime import Datetime
 from .datetime_or_callable import DatetimeOrCallable
 from .float import Float
@@ -106,7 +105,6 @@ __all__ = [
     "BooleanOrCallable",
     "Conditions",
     "Config",
-    "Configurable",
     "Integer",
     "IntegerOrCallable",
     "ModelClass",

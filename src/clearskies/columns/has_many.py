@@ -1,6 +1,6 @@
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
-from clearskies.columns.column import Column
+from clearskies.column import Column
 
 
 class HasMany(Column):

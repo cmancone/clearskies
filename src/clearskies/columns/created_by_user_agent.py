@@ -1,5 +1,5 @@
 import clearskies.typing
-from clearskies.columns.column import Column
+from clearskies.column import Column
 from clearskies import configs, parameters_to_properties
 
 

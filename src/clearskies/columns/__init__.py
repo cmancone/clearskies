@@ -3,8 +3,6 @@ from .belongs_to import BelongsTo
 from .belongs_to_self import BelongsToSelf
 from .boolean import Boolean
 from .category_tree import CategoryTree
-from .column import Column
-from .columns import Columns
 from .created_by_authorization_data import CreatedByAuthorizationData
 from .created_by_header import CreatedByHeader
 from .created_by_ip import CreatedByIp
@@ -32,8 +30,6 @@ __all__ = [
     "BelongsToSelf",
     "Boolean",
     "CategoryTree",
-    "Column",
-    "Columns",
     "CreatedByAuthorizationData",
     "CreatedByHeader",
     "CreatedByIp",

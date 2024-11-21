@@ -2,7 +2,7 @@ from typing import Callable
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
-from clearskies.columns.column import Column
+from clearskies.column import Column
 
 
 class Boolean(Column):
@@ -42,6 +42,7 @@ class Boolean(Column):
         on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
         created_by_source_type: str = "",
         created_by_source_key: str = "",
+        created_by_source_strict: bool = True,
     ):
         pass
 

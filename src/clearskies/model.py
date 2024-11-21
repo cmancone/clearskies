@@ -1,47 +1,37 @@
-from typing import Any, Dict, Optional, Union
-
+from __future__ import annotations
+from typing import Any, Self, TYPE_CHECKING
 from abc import abstractmethod
 from collections import OrderedDict
-from .functional import string
 import re
 
-try:
-    from typing_extensions import Self
-except ModuleNotFoundError:
-    from typing import Self
 
-from clearskies.columns.column import Column
+from clearskies.functional import string
+if TYPE_CHECKING:
+    import clearskies.column
 
 
 class Model:
-    _columns = None
-    _column_configs: Dict[str, Column] = {}
-    _previous_data: Dict[str, Any] = {}
-    _data: Dict[str, Any] = {}
-    _next_data: Dict[str, Any] = None
-    _transformed_data: Dict[str, Any] = None
-    _touched_columns: Dict[str, bool] = None
+    """
+    A clearskies model.
+
+    To be useable, a model class needs three things:
+
+     1. Column definitions
+     2. The name of the id column
+     3. A backend
+
+    All of these are provided as attributes.  The columns all come from the `clearskies.columns` module.
+
+    """
+
+    _column_configs: dict[str, clearskies.column.Column] = {}
+    _columns: dict[str, clearskies.column.Column] = {}
+    _previous_data: dict[str, Any] = {}
+    _data: dict[str, Any] = {}
+    _next_data: dict[str, Any] = None
+    _transformed_data: dict[str, Any] = None
+    _touched_columns: dict[str, bool] = None
     id_column_name: str = ""
-
-    def __init__(self: Self, backend, columns):
-        self._backend = backend
-        self._columns = columns
-        self._transformed_data = {}
-        self._previous_data = {}
-        self._data = {}
-        self._next_data = {}
-        self._touched_columns = {}
-
-        model_class = self.__class__
-        if not self.id_column_name:
-            raise ValueError(
-                f"Error for model class '{model_class.__name__}': no value was specified for the 'id_column_name' property.  This is a required property."
-            )
-        column_configs = self.__class__.get_column_configs()
-        if self.id_column_name not in column_configs:
-            raise ValueError(
-                f"Error for model class '{model_class.__name__}': the provided id_column_name, '{self.id_column_name}' does not correspond to a column for the model"
-            )
 
     @classmethod
     def destination_name(cls: type[Self]) -> str:
@@ -64,15 +54,24 @@ class Model:
         return f"{singular}s"
 
     @classmethod
-    def get_column_configs(cls: type[Self]) -> Dict[str, Column]:
-        """Returns an ordered dictionary with the configuration for the columns"""
+    def get_column_configs(cls: type[Self]) -> dict[str, clearskies.column.Column]:
+        """
+        Returns an ordered dictionary with the configuration for the columns
+
+        Generally, this method is meant for internal use.  It just pulls the column configuration
+        information out of class attributes.  It doesn't return the fully prepared columns,
+        so you probably can't use the return value of this function.  For that, see
+        `model.columns()`.
+        """
         if cls._column_configs:
             return cls._column_configs
 
-        column_configs: Dict[str, Column] = {}
+        column_configs: Dict[str, clearskies.column.Column] = {}
         for attribute_name in dir(cls):
             attribute = getattr(cls, attribute_name)
-            if not isinstance(attribute, Column):
+            # use duck typing instead of isinstance to decide which attribute is a column.
+            # We have to do this to avoid circular imports.
+            if not hasattr(attribute, "setable") and not hasattr(attribute, "default"):
                 continue
 
             column_config.finalize_configuration(cls, attribute_name)
@@ -81,33 +80,28 @@ class Model:
         cls._column_configs = column_configs
         return cls.column_configs
 
-    def columns(self: Self, overrides=None) -> Dict[str, Any]:
+    def get_columns(self: Self, overrides=None) -> dict[str, clearskies.column.Column]:
         """
-        Returns a dictionary with the column implementors.
+        Returns an ordered dictionary with the columns.
 
-        The difference between this function and model.column_configs is that this returns
-        the column implementors (e.g. clearskies.columns.implementors) rather than the column
-        config objects (which are defined via model parameters).
+        Optionally, you can provide a dictionary with override information.
 
-        The column implementors are used throughout the save/load cycle.
+        The difference between this method and model.get_column_configs is that this returns
+        fully prepared columns that are ready for use.
+
+        The columns are used throughout the save/load cycle.
         """
         model_class = self.__class__
         # no caching if we have overrides
         if overrides is not None:
-            return self._columns.configure(self.all_columns(), self.__class__, overrides=overrides)
+            return self._finalize_columns(overrides=overrides)
 
-        if self._configured_columns is None:
-            self._configured_columns = self._columns.configure(self.all_columns(), self.__class__)
-        return self._configured_columns
+        if self._columns is None:
+            self._columns = self._finalize_columns()
+        return self._columns
 
     def supports_n_plus_one(self: Self):
-        return self._backend.supports_n_plus_one
-
-    def get(self: Self, column_name, silent=False):
-        if not self.exists:
-            return None
-
-        return self.get_transformed_from_data(column_name, self._data, silent=silent)
+        return self.backend.supports_n_plus_one
 
     def get_transformed_from_data(self: Self, column_name, data, cache=True, check_providers=True, silent=False):
         if cache and column_name in self._transformed:
@@ -132,7 +126,7 @@ class Model:
                 return None
         else:
             value = (
-                self._backend.column_from_backend(self.columns()[column_name], data[column_name])
+                self.backend.column_from_backend(self.columns()[column_name], data[column_name])
                 if column_name in self.columns()
                 else data[column_name]
             )
@@ -150,7 +144,7 @@ class Model:
     def set_raw_data(self: Self, data: Dict[str, Any]) -> None:
         self._data = {} if data is None else data
 
-    def save(self: Self, data: Optional[Dict[str, Any]] = None, columns=None) -> bool:
+    def save(self: Self, data: dict[str, Any] | None = None, columns=None) -> bool:
         """
         Save data to the database and update the model!
 
@@ -199,10 +193,10 @@ class Model:
         [to_save, temporary_data] = self.columns_to_backend(data, save_columns)
         to_save = self.to_backend(to_save, save_columns)
         if self.exists:
-            new_data = self._backend.update(self._data[self.id_column_name], to_save, self)
+            new_data = self.backend.update(self._data[self.id_column_name], to_save, self)
         else:
-            new_data = self._backend.create(to_save, self)
-        id = self._backend.column_from_backend(save_columns[self.id_column_name], new_data[self.id_column_name])
+            new_data = self.backend.create(to_save, self)
+        id = self.backend.column_from_backend(save_columns[self.id_column_name], new_data[self.id_column_name])
 
         # if we had any temporary columns add them back in
         new_data = {
@@ -223,7 +217,7 @@ class Model:
 
         return True
 
-    def is_changing(self: Self, key: str, data: Dict[str, Any]) -> bool:
+    def is_changing(self: Self, key: str, data: dict[str, Any]) -> bool:
         """
         Returns True/False to denote if the given column is being modified by the active save operation
 
@@ -239,7 +233,7 @@ class Model:
 
         return self.__getattr__(key) != data[key]
 
-    def latest(self: Self, key: str, data: Dict[str, Any]) -> Any:
+    def latest(self: Self, key: str, data: dict[str, Any]) -> Any:
         """
         Returns the 'latest' value for a column during the save operation
 
@@ -289,13 +283,13 @@ class Model:
         self.columns_pre_delete(columns)
         self.pre_delete()
 
-        self._backend.delete(self._data[self.id_column_name], self)
+        self.backend.delete(self._data[self.id_column_name], self)
 
         self.columns_post_delete(columns)
         self.post_delete()
         return True
 
-    def columns_pre_save(self: Self, data: Dict[str, Any], columns) -> Dict[str, Any]:
+    def columns_pre_save(self: Self, data: dict[str, Any], columns) -> dict[str, Any]:
         """Uses the column information present in the model to make any necessary changes before saving"""
         for column in columns.values():
             data = column.pre_save(data, self)
@@ -305,7 +299,7 @@ class Model:
                 )
         return data
 
-    def pre_save(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def pre_save(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         A hook to extend so you can provide additional pre-save logic as needed
 
@@ -313,7 +307,7 @@ class Model:
         """
         return data
 
-    def columns_to_backend(self: Self, data: Dict[str, Any], columns) -> Any:
+    def columns_to_backend(self: Self, data: dict[str, Any], columns) -> Any:
         backend_data = {**data}
         temporary_data = {}
         for column in columns.values():
@@ -323,7 +317,7 @@ class Model:
                     del backend_data[column.name]
                 continue
 
-            backend_data = self._backend.column_to_backend(column, backend_data)
+            backend_data = self.backend.column_to_backend(column, backend_data)
             if backend_data is None:
                 raise ValueError(
                     f"Column {column.name} of type {column.__class__.__name__} did not return any data for to_database"
@@ -331,10 +325,10 @@ class Model:
 
         return [backend_data, temporary_data]
 
-    def to_backend(self: Self, data: Dict[str, Any], columns) -> Dict[str, Any]:
+    def to_backend(self: Self, data: dict[str, Any], columns) -> dict[str, Any]:
         return data
 
-    def columns_post_save(self: Self, data: Dict[str, Any], id: Union[str, int], columns) -> Dict[str, Any]:
+    def columns_post_save(self: Self, data: dict[str, Any], id: str | int, columns) -> dict[str, Any]:
         """Uses the column information present in the model to make additional changes as needed after saving"""
         for column in columns.values():
             data = column.post_save(data, self, id)
@@ -349,7 +343,7 @@ class Model:
         for column in columns.values():
             column.save_finished(self)
 
-    def post_save(self: Self, data: Dict[str, Any], id: Union[str, int]) -> None:
+    def post_save(self: Self, data: dict[str, Any], id: str | int) -> None:
         """
         A hook to extend so you can provide additional pre-save logic as needed
 
@@ -358,7 +352,7 @@ class Model:
         """
         pass
 
-    def pre_save(self: Self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def pre_save(self: Self, data: dict[str, Any]) -> dict[str, Any]:
         """
         A hook to extend so you can provide additional pre-save logic as needed
 
@@ -376,7 +370,7 @@ class Model:
         """
         pass
 
-    def columns_pre_delete(self: Self, columns) -> None:
+    def columns_pre_delete(self: Self, columns: dict[str, clearskies.column.Column]) -> None:
         """Uses the column information present in the model to make any necessary changes before deleting"""
         for column in columns.values():
             column.pre_delete(self)
@@ -387,7 +381,7 @@ class Model:
         """
         pass
 
-    def columns_post_delete(self: Self, columns) -> None:
+    def columns_post_delete(self: Self, columns: dict[str, clearskies.column.Column]) -> None:
         """Uses the column information present in the model to make any necessary changes after deleting"""
         for column in columns.values():
             column.post_delete(self)
@@ -401,8 +395,8 @@ class Model:
     def where_for_request(
         self: Self,
         models: Self,
-        routing_data: Dict[str, str],
-        authorization_data: Dict[str, Any],
+        routing_data: dict[str, str],
+        authorization_data: dict[str, Any],
         input_output: Any,
         overrides=None,
     ) -> Self:

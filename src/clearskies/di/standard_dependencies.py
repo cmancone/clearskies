@@ -1,5 +1,4 @@
 from .di import DI
-from ..columns import Columns
 from ..environment import Environment
 from ..backends import CursorBackend, JsonBackend, MemoryBackend, SecretsBackend
 from .. import autodoc
@@ -35,9 +34,6 @@ class StandardDependencies(DI):
         import sys
 
         return sys
-
-    def provide_columns(self):
-        return Columns(self)
 
     def provide_secrets(self):
         from ..secrets import secrets

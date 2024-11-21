@@ -1,29 +1,50 @@
-from ..bindings import Binding as BindingConfig
-from .additional_config_auto_import import AdditionalConfigAutoImport
+from typing import Any
+from types import ModuleType
 import inspect
 import re
 import sys
 import os
-from ..functional import string
+
+from clearskies.di.additional_config import AdditionalConfig
+from clearskies.di.additional_config_auto_import import AdditionalConfigAutoImport
+from clearskies.functional import string
 
 
-class DI:
-    _bindings = None
-    _building = None
-    _classes = None
-    _prepared = None
-    _added_modules = None
-    _additional_configs = None
-    _class_mocks = None
+class Di:
+    _added_modules: dict[int, bool] = {}
+    _additional_configs: list[AdditionalConfig] = {}
+    _bindings: dict[str, Any] = {}
+    _building: dict[int, str] = {}
+    _classes: dict[str, dict[str, int | type]] = {}
+    _prepared: dict[str, Any] = {}
+    _class_mocks_by_name: dict[str, type] = {}
+    _class_mocks_by_class: dict[type, type] = {}
 
-    def __init__(self, classes=None, modules=None, bindings=None, additional_configs=None):
-        self._bindings = {}
-        self._prepared = {}
-        self._classes = {}
-        self._building = {}
+    def __init__(
+        self,
+        classes: type | list[type]=[],
+        modules: ModuleType | list[ModuleType]=[],
+        bindings: dict[str, Any]={},
+        additional_configs: AdditionalConfig | list[AdditionalConfig]=[],
+    ):
+        """
+        Create a dependency injection container.
+
+        For details on the parameters, see the related methods:
+
+        classes -> di.add_classes()
+        modules -> di.add_modules()
+        bindings -> di.bind()
+        additional_configs -> di.add_additional_configs()
+        """
         self._added_modules = {}
         self._additional_configs = []
-        self._class_mocks = {}
+        self._bindings = {}
+        self._building = {}
+        self._classes = {}
+        self._class_mocks_by_name = {}
+        self._class_mocks_by_class = {}
+        self._prepared = {}
         if classes is not None:
             self.add_classes(classes)
         if modules is not None:
@@ -34,8 +55,35 @@ class DI:
         if additional_configs is not None:
             self.add_additional_configs(additional_configs)
 
-    def add_classes(self, classes):
-        if inspect.isclass(classes):
+    def add_classes(self, classes: type | list[type]) -> None:
+        """
+        Record any class that should be made available for injection.
+
+        All classes that come in here become available via their injection name, which is calculated
+        by converting the class name from TitleCase to snake_case.  e.g. the following class:
+
+        ```
+        class MyClass:
+            pass
+        ```
+
+        gets an injection name of `my_class`:
+
+        ```
+        from clearskies.di import Di
+
+        class MyClass:
+            name = "Simple Demo"
+
+        di = Di(classes=[MyClass])
+        # equivalent: di.add_classes(MyClass), di.add_classes([MyClass])
+        def my_function(my_class):
+            print(my_class.name)
+
+        di.call_function(my_function)
+        ```
+        """
+        if not isinstance(classes, list):
             classes = [classes]
         for add_class in classes:
             name = string.camel_case_to_snake_case(add_class.__name__)
@@ -54,11 +102,48 @@ class DI:
             if hasattr(add_class, "id_column_name"):
                 self._classes[string.make_plural(name)] = {"id": id(add_class), "class": add_class}
 
-    def add_modules(self, modules, root=None, is_root=True):
-        if inspect.ismodule(modules):
+    def add_modules(self, modules: ModuleType | list[ModuleType], root: str=None, is_root: bool=True) -> None:
+        """
+        Add a module to the dependency injection container.
+
+        clearskies will iterate through the module, adding all imported classes into the dependency injection container.
+
+        So, consider the following file structure inside a module:
+
+        ```
+        my_module/
+            __init__.py
+            my_sub_module/
+                __init__.py
+                my_class.py
+        ```
+
+        Assuming that the submodule and class are imported at each level (e.g. my_module/__init__.py imports my_sub_module,
+        and my_sub_module/__init__.py imports my_class.py) then you can:
+
+        ```
+        from clearksies.di import Di
+        import my_module
+
+        di = Di()
+        di.add_modules([my_module]) # also equivalent: di.add_modules(my_module), or Di(modules=[my_module])
+        def my_function(my_class):
+            pass
+
+        di.call_function(my_function)
+        ```
+
+        `my_function` will be called and `my_class` will automatically be populated with an instance of
+        `my_module.sub_module.my_class.MyClass`.
+
+        Note that MyClass will be able to declare its own dependencies per normal dependency injection rules.
+        See the main docblock in the clearskies.di.Di class for more details about how all the pieces work together.
+        """
+        if not isinstance(modules, list):
             modules = [modules]
 
         for module in modules:
+            # skip internal python modules
             if not hasattr(module, "__file__") or not module.__file__:
                 continue
             module_id = id(module)
@@ -101,13 +186,43 @@ class DI:
                         break
                     self.add_modules([item], root=root, is_root=False)
 
-    def add_additional_configs(self, additional_configs):
-        if type(additional_configs) != list:
+    def add_additional_configs(self, additional_configs: AdditionalConfig | list[AdditionalConfig]) -> None:
+        """
+        Adds an additional config instance to the dependency injection container.
+
+        Additional config class provide an additional way to provide dependencies into the dependency
+        injection system.  For more details about how to use them, see both base classes:
+
+         1. clearskies.di.additional_config.AdditionalConfig
+         2. clearskies.di.additional_config_auto_import.AdditionalConfigAutoImport
+
+        To use this method:
+
+        ```
+        import clearskies.di
+
+        MyConfig(clearskies.di.AdditionalConfig):
+            def provide_some_value(self):
+                return 2
+
+            def provide_another_value(self, some_value):
+                return some_value*2
+
+        di = clearskies.di.Di()
+        di.add_additional_configs([MyConfig()])
+        # equivalents:
+        # di.add_additional_configs(MyConfig())
+        # di = clearskies.di.Di(additional_configs=[MyConfig()])
+
+        def my_function(another_value):
+            print(another_value) # prints 4
+
+        di.call_function(my_function)
+        ```
+        """
+        if not isinstance(additional_configs, list):
             additional_configs = [additional_configs]
-        for additional_config in additional_configs:
-            self._additional_configs.append(
-                additional_config() if inspect.isclass(additional_config) else additional_config
-            )
+        self._additional_configs.extend(additional_configs)
 
     def bind(self, key, value):
         if key in self._building:
