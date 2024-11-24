@@ -11,6 +11,134 @@ from clearskies.functional import string
 
 
 class Di:
+    """
+    Build a dependency injection object.
+
+    The dependency injection (DI) container is a key part of clearskies, so understanding how to both configure
+    them and get dependencies for your classes is important.  Note however that there you don't often have
+    to interact with the dependency injection container directly.  All of the configuration options for
+    the DI container are also available to all the contexts, which is typically how you will build clearskies
+    applications.  So, while you can create a DI container and use it directly, typically you'll just follow
+    the same basic techniques to configure your context and use that to run your application.
+
+    These are the main ways to configure the DI container:
+
+     1. Import classes - each imported class is assigned an injection name based on the class name.
+     2. Import modules - clearskies will iterate over the module and import all the classes and AdditionalConfigAutoImport classes it finds.
+     3. Import AdditionalConfig classes - these allow you to programmatically define dependencies.
+     4. Specify bindings - this allows you to provide any kind of value with whatever name you want.
+     5. Specify class overrides - these allow you to swap out classes directly.
+     6. Extending the Di class - this allows you to provide a default set of values.
+
+    When the DI system builds a class or calls a function, those classes and functions can themselves request any value
+    configured inside the DI container.  There are three ways to request the desired dependencies:
+
+     1. By type hinting a class on any arguments (excluding python built-ins)
+     2. By specifying the name of a registered dependency
+     3. By extending the `clearskies.di.AutoFillProps` class and creating class properties from the `clearskies.di.inject_from` module
+
+    Note that when a class is built/function is called by the DI container, keyword arguments are not allowed
+    (because the DI container doesn't know whether or not it should provide optional arguments).  In addition,
+    the DI container must be able to resolve all positional arguments.  If the class requests an argument
+    that the DI system does not recognize, an error will be thrown.  Finally, it's a common pattern in clearskies
+    for some portion of the system to accept functions that will be called by the DI container.  When this happens,
+    it's possible for clearskies to provide additional values that may be useful when executing the function.
+    The areas that accept functions like this also document the additional dependency injection names that are available.
+
+    Given the variety of ways that dependencies can be specified, it's important to understand the order the priority that
+    clearskies uses to determine what value to provide in case there is more than one source.  That order is:
+
+     1. An argument named `di` will always return the DI container itself
+     2. Positional arguments with type hints that aren't for python built-ins will receive
+        1. The override class if the type-hinted class has a registered override
+        2. An AdditionalConfig that can provide the type-hinted class
+        3. The base Di class if it can provide the type-hinted class
+        2. The class itself if no override exists
+     3. All other positional arguments will have values provided based on the argument name and will receive
+        1. Things set via `add_binding(name, value)`
+        2. Class added via `add_classes` or `add_modules` which are made available according to their Di name
+        3. An AdditionalConfig class with a corresponding `provide_[name]` function
+        4. The Di class itself if it has a matching `provide_[name]` function
+
+    Note: multiple `AdditionalConfig` classes can be added to the Di container, and so a single injection name or class
+    can potentially be provided by multiple AdditionalConfig classes.  AdditionalConfig classes are checked in the
+    reverse of the order they were addded in - classes added last are checked first when trying to find values.
+
+    Note: When importing modules, any classes that inherit from `AdditionalConfigAutoImport` are automatically added
+    to the list of additional config classes.  These classes are added at the top of the list, so they are lower
+    priority than any classes you add via `add_additional_configs` or the `additional_configs` argument of the Di
+    constructor.
+
+    Note: Once a value is constructed, it is cached by the Di container and will automatically be provided for future
+    references of that same Di name or class.  Arguments injected in a constructor will always receive the cached
+    value.  If you want a "fresh" value of a given dependency, you have to attach instances from the
+    `clearskies.di.inject_from` module onto class proprties.  The instances in the `inject_from` module generally
+    give options for cache control.
+
+    Here's an example that brings most of these pieces together.  Once again, note that we're directly using
+    the Di contianer to build class/call functions, while normally you configure the Di container via your context
+    and then clearskies itself will build your class or call your functions as needed.
+
+    ```
+    from clearskies.import di
+
+    class SomeClass:
+        def __init__(self, my_value: int):
+            self.my_value = my_value
+
+    class MyClass:
+        def __init__(self, some_specific_value: int, some_class: SomeClass):
+            # `some_specific_value` is defined in both `MyProvider` and `MyOtherProvider`
+            # `some_class` will be injected from the type hint, and the actual instance is made by our
+            # `MyProvider`
+            self.final_value = some_specific_value*some_class.my_value
+
+    class VeryNeedy:
+        def __init__(self, my_class, some_other_value):
+            # We're relying on the automatic conversion of class names to snake_case, so clearskies
+            # will connect `my_class` to `MyClass`, which we provided directly to the Di container.
+
+            # some_other_value is specified as a binding
+            self.my_class = MyClass
+            self.some_other_value = some_other_value
+
+    class MyOtherProvider(di.AdditionalConfig):
+        def provide_some_specific_value(self):
+            # the order of additional configs will cause this function to be invoked
+            # (and hence some_specific_value will be `10`) despite the fact that MyProvider
+            # also has a `provide_` function with the same name.
+            return 10
+
+    class MyProvider(di.AdditionalConfig):
+        def provide_some_specific_value(self):
+            # note that the name of our function matches the name of the argument
+            # expected by MyClass.__init__.  Again though, we won't get called because
+            # the order the AdditionalConfigs are loaded gives `MyOtherProvider` priority.
+            return 5
+
+        def can_provide_class(class_to_check: type) -> bool:
+            # this lets the DI container know that if someone wants an instance
+            # of SomeClass, we can build it.
+            return class_to_check == SomeClass
+
+        def provide_class(class_to_provide: type):
+            if class_to_provide == SomeClass:
+                return SomeClass(5)
+            raise ValueError(f"I was asked to build a class I didn't expect '{class_to_provide.__name__}'")
+
+    di = Di(
+        classes=[MyClass],
+        additional_configs=[MyProvider(), MyOtherProvider()],
+        bindings={
+            "some_other_value": "dogs",
+        },
+    )
+
+    def my_function(this_uses_type_hinting_exclusively: VeryNeedy):
+        print(f"Jane owns {this_uses_type_hinting_exclusively.my_class.final_value}:")
+        print(f"{this_uses_type_hinting_exclusively.some_other_value}s")
+    ```
+    """
     _added_modules: dict[int, bool] = {}
     _additional_configs: list[AdditionalConfig] = {}
     _bindings: dict[str, Any] = {}
@@ -26,6 +154,7 @@ class Di:
         modules: ModuleType | list[ModuleType]=[],
         bindings: dict[str, Any]={},
         additional_configs: AdditionalConfig | list[AdditionalConfig]=[],
+        class_overrides: dict[type, type]={},
     ):
         """
         Create a dependency injection container.
@@ -34,8 +163,9 @@ class Di:
 
         classes -> di.add_classes()
         modules -> di.add_modules()
-        bindings -> di.bind()
+        bindings -> di.add_binding()
         additional_configs -> di.add_additional_configs()
+        class_overrides -> di.add_class_override()
         """
         self._added_modules = {}
         self._additional_configs = []
@@ -51,9 +181,12 @@ class Di:
             self.add_modules(modules)
         if bindings is not None:
             for key, value in bindings.items():
-                self.bind(key, value)
+                self.add_binding(key, value)
         if additional_configs is not None:
             self.add_additional_configs(additional_configs)
+        if class_overrides:
+            for (key, value) in class_overrides.items:
+                self.add_class_override(key, value)
 
     def add_classes(self, classes: type | list[type]) -> None:
         """
@@ -224,7 +357,26 @@ class Di:
             additional_configs = [additional_configs]
         self._additional_configs.extend(additional_configs)
 
-    def bind(self, key, value):
+    def add_binding(self, key, value):
+        """
+        Provide a specific value for name-based injection.
+
+        This method attaches a value to a specific dependency injection name.
+
+        ```
+        import clearskies.di
+
+        di = clearskies.di.Di()
+        di.add_binding("my_name", 12345)
+        # equivalent:
+        # di = clearskies.di.Di(bindings={"my_name": 12345})
+
+        def my_function(my_name):
+            print(my_name) # prints 12345
+
+        di.call_function(my_function)
+        ```
+        """
         if key in self._building:
             raise KeyError(f"Attempt to set binding for '{key}' while '{key}' was already being built")
 
@@ -237,40 +389,32 @@ class Di:
         else:
             self._prepared[key] = value
 
-    def build(self, thing, context=None, cache=False):
+    def build(self, thing: Any, context: str=None, cache: bool=False) -> Any:
+        """
+        Have the dependency injection container build a value for you.
+
+        This will accept either a dependency injection name or a class.
+        """
         if inspect.isclass(thing):
             return self.build_class(thing, context=context, cache=cache)
-        elif isinstance(thing, BindingConfig):
-            if not inspect.isclass(thing.object_class):
-                raise ValueError("BindingConfig contained a non-class!")
-            instance = self.build_class(thing.object_class, context=context, cache=cache)
-            if (thing.args or thing.kwargs) and not hasattr(instance, "configure"):
-                raise ValueError(
-                    f"Cannot build instance of class '{instance.__class__.__name__}' "
-                    + "because it is missing the 'configure' method"
-                )
-            instance.configure(*thing.args, **thing.kwargs)
-            return instance
         elif type(thing) == str:
             return self.build_from_name(thing, context=context, cache=cache)
         elif callable(thing):
-            raise ValueError("build received a callable: you probably want to call di.call_function()")
+            raise ValueError("build received a callable: you probably want to use di.call_function()")
 
         # if we got here then our thing is already and object of some sort and doesn't need anything further
         return thing
 
-    def build_from_name(self, name, context=None, cache=False):
+    def build_from_name(self, name: str, context: str=None, cache: bool=False) -> Any:
         """
         Builds a dependency based on its name
 
         Order of priority:
-          1. 'di' (aka self)
-          2. Already prepared things
-          3. Things set via `bind(name, value)`
-          4. Class via add_classes or add_modules
-          5. Things set in "additional_config" classes
-          6. Method on DI class called `provide_[name]`
-          7. Already prepared things
+          1. `di`, in which case the dependency injection container itself is injected
+          2. Things set via `add_binding(name, value)`
+          3. Class added via `add_classes` or `add_modules` which are made available according to their Di name
+          4. An AdditionalConfig class with a corresponding `provide_[name]` function
+          5. The Di class itself if it has a matching `provide_[name]` function
         """
         if name == "di":
             return self
@@ -320,12 +464,36 @@ class Di:
             + f"or a corresponding 'provide_{name}' method for this name."
         )
 
-    def mock_class(self, class_or_name, replacement):
-        if type(class_or_name) == str:
-            name = class_or_name
-        elif inspect.isclass(class_or_name):
-            name = string.camel_case_to_snake_case(class_or_name.__name__)
-        else:
+    def add_class_override(self, class_to_override: type, replacement_class: type) -> None:
+        """
+        Overrides a class for type-based injection.
+
+        This function allows you to replace/mock class provided when relying on type hinting for injection.
+        This is most often (but not exclusively) used for mocking out classes during texting.  Note that
+        this only overrides that specific class - not classes that extend it.
+
+        Example:
+
+        ```
+        from clearskies.import Di
+
+        class TypeHintedClass:
+            my_value = 5
+
+        class ReplacementClass:
+            my_value = 10
+
+        di = Di()
+        di.add_class_override(TypeHintedClass, ReplacementClass)
+        # also di = Di(class_overrides={TypeHintedClass: ReplacementClass})
+
+        def my_function(some_value: TypeHintedClass):
+            print(some_value.my_value) # prints 10
+
+        di.call_function(my_function)
+        ```
+        """
+        if not inspect.isclass(class_to_override):
             raise ValueError(
                 "Invalid value passed to 'mock_class' for 'class_or_name' parameter: it was neither a name nor a class"
             )
@@ -335,7 +503,7 @@ class Di:
                 + str(type(replacement))
             )
 
-        self._class_mocks[name] = replacement
+        self._class_replacements[class_to_override] = replacement_class
 
     def build_class(self, class_to_build, context=None, name=None, cache=False):
         """
@@ -349,8 +517,8 @@ class Di:
             return self._prepared[name]
         my_class_name = class_to_build.__name__
 
-        if name in self._class_mocks:
-            class_to_build = self._class_mocks[name]
+        if name in self._class_replacements:
+            class_to_build = self._class_replacements[name]
 
         init_args = inspect.getfullargspec(class_to_build)
         if init_args.defaults is not None:
@@ -395,8 +563,6 @@ class Di:
                 and not inspect.isabstract(typed_class)
                 and not isinstance(typed_class, type)
             ):
-                print(my_class_name)
-                print(typed_class)
                 args.append(self.build_class(typed_class, context=my_class_name, cache=True))
                 continue
             args.append(self.build_from_name(build_argument, context=my_class_name, cache=True))
@@ -408,11 +574,20 @@ class Di:
             self._prepared[name] = built_value
         return built_value
 
-    def call_function(self, callable_to_execute, **kwargs):
+    def call_function(self, callable_to_execute: Callable, **kwargs):
         """
         Calls a function, building any positional arguments and providing them.
 
-        Any kwargs passed to call_function will populate the equivalent dependencies
+        Any kwargs passed to call_function will populate the equivalent dependencies.
+
+        ```
+        from clearskies.di import Di
+
+        di = Di(bindings={"some_name": "hello"})
+        def my_function(some_name, some_other_name):
+            print(f"{some_name} {some_other_value}") # prints 'hello world'
+        di.call_function(my_function, some_other_value="world")
+        ```
         """
         args_data = inspect.getfullargspec(callable_to_execute)
 
@@ -465,17 +640,3 @@ class Di:
         it right now.
         """
         raise ValueError(f"Cannot {action} because it has keyword arguments.")
-
-    @classmethod
-    def init(cls, *binding_classes, **bindings):
-        modules = None
-        additional_configs = None
-        if "modules" in bindings:
-            modules = bindings["modules"]
-            del bindings["modules"]
-        if "additional_configs" in bindings:
-            additional_configs = bindings["additional_configs"]
-            del bindings["additional_configs"]
-
-        di = cls(classes=binding_classes, modules=modules, bindings=bindings, additional_configs=additional_configs)
-        return di
