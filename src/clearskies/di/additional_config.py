@@ -109,13 +109,13 @@ class AdditionalConfig:
 
         return di.call_function(getattr(self, f"provide_{name}"))
 
-    def can_provide_class(class_to_check: type) -> bool:
+    def can_provide_class(self, class_to_check: type) -> bool:
         """
         Return True/False to denote if this AdditionalConfig class can provide a given class.
         """
         return False
 
-    def provide_class(class_to_provide: type) -> Any:
+    def provide_class(self, class_to_provide: type) -> Any:
         """
         Return the desired instance of a given class.
         """

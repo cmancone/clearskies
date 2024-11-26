@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 from types import ModuleType
 import inspect
 import re
@@ -80,7 +80,7 @@ class Di:
     and then clearskies itself will build your class or call your functions as needed.
 
     ```
-    from clearskies.import di
+    from clearskies.di import Di, AdditionalConfig
 
     class SomeClass:
         def __init__(self, my_value: int):
@@ -102,26 +102,26 @@ class Di:
             self.my_class = MyClass
             self.some_other_value = some_other_value
 
-    class MyOtherProvider(di.AdditionalConfig):
+    class MyOtherProvider(AdditionalConfig):
         def provide_some_specific_value(self):
             # the order of additional configs will cause this function to be invoked
             # (and hence some_specific_value will be `10`) despite the fact that MyProvider
             # also has a `provide_` function with the same name.
             return 10
 
-    class MyProvider(di.AdditionalConfig):
+    class MyProvider(AdditionalConfig):
         def provide_some_specific_value(self):
             # note that the name of our function matches the name of the argument
             # expected by MyClass.__init__.  Again though, we won't get called because
             # the order the AdditionalConfigs are loaded gives `MyOtherProvider` priority.
             return 5
 
-        def can_provide_class(class_to_check: type) -> bool:
+        def can_provide_class(self, class_to_check: type) -> bool:
             # this lets the DI container know that if someone wants an instance
             # of SomeClass, we can build it.
             return class_to_check == SomeClass
 
-        def provide_class(class_to_provide: type):
+        def provide_class(self, class_to_provide: type):
             if class_to_provide == SomeClass:
                 return SomeClass(5)
             raise ValueError(f"I was asked to build a class I didn't expect '{class_to_provide.__name__}'")
@@ -130,13 +130,16 @@ class Di:
         classes=[MyClass],
         additional_configs=[MyProvider(), MyOtherProvider()],
         bindings={
-            "some_other_value": "dogs",
+            "some_other_value": "dog",
         },
     )
 
     def my_function(this_uses_type_hinting_exclusively: VeryNeedy):
         print(f"Jane owns {this_uses_type_hinting_exclusively.my_class.final_value}:")
         print(f"{this_uses_type_hinting_exclusively.some_other_value}s")
+
+    print(di.call_function(my_function))
+    # prints 'Jane owns 50 dogs'
     ```
     """
     _added_modules: dict[int, bool] = {}
@@ -380,9 +383,8 @@ class Di:
         if key in self._building:
             raise KeyError(f"Attempt to set binding for '{key}' while '{key}' was already being built")
 
-        # classes and binding configs are placed in self._bindings, but any other prepared value goes straight
-        # into self._prepared
-        if inspect.isclass(value) or isinstance(value, BindingConfig):
+        # classes are placed in self._bindings, but any other prepared value goes straight into self._prepared
+        if inspect.isclass(value):
             self._bindings[key] = value
             if key in self._prepared:
                 del self._prepared[key]
