@@ -16,6 +16,7 @@ packages = [
 exclude = [
     "src/clearskies/*_test.py",
     "src/clearskies/**/*_test.py",
+    "src/clearskies/integration_tests/*"
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Callable
 from types import ModuleType
 import inspect
@@ -48,17 +49,24 @@ class Di:
     Given the variety of ways that dependencies can be specified, it's important to understand the order the priority that
     clearskies uses to determine what value to provide in case there is more than one source.  That order is:
 
-     1. An argument named `di` will always return the DI container itself
-     2. Positional arguments with type hints that aren't for python built-ins will receive
+     1. Arguments named `di`, `now`, or `utcnow` always return pre-defined values
+     2. Positional arguments with type hints:
         1. The override class if the type-hinted class has a registered override
-        2. An AdditionalConfig that can provide the type-hinted class
-        3. The base Di class if it can provide the type-hinted class
-        2. The class itself if no override exists
+        2. A value provided by an AdditionalConfig that can provide the type-hinted class
+        3. The class itself if the class has been added explicitly via add_classes or implicitly via add_modules
      3. All other positional arguments will have values provided based on the argument name and will receive
         1. Things set via `add_binding(name, value)`
         2. Class added via `add_classes` or `add_modules` which are made available according to their Di name
         3. An AdditionalConfig class with a corresponding `provide_[name]` function
         4. The Di class itself if it has a matching `provide_[name]` function
+
+    Note: an argument named `di` will always be populated with the DI container itself.
+
+    Note: an argument named `now` will always be populated by the current time without a timezone.  During testing, you
+    can change the time with di.set_now() (this method is also available on all contexts)
+
+    Note: an argument named `utcnow` will always be populated by the current time (set to the UTC timezone).  During testing,
+    you can change the time with di.set_utcnow() (this method is also available on all contexts).
 
     Note: multiple `AdditionalConfig` classes can be added to the Di container, and so a single injection name or class
     can potentially be provided by multiple AdditionalConfig classes.  AdditionalConfig classes are checked in the
@@ -77,7 +85,8 @@ class Di:
 
     Here's an example that brings most of these pieces together.  Once again, note that we're directly using
     the Di contianer to build class/call functions, while normally you configure the Di container via your context
-    and then clearskies itself will build your class or call your functions as needed.
+    and then clearskies itself will build your class or call your functions as needed.  Full explanation comes after
+    the example.
 
     ```
     from clearskies.di import Di, AdditionalConfig
@@ -94,12 +103,12 @@ class Di:
             self.final_value = some_specific_value*some_class.my_value
 
     class VeryNeedy:
-        def __init__(self, my_class, some_other_value):
+        def __init__(self, my_class, some_other_value: str):
             # We're relying on the automatic conversion of class names to snake_case, so clearskies
             # will connect `my_class` to `MyClass`, which we provided directly to the Di container.
 
             # some_other_value is specified as a binding
-            self.my_class = MyClass
+            self.my_class = my_class
             self.some_other_value = some_other_value
 
     class MyOtherProvider(AdditionalConfig):
@@ -116,31 +125,55 @@ class Di:
             # the order the AdditionalConfigs are loaded gives `MyOtherProvider` priority.
             return 5
 
-        def can_provide_class(self, class_to_check: type) -> bool:
+        def can_build_class(self, class_to_check: type) -> bool:
             # this lets the DI container know that if someone wants an instance
             # of SomeClass, we can build it.
             return class_to_check == SomeClass
 
-        def provide_class(self, class_to_provide: type):
+        def build_class(self, class_to_provide: type, argument_name: str, di, context: str = ""):
             if class_to_provide == SomeClass:
                 return SomeClass(5)
             raise ValueError(f"I was asked to build a class I didn't expect '{class_to_provide.__name__}'")
 
     di = Di(
-        classes=[MyClass],
+        classes=[MyClass, VeryNeedy, SomeClass],
         additional_configs=[MyProvider(), MyOtherProvider()],
         bindings={
             "some_other_value": "dog",
         },
     )
 
-    def my_function(this_uses_type_hinting_exclusively: VeryNeedy):
-        print(f"Jane owns {this_uses_type_hinting_exclusively.my_class.final_value}:")
-        print(f"{this_uses_type_hinting_exclusively.some_other_value}s")
+    def my_function(my_fancy_argument: VeryNeedy):
+        print(f"Jane owns {my_fancy_argument.my_class.final_value}:")
+        print(f"{my_fancy_argument.some_other_value}s")
 
     print(di.call_function(my_function))
     # prints 'Jane owns 50 dogs'
     ```
+
+    When `call_function` is executed on `my_function`, the di system checks the calling arguments of `my_function`
+    and runs through the priority list above to populate them.  `my_function` has one argument -
+    `my_fancy_argument: VeryNeedy`, which it resolves as so:
+
+     1. The type hint (`VeryNeedy`) matches an imported class.  Therefore, clearskies will build an instance of VeryNeedy and
+        provide it for `my_fancy_argument`.
+     2. clearskies inpsects the constructor for `VeryNeedy` and finds two arguments, `my_class` and `some_other_value: str`,
+        which it attempts to build.
+        1. `my_class` has no type hint, so clearskies falls back on name-based resolution.  A class called `MyClass` was imported,
+           and per standard naming convention, this automatically becomes available via the name `my_class`.  Thus, clearskies
+           prepares to build an instance of `MyClass`. `MyClass` has two arguments: `some_specific_value: int` and
+           `some_class: SomeClass`
+           1. For `some_specific_value`, the Di service falls back on named-based resolution (because it will never try to
+              provide values for type-hints of built-in types).  Both `MyOtherProvider` and `MyProvider` have a method called
+              `provide_some_specific_value`, so both can be used to provide this value.  Since `MyOtherProvider` was added to
+              the Di container last, it takes priority.  Therefore, clearskies calls `MyOtherProvider.provide_some_specific_value`
+              to create the value that it will populate into the `some_specific_value` parameter.
+           2. For `some_class: SomeClass`, clearskies evaluates the type-hint.  It works through the additional configs and, since
+              `MyProvider` returns True when `can_build_class` is called with  `SomeClass`, the Di container will use this
+              additional config to create the value for the `some_class` argument.  Therefore, clearskies calls
+              `MyProvider.build_class(SomeClass, 'some_class', di)` and the return value is used for the `some_class` argument.
+        2. `some_other_value` uses a built-in for a type hint, so clearskies falls back on name-based resolution.  It falls back
+           on the registered binding of `"dog"` to the name `"some_other_value"`, so clearskies provides `"dog"`.
     """
     _added_modules: dict[int, bool] = {}
     _additional_configs: list[AdditionalConfig] = {}
@@ -148,8 +181,12 @@ class Di:
     _building: dict[int, str] = {}
     _classes: dict[str, dict[str, int | type]] = {}
     _prepared: dict[str, Any] = {}
-    _class_mocks_by_name: dict[str, type] = {}
-    _class_mocks_by_class: dict[type, type] = {}
+    _class_overrides_by_name: dict[str, type] = {}
+    _class_overrides_by_class: dict[type, type] = {}
+    _type_hint_disallow_list = [int, float, str, dict, list, datetime.datetime]
+    _high_priority_names = ['di', 'now', 'utcnow']
+    _now: datetime.datetime | None = None
+    _utcnow: datetime.datetime | None = None
 
     def __init__(
         self,
@@ -158,6 +195,9 @@ class Di:
         bindings: dict[str, Any]={},
         additional_configs: AdditionalConfig | list[AdditionalConfig]=[],
         class_overrides: dict[type, type]={},
+        overrides: dict[str, type]={},
+        now: datetime.datetime | None = None,
+        utcnow: datetime.datetime | None = None,
     ):
         """
         Create a dependency injection container.
@@ -175,8 +215,8 @@ class Di:
         self._bindings = {}
         self._building = {}
         self._classes = {}
-        self._class_mocks_by_name = {}
-        self._class_mocks_by_class = {}
+        self._class_overrides_by_name = {}
+        self._class_overrides_by_class = {}
         self._prepared = {}
         if classes is not None:
             self.add_classes(classes)
@@ -188,8 +228,15 @@ class Di:
         if additional_configs is not None:
             self.add_additional_configs(additional_configs)
         if class_overrides:
-            for (key, value) in class_overrides.items:
+            for (key, value) in class_overrides.items():
                 self.add_class_override(key, value)
+        if overrides:
+            for (key, value) in overrides:
+                self.add_override(key, value)
+        if now:
+            self.set_now(now)
+        if utcnow:
+            self.set_utcnow(utcnow)
 
     def add_classes(self, classes: type | list[type]) -> None:
         """
@@ -203,7 +250,8 @@ class Di:
             pass
         ```
 
-        gets an injection name of `my_class`:
+        gets an injection name of `my_class`.  Also, clearskies will only resolve and reject based on type hints
+        if those classes are first added via `add_classes`.  See the following example:
 
         ```
         from clearskies.di import Di
@@ -213,25 +261,24 @@ class Di:
 
         di = Di(classes=[MyClass])
         # equivalent: di.add_classes(MyClass), di.add_classes([MyClass])
+
         def my_function(my_class):
             print(my_class.name)
 
+        def my_function_with_type_hinting(the_name_no_longer_matters: MyClass):
+            print(my-class.name)
+
+        # both print 'Simple Demo'
         di.call_function(my_function)
+        di.call_function(my_function_with_type_hinting)
         ```
         """
         if not isinstance(classes, list):
             classes = [classes]
         for add_class in classes:
             name = string.camel_case_to_snake_case(add_class.__name__)
-            # if name in self._classes:
-            ## if we're re-adding the same class twice then just ignore it.
-            # if id(add_class) == self._classes[name]['id']:
-            # continue
-
-            ## otherwise throw an exception
-            # raise ValueError(f"More than one class with a name of '{name}' was added")
-
             self._classes[name] = {"id": id(add_class), "class": add_class}
+            self._classes[add_class] = {"id": id(add_class), "class": add_class}
 
             # if this is a model class then also add a plural version of its name
             # to the DI configuration
@@ -337,7 +384,7 @@ class Di:
         ```
         import clearskies.di
 
-        MyConfig(clearskies.di.AdditionalConfig):
+        class MyConfig(clearskies.di.AdditionalConfig):
             def provide_some_value(self):
                 return 2
 
@@ -391,6 +438,76 @@ class Di:
         else:
             self._prepared[key] = value
 
+    def add_class_override(self, class_to_override: type, replacement_class: type) -> None:
+        """
+        Overrides a class for type-based injection.
+
+        This function allows you to replace/mock class provided when relying on type hinting for injection.
+        This is most often (but not exclusively) used for mocking out classes during texting.  Note that
+        this only overrides that specific class - not classes that extend it.
+
+        Example:
+
+        ```
+        from clearskies.import Di
+
+        class TypeHintedClass:
+            my_value = 5
+
+        class ReplacementClass:
+            my_value = 10
+
+        di = Di()
+        di.add_classes(TypeHintedClass)
+        di.add_class_override(TypeHintedClass, ReplacementClass)
+        # also di = Di(class_overrides={TypeHintedClass: ReplacementClass})
+
+        def my_function(some_value: TypeHintedClass):
+            print(some_value.my_value) # prints 10
+
+        di.call_function(my_function)
+        ```
+        """
+        if not inspect.isclass(class_to_override):
+            raise ValueError(
+                "Invalid value passed to add_class_override for 'class_or_name' parameter: it was neither a name nor a class"
+            )
+        if not inspect.isclass(replacement_class):
+            raise ValueError(
+                "Invalid value passed to add_class_override for 'replacement_class' parameter: a class should be passed but I got a "
+                + str(type(replacement_class))
+            )
+
+        self._class_overrides_by_class[class_to_override] = replacement_class
+
+    def add_override(self, name: str, replacement_class: type) -> None:
+        """
+        Overrides a specific injection name by specifying a class that should be injected in its place.
+        """
+        if not inspect.isclass(replacement_class):
+            raise ValueError(
+                "Invalid value passed to add_override for 'replacement_class' parameter: a class should be passed but I got a "
+                + str(type(replacement_class))
+            )
+
+        self._class_overrides_by_name[name] = replacement_class
+
+    def set_now(self, now: datetime.datetime) -> None:
+        """
+        Set the current time which will be passed along to any dependency arguments named `now`.
+        """
+        if now.tzinfo is not None:
+            raise ValueError("set_now() was passed a datetime object with timezone information - it should only be given timezone-naive datetime objects.  Maybe you meant to use di.set_utcnow()")
+        self._now = now
+
+    def set_utcnow(self, utcnow: datetime.datetime) -> None:
+        """
+        Set the current time which will be passed along to any dependency arguments named `utcnow`.
+        """
+        if not utcnow.tzinfo:
+            raise ValueError("set_utcnow() was passed a datetime object without timezone information - it should only be given timezone-aware datetime objects.  Maybe you meant to use di.set_now()")
+        self._utcnow = utcnow
+
     def build(self, thing: Any, context: str=None, cache: bool=False) -> Any:
         """
         Have the dependency injection container build a value for you.
@@ -418,8 +535,8 @@ class Di:
           4. An AdditionalConfig class with a corresponding `provide_[name]` function
           5. The Di class itself if it has a matching `provide_[name]` function
         """
-        if name == "di":
-            return self
+        if name in self._high_priority_names:
+            return self.build_predefined_keyword(name)
 
         if name in self._prepared and cache:
             return self._prepared[name]
@@ -430,8 +547,11 @@ class Di:
                 self._prepared[name] = built_value
             return built_value
 
-        if name in self._classes:
-            built_value = self.build_class(self._classes[name]["class"], context=context)
+        if name in self._classes or name in self._class_overrides_by_name:
+            class_to_build = self._class_overrides_by_name[name]["class"] if name in self._class_overrides_by_name else self._classes[name]["class"]
+            print(class_to_build)
+            print(context)
+            built_value = self.build_class(class_to_build, context=context)
             if cache:
                 self._prepared[name] = built_value
             return built_value
@@ -443,13 +563,13 @@ class Di:
             if not additional_config.can_build(name):
                 continue
             built_value = additional_config.build(name, self, context=context)
-            if cache and self.call_function(additional_config.can_cache, name=name, context=context):
+            if cache and additional_config.can_cache(name, self, context=context):
                 self._prepared[name] = built_value
             return built_value
 
         if hasattr(self, f"provide_{name}"):
             built_value = self.call_function(getattr(self, f"provide_{name}"))
-            if cache:
+            if cache and self.can_cache(name, context):
                 self._prepared[name] = built_value
             return built_value
 
@@ -466,72 +586,53 @@ class Di:
             + f"or a corresponding 'provide_{name}' method for this name."
         )
 
-    def add_class_override(self, class_to_override: type, replacement_class: type) -> None:
+    def build_predefined_keyword(self, name: str) -> Any:
         """
-        Overrides a class for type-based injection.
-
-        This function allows you to replace/mock class provided when relying on type hinting for injection.
-        This is most often (but not exclusively) used for mocking out classes during texting.  Note that
-        this only overrides that specific class - not classes that extend it.
-
-        Example:
-
-        ```
-        from clearskies.import Di
-
-        class TypeHintedClass:
-            my_value = 5
-
-        class ReplacementClass:
-            my_value = 10
-
-        di = Di()
-        di.add_class_override(TypeHintedClass, ReplacementClass)
-        # also di = Di(class_overrides={TypeHintedClass: ReplacementClass})
-
-        def my_function(some_value: TypeHintedClass):
-            print(some_value.my_value) # prints 10
-
-        di.call_function(my_function)
-        ```
+        Returns a value for one of the predefined keywords (stored in self._high_priority_names)
         """
-        if not inspect.isclass(class_to_override):
-            raise ValueError(
-                "Invalid value passed to 'mock_class' for 'class_or_name' parameter: it was neither a name nor a class"
-            )
-        if not inspect.isclass(replacement):
-            raise ValueError(
-                "Invalid value passed to 'mock_class' for 'replacement' parameter: a class should be passed but I got a "
-                + str(type(replacement))
-            )
+        if name.lower() == "di":
+            return self
 
-        self._class_replacements[class_to_override] = replacement_class
+        if name == 'now':
+            return self._now if self._now else datetime.datetime.now()
+        return self._utcnow if self._utcnow else datetime.datetime.now(datetime.timezone.utc)
 
-    def build_class(self, class_to_build, context=None, name=None, cache=False):
+
+    def build_argument(self, argument_name: str, type_hint: type | None, context: str="", cache: bool = True) -> Any:
         """
-        Builds a class
+        Build an argument given the name and type hint.
+
+        Runs through the resolution order described in the docblock at the top of the Di class to build an argument given
+        its name and type-hint.
+        """
+        if argument_name in self._high_priority_names:
+            return self.build_predefined_keyword(argument_name)
+        built_value = self.build_class_from_type_hint(argument_name, type_hint, context=context, cache=True)
+        if built_value:
+            return built_value
+        return self.build_from_name(argument_name, context=context, cache=True)
+
+    def build_class(self, class_to_build: type, context=None, cache=True) -> Any:
+        """
+        Builds a class.
 
         The class constructor cannot accept any kwargs.   See self._disallow_kwargs for more details
         """
-        if name is None:
-            name = string.camel_case_to_snake_case(class_to_build.__name__)
-        if name in self._prepared and cache:
-            return self._prepared[name]
-        my_class_name = class_to_build.__name__
 
-        if name in self._class_replacements:
-            class_to_build = self._class_replacements[name]
+        if class_to_build in self._prepared and cache:
+            return self._prepared[class_to_build]
+        my_class_name = class_to_build.__name__
 
         init_args = inspect.getfullargspec(class_to_build)
         if init_args.defaults is not None:
-            self._disallow_kwargs(f"build class '{my_class_name}'")
+            self._disallow_kwargs(f"build class '{class_to_build.__name__}'")
 
         # ignore the first argument because that is just `self`
         build_arguments = init_args.args[1:]
         if not build_arguments:
             built_value = class_to_build()
             if cache:
-                self._prepared[name] = built_value
+                self._prepared[class_to_build] = built_value
             return built_value
 
         # self._building will help us keep track of what we're already building, and what we are building it for.
@@ -551,30 +652,63 @@ class Di:
 
         self._building[class_id] = context
         # Turn on caching when building the automatic dependencies that get injected into a class constructor
-        args = []
-        for build_argument in build_arguments:
-            typed_class = init_args.annotations.get(build_argument, None)
-            # I'm probably going to have to pull this conditional off into its own function and make it smarter over time.
-            # The idea is that we want to decide what to inject based on either the type hinting itself of the variable name.
-            # However, dependency injection via type hinting is actually rather tricky because there are plenty of cases
-            # where the type doesn't actually specify what needs to be injected.  If we're lucky, I have already taken
-            # care of all the edge cases, but we'll see...
-            if (
-                typed_class
-                and callable(typed_class)
-                and not inspect.isabstract(typed_class)
-                and not isinstance(typed_class, type)
-            ):
-                args.append(self.build_class(typed_class, context=my_class_name, cache=True))
-                continue
-            args.append(self.build_from_name(build_argument, context=my_class_name, cache=True))
+        args = [
+            self.build_argument(build_argument, init_args.annotations.get(build_argument, None), context=my_class_name, cache=True)
+            for build_argument in build_arguments
+        ]
 
         del self._building[class_id]
 
         built_value = class_to_build(*args)
         if cache:
-            self._prepared[name] = built_value
+            self._prepared[class_to_build] = built_value
         return built_value
+
+    def build_class_from_type_hint(self, argument_name: str, class_to_build: type, context: str='', cache: bool=True) -> Any | None:
+        """
+        Build an argument from a type hint.
+
+        Note that in many cases we can't actually build the thing.  It may be a type hint of a built-in or some other value
+        that we're not configured to deal with.  In that case, just return None and the calling method will deal with it.
+
+        This follows the resolution order defined in the docblock of the Di class.
+        """
+
+        # these first checks just verify that it is something that we can actually build
+        if not class_to_build:
+            return None
+        if not callable(class_to_build):
+            return None
+        if inspect.isabstract(class_to_build):
+            return None
+
+        # then first things first: check our class overrides
+        if class_to_build in self._class_overrides_by_class:
+            return self.build_class(self._class_overrides_by_class[class_to_build], context=context, cache=cache)
+
+        # next check our additional config classes
+        built_value = None
+        can_cache = False
+        for index in range(len(self._additional_configs) - 1, -1, -1):
+            additional_config = self._additional_configs[index]
+            if not additional_config.can_build_class(class_to_build):
+                continue
+
+            built_value = additional_config.build_class(class_to_build, argument_name, self, context=context)
+            can_cache = additional_config.can_cache_class(class_to_build, self, context)
+            break
+
+        # finally, if we found something, cache and/or return it
+        if built_value is not None:
+            if cache and can_cache:
+                self._prepared[class_to_build] = built_value
+            return built_value
+
+        # last but not least we build the class itself as long as it has been imported into the Di system
+        if class_to_build in self._classes:
+            return self.build_class(class_to_build, context=context, cache=cache)
+
+        return None
 
     def call_function(self, callable_to_execute: Callable, **kwargs):
         """
@@ -612,7 +746,7 @@ class Di:
         callable_args = [
             kwargs[arg]
             if arg in kwargs
-            else self.build_from_name(arg, context=callable_to_execute.__name__, cache=True)
+            else self.build_argument(arg, args_data.annotations.get(arg, None), context=callable_to_execute.__name__, cache=True)
             for arg in arg_names
         ]
         callable_kwargs = {}
@@ -642,3 +776,9 @@ class Di:
         it right now.
         """
         raise ValueError(f"Cannot {action} because it has keyword arguments.")
+
+    def can_cache(self, name: str, context: str) -> bool:
+        """
+        Control whether or not to cache a value built by the DI container.
+        """
+        return False

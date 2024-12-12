@@ -48,7 +48,7 @@ class AdditionalConfig:
         print(important_thing) # prints 100
     ```
     """
-    def can_cache(self, name: str, context: str | None=None) -> bool:
+    def can_cache(self, name: str, di, context: str) -> bool:
         """
         Cache control!
 
@@ -109,14 +109,20 @@ class AdditionalConfig:
 
         return di.call_function(getattr(self, f"provide_{name}"))
 
-    def can_provide_class(self, class_to_check: type) -> bool:
+    def can_build_class(self, class_to_check: type) -> bool:
         """
         Return True/False to denote if this AdditionalConfig class can provide a given class.
         """
         return False
 
-    def provide_class(self, class_to_provide: type) -> Any:
+    def build_class(self, class_to_provide: type, argument_name: str, di, context: str = "") -> Any:
         """
         Return the desired instance of a given class.
         """
         pass
+
+    def can_cache_class(self, class_to_build: type, di, context: str) -> bool:
+        """
+        Control whether or not the Di container caches the instance after building a class
+        """
+        return False
