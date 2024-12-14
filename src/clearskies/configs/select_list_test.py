@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import MagicMock
 
-from clearskies import configs
+from clearskies import configs, Configurable
 import clearskies.parameters_to_properties
 
 
-class HasConfigs(configs.Configurable):
+class HasConfigs(Configurable):
     my_select_list = configs.SelectList(["asdf", "qwerty", "bob", "jane"], default=["asdf", "bob"])
 
     @clearskies.parameters_to_properties

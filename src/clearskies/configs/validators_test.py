@@ -1,9 +1,8 @@
 import unittest
 from unittest.mock import MagicMock
 
-from clearskies import configs, parameters_to_properties
+from clearskies import configs, Configurable, parameters_to_properties
 from .. import validator
-from clearskies.bindings import Validator as BindingValidator
 
 
 class FakeValidator(validator.Validator):
@@ -11,7 +10,7 @@ class FakeValidator(validator.Validator):
         pass
 
 
-class HasConfigs(configs.Configurable):
+class HasConfigs(Configurable):
     validators = configs.Validators()
 
     @parameters_to_properties
@@ -21,20 +20,16 @@ class HasConfigs(configs.Configurable):
 
 class ValidatorsTest(unittest.TestCase):
     def test_allow(self):
-        binding_validator = BindingValidator(ValidatorsTest)
         fake_validator = FakeValidator()
 
         has_configs = HasConfigs(fake_validator)
         assert has_configs.validators == [fake_validator]
 
-        more_configs = HasConfigs([binding_validator, fake_validator])
-        assert more_configs.validators == [binding_validator, fake_validator]
-
-    def test_raise_non_action(self):
+    def test_raise_non_validator(self):
         with self.assertRaises(TypeError) as context:
             fake_validator = FakeValidator()
             has_configs = HasConfigs([fake_validator, "sup"])
         assert (
-            "Error with 'HasConfigs.validators': attempt to set a value of type 'str' for item #2 when a Validator or BindingValidator is required"
+            "Error with 'HasConfigs.validators': attempt to set a value of type 'str' for item #2 when a Validator is required"
             == str(context.exception)
         )

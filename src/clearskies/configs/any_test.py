@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import MagicMock
 
-from clearskies import configs, parameters_to_properties
+from clearskies import configs, Configurable, parameters_to_properties
 
 
-class HasConfigs(configs.Configurable):
+class HasConfigs(Configurable):
     anything = configs.Any()
 
     @parameters_to_properties

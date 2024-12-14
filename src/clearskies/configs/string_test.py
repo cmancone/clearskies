@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import MagicMock
 
-from clearskies import configs, parameters_to_properties
+from clearskies import configs, Configurable, parameters_to_properties
 
 
-class HasConfigs(configs.Configurable):
+class HasConfigs(Configurable):
     my_string = configs.String(default="asdf")
 
     @parameters_to_properties
@@ -12,7 +12,7 @@ class HasConfigs(configs.Configurable):
         self.finalize_and_validate_configuration()
 
 
-class HasConfigsRequired(configs.Configurable):
+class HasConfigsRequired(Configurable):
     my_string = configs.String(required=True)
 
     @parameters_to_properties
@@ -28,7 +28,7 @@ class StringTest(unittest.TestCase):
     def test_raise_wrong_type(self):
         with self.assertRaises(TypeError) as context:
             has_configs = HasConfigs(5)
-        assert "Error with 'HasConfigs.my_string': attempt to set a value of type 'int' to a string parameter" == str(
+        assert "Error with 'HasConfigs.my_string': attempt to set a value of type 'int' to a parameter that requires a string." == str(
             context.exception
         )
 

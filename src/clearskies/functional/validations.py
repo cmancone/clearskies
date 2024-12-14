@@ -10,8 +10,6 @@ def is_model(to_check: Any) -> bool:
     """
     if not hasattr(to_check, "destination_name"):
         return False
-    if not hasattr(to_check, "column_configs"):
-        return False
     return True
 
 
@@ -64,7 +62,7 @@ def is_model_class_or_reference(to_check: Any, raise_error_message=False) -> boo
     if raise_error_message:
         raise TypeError(
             "I expected a model class or reference, but instead I received a class that was neither.  It had a type of '"
-            + type(to_check)
+            + to_check.__class__.__name__
             + "'"
         )
 
