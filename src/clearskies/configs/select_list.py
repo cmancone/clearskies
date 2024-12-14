@@ -1,7 +1,7 @@
-from clearskies.configs import string
+from clearskies.configs import config
 
 
-class SelectList(string.String):
+class SelectList(config.Config):
     """
     This is for a configuration that should be a list of strings matching some list of allowed values.
 

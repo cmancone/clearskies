@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 from clearskies import configs, Configurable, Model, parameters_to_properties
 
 class MyModel(Model):
-    destination_name = "asdf"
+    destination_name = "asdf"  # type: ignore
 
 class HasConfigs(Configurable):
     some_model_class = configs.ModelClass()

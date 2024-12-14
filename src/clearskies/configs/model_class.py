@@ -27,7 +27,7 @@ class ModelClass(config.Config):
         if validations.is_model_class_reference(value):
             if inspect.isclass(value):
                 value = value()
-            instance._set_config(self, value.get_model_class())
+            instance._set_config(self, value.get_model_class())  # type: ignore
         else:
             instance._set_config(self, value)
 

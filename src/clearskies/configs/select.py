@@ -16,7 +16,7 @@ class Select(string.String):
             )
         if value not in self.allowed_values:
             raise ValueError(
-                f"{error_prefix} attempt to set a value of type '{value}' which is not in the list of allowed values.  It must be one of '"
+                f"{error_prefix} attempt to set a value of type '{value}' which is not in the list of allowed values.  It must be one of '"  # type: ignore
                 + "', '".join(self.allowed_values)
                 + "'"
             )

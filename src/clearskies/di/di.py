@@ -176,7 +176,7 @@ class Di:
            on the registered binding of `"dog"` to the name `"some_other_value"`, so clearskies provides `"dog"`.
     """
     _added_modules: dict[int, bool] = {}
-    _additional_configs: list[AdditionalConfig] = {}
+    _additional_configs: list[AdditionalConfig] = []
     _bindings: dict[str, Any] = {}
     _building: dict[int, str] = {}
     _classes: dict[str, dict[str, int | type]] = {}
@@ -228,10 +228,10 @@ class Di:
         if additional_configs is not None:
             self.add_additional_configs(additional_configs)
         if class_overrides:
-            for (key, value) in class_overrides.items():
-                self.add_class_override(key, value)
+            for (key, value) in class_overrides.items():  # type: ignore
+                self.add_class_override(key, value)  # type: ignore
         if overrides:
-            for (key, value) in overrides:
+            for (key, value) in overrides.items():
                 self.add_override(key, value)
         if now:
             self.set_now(now)
@@ -278,14 +278,14 @@ class Di:
         for add_class in classes:
             name = string.camel_case_to_snake_case(add_class.__name__)
             self._classes[name] = {"id": id(add_class), "class": add_class}
-            self._classes[add_class] = {"id": id(add_class), "class": add_class}
+            self._classes[add_class] = {"id": id(add_class), "class": add_class}  # type: ignore
 
             # if this is a model class then also add a plural version of its name
             # to the DI configuration
             if hasattr(add_class, "id_column_name"):
                 self._classes[string.make_plural(name)] = {"id": id(add_class), "class": add_class}
 
-    def add_modules(self, modules: ModuleType | list[ModuleType], root: str=None, is_root: bool=True) -> None:
+    def add_modules(self, modules: ModuleType | list[ModuleType], root: str | None=None, is_root: bool=True) -> None:
         """
         Add a module to the dependency injection container.
 
@@ -332,7 +332,7 @@ class Di:
             module_id = id(module)
             if is_root:
                 root = os.path.dirname(module.__file__)
-            root_len = len(root)
+            root_len = len(root) if root else 0
             if module_id in self._added_modules:
                 continue
             self._added_modules[module_id] = True
@@ -508,7 +508,7 @@ class Di:
             raise ValueError("set_utcnow() was passed a datetime object without timezone information - it should only be given timezone-aware datetime objects.  Maybe you meant to use di.set_now()")
         self._utcnow = utcnow
 
-    def build(self, thing: Any, context: str=None, cache: bool=False) -> Any:
+    def build(self, thing: Any, context: str | None=None, cache: bool=False) -> Any:
         """
         Have the dependency injection container build a value for you.
 
@@ -524,7 +524,7 @@ class Di:
         # if we got here then our thing is already and object of some sort and doesn't need anything further
         return thing
 
-    def build_from_name(self, name: str, context: str=None, cache: bool=False) -> Any:
+    def build_from_name(self, name: str, context: str | None=None, cache: bool=False) -> Any:
         """
         Builds a dependency based on its name
 
@@ -548,12 +548,10 @@ class Di:
             return built_value
 
         if name in self._classes or name in self._class_overrides_by_name:
-            class_to_build = self._class_overrides_by_name[name]["class"] if name in self._class_overrides_by_name else self._classes[name]["class"]
-            print(class_to_build)
-            print(context)
-            built_value = self.build_class(class_to_build, context=context)
+            class_to_build = self._class_overrides_by_name[name]["class"] if name in self._class_overrides_by_name else self._classes[name]["class"]  # type: ignore
+            built_value = self.build_class(class_to_build, context=context)  # type: ignore
             if cache:
-                self._prepared[name] = built_value
+                self._prepared[name] = built_value  # type: ignore
             return built_value
 
         # additional configs are meant to override ones that come before, with most recent ones
@@ -562,14 +560,14 @@ class Di:
             additional_config = self._additional_configs[index]
             if not additional_config.can_build(name):
                 continue
-            built_value = additional_config.build(name, self, context=context)
-            if cache and additional_config.can_cache(name, self, context=context):
+            built_value = additional_config.build(name, self, context if context else "")
+            if cache and additional_config.can_cache(name, self, context if context else ""):
                 self._prepared[name] = built_value
             return built_value
 
         if hasattr(self, f"provide_{name}"):
             built_value = self.call_function(getattr(self, f"provide_{name}"))
-            if cache and self.can_cache(name, context):
+            if cache and self.can_cache(name, context if context else ""):
                 self._prepared[name] = built_value
             return built_value
 
@@ -620,7 +618,7 @@ class Di:
         """
 
         if class_to_build in self._prepared and cache:
-            return self._prepared[class_to_build]
+            return self._prepared[class_to_build]  # type: ignore
         my_class_name = class_to_build.__name__
 
         init_args = inspect.getfullargspec(class_to_build)
@@ -632,7 +630,7 @@ class Di:
         if not build_arguments:
             built_value = class_to_build()
             if cache:
-                self._prepared[class_to_build] = built_value
+                self._prepared[class_to_build] = built_value  # type: ignore
             return built_value
 
         # self._building will help us keep track of what we're already building, and what we are building it for.
@@ -661,10 +659,10 @@ class Di:
 
         built_value = class_to_build(*args)
         if cache:
-            self._prepared[class_to_build] = built_value
+            self._prepared[class_to_build] = built_value  # type: ignore
         return built_value
 
-    def build_class_from_type_hint(self, argument_name: str, class_to_build: type, context: str='', cache: bool=True) -> Any | None:
+    def build_class_from_type_hint(self, argument_name: str, class_to_build: type | None, context: str='', cache: bool=True) -> Any | None:
         """
         Build an argument from a type hint.
 
@@ -701,7 +699,7 @@ class Di:
         # finally, if we found something, cache and/or return it
         if built_value is not None:
             if cache and can_cache:
-                self._prepared[class_to_build] = built_value
+                self._prepared[class_to_build] = built_value  # type: ignore
             return built_value
 
         # last but not least we build the class itself as long as it has been imported into the Di system

@@ -1,13 +1,13 @@
-from .di import DI
+# type: ignore
+
+from .di import Di
 from ..environment import Environment
-from ..backends import CursorBackend, JsonBackend, MemoryBackend, SecretsBackend
-from .. import autodoc
 import os
 import uuid
 import inspect
 
 
-class StandardDependencies(DI):
+class StandardDependencies(Di):
     def provide_requests(self):
         # by importing the requests library when requested, instead of in the top of the file,
         # it is not necessary to install the requests library if it is never used.
@@ -86,18 +86,6 @@ class StandardDependencies(DI):
     def provide_cursor(self, connection):
         return connection.cursor()
 
-    def provide_cursor_backend(self, cursor):
-        return CursorBackend(cursor)
-
-    def provide_memory_backend(self):
-        return MemoryBackend()
-
-    def provide_json_backend(self):
-        return JsonBackend()
-
-    def provide_secrets_backend(self, secrets):
-        return SecretsBackend(secrets)
-
     def provide_logging(self):
         import logging
 
@@ -132,6 +120,7 @@ class StandardDependencies(DI):
         return jwt
 
     def provide_oai3_schema_resolver(self):
+        from .. import autodoc
         return autodoc.formats.oai3_json.OAI3SchemaResolver()
 
     def provide_uuid(self):

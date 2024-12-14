@@ -46,6 +46,7 @@ priority = "primary"
 pre-commit = "^3.2.2"
 black = "^23.3.0"
 pytest = "^8.3.1"
+mypy = "^1.13.0"
 
 [tool.poetry.extras]
 secrets = ["akeyless", "akeyless-cloud-id"]

@@ -7,7 +7,7 @@ import re
 
 from clearskies.functional import string
 if TYPE_CHECKING:
-    import clearskies.column
+    from clearskies import Column
 
 
 class Model:
@@ -24,13 +24,12 @@ class Model:
 
     """
 
-    _column_configs: dict[str, clearskies.column.Column] = {}
-    _columns: dict[str, clearskies.column.Column] = {}
+    _columns: dict[str, Column] = {}
     _previous_data: dict[str, Any] = {}
     _data: dict[str, Any] = {}
-    _next_data: dict[str, Any] = None
-    _transformed_data: dict[str, Any] = None
-    _touched_columns: dict[str, bool] = None
+    _next_data: dict[str, Any] = {}
+    _transformed_data: dict[str, Any] = {}
+    _touched_columns: dict[str, bool] = {}
     id_column_name: str = ""
 
     @classmethod
@@ -54,7 +53,7 @@ class Model:
         return f"{singular}s"
 
     @classmethod
-    def get_column_configs(cls: type[Self]) -> dict[str, clearskies.column.Column]:
+    def get_columns(cls: type[Self], overrides: dict[str, Column]={}) -> dict[str, Column]:
         """
         Returns an ordered dictionary with the configuration for the columns
 
@@ -63,10 +62,12 @@ class Model:
         so you probably can't use the return value of this function.  For that, see
         `model.columns()`.
         """
-        if cls._column_configs:
-            return cls._column_configs
+        # no caching if we have overrides
+        overrides = {**overrides}
+        if cls._columns and not overrides:
+            return cls._columns
 
-        column_configs: Dict[str, clearskies.column.Column] = {}
+        columns: dict[str, Column] = {}
         for attribute_name in dir(cls):
             attribute = getattr(cls, attribute_name)
             # use duck typing instead of isinstance to decide which attribute is a column.
@@ -74,77 +75,32 @@ class Model:
             if not hasattr(attribute, "setable") and not hasattr(attribute, "default"):
                 continue
 
-            column_config.finalize_configuration(cls, attribute_name)
-            column_configs[attribute_name] = column_config
+            if attribute_name in overrides:
+                columns[attribute_name] = overrides[attribute_name]
+                del overrides[attribute_name]
+            attribute.finalize_configuration(cls, attribute_name)
+            columns[attribute_name] = attribute
 
-        cls._column_configs = column_configs
-        return cls.column_configs
+        for (attribute_name, column) in overrides.items():
+            columns[attribute_name] = column  # type: ignore
 
-    def get_columns(self: Self, overrides=None) -> dict[str, clearskies.column.Column]:
-        """
-        Returns an ordered dictionary with the columns.
-
-        Optionally, you can provide a dictionary with override information.
-
-        The difference between this method and model.get_column_configs is that this returns
-        fully prepared columns that are ready for use.
-
-        The columns are used throughout the save/load cycle.
-        """
-        model_class = self.__class__
-        # no caching if we have overrides
-        if overrides is not None:
-            return self._finalize_columns(overrides=overrides)
-
-        if self._columns is None:
-            self._columns = self._finalize_columns()
-        return self._columns
+        if not overrides:
+            cls._columns = columns
+        return columns
 
     def supports_n_plus_one(self: Self):
-        return self.backend.supports_n_plus_one
-
-    def get_transformed_from_data(self: Self, column_name, data, cache=True, check_providers=True, silent=False):
-        if cache and column_name in self._transformed:
-            return self._transformed[column_name]
-
-        # everything in self._data came directly out of the database, but we don't want to send that off.
-        # instead, the corresponding column has an opportunity to make changes as needed.  Moreover,
-        # it could be that the requested column_name doesn't even exist directly in self._data, but
-        # can be provided by a column.  Therefore, we're going to do some work to fulfill the request,
-        # raise an Error if we *really* can't fulfill it, and store the results in self._transformed
-        # as a simple local cache (self._transformed is cleared during a save operation)
-        columns = self.columns()
-        value = None
-        if (column_name not in data or data[column_name] is None) and check_providers:
-            for column in columns.values():
-                if column.can_provide(column_name):
-                    value = column.provide(data, column_name)
-                    break
-            if column_name not in data and value is None:
-                if not silent:
-                    raise KeyError(f"Unknown column '{column_name}' requested from model '{self.__class__.__name__}'")
-                return None
-        else:
-            value = (
-                self.backend.column_from_backend(self.columns()[column_name], data[column_name])
-                if column_name in self.columns()
-                else data[column_name]
-            )
-
-        if cache:
-            self._transformed[column_name] = value
-        return value
+        return self.backend.supports_n_plus_one #  type: ignore
 
     def __bool__(self: Self) -> bool:
         return True if (self.id_column_name in self._data and self._data[self.id_column_name]) else False
 
-    def get_raw_data(self: Self) -> Dict[str, Any]:
+    def get_raw_data(self: Self) -> dict[str, Any]:
         return self._data
 
-    def set_raw_data(self: Self, data: Dict[str, Any]) -> None:
+    def set_raw_data(self: Self, data: dict[str, Any]) -> None:
         self._data = {} if data is None else data
 
-    def save(self: Self, data: dict[str, Any] | None = None, columns=None) -> bool:
+    def save(self: Self, data: dict[str, Any] | None = None, columns: dict[str, Column]={}) -> bool:
         """
         Save data to the database and update the model!
 
@@ -170,21 +126,21 @@ class Model:
         You cannot combine these methods.  If you set a value on a column attribute and also pass
         in a dictionary of data to the save, then an exception will be raised.
         """
-        if not len(data) and not len(self._next_data):
+        if not data and not self._next_data:
             raise ValueError("You have to pass in something to save!")
-        if len(data) and len(self._next_data):
+        if data and self._next_data:
             raise ValueError(
                 "Save data was provided to the model class by both passing in a dictionary and setting new values on the column attributes.  This is not allowed.  You will have to use just one method of specifying save data."
             )
-        if not len(data):
+        if not data:
             data = {**self._next_data}
 
-        save_columns = self.columns()
+        save_columns = self.get_columns()
         if columns is not None:
             for column in columns.values():
                 save_columns[column.name] = column
 
-        old_data = self.data
+        old_data = self.get_raw_data()
         data = self.columns_pre_save(data, save_columns)
         data = self.pre_save(data)
         if data is None:
@@ -192,11 +148,11 @@ class Model:
 
         [to_save, temporary_data] = self.columns_to_backend(data, save_columns)
         to_save = self.to_backend(to_save, save_columns)
-        if self.exists:
-            new_data = self.backend.update(self._data[self.id_column_name], to_save, self)
+        if self:
+            new_data = self.backend.update(self._data[self.id_column_name], to_save, self)  # type: ignore
         else:
-            new_data = self.backend.create(to_save, self)
-        id = self.backend.column_from_backend(save_columns[self.id_column_name], new_data[self.id_column_name])
+            new_data = self.backend.create(to_save, self)  # type: ignore
+        id = self.backend.column_from_backend(save_columns[self.id_column_name], new_data[self.id_column_name])  # type: ignore
 
         # if we had any temporary columns add them back in
         new_data = {
@@ -208,9 +164,9 @@ class Model:
         self.post_save(data, id)
 
         self.data = new_data
-        self._transformed = {}
+        self._transformed_data = {}
         self._previous_data = old_data
-        self._touched_columns = list(data.keys())
+        self._touched_columns = {key: True for key in data.keys()}
 
         self.columns_save_finished(save_columns)
         self.save_finished()
@@ -231,7 +187,7 @@ class Model:
         if not has_old_value:
             return True
 
-        return self.__getattr__(key) != data[key]
+        return getattr(self, key) != data[key]
 
     def latest(self: Self, key: str, data: dict[str, Any]) -> Any:
         """
@@ -263,7 +219,7 @@ class Model:
         if not has_old_value:
             return False
 
-        columns = self.columns()
+        columns = self.get_columns()
         new_value = self._data[key]
         old_value = self._previous_data[key]
         if key not in columns:
@@ -271,19 +227,19 @@ class Model:
         return not columns[key].values_match(old_value, new_value)
 
     def previous_value(self: Self, key: str):
-        return self.get_transformed_from_data(key, self._previous_data, cache=False, check_providers=False, silent=True)
+        return getattr(self.__class__, key).transform(self._previous_data.get(key))
 
     def delete(self: Self, except_if_not_exists=True) -> bool:
-        if not self.exists:
+        if not self:
             if except_if_not_exists:
                 raise ValueError("Cannot delete model that already exists")
             return True
 
-        columns = self.columns()
+        columns = self.get_columns()
         self.columns_pre_delete(columns)
         self.pre_delete()
 
-        self.backend.delete(self._data[self.id_column_name], self)
+        self.backend.delete(self._data[self.id_column_name], self)  # type: ignore
 
         self.columns_post_delete(columns)
         self.post_delete()
@@ -299,14 +255,6 @@ class Model:
                 )
         return data
 
-    def pre_save(self, data: dict[str, Any]) -> dict[str, Any]:
-        """
-        A hook to extend so you can provide additional pre-save logic as needed
-
-        It is passed in the data being saved and it should return the same data with adjustments as needed
-        """
-        return data
-
     def columns_to_backend(self: Self, data: dict[str, Any], columns) -> Any:
         backend_data = {**data}
         temporary_data = {}
@@ -317,7 +265,7 @@ class Model:
                     del backend_data[column.name]
                 continue
 
-            backend_data = self.backend.column_to_backend(column, backend_data)
+            backend_data = self.backend.column_to_backend(column, backend_data)  # type: ignore
             if backend_data is None:
                 raise ValueError(
                     f"Column {column.name} of type {column.__class__.__name__} did not return any data for to_database"
@@ -370,7 +318,7 @@ class Model:
         """
         pass
 
-    def columns_pre_delete(self: Self, columns: dict[str, clearskies.column.Column]) -> None:
+    def columns_pre_delete(self: Self, columns: dict[str, Column]) -> None:
         """Uses the column information present in the model to make any necessary changes before deleting"""
         for column in columns.values():
             column.pre_delete(self)
@@ -381,7 +329,7 @@ class Model:
         """
         pass
 
-    def columns_post_delete(self: Self, columns: dict[str, clearskies.column.Column]) -> None:
+    def columns_post_delete(self: Self, columns: dict[str, Column]) -> None:
         """Uses the column information present in the model to make any necessary changes after deleting"""
         for column in columns.values():
             column.post_delete(self)
@@ -398,11 +346,11 @@ class Model:
         routing_data: dict[str, str],
         authorization_data: dict[str, Any],
         input_output: Any,
-        overrides=None,
+        overrides: dict[str, Column]={},
     ) -> Self:
         """
         A hook to automatically apply filtering whenever the model makes an appearance in a get/update/list/search handler.
         """
-        for column in self.columns(overrides=overrides).values():
-            models = column.where_for_request(models, routing_data, authorization_data, input_output)
+        for column in self.get_columns(overrides=overrides).values():
+            models = column.where_for_request(models, routing_data, authorization_data, input_output)  # type: ignore
         return models
