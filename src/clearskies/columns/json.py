@@ -1,3 +1,4 @@
+import json
 from typing import Any, Callable
 
 import clearskies.typing
@@ -24,11 +25,25 @@ class Json(Column):
     ):
         pass
 
-    def __get__(self, instance, parent) -> dict[str, Any]:
-        if not instance:
-            return self  # type: ignore
-
-        return instance._data[self._my_name(instance)]
+    def __get__(self, instance, parent) -> dict[str, Any] | None:
+        return super().__get__(instance, parent)
 
     def __set__(self, instance, value: dict[str, Any]) -> None:
         instance._next_data[self._my_name(instance)] = value
+
+    def from_backend(self, instance, value) -> str:
+        if type(value) == list or type(value) == dict:
+            return value
+        if not value:
+            return None
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return None
+
+    def to_backend(self, data):
+        if self.name not in data or data[self.name] is None:
+            return data
+
+        value = data[self.name]
+        return {**data, self.name: value if isinstance(value, str) else json.dumps(value)}

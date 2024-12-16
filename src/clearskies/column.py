@@ -226,11 +226,26 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
         self.name = name
         self.finalize_and_validate_configuration()
 
-    def __get__(self, instance, parent) -> str:
+    def from_backend(self, instance, value) -> str:
+        return str(value)
+
+    def to_backend(self, data):
+        if self.name not in data:
+            return data
+
+        return {**data, self.name: str(data[self.name])}
+
+    def __get__(self, instance, parent) -> str | None:
         if not instance:
             return self  # type: ignore
 
-        return instance._data[self.name]
+        if self.name not in instance._data:
+            return None
+
+        if self.name not in instance._transformed_data:
+            instance._transformed_data[self.name] = self.transform_data(instance, instance._data[self.name])
+
+        return instance._transformed_data[self.name]
 
     def __set__(self, instance, value: str) -> None:
         instance._next_data[self.name] = value

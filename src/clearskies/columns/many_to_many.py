@@ -173,3 +173,16 @@ class ManyToMany(Column):
         created_by_source_strict: bool = True,
     ):
         pass
+
+    def to_backend(self, data):
+        # we can't persist our mapping data to the database directly, so remove anything here
+        # and take care of things in post_save
+        if self.name in data:
+            del data[self.name]
+        return data
+
+    def __get__(self, instance, parent) -> list[str] | None:
+        return super().__get__(instance, parent)
+
+    def __set__(self, instance, value: list[str]) -> None:
+        instance._next_data[self._my_name(instance)] = value

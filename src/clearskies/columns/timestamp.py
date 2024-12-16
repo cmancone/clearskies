@@ -37,3 +37,49 @@ class Timestamp(Datetime):
         created_by_source_strict: bool = True,
     ):
         pass
+
+    def from_backend(self, instance, value) -> datetime.datetime | None:
+       mult = 1000 if self.milliseconds else 1
+        if not value:
+            date = None
+        elif isinstance(value, str):
+            if not value.isdigit():
+                raise ValueError(
+                    f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: a string value was found that is not a timestamp.  It was '{value}'"
+                )
+            date = datetime.fromtimestamp(int(value) / mult, self._timezone)
+        elif isinstance(value, int):
+            date = datetime.fromtimestamp(value / mult, self._timezone)
+        else:
+            if not isinstance(value, datetime):
+                raise ValueError(
+                    f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: the value was neither an integer, a string, nor a datetime object"
+                )
+            date = value
+        return date.replace(tzinfo=self._timezone) if date else None
+
+    def to_backend(self, data):
+        if not self.name in data or isinstance(data[self.name], int) or data[self.name] == None:
+            return data
+
+        value = data[self.name]
+        if isinstance(value, str):
+            if not value.isdigit():
+                raise ValueError(
+                    f"Invalid data was sent to the backend for model {self.model_class.__name__} and column {self.name}: a string value was found that is not a timestamp. It was '{value}'"
+                )
+            value = int(value)
+        elif isinstance(value, datetime):
+            value = value.timestamp()
+        else:
+            raise ValueError(
+                f"Invalid data was sent to the backend for model {self.model_class.__name__} and column {self.name}: the value was neither an integer, a string, nor a datetime object"
+            )
+
+        return {**data, self.name: value}
+
+    def __get__(self, instance, parent) -> datetime.datetime | None:
+        return super().__get__(instance, parent)
+
+    def __set__(self, instance, value: datetime.datetime) -> None:
+        instance._next_data[self.name] = value

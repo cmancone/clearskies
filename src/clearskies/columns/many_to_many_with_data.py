@@ -40,7 +40,7 @@ class ManyToManyWithData(ManyToMany):
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         name = clearskies'columns.String()
-        thingies = clearskies.columns.ManyToMany(
+        thingies = clearskies.columns.ManyToManyWithData(
             related_model_class=ThingyReference,
             pivot_model_class=ThingyToWidgetReference,
         )
@@ -52,7 +52,7 @@ class ManyToManyWithData(ManyToMany):
         id = clearskies.columns.Uuid()
         name = clearskies'columns.String()
         some_ref = clearskies.columns.String(validators=clearskies.validators.Unique())
-        widgets = clearskies.columns.ManyToMany(
+        widgets = clearskies.columns.ManyToManyWithData(
             related_model_class=WidgetReference,
             pivot_model_class=ThingyToWidgetReference,
         )
@@ -152,3 +152,9 @@ class ManyToManyWithData(ManyToMany):
         created_by_source_strict: bool = True,
     ):
         pass
+
+    def __get__(self, instance, parent) -> list[Any] | None:
+        return super().__get__(instance, parent)
+
+    def __set__(self, instance, value: list[dict[str, Any]]) -> None:
+        instance._next_data[self._my_name(instance)] = value

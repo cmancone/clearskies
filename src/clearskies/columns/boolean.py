@@ -46,11 +46,19 @@ class Boolean(Column):
     ):
         pass
 
-    def __get__(self, instance, parent) -> bool:
-        if not instance:
-            return self  # type: ignore
+    def from_backend(self, instance, value) -> bool:
+        if value == "0":
+            return False
+        return bool(value)
 
-        return instance._data[self._my_name(instance)]
+    def to_backend(self, data):
+        if self.name not in data:
+            return data
 
-    def __set__(self, instance, value: str) -> bool:
+        return {**data, self.name: bool(data[self.name])}
+
+    def __get__(self, instance, parent) -> bool | None:
+        return super().__get__(instance, parent)
+
+    def __set__(self, instance, value: bool) -> None:
         instance._next_data[self._my_name(instance)] = value

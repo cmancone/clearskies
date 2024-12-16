@@ -1,6 +1,8 @@
 import datetime
 from typing import Callable
 
+import dateparser
+
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
@@ -12,9 +14,14 @@ class Datetime(Column):
     """
 
     """
-    Whether or not to use UTC for the timezone.
+    Whether or not to make datetime objects timezone-aware
     """
-    in_utc = configs.Boolean(default=True)
+    timezone_aware = configs.Boolean(default=True)
+
+    """
+    The timezone to use for the datetime object (if it is timezone aware)
+    """
+    timezone = configs.Timezone(default=datetime.timezone.utc)
 
     """
     The format string to use when sending to the backend (default: %Y-%m-%d %H:%M:%S)
@@ -50,7 +57,8 @@ class Datetime(Column):
         self,
         date_format: str = "%Y-%m-%d %H:%M:%S",
         backend_default: str = "0000-00-00 00:00:00",
-        in_utc: bool = True,
+        timezone_aware: bool = True,
+        timezone: datetime.timezone = datetime.timezone.utc,
         default: datetime.datetime | None = None,
         setable: datetime.datetime | Callable[..., datetime.datetime] | None = None,
         is_readable: bool = True,
@@ -66,11 +74,38 @@ class Datetime(Column):
     ):
         pass
 
-    def __get__(self, instance, parent) -> datetime.datetime:
-        if not instance:
-            return self  # type: ignore
+    def from_backend(self, instance, value) -> datetime.datetime | None:
+        if not value or value == self.backend_default:
+            return None
+        if isinstance(value, str):
+            value = dateparser.parse(value)
+        if not isinstance(value, datetime.datetime):
+            raise TypeError(f"I was expecting to get a datetime from the backend but I didn't get anything recognizable.  I have a value of type '{value.__class__.__name__}'.  I need either a datetime object or a datetime serialized as a string.")
+        if self.timezone_aware:
+            if not value.tzinfo:
+                value = value.replace(tzinfo=self.timezone)
+            elif value.tzinfo != self.timezone:
+                value = value.astimezone(self.timezone)
+        else:
+            value.tzinfo = None
 
-        return instance._data[self._my_name(instance)]
+        return value
+
+    def to_backend(self, data):
+        if self.name not in data or isinstance(data[self.name], str) or data[self.name] is None:
+            return data
+
+        value = data[self.name]
+        if not isinstance(data[self.name], datetime.datetime):
+            raise TypeError(f"I was expecting a stringified-date or a datetime object to send to the backend, but instead I found a value of {value.__class__.__name__}")
+
+        return {
+            **data,
+            self.name: value.strftime(self.date_format))
+        }
+
+    def __get__(self, instance, parent) -> datetime.datetime | None:
+        return super().__get__(instance, parent)
 
     def __set__(self, instance, value: datetime.datetime) -> None:
-        instance._next_data[self._my_name(instance)] = value
+        instance._next_data[self.name] = value

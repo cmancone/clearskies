@@ -43,11 +43,17 @@ class Float(Column):
     ):
         pass
 
-    def __get__(self, instance, parent) -> float:
-        if not instance:
-            return self  # type: ignore
+    def __get__(self, instance, parent) -> float | None:
+        return super().__get__(instance, parent)
 
-        return instance._data[self._my_name(instance)]
-
-    def __set__(self, instance, value: str) -> float:
+    def __set__(self, instance, value: float) -> None:
         instance._next_data[self._my_name(instance)] = value
+
+    def from_backend(self, instance, value) -> float:
+        return float(value)
+
+    def to_backend(self, data):
+        if self.name not in data or data[self.name] is None:
+            return data
+
+        return {**data, self.name: float(data[self.name])}

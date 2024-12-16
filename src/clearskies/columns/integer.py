@@ -43,11 +43,17 @@ class Integer(Column):
     ):
         pass
 
-    def __get__(self, instance, parent) -> int:
-        if not instance:
-            return self  # type: ignore
-
-        return instance._data[self._my_name(instance)]
+    def __get__(self, instance, parent) -> int | None:
+        return super().__get__(instance, parent)
 
     def __set__(self, instance, value: int) -> None:
         instance._next_data[self._my_name(instance)] = value
+
+    def from_backend(self, instance, value) -> int:
+        return int(value)
+
+    def to_backend(self, data):
+        if self.name not in data or data[self.name] is None:
+            return data
+
+        return {**data, self.name: int(data[self.name])}
