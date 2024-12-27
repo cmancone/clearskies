@@ -56,6 +56,7 @@ class Audit(HasMany):
     Since this column is always populated automatically, it is never directly writeable.
     """
     is_writeable = configs.Boolean(default=False)
+    is_searchable = configs.Boolean(default=False)
 
     @parameters_to_properties.parameters_to_properties
     def __init__(

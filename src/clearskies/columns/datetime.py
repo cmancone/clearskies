@@ -63,6 +63,7 @@ class Datetime(Column):
         setable: datetime.datetime | Callable[..., datetime.datetime] | None = None,
         is_readable: bool = True,
         is_writeable: bool = True,
+        is_searchable: bool = True,
         is_temporary: bool = False,
         validators: clearskies.typing.validator | list[clearskies.typing.validator] = [],
         on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
@@ -101,7 +102,7 @@ class Datetime(Column):
 
         return {
             **data,
-            self.name: value.strftime(self.date_format))
+            self.name: value.strftime(self.date_format),
         }
 
     def __get__(self, instance, parent) -> datetime.datetime | None:

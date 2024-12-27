@@ -1,6 +1,7 @@
 import datetime
 from typing import Any, Callable
 from types import ModuleType
+import requests
 import inspect
 import re
 import sys
@@ -9,6 +10,8 @@ import os
 from clearskies.di.additional_config import AdditionalConfig
 from clearskies.di.additional_config_auto_import import AdditionalConfigAutoImport
 from clearskies.functional import string
+from clearskies.environment import Environment
+import clearskies.input_outputs.input_output
 
 
 class Di:
@@ -49,24 +52,39 @@ class Di:
     Given the variety of ways that dependencies can be specified, it's important to understand the order the priority that
     clearskies uses to determine what value to provide in case there is more than one source.  That order is:
 
-     1. Arguments named `di`, `now`, or `utcnow` always return pre-defined values
-     2. Positional arguments with type hints:
+     1. Positional arguments with type hints:
         1. The override class if the type-hinted class has a registered override
         2. A value provided by an AdditionalConfig that can provide the type-hinted class
         3. The class itself if the class has been added explicitly via add_classes or implicitly via add_modules
-     3. All other positional arguments will have values provided based on the argument name and will receive
+        4. A clearskies built-in for predefined types
+     2. All other positional arguments will have values provided based on the argument name and will receive
         1. Things set via `add_binding(name, value)`
         2. Class added via `add_classes` or `add_modules` which are made available according to their Di name
         3. An AdditionalConfig class with a corresponding `provide_[name]` function
-        4. The Di class itself if it has a matching `provide_[name]` function
+        4. A clearskies built-in for predefined names
 
-    Note: an argument named `di` will always be populated with the DI container itself.
+    Here is the list of predefined values with their names and types:
 
-    Note: an argument named `now` will always be populated by the current time without a timezone.  During testing, you
-    can change the time with di.set_now() (this method is also available on all contexts)
+    | Injection Name       | Injection Type                                          | Value                                                                                     |
+    |----------------------|---------------------------------------------------------|-------------------------------------------------------------------------------------------|
+    | di                   | -                                                       | The active Di container                                                                   |
+    | now                  | -                                                       | The current time in a datetime object, without timezone                                   |
+    | utcnow               | -                                                       | The current time in a datetime object, with timezone set to UTC                           |
+    | requests             | requests.Session                                        | A requests object configured to allow a small number of retries                           |
+    | input_output         | clearskies.input_outputs.InputOutput                    | The clearskies builtin used for receiving and sending data to the client                  |
+    | uuid                 | -                                                       | `import uuid` - the uuid module builtin to python                                         |
+    | environment          | clearskies.Environment                                  | A clearskies helper that access config info from the environment or a .env file           |
+    | sys                  | -                                                       | `import sys` - the sys module builtin to python                                           |
+    | oai3_schema_resolver | -                                                       | Used by the autodoc system                                                                |
+    | connection_details   | -                                                       | A dictionary containing credentials that pymysql should use when connecting to a database |
+    | connection           | -                                                       | A pymysql connection object                                                               |
+    | cursor               | -                                                       | A pymysql cursor object                                                                   |
 
-    Note: an argument named `utcnow` will always be populated by the current time (set to the UTC timezone).  During testing,
-    you can change the time with di.set_utcnow() (this method is also available on all contexts).
+    Note: for dependencies with an injection name but no injection type, this means that to inject those values you
+    must name your argument with the given injection name.  In all of the above cases though you can still add type
+    hints if desired.  So, for instance, you can declare an argument of `utcnow: datetime.datetime`.  clearskies
+    will ignore the type hint (since `datetime.datetime` isn't a type with a predefined value in clearskies) and
+    identify the value based on the name of the argument.
 
     Note: multiple `AdditionalConfig` classes can be added to the Di container, and so a single injection name or class
     can potentially be provided by multiple AdditionalConfig classes.  AdditionalConfig classes are checked in the
@@ -80,7 +98,7 @@ class Di:
     Note: Once a value is constructed, it is cached by the Di container and will automatically be provided for future
     references of that same Di name or class.  Arguments injected in a constructor will always receive the cached
     value.  If you want a "fresh" value of a given dependency, you have to attach instances from the
-    `clearskies.di.inject_from` module onto class proprties.  The instances in the `inject_from` module generally
+    `clearskies.di.inject` module onto class proprties.  The instances in the `inject` module generally
     give options for cache control.
 
     Here's an example that brings most of these pieces together.  Once again, note that we're directly using
@@ -184,9 +202,13 @@ class Di:
     _class_overrides_by_name: dict[str, type] = {}
     _class_overrides_by_class: dict[type, type] = {}
     _type_hint_disallow_list = [int, float, str, dict, list, datetime.datetime]
-    _high_priority_names = ['di', 'now', 'utcnow']
     _now: datetime.datetime | None = None
     _utcnow: datetime.datetime | None = None
+    _predefined_classes_name_map: dict[type, str] = {
+        requests.Session: "requests",
+        clearskies.input_outputs.input_output.InputOutput: "input_output",
+        Environment: "environment",
+    }
 
     def __init__(
         self,
@@ -529,15 +551,11 @@ class Di:
         Builds a dependency based on its name
 
         Order of priority:
-          1. `di`, in which case the dependency injection container itself is injected
-          2. Things set via `add_binding(name, value)`
-          3. Class added via `add_classes` or `add_modules` which are made available according to their Di name
-          4. An AdditionalConfig class with a corresponding `provide_[name]` function
-          5. The Di class itself if it has a matching `provide_[name]` function
+          1. Things set via `add_binding(name, value)`
+          2. Class added via `add_classes` or `add_modules` which are made available according to their Di name
+          3. An AdditionalConfig class with a corresponding `provide_[name]` function
+          4. The Di class itself if it has a matching `provide_[name]` function (aka the builtins)
         """
-        if name in self._high_priority_names:
-            return self.build_predefined_keyword(name)
-
         if name in self._prepared and cache:
             return self._prepared[name]
 
@@ -584,18 +602,6 @@ class Di:
             + f"or a corresponding 'provide_{name}' method for this name."
         )
 
-    def build_predefined_keyword(self, name: str) -> Any:
-        """
-        Returns a value for one of the predefined keywords (stored in self._high_priority_names)
-        """
-        if name.lower() == "di":
-            return self
-
-        if name == 'now':
-            return self._now if self._now else datetime.datetime.now()
-        return self._utcnow if self._utcnow else datetime.datetime.now(datetime.timezone.utc)
-
-
     def build_argument(self, argument_name: str, type_hint: type | None, context: str="", cache: bool = True) -> Any:
         """
         Build an argument given the name and type hint.
@@ -603,8 +609,6 @@ class Di:
         Runs through the resolution order described in the docblock at the top of the Di class to build an argument given
         its name and type-hint.
         """
-        if argument_name in self._high_priority_names:
-            return self.build_predefined_keyword(argument_name)
         built_value = self.build_class_from_type_hint(argument_name, type_hint, context=context, cache=True)
         if built_value:
             return built_value
@@ -696,6 +700,12 @@ class Di:
             can_cache = additional_config.can_cache_class(class_to_build, self, context)
             break
 
+        # a small handful of predefined classes
+        if class_to_build in self._predefined_classes_name_map:
+            dependency_name = self._predefined_classes_name_map[class_to_build]
+            built_value = call_function(self, f"provide_{dependency_name}")
+            can_cache = self.can_cache(dependency_name, context if context else "")
+
         # finally, if we found something, cache and/or return it
         if built_value is not None:
             if cache and can_cache:
@@ -780,3 +790,87 @@ class Di:
         Control whether or not to cache a value built by the DI container.
         """
         return False
+
+    def provide_di(self):
+        return self
+
+    def provide_requests(self):
+        retry_strategy = Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            backoff_factor=1,
+            allowed_methods=["GET", "POST", "DELETE", "OPTIONS", "PATCH"],
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session = requests.Session()
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        return session
+
+    def provide_sys(self):
+        import sys
+        return sys
+
+    def provide_environment(self):
+        return Environment(os.getcwd() + "/.env", os.environ, {})
+
+    def provide_connection_no_autocommit(self, connection_details):
+        # I should probably just switch things so that autocommit is *off* by default
+        # and only have one of these, but for now I'm being lazy.
+        import pymysql
+
+        return pymysql.connect(
+            user=connection_details["username"],
+            password=connection_details["password"],
+            host=connection_details["host"],
+            database=connection_details["database"],
+            port=connection_details.get("port", 3306),
+            ssl_ca=connection_details.get("ssl_ca", None),
+            autocommit=False,
+            connect_timeout=2,
+            cursorclass=pymysql.cursors.DictCursor,
+        )
+
+    def provide_connection(self, connection_details):
+        import pymysql
+
+        return pymysql.connect(
+            user=connection_details["username"],
+            password=connection_details["password"],
+            host=connection_details["host"],
+            database=connection_details["database"],
+            port=connection_details.get("port", 3306),
+            ssl_ca=connection_details.get("ssl_ca", None),
+            autocommit=True,
+            connect_timeout=2,
+            cursorclass=pymysql.cursors.DictCursor,
+        )
+
+    def provide_connection_details(self, environment):
+        return {
+            "username": environment.get("db_username"),
+            "password": environment.get("db_password"),
+            "host": environment.get("db_host"),
+            "database": environment.get("db_database"),
+        }
+
+    def provide_cursor(self, connection):
+        return connection.cursor()
+
+    def provide_now(self):
+        return datetime.datetime.now() if self._now is None else self._now
+
+    def provide_utcnow(self):
+        return datetime.datetime.now(datetime.timezone.utc) if self._utcnow is None else self._utcnow
+
+    def provide_input_output(self):
+        raise AttributeError(
+            "The dependency injector requested an InputOutput but none has been configured.  Alternatively, if you directly called `di.build('input_output')` then try again with `di.build('input_output', cache=True)`"
+        )
+
+    def provide_oai3_schema_resolver(self):
+        from clearskies import autodoc
+        return autodoc.formats.oai3_json.OAI3SchemaResolver()
+
+    def provide_uuid(self):
+        return uuid

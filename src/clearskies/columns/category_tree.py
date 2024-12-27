@@ -104,6 +104,8 @@ class CategoryTree(BelongsTo):
     """
     load_relatives_strategy = configs.Select(["join", "where_in", "individual"], default="join")
 
+    is_searchable = configs.Boolean(default=False)
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,

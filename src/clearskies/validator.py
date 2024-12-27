@@ -20,7 +20,7 @@ class Validator(ABC):
         pass
 
     @abstractmethod
-    def check(self, data: Dict[str, Any]):
+    def __call__(self, model, data: Dict[str, Any]):
         pass
 
     def additional_write_columns(self, is_create=False) -> Dict[str, Any]:

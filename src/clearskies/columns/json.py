@@ -2,11 +2,13 @@ import json
 from typing import Any, Callable
 
 import clearskies.typing
-from clearskies import parameters_to_properties
+from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
 
 
 class Json(Column):
+    is_searchable = configs.Boolean(default=False)
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,

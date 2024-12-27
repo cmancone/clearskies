@@ -33,6 +33,7 @@ class Uuid(Column):
     def __init__(
         self,
         is_readable: bool = True,
+        is_searchable: bool = True,
         is_temporary: bool = False,
         on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
         on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],

@@ -35,6 +35,7 @@ class Boolean(Column):
         setable: bool | Callable[..., bool] | None = None,
         is_readable: bool = True,
         is_writeable: bool = True,
+        is_searchable: bool = True,
         is_temporary: bool = False,
         validators: clearskies.typing.validator | list[clearskies.typing.validator] = [],
         on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],

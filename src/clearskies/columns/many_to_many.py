@@ -151,6 +151,8 @@ class ManyToMany(Column):
     """
     setable = configs.StringListOrCallable(default=None)
 
+    is_searchable = configs.Boolean(default=False)
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,

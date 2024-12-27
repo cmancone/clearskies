@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from ..handlers.exceptions import ClientError
+from clearskies.exceptions import ClientError
 import json
 
 

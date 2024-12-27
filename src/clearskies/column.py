@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable
+from typing import Any, Callable, Self, TYPE_CHECKING
 
 import clearskies.di
 import clearskies.model
@@ -11,10 +11,13 @@ import clearskies.configs.select
 import clearskies.configs.string
 import clearskies.configs.string_or_callable
 import clearskies.configs.validators
+from clearskies.validator import Validator
 from clearskies import parameters_to_properties
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
-class Column(clearskies.configurable.Configurable): # , clearskies.di.InjectableParameters
+class Column(clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
     """
     The base column.
 
@@ -31,7 +34,7 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
     """
     The column class gets the full DI container, because it does a lot of object building itself
     """
-    #di: clearskies.di.Di = clearskies.di.inject_di_container()
+    di = clearskies.di.inject.Di()
 
     """
     A default value to set for this column.
@@ -57,6 +60,11 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
     Whether or not this column can be set via an API call.
     """
     is_writeable = clearskies.configs.boolean.Boolean(default=True)
+
+    """
+    Whether or not it is possible to search by this column
+    """
+    is_searchable = clearskies.configs.boolean.Boolean(default=True)
 
     """
     Whether or not this column is temporary.  A temporary column is not persisted to the backend.
@@ -201,6 +209,7 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
         setable: str | Callable[..., str] | None = None,
         is_readable: bool = True,
         is_writeable: bool = True,
+        is_searchable: bool = True,
         is_temporary: bool = False,
         validators: clearskies.typing.validator | list[clearskies.typing.validator] = [],
         on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
@@ -227,15 +236,26 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
         self.finalize_and_validate_configuration()
 
     def from_backend(self, instance, value) -> str:
+        """
+        Takes the backend representation and returns a python representation
+
+        For instance, for an SQL date field, this will return a Python DateTime object
+        """
         return str(value)
 
     def to_backend(self, data):
+        """
+        Makes any changes needed to save the data to the backend.
+
+        This typically means formatting changes - converting DateTime objects to database
+        date strings, etc...
+        """
         if self.name not in data:
             return data
 
         return {**data, self.name: str(data[self.name])}
 
-    def __get__(self, instance, parent) -> str | None:
+    def __get__(self, instance: Model, parent: type) -> str | None:
         if not instance:
             return self  # type: ignore
 
@@ -243,11 +263,11 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
             return None
 
         if self.name not in instance._transformed_data:
-            instance._transformed_data[self.name] = self.transform_data(instance, instance._data[self.name])
+            instance._transformed_data[self.name] = self.from_backend(instance, instance._data[self.name])
 
         return instance._transformed_data[self.name]
 
-    def __set__(self, instance, value: str) -> None:
+    def __set__(self, instance: Model, value: str) -> None:
         instance._next_data[self.name] = value
 
     def finalize_and_validate_configuration(self):
@@ -291,30 +311,15 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
         columns in the save operation.  This function adds those in so they can be included in the
         API call.
         """
-        additional_write_columns = {}
+        additional_write_columns: dict[str, Self] = {}
         for validator in self.validators:
+            if not isinstance(validator, Validator):
+                continue
             additional_write_columns = {
                 **additional_write_columns,
                 **validator.additional_write_columns(is_create=is_create),
             }
         return additional_write_columns
-
-    def from_backend(self, value: str) -> str:
-        """
-        Takes the database representation and returns a python representation
-
-        For instance, for an SQL date field, this will return a Python DateTime object
-        """
-        return value
-
-    def to_backend(self, data: dict[str, Any]) -> dict[str, Any]:
-        """
-        Makes any changes needed to save the data to the backend.
-
-        This typically means formatting changes - converting DateTime objects to database
-        date strings, etc...
-        """
-        return data
 
     def to_json(self, model: clearskies.model.Model):
         """
@@ -349,7 +354,7 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
                 return {self.name: error}
 
         for validator in self.validators:
-            error = validators.check(model, data)
+            error = validator(model, data)
             if error:
                 return {self.name: error}
 
@@ -358,8 +363,8 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
     def check_search_value(
         self,
         value: str,
-        operator: str=None,
-        relationship_reference: str=None
+        operator: str | None=None,
+        relationship_reference: str | None=None
     ) -> str:
         """
         This is called by the search operation in the various API-related handlers to validate a search value.
@@ -369,7 +374,7 @@ class Column(clearskies.configurable.Configurable): # , clearskies.di.Injectable
         """
         return self.input_error_for_value(value, operator=operator)
 
-    def input_error_for_value(self, value: str, operator: str=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
         """
         Check if the given value is an allowed value.
 

@@ -27,6 +27,7 @@ class Timestamp(Datetime):
         setable: datetime.datetime | Callable[..., datetime.datetime] | None = None,
         is_readable: bool = True,
         is_writeable: bool = True,
+        is_searchable: bool = True,
         is_temporary: bool = False,
         validators: clearskies.typing.validator | list[clearskies.typing.validator] = [],
         on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
@@ -39,7 +40,7 @@ class Timestamp(Datetime):
         pass
 
     def from_backend(self, instance, value) -> datetime.datetime | None:
-       mult = 1000 if self.milliseconds else 1
+        mult = 1000 if self.milliseconds else 1
         if not value:
             date = None
         elif isinstance(value, str):

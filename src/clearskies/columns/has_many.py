@@ -25,6 +25,7 @@ class HasMany(Column):
     HasMany columns are not currently writeable.
     """
     is_writeable = configs.Boolean(default=False)
+    is_searchable = configs.Boolean(default=False)
 
     """ The model class for the child table we keep our "many" records in. """
     child_model_class = configs.ModelClass(required=True)

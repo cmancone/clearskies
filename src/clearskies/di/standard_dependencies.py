@@ -6,29 +6,23 @@ import os
 import uuid
 import inspect
 
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 class StandardDependencies(Di):
     def provide_requests(self):
-        # by importing the requests library when requested, instead of in the top of the file,
-        # it is not necessary to install the requests library if it is never used.
-        import requests
-        from requests.adapters import HTTPAdapter
-        from requests.packages.urllib3.util.retry import Retry
-
-        use_allowed_methods = "allowed_methods" in inspect.getfullargspec(Retry.__init__).args
-        methods_key = "allowed_methods" if use_allowed_methods else "method_whitelist"
-        kwargs = {
-            "total": 3,
-            "status_forcelist": [429, 500, 502, 503, 504],
-            "backoff_factor": 1,
-            methods_key: ["GET", "POST", "DELETE", "OPTIONS", "PATCH"],
-        }
-
-        retry_strategy = Retry(**kwargs)
+        retry_strategy = Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            backoff_factor=1,
+            allowed_methods=["GET", "POST", "DELETE", "OPTIONS", "PATCH"],
+        )
         adapter = HTTPAdapter(max_retries=retry_strategy)
-        http = requests.Session()
-        http.mount("https://", adapter)
-        return http
+        session = requests.Session()
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        return session
 
     def provide_sys(self):
         import sys

@@ -54,6 +54,7 @@ class Updated(Datetime):
         date_format: str = "%Y-%m-%d %H:%M:%S",
         backend_default: str = "0000-00-00 00:00:00",
         is_readable: bool = True,
+        is_searchable: bool = True,
         is_temporary: bool = False,
         on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
         on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],

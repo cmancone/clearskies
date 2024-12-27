@@ -41,6 +41,7 @@ class CreatedByRoutingData(Column):
         routing_path_name: str,
         strict: bool = True,
         is_readable: bool = True,
+        is_searchable: bool = True,
         is_temporary: bool = False,
         on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],
         on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
