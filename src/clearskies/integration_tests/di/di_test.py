@@ -1,6 +1,7 @@
 import unittest
-from clearskies.di import Di, AdditionalConfig
+from clearskies.di import Di, AdditionalConfig, inject, InjectableProperties
 import datetime
+import requests
 
 class SomeClass:
     def __init__(self, my_value: int):
@@ -147,3 +148,30 @@ class DiTest(unittest.TestCase):
         di.set_utcnow(utcnow)
         assert utcnow == di.build("utcnow")
         assert utcnow != also_utcnow
+
+    def test_requests(self):
+        di = Di()
+        assert isinstance(di.build("requests"), requests.Session)
+        assert di.build("requests", cache=True) == di.build("requests", cache=True)
+        assert di.build("requests", cache=True) != di.build(requests.Session, cache=True)
+        assert di.build(requests.Session, cache=True) == di.build(requests.Session, cache=True)
+
+    def test_inject(self):
+        class MySubDep(InjectableProperties):
+            requests = inject.Requests()
+            value = inject.ByName("asdfer")
+
+        class MyClass(InjectableProperties):
+            di = inject.Di()
+            now = inject.Now()
+            my_sub_dep = inject.ByClass(MySubDep)
+
+        di = Di(bindings={"asdfer": "hey"})
+        now = datetime.datetime.now()
+        di.set_now(now)
+        my_class = di.build_class(MyClass)
+        assert now == my_class.now
+        assert di == my_class.di
+        assert isinstance(my_class.my_sub_dep, MySubDep)
+        assert isinstance(my_class.my_sub_dep.requests, requests.Session)
+        assert my_class.my_sub_dep.value == "hey"

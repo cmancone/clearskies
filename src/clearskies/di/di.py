@@ -2,6 +2,8 @@ import datetime
 from typing import Any, Callable
 from types import ModuleType
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import inspect
 import re
 import sys
@@ -620,7 +622,6 @@ class Di:
 
         The class constructor cannot accept any kwargs.   See self._disallow_kwargs for more details
         """
-
         if class_to_build in self._prepared and cache:
             return self._prepared[class_to_build]  # type: ignore
         my_class_name = class_to_build.__name__
@@ -635,6 +636,8 @@ class Di:
             built_value = class_to_build()
             if cache:
                 self._prepared[class_to_build] = built_value  # type: ignore
+            if hasattr(built_value, "injectable_properties"):
+                built_value.injectable_properties(self)
             return built_value
 
         # self._building will help us keep track of what we're already building, and what we are building it for.
@@ -662,6 +665,8 @@ class Di:
         del self._building[class_id]
 
         built_value = class_to_build(*args)
+        if hasattr(built_value, "injectable_properties"):
+            built_value.injectable_properties(self)
         if cache:
             self._prepared[class_to_build] = built_value  # type: ignore
         return built_value
@@ -789,7 +794,9 @@ class Di:
         """
         Control whether or not to cache a value built by the DI container.
         """
-        return False
+        if name == "now" or name == "utcnow":
+            return False
+        return True
 
     def provide_di(self):
         return self
