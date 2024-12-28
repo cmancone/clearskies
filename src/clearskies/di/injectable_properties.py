@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 class InjectableProperties:
     """
-    Allows you to provide dependencies via properties rather than constructor arguments
+    Fetch dependencies via properties rather than constructor arguments
 
     This class allows you to specify dependencies by setting them as class properties instead of constructor
     arguments.  This is common in clearskies as it helps make easily reusable classes - configuration can
@@ -19,22 +19,43 @@ class InjectableProperties:
      1. By using the classes in the `clearskies.di.inject.*`module.
      2. By directly attaching objects which also use the `InjectableProperties` class.
 
+    The following table shows the dependencies that can be injected as properties via the clearskies.di.inject module:
+
+    | Class                            | Type                                 | Result                                          |
+    | clearskies.di.inject.ByClass     | N/A                                  | The specified class will be built               |
+    | clearskies.di.inject.ByName      | N/A                                  | The specified dependnecy name will be built     |
+    | clearskies.di.inject.Cursor      | N/A                                  | The PyMySQL cursor                              |
+    | clearskies.di.inject.Di          | N/A                                  | The dependency injection container itself       |
+    | clearskies.di.inject.Environment | clearskies.Environment               | The environment helper                          |
+    | clearskies.di.inject.InputOutput | clearskies.input_outputs.InputOutput | The InputOutput object for the current request  |
+    | clearskies.di.inject.Now         | datetime.datetime                    | The current time (no timezone)                  |
+    | clearskies.di.inject.Requests    | requests.Session                     | A requests session                              |
+    | clearskies.di.inject.Utcnow      | datetime.datetime                    | The current time (tzinfo=datetime.timezone.utc) |
+
+    Note: now/utcnow are not cached, so you'll get the current time everytime you get a value out of the class property,
+    unless a specific time has been set on the dependency injection container.
+
     Here's an example:
 
     ```
     import clearskies
+    import time
     from clearskies import parameters_to_properties
 
-    class ReusableClass(clearskies.Configurable, clearskies.di.injectable_properties):
-        my_int = clearskies.config.Integer(required=True)
-        some_number = clearskies.di.inject.by_name('some_number')
+    class MyOtherThing(clearskies.di.InjectableProperties):
+        now = clearskies.di.inject.Now()
 
-        @parameters_to_properties.parameters_to_properties
+    class ReusableClass(clearskies.Configurable, clearskies.di.InjectableProperties):
+        my_int = clearskies.configs.Integer(required=True)
+        some_number = clearskies.di.inject.ByName('some_number')
+        my_other_thing = clearskies.di.inject.ByClass(MyOtherThing)
+
+        @parameters_to_properties
         def __init__(self, my_int: int):
             self.finalize_and_validate_configuration()
 
         def my_value(self) -> int:
-            return my_int*some_number
+            return self.my_int*self.some_number
 
     class MyClass(clearskies.di.InjectableProperties):
         reusable = ReusableClass(5)
@@ -52,7 +73,12 @@ class InjectableProperties:
     print(my_class.reusable.my_value()) # prints 50
 
     my_other_class = di.build(MyOtherClass)
-    print(my_other_class.my_value()) # prints 100
+    print(my_other_class.reusable.my_value()) # prints 100
+
+    start = my_class.reusable.my_other_thing.now
+    time.sleep(1)
+    stop = my_class.reusable.my_other_thing.now
+    print((stop - start).seconds) # prints 1
     ```
     """
     _injectable_descriptors: list[str] = []

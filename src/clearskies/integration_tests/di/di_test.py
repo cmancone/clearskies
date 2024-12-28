@@ -1,5 +1,7 @@
 import unittest
 from clearskies.di import Di, AdditionalConfig, inject, InjectableProperties
+from clearskies import parameters_to_properties, Configurable
+import clearskies.configs
 import datetime
 import requests
 
@@ -175,3 +177,39 @@ class DiTest(unittest.TestCase):
         assert isinstance(my_class.my_sub_dep, MySubDep)
         assert isinstance(my_class.my_sub_dep.requests, requests.Session)
         assert my_class.my_sub_dep.value == "hey"
+
+    def test_injectable_example(self):
+        class MyOtherThing(InjectableProperties):
+            now = inject.Now()
+
+        class ReusableClass(clearskies.Configurable, InjectableProperties):
+            my_int = clearskies.configs.Integer(required=True)
+            some_number = inject.ByName('some_number')
+            my_other_thing = inject.ByClass(MyOtherThing)
+
+            @parameters_to_properties
+            def __init__(self, my_int: int):
+                self.finalize_and_validate_configuration()
+
+            def my_value(self) -> int:
+                return self.my_int*self.some_number
+
+        class MyClass(InjectableProperties):
+            reusable = ReusableClass(5)
+
+        class MyOtherClass(InjectableProperties):
+            reusable = ReusableClass(10)
+
+        di = Di(
+            bindings={
+                "some_number": 10,
+            }
+        )
+
+        my_class = di.build(MyClass)
+        assert my_class.reusable.my_value() == 50
+
+        my_other_class = di.build(MyOtherClass)
+        assert my_other_class.reusable.my_value() == 100
+
+        assert isinstance(my_class.reusable.my_other_thing.now, datetime.datetime)
