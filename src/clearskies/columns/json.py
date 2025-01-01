@@ -31,9 +31,9 @@ class Json(Column):
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: dict[str, Any]) -> None:
-        instance._next_data[self._my_name(instance)] = value
+        instance._next_data[self.name] = value
 
-    def from_backend(self, instance, value) -> str:
+    def from_backend(self, instance, value) -> dict[str, Any] | list[Any] | None:
         if type(value) == list or type(value) == dict:
             return value
         if not value:

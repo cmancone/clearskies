@@ -16,14 +16,14 @@ class Float(Column):
     The default is only used when creating a record for the first time, and only if
     a value for this column has not been set.
     """
-    default = configs.Float()
+    default = configs.Float() #  type: ignore
 
     """
     A value to set for this column during a save operation.
 
     Unlike the default value, a setable value is always set during a save.
     """
-    setable = configs.FloatOrCallable(default=None)
+    setable = configs.FloatOrCallable(default=None) #  type: ignore
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
@@ -48,7 +48,7 @@ class Float(Column):
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: float) -> None:
-        instance._next_data[self._my_name(instance)] = value
+        instance._next_data[self.name] = value
 
     def from_backend(self, instance, value) -> float:
         return float(value)

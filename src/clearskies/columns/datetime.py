@@ -1,7 +1,7 @@
 import datetime
 from typing import Callable
 
-import dateparser
+import dateparser # type: ignore
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
@@ -34,7 +34,7 @@ class Datetime(Column):
     The default is only used when creating a record for the first time, and only if
     a value for this column has not been set.
     """
-    default = configs.Datetime()
+    default = configs.Datetime()  # type: ignore
 
     """
     Sets a default date that the backend is going to provide.
@@ -50,7 +50,7 @@ class Datetime(Column):
 
     Unlike the default value, a setable value is always set during a save.
     """
-    setable = configs.DatetimeOrCallable(default=None)
+    setable = configs.DatetimeOrCallable(default=None)  # type: ignore
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
@@ -88,7 +88,7 @@ class Datetime(Column):
             elif value.tzinfo != self.timezone:
                 value = value.astimezone(self.timezone)
         else:
-            value.tzinfo = None
+            value = value.replace(tzinfo=None)
 
         return value
 

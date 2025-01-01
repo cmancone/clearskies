@@ -16,7 +16,7 @@ class Timestamp(Datetime):
     Also, this ALWAYS assumes the timezone for the timestamp is UTC
     """
 
-    # whether or not to include the milliseconds in the timestamp
+    # whether or not to include the microseconds in the timestamp
     include_microseconds = configs.Boolean(default=False)
 
     @parameters_to_properties.parameters_to_properties
@@ -40,7 +40,7 @@ class Timestamp(Datetime):
         pass
 
     def from_backend(self, instance, value) -> datetime.datetime | None:
-        mult = 1000 if self.milliseconds else 1
+        mult = 1000 if self.include_microseconds else 1
         if not value:
             date = None
         elif isinstance(value, str):
@@ -48,16 +48,16 @@ class Timestamp(Datetime):
                 raise ValueError(
                     f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: a string value was found that is not a timestamp.  It was '{value}'"
                 )
-            date = datetime.fromtimestamp(int(value) / mult, self._timezone)
+            date = datetime.datetime.fromtimestamp(int(value) / mult, datetime.timezone.utc)
         elif isinstance(value, int):
-            date = datetime.fromtimestamp(value / mult, self._timezone)
+            date = datetime.datetime.fromtimestamp(value / mult, datetime.timezone.utc)
         else:
-            if not isinstance(value, datetime):
+            if not isinstance(value, datetime.datetime):
                 raise ValueError(
                     f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: the value was neither an integer, a string, nor a datetime object"
                 )
             date = value
-        return date.replace(tzinfo=self._timezone) if date else None
+        return date.replace(tzinfo=datetime.timezone.utc) if date else None
 
     def to_backend(self, data):
         if not self.name in data or isinstance(data[self.name], int) or data[self.name] == None:

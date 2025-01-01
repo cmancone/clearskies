@@ -12,7 +12,7 @@ import clearskies.configs.string
 import clearskies.configs.string_or_callable
 import clearskies.configs.validators
 from clearskies.validator import Validator
-from clearskies import parameters_to_properties
+import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -202,7 +202,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     """
     _is_required = False
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         default: str | None = None,
@@ -221,7 +221,11 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     ):
         pass
 
-    def finalize_configuration(self, model_class, name) -> None:
+    def get_model_columns(self):
+        """ Return the columns or the model this column is attached to. """
+        return self.model_class.get_columns()
+
+    def finalize_configuration(self, model_class: type, name: str) -> None:
         """
         Finalize and check the configuration.
 
@@ -235,7 +239,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         self.name = name
         self.finalize_and_validate_configuration()
 
-    def from_backend(self, instance, value) -> str:
+    def from_backend(self, instance, value):
         """
         Takes the backend representation and returns a python representation
 
@@ -255,9 +259,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
         return {**data, self.name: str(data[self.name])}
 
-    def __get__(self, instance: Model, parent: type) -> str | None:
+    def __get__(self, instance: Model, parent: type):
         if not instance:
-            return self  # type: ignore
+            return self
 
         if self.name not in instance._data:
             return None
@@ -267,7 +271,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
         return instance._transformed_data[self.name]
 
-    def __set__(self, instance: Model, value: str) -> None:
+    def __set__(self, instance: Model, value) -> None:
         instance._next_data[self.name] = value
 
     def finalize_and_validate_configuration(self):
@@ -321,7 +325,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             }
         return additional_write_columns
 
-    def to_json(self, model: clearskies.model.Model):
+    def to_json(self, model: clearskies.model.Model) -> dict[str, Any]:
         """
         Grabs the column out of the model and converts it into a representation that can be turned into JSON
         """
@@ -417,7 +421,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
                 data[self.name] = self.di.call_function(self.setable, data=data, model=model, **input_output.get_context_for_callables())
             else:
                 data[self.name] = self.setable
-        if not model.exists and self.default and self.name not in data:
+        if not model and self.default and self.name not in data:
             data[self.name] = self.default
         if self.on_change_pre_save and model.is_changing(self.name, data):
             data = self.execute_actions_with_data(self.on_change_pre_save, model, data)
@@ -440,7 +444,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         have to execute a new save operation.
         """
         if self.on_change_post_save and model.is_changing(self.name, data):
-            self.execute_actions(self.on_change_post_save, model, data=data)
+            self.execute_actions_with_data(self.on_change_post_save, model, data, context="on_change_post_save")
 
     def save_finished(self, model: clearskies.model.Model) -> None:
         """
@@ -450,7 +454,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         `pre_save` or `post_save`.  See the model class for more details about the various lifecycle hooks during
         a save.
         """
-        if self.on_chnage_save_finished and model.was_changed(self.name):
+        if self.on_change_save_finished and model.was_changed(self.name):
             self.execute_actions(self.on_change_save_finished, model)
 
     def pre_delete(self, model):
@@ -470,6 +474,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         For columns with `created_by_source_type` set, this fetches the appropriate value from the request
         """
         input_output = self.di.build("input_output", cache=True)
+        source_type = self.created_by_source_type
         if source_type == "authorization_data":
             data = input_output.get_authorization_data()
         elif source_type == "http_header":
@@ -486,6 +491,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         return data.get(self.created_by_source_key, "N/A")
 
     def execute_actions_with_data(
+        self,
         actions: list[clearskies.typing.action],
         model: clearskies.model.Model,
         data: dict[str, Any],
@@ -514,7 +520,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         self,
         actions: list[clearskies.typing.action],
         model: clearskies.model.Model,
-    ) -> dict[str, Any] | None:
+    ) -> None:
         """
         Executes a given set of actions
         """
@@ -538,15 +544,15 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         self,
         model: clearskies.model.Model,
         value: str,
-        operator: str=None,
-        relationship_reference: str=None
+        operator: str="",
+        relationship_reference: str=""
     ) -> clearskies.model.Model:
         return model.where(self.build_condition(value, operator=operator))
 
     def build_condition(
         self,
         value: str,
-        operator: str=None,
+        operator: str="",
         column_prefix: str=""
     ):
         """
@@ -564,18 +570,18 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     def is_allowed_operator(
         self,
         operator: str,
-        relationship_reference: str=None,
+        relationship_reference: str="",
     ):
         """
         This is called when processing user data to decide if the end-user is specifying an allowed operator
         """
         return operator == "="
 
-    def n_plus_one_add_joins(self, model: clearskies.model.Model) -> clearskies.model.Model:
+    def n_plus_one_add_joins(self, model: clearskies.model.Model, column_names: list[str] = []) -> clearskies.model.Model:
         """
         Add any additional joins to solve the N+1 problem.
         """
-        return models
+        return model
 
     def n_plus_one_join_table_alias_prefix(self):
         """

@@ -1,9 +1,13 @@
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+from clearskies import configs, parameters_to_properties, Model
 from clearskies.column import Column
+from clearskies.functional import validations
+from clearskies.di.inject import InputOutput
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class BelongsTo(Column):
     """
@@ -21,10 +25,10 @@ class BelongsTo(Column):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         category_id = clearskies.columns.BelongsTo(Category)
-        category = clearskies.columns.BelongsToRef(id_column_name="category_id")
+        category = clearskies.columns.BelongsToModel(belongs_to_column_name="category_id")
     ```
 
-    The opposite of a BelongsTo relationship is a HasMany relationship, so the parent gets that:
+    The opposite of a BelongsTo relationship is a HasMany relationship, so the parent gets:
 
     ```
     import clearskies
@@ -69,7 +73,7 @@ class BelongsTo(Column):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         category_id = clearskies.columns.BelongsTo(CategoryReference)
-        category = clearskies.columns.BelongsToRef(id_column_name="category_id")
+        category = clearskies.columns.BelongsToModel(belongs_to_column_name="category_id")
     ```
 
     """
@@ -99,6 +103,9 @@ class BelongsTo(Column):
     """
     where = configs.Conditions()
 
+    input_output = InputOutput()
+    wants_n_plus_one = True
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -121,3 +128,71 @@ class BelongsTo(Column):
         created_by_source_strict: bool = True,
     ):
         pass
+
+    @property
+    def parent_model(self) -> Model:
+        parents = self.di.build(self.parent_model_class, cache=True)
+        for (index, where) in enumerate(self.where):
+            if callable(where):
+                parents = self.di.call_function(where, model=parents)
+                if not validations.is_model(parents):
+                    raise ValueError(
+                        f"Configuration error for {self.model_class.__name__}.{self.name}: when 'where' is a callable, it must return a model class, but when the callable in where entry #{index+1} was called, it returned something else."
+                    )
+            else:
+                parents = parents.where(where)
+        return parents
+
+    @property
+    def parent_columns(self):
+        return self.parent_model_class.get_columns()
+
+    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+        parent_check = super().input_error_for_value(value)
+        if parent_check:
+            return parent_check
+        parent_model = self.parent_model
+        matching_parents = parent_model.where(f"{parent_model.id_column_name}={value}")
+        matching_parents = matching_parents.where_for_request(
+            matching_parents,
+            self.input_output.routing_data(),
+            self.input_output.get_authorization_data(),
+            self.input_output,
+        )
+        if not len(matching_parents):
+            return f"Invalid selection for {self.name}: record does not exist"
+        return ""
+
+    def n_plus_one_add_joins(self, model: Model, column_names: list[str] = []) -> Model:
+        """
+        Add any additional joins to solve the N+1 problem.
+        """
+        if not column_names:
+            column_names = self.readable_parent_columns
+        if not column_names:
+            return model
+
+        model = self.add_join(model)
+        alias = self.join_table_alias()
+        parent_id_column_name = self.parent_model.id_column_name
+        select_parts = [f"{alias}.{column_name} AS {alias}_{column_name}" for column_name in column_names]
+        if parent_id_column_name not in column_names:
+            select_parts.append(f"{alias}.{parent_id_column_name} AS {alias}_{parent_id_column_name}")
+        return model.select(", ".join(select_parts))
+
+    def add_join(self, model: Model) -> Model:
+        parent_table = self.parent_model.destination_name()
+        alias = self.join_table_alias()
+
+        if model.is_joined(parent_table, alias=alias):
+            return model
+
+        join_type = "LEFT " if self.join_type == "LEFT" else ""
+        own_table_name = model.destination_name()
+        parent_id_column_name = self.parent_model.id_column_name
+        return model.join(
+            f"{join_type}JOIN {parent_table} as {alias} on {alias}.{parent_id_column_name}={own_table_name}.{self.name}"
+        )
+
+    def join_table_alias(self) -> str:
+        return self.parent_model.destination_name() + "_" + self.name

@@ -39,7 +39,7 @@ class SelectList(config.Config):
                     + "', '".join(self.allowed_values)
                     + "'"
                 )
-        instance._set_config(self, value)
+        instance._set_config(self, [*value])
 
     def __get__(self, instance, parent) -> list[str]:
         if not instance:

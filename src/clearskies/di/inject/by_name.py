@@ -2,10 +2,6 @@ from typing import Any
 from clearskies.di.injectable import Injectable
 
 class ByName(Injectable):
-    """
-    DOCBLOCKS!!!!!!!!!!!!!!
-    EXAMPLES!!!!!!!!
-    """
     def __init__(self, name: str, cache: bool=True):
         if not isinstance(name, str):
             raise TypeError(f"I expected a string for the first argument to clearskies.di.inject.ByName, but I received an object of type '{name.__class__.__name__}' instead.")

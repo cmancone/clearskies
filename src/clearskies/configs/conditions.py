@@ -16,7 +16,7 @@ class Conditions(config.Config):
                 f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index+1} when a string or callable is required"  # type: ignore
             )
 
-        instance._set_config(self, value)
+        instance._set_config(self, [*value])
 
     def __get__(self, instance, parent) -> list[typing.condition]:
         if not instance:

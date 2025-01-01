@@ -1,7 +1,7 @@
-from typing import Callable
+from typing import Callable, Any
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+from clearskies import configs, parameters_to_properties, Model
 from clearskies.columns.belongs_to import BelongsTo
 
 
@@ -146,3 +146,72 @@ class CategoryTree(BelongsTo):
         """
         self.parent_model_class = model_class
         super().finalize_configuration(model_class, name)
+
+    @property
+    def tree_model(self):
+        return self.di.build(self.tree_model_class, cache=True)
+
+    def post_save(self, data: dict[str, Any], model: Model, id: int | str) -> None:
+        if not model.is_changing(self.name, data):
+            return
+
+        self.update_tree_table(model, id, model.latest(self.name, data))
+        return
+
+    def force_tree_update(self, model: Model):
+        self.update_tree_table(model, getattr(model, model.id_column_name), getattr(model, self.name))
+
+    def update_tree_table(self, model: Model, child_id: int | str, direct_parent_id: int | str) -> None:
+        tree_model = self.tree_model
+        parent_model = self.parent_model
+        tree_parent_id_column_name = self.tree_parent_id_column_name
+        tree_child_id_column_name = self.tree_child_id_column_name
+        tree_is_parent_column_name = self.tree_is_parent_column_name
+        tree_level_column_name = self.tree_level_column_name
+        max_iterations = self.max_iterations
+
+        # we're going to be lazy and just delete the data for the current record in the tree table,
+        # and then re-insert everything (but we can skip this if creating a new record)
+        if model:
+            for tree in tree_model.where(f"{tree_child_id_column_name}={child_id}"):
+                tree.delete()
+
+        # if we are a root category then we don't have a tree
+        if not direct_parent_id:
+            return
+
+        is_root = False
+        id_column_name = parent_model.id_column_name
+        next_parent = parent_model.find(f"{id_column_name}={direct_parent_id}")
+        tree = []
+        c = 0
+        while not is_root:
+            c += 1
+            if c > max_iterations:
+                self._circular(max_iterations)
+
+            tree.append(getattr(next_parent, next_parent.id_column_name))
+            if not getattr(next_parent, self.name):
+                is_root = True
+            else:
+                next_next_parent_id = getattr(next_parent, self.name)
+                next_parent = model.find(f"{id_column_name}={next_next_parent_id}")
+
+        tree.reverse()
+        for index, parent_id in enumerate(tree):
+            tree_model.create(
+                {
+                    tree_parent_id_column_name: parent_id,
+                    tree_child_id_column_name: child_id,
+                    tree_is_parent_column_name: 1 if parent_id == direct_parent_id else 0,
+                    tree_level_column_name: index,
+                }
+            )
+
+    def _circular(self, max_iterations):
+        raise ValueError(
+            f"Error for column {self.model_class.__name__}.{self.name}: "
+            + f"I've climbed through {max_iterations} parents and haven't found the root yet."
+            + "You may have accidentally created a circular cateogry tree.  If not, and your category tree "
+            + "really _is_ that deep, then adjust the 'max_iterations' configuration for this column accordingly. "
+        )

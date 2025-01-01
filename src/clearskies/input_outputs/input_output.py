@@ -1,3 +1,4 @@
+from typing import Any
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from clearskies.exceptions import ClientError
@@ -167,3 +168,28 @@ class InputOutput(ABC):
 
     def context_specifics(self):
         return {}
+
+    def get_context_for_callables(self) -> dict[str, Any]:
+        """
+        Return a dictionary with various important parts of the request that are passed along to user-defined functions
+
+        It's common to make various aspects of an incoming request available to user-defined functions that are
+        attached to clearskies hooks everywhere.  This function centralizes the definition of what aspects of
+        the reequest shouuld be passed along to callables in this case.  When this is in use it typically
+        looks like this:
+
+        di.call_function(some_function, **input_output.get_context_for_callables())
+
+        And this function returns a dictionary with the following values:
+
+        | Key                | Type                        | Ref                                       | Value                                                                           |
+        |--------------------|-----------------------------|-------------------------------------------|---------------------------------------------------------------------------------|
+        | routing_data       | dict[str, str]              | input_output.get_routing_data()           | A dictionary of data extracted from URL path parameters.                        |
+        | authorization_data | dict[str, Any]              | input_output.get_authorization_data()     | A dictionary containing the authorization data set by the authentication method |
+        | request_data       | Union[dict[str, Any], None] | input_output.request_data(required=False) | The data sent along with the request                                            |
+        """
+        return {
+            "routing_data": self.get_routing_data(),
+            "authorization_data": self.get_authorization_data(),
+            "request_data": self.get_request_data(required=False),
+        }

@@ -142,14 +142,14 @@ class ManyToMany(Column):
     The default is only used when creating a record for the first time, and only if
     a value for this column has not been set.
     """
-    default = configs.StringList(default=None)
+    default = configs.StringList(default=None) #  type: ignore
 
     """
     A value to set for this column during a save operation.
 
     Unlike the default value, a setable value is always set during a save.
     """
-    setable = configs.StringListOrCallable(default=None)
+    setable = configs.StringListOrCallable(default=None) #  type: ignore
 
     is_searchable = configs.Boolean(default=False)
 
@@ -183,8 +183,8 @@ class ManyToMany(Column):
             del data[self.name]
         return data
 
-    def __get__(self, instance, parent) -> list[str] | None:
-        return super().__get__(instance, parent)
+    def __get__(self, instance, parent) -> list[str] | None: #  type: ignore
+        return super().__get__(instance, parent) #  type: ignore
 
-    def __set__(self, instance, value: list[str]) -> None:
-        instance._next_data[self._my_name(instance)] = value
+    def __set__(self, instance, value: list[str]) -> None: #  type: ignore
+        instance._next_data[self.name] = value

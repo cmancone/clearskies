@@ -6,11 +6,12 @@ import re
 
 
 from clearskies.functional import string
+from clearskies.di import InjectableProperties, inject
 if TYPE_CHECKING:
     from clearskies import Column
 
 
-class Model:
+class Model(InjectableProperties):
     """
     A clearskies model.
 
@@ -19,8 +20,7 @@ class Model:
      1. Column definitions
      2. The name of the id column
      3. A backend
-
-    All of these are provided as attributes.  The columns all come from the `clearskies.columns` module.
+     4. A destination name (equivalent to a table name for SQL backends)
 
     """
 
@@ -31,6 +31,9 @@ class Model:
     _transformed_data: dict[str, Any] = {}
     _touched_columns: dict[str, bool] = {}
     id_column_name: str = ""
+    backend = None
+
+    di = inject.Di()
 
     @classmethod
     def destination_name(cls: type[Self]) -> str:
@@ -63,10 +66,10 @@ class Model:
         `model.columns()`.
         """
         # no caching if we have overrides
-        overrides = {**overrides}
         if cls._columns and not overrides:
             return cls._columns
 
+        overrides = {**overrides}
         columns: dict[str, Column] = {}
         for attribute_name in dir(cls):
             attribute = getattr(cls, attribute_name)

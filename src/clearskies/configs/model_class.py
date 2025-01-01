@@ -1,7 +1,6 @@
 from __future__ import annotations
 import inspect
 
-
 import clearskies.model
 from clearskies.functional import validations
 from clearskies.configs import config
@@ -16,7 +15,7 @@ class ModelClass(config.Config):
     have a config that relies on the model class.  We have to make do with run-time checks.
     """
 
-    def __set__(self, instance, value: clearskies.model.Model):
+    def __set__(self, instance, value: type[clearskies.model.Model]):
         try:
             validations.is_model_class_or_reference(value, raise_error_message=True)
         except TypeError as e:
@@ -31,7 +30,7 @@ class ModelClass(config.Config):
         else:
             instance._set_config(self, value)
 
-    def __get__(self, instance, parent) -> clearskies.model.Model:
+    def __get__(self, instance, parent) -> type[clearskies.model.Model]:
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)
