@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Self, TYPE_CHECKING
+from typing import Any, Callable, Iterator, Self, TYPE_CHECKING
 from abc import abstractmethod
 from collections import OrderedDict
 import re
@@ -7,8 +7,10 @@ import re
 
 from clearskies.functional import string
 from clearskies.di import InjectableProperties, inject
+from clearskies.query import Query, Sort, Condition, Join
 if TYPE_CHECKING:
     from clearskies import Column
+    from clearskies.backends import Backend
 
 
 class Model(InjectableProperties):
@@ -30,10 +32,15 @@ class Model(InjectableProperties):
     _next_data: dict[str, Any] = {}
     _transformed_data: dict[str, Any] = {}
     _touched_columns: dict[str, bool] = {}
-    id_column_name: str = ""
-    backend = None
+    _query: Query | None = None
+    _query_executed: bool = False
+    _count: int | None = None
+    _next_page_data: dict[str, Any] | None = None
 
-    di = inject.Di()
+    id_column_name: str = ""
+    backend: Backend = None # type: ignore
+
+    _di = inject.Di()
 
     @classmethod
     def destination_name(cls: type[Self]) -> str:
@@ -70,7 +77,7 @@ class Model(InjectableProperties):
             return cls._columns
 
         overrides = {**overrides}
-        columns: dict[str, Column] = {}
+        columns: dict[str, Column] = OrderedDict()
         for attribute_name in dir(cls):
             attribute = getattr(cls, attribute_name)
             # use duck typing instead of isinstance to decide which attribute is a column.
@@ -95,12 +102,17 @@ class Model(InjectableProperties):
         return self.backend.supports_n_plus_one #  type: ignore
 
     def __bool__(self: Self) -> bool:
-        return True if (self.id_column_name in self._data and self._data[self.id_column_name]) else False
+        if self._query:
+            return bool(self.__len__())
+
+        return True if self._data else False
 
     def get_raw_data(self: Self) -> dict[str, Any]:
+        self.no_queries()
         return self._data
 
     def set_raw_data(self: Self, data: dict[str, Any]) -> None:
+        self.no_queries()
         self._data = {} if data is None else data
 
     def save(self: Self, data: dict[str, Any] | None = None, columns: dict[str, Column]={}) -> bool:
@@ -129,6 +141,7 @@ class Model(InjectableProperties):
         You cannot combine these methods.  If you set a value on a column attribute and also pass
         in a dictionary of data to the save, then an exception will be raised.
         """
+        self.no_queries()
         if not data and not self._next_data:
             raise ValueError("You have to pass in something to save!")
         if data and self._next_data:
@@ -182,6 +195,7 @@ class Model(InjectableProperties):
 
         Pass in the name of the column to check and the data dictionary from the save in progress
         """
+        self.no_queries()
         has_old_value = key in self._data
         has_new_value = key in data
 
@@ -202,12 +216,14 @@ class Model(InjectableProperties):
 
         Pass in the name of the column to check and the data dictionary from the save in progress
         """
+        self.no_queries()
         if key in data:
             return data[key]
         return getattr(self, key)
 
     def was_changed(self: Self, key: str) -> bool:
         """Returns True/False to denote if a column was changed in the last save"""
+        self.no_queries()
         if self._previous_data is None:
             raise ValueError("was_changed was called before a save was finished - you must save something first")
         if key not in self._touched_columns:
@@ -230,9 +246,11 @@ class Model(InjectableProperties):
         return not columns[key].values_match(old_value, new_value)
 
     def previous_value(self: Self, key: str):
+        self.no_queries()
         return getattr(self.__class__, key).transform(self._previous_data.get(key))
 
     def delete(self: Self, except_if_not_exists=True) -> bool:
+        self.no_queries()
         if not self:
             if except_if_not_exists:
                 raise ValueError("Cannot delete model that already exists")
@@ -357,3 +375,242 @@ class Model(InjectableProperties):
         for column in self.get_columns(overrides=overrides).values():
             models = column.where_for_request(models, routing_data, authorization_data, input_output)  # type: ignore
         return models
+
+    ##############################################################
+    ### From here down is functionality related to list/search ###
+    ##############################################################
+    def get_query(self) -> Query:
+        """
+        Fetch the query object in the model
+        """
+        return self._query if self._query else Query(self.__class__)
+
+    def set_query(self, query: Query) -> Self:
+        """
+        Set the query object
+        """
+        self._query = query
+        self._query_executed = False
+        return self
+
+    def with_query(self, query: Query) -> Self:
+        return self._di.build(self.__class__, cache=False).set_query(query)
+
+    def select(self: Self, select: str) -> Self:
+        """
+        Add some additional columns to the select part of the query.
+
+        This method returns a new object with the updated query.  The original model object is unmodified.
+        Multiple calls to this method add together.  The following:
+
+        ```
+        models.select("column_1 column_2").select("column_3")
+        ```
+
+        will select column_1, column_2, column_3 in the final query.
+        """
+        self.no_single_model()
+        return self.with_query(self.get_query().add_select(select))
+
+    def select_all(self: Self, select_all=True) -> Self:
+        """
+        Set whether or not to select all columns with the query.
+
+        This method returns a new object with the updated query.  The original model object is unmodified.
+        """
+        self.no_single_model()
+        return self.with_query(self.get_query().set_select_all(select_all))
+
+    def where(self: Self, where: str) -> Self:
+        """
+        Adds the given condition to the query.
+
+        This method returns a new object with the updated query.  The original model object is unmodified.
+
+        Conditions should be an SQL-like string of the form [column][operator][value] with an optional table prefix.
+        You can safely inject user input into the value.  The column name will also be checked against the searchable
+        columns for the model class, and an exception will be thrown if the column doesn't exist or is not searchable.
+
+        Multiple conditions are always joined with AND.  There is no explicit option for OR.  The closest is using an
+        IN condition.
+
+        Examples:
+
+        ```
+        for record in models.where("order_id=5").where("status IN ('ACTIVE','PENDING')").where("other_table.id=asdf"):
+            print(record.id)
+        ```
+        """
+        self.no_single_model()
+        return self.with_query(self.get_query().add_where(Condition(where)))
+
+    def join(self: Self, join: str) -> Self:
+        """
+        Adds a join clause to the query.
+        """
+        self.no_single_model()
+        return self.with_query(self.get_query().add_join(Join(join)))
+
+    def is_joined(self: Self, table_name: str, alias: str="") -> bool:
+        """
+        Check if a given table was already joined.
+
+        If you provide an alias then it will also verify if the table was joined with the specific alias name.
+        """
+        for join in self.get_query().joins:
+            if join.unaliased_table_name != table_name:
+                continue
+
+            if alias and join.alias != alias:
+                continue
+
+            return True
+        return False
+
+    def group_by(self: Self, group_by_column_name: str) -> Self:
+        self.no_single_model()
+        return self.with_query(self.get_query().set_group_by(group_by_column_name))
+
+    def sort_by(
+        self: Self,
+        primary_column_name: str,
+        primary_direction: str,
+        primary_table_name: str="",
+        secondary_column_name: str="",
+        secondary_direction: str="",
+        secondary_table_name: str="",
+    ) -> Self:
+        self.no_single_model()
+        sort = Sort(primary_table_name, primary_column_name, primary_direction)
+        secondary_sort = None
+        if secondary_column_name and secondary_direction:
+            secondary_sort = Sort(secondary_table_name, secondary_column_name, secondary_direction)
+        return self.with_query(self.get_query().set_sort(sort, secondary_sort))
+
+    def limit(self: Self, limit: int) -> Self:
+        self.no_single_model()
+        return self.with_query(self.get_query().set_limit(limit))
+
+    def pagination(self: Self, **pagination_data) -> Self:
+        self.no_single_model()
+        error = self.backend.validate_pagination_data(pagination_data, str)
+        if error:
+            raise ValueError(
+                f"Invalid pagination data for model {self.__class__.__name__} with backend "
+                + f"{self.backend.__class__.__name__}. {error}"
+            )
+        return self.with_query(self.get_query().set_pagination(pagination_data))
+
+    def find(self: Self, where: str) -> Self:
+        """
+        Returns the first model matching a given where condition.
+
+        This is just shorthand for `models.where("column=value").find()`.  Example:
+
+        ```
+        model = models.find("column=value")
+        print(model.id)
+        ```
+        """
+        self.no_single_model()
+        return self.where(where).first()
+
+    def __len__(self: Self):
+        self.no_single_model()
+        if self._count is None:
+            self._count = self.backend.count(self.get_query())
+        return self._count
+
+    def __iter__(self: Self) -> Iterator[Self]:
+        self.no_single_model()
+        self._next_page_data = {}
+        raw_rows = self.backend.records(
+            self.get_query(),
+            next_page_data=self._next_page_data,
+        )
+        models = iter([self.model(row) for row in raw_rows])
+        return models
+
+    def paginate_all(self: Self) -> list[Self]:
+        """
+        Loops through all available pages of results and returns a list of all models that match the query.
+
+        NOTE: this loads up all records in memory before returning (e.g. it isn't using generators yet), so
+        expect delays for large record sets.
+
+        ```
+        for model in models.where("column=value").paginate_all():
+            print(model.id)
+        """
+        self.no_single_model()
+        next_models = self.with_query(self.get_query())
+        results = list(next_models.__iter__())
+        next_page_data = next_models.next_page_data()
+        while next_page_data:
+            next_models = self.pagination(**next_page_data)
+            results.extend(next_models.__iter__())
+            next_page_data = next_models.next_page_data()
+        return results
+
+    def model(self: Self, data: dict[str, Any] = {}) -> Self:
+        """
+        Creates a new model object and populates it with the data in `data`.
+
+        NOTE: the difference between this and `model.create` is that model.create() actually saves a record in the backend,
+        while this method just creates a model object populated with the given data.
+        """
+        model = self._di.build(self.__class__, cache=False)
+        model.set_raw_data(data)
+        return model
+
+    def create(self: Self, data: dict[str, Any]) -> Self:
+        """
+        Creates a new record in the backend using the information in `data`.
+
+        new_model = models.create({"column": "value"})
+        """
+        empty = self.model()
+        empty.save(data)
+        return empty
+
+    def first(self: Self) -> Self:
+        """
+        Returns the first model matching the given query:
+
+        ```
+        model = models.where("column=value").sort_by("age", "DESC").first()
+        print(model.id)
+        ```
+        """
+        self.no_single_model()
+        iter = self.__iter__()
+        try:
+            return iter.__next__()
+        except StopIteration:
+            return self.model()
+
+    def allowed_pagination_keys(self: Self) -> list[str]:
+        return self.backend.allowed_pagination_keys()
+
+    def validate_pagination_data(self, kwargs: dict[str, Any], case_mapping: Callable[[str], str]) -> str:
+        return self.backend.validate_pagination_data(kwargs, case_mapping)
+
+    def next_page_data(self: Self):
+        return self._next_page_data
+
+    def documentation_pagination_next_page_response(self: Self, case_mapping: Callable) -> list[Any]:
+        return self.backend.documentation_pagination_next_page_response(case_mapping)
+
+    def documentation_pagination_next_page_example(self: Self, case_mapping: Callable) -> dict[str, Any]:
+        return self.backend.documentation_pagination_next_page_example(case_mapping)
+
+    def documentation_pagination_parameters(self: Self, case_mapping: Callable) -> list[tuple[Any]]:
+        return self.backend.documentation_pagination_parameters(case_mapping)
+
+    def no_queries(self) -> None:
+        if self._data:
+            raise ValueError("You attempted to save/read record data for a model being used to make a query.  This is not allowed, as it is typically a sign of a bug in your application code.")
+
+    def no_single_model(self):
+        if self._query:
+            raise ValueError("You have attempted to execute a query against a model that represents an individual record.  This is not allowed, as it is typically a sign of a bug in your application code.")

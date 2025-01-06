@@ -1,9 +1,12 @@
-from typing import Callable, Any
+from __future__ import annotations
+from typing import Callable, Any, TYPE_CHECKING
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties, Model
+from clearskies import configs, parameters_to_properties
 from clearskies.columns.belongs_to import BelongsTo
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class CategoryTree(BelongsTo):
     """

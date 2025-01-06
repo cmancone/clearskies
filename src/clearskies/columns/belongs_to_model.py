@@ -1,7 +1,8 @@
+from __future__ import annotations
 from typing import Callable, TYPE_CHECKING
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties, Model
+from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
 from clearskies.functional import validations
 from clearskies.di.inject import InputOutput

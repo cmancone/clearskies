@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import inspect
 import clearskies.model
 import clearskies.column
+import clearskies.query
 from typing import Any, Callable, Type
 
 
@@ -30,7 +31,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def count(self, configuration: dict[str, Any], model: clearskies.model.Model) -> int:
+    def count(self, query: clearskies.query.Query) -> int:
         """
         Returns the number of records which match the given query configuration
         """
@@ -38,7 +39,7 @@ class Backend(ABC):
 
     @abstractmethod
     def records(
-        self, configuration: dict[str, Any], model: clearskies.model, next_page_data: dict[str, str] = None
+        self, query: clearskies.query.Query, next_page_data: dict[str, str] = None
     ) -> list[dict[str, Any]]:
         """
         Returns a list of records that match the given query configuration
@@ -50,7 +51,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def validate_pagination_kwargs(self, kwargs: dict[str, Any]) -> str:
+    def validate_pagination_data(self, data: dict[str, Any], case_mapping: Callable[[str], str]) -> str:
         """
         Checks if the given dictionary is valid pagination data for the background.
 
@@ -59,7 +60,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def allowed_pagination_keys(self) -> dict[str]:
+    def allowed_pagination_keys(self) -> list[str]:
         """
         Returns the list of allowed keys in the pagination kwargs for the backend
 
