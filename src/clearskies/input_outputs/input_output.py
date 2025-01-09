@@ -69,15 +69,15 @@ class InputOutput(ABC):
         else:
             self._routing_data[key] = value
 
-    def request_data(self, required=True):
-        request_data = self.json_body(False)
+    def request_data(self, required=True, allow_non_json_bodies=False):
+        request_data = self.json_body(False, allow_non_json_bodies=allow_non_json_bodies)
         if not request_data:
-            if self.has_body():
+            if self.has_body() and not allow_non_json_bodies:
                 raise ClientError("Request body was not valid JSON")
             request_data = {}
         return request_data
 
-    def json_body(self, required=True):
+    def json_body(self, required=True, allow_non_json_bodies=False):
         json = self._get_json_body()
         # if we get None then either the body was not JSON or was empty.
         # If it is required then we have an exception either way.  If it is not required
@@ -85,7 +85,7 @@ class InputOutput(ABC):
         # if json is None and there is an actual request body.  If json is none, the body is empty,
         # and it was not required, then we can just return None
         if json is None:
-            if required or self.has_body():
+            if required or (self.has_body() and not allow_non_json_bodies):
                 raise ClientError("Request body was not valid JSON")
         return json
 
