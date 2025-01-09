@@ -1,10 +1,12 @@
-from .backend import Backend
-from collections import OrderedDict
+from collections import Ordereddict
 from functools import cmp_to_key
 import inspect
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Type
+
 from clearskies.autodoc.schema import Integer as AutoDocInteger
 import clearskies.model
+import clearskies.query
+from clearskies.backends.backend import Backend
 
 
 class Null:
@@ -203,32 +205,36 @@ class MemoryBackend(Backend):
     def silent_on_missing_tables(self, silent=True):
         self._silent_on_missing_tables = silent
 
-    def configure(self):
-        pass
-
-    def create_table(self, model):
-        """
-        Accepts either a model or a model class and creates a "table" for it
-        """
-        model = self.cheez_model(model)
-        if model.table_name() in self._tables:
+    def create_table(self, model_class: Type[clearskies.model.Model]):
+        table_name = model_class.destination_name()
+        if table_name in self._tables:
             return
-        self._tables[model.table_name()] = MemoryTable(model)
+        self._tables[table_name] = MemoryTable(model_class)
 
-    def update(self, id, data, model):
+    def get_table(self, model_class: Type[clearskies.model.Model], create_if_missing=False) -> MemoryTable:
+        table_name = model_class.destination_name()
+        if table_name not in self._tables:
+            if create_if_missing:
+                self.create_table(model_class)
+            else:
+                raise ValueError(f"The memory backend was asked to work with the model '{model_class.__name__}' but this model hasn't been explicitly added to the memory backend.  This typically means that you are querying for records in a model but haven't created any yet.")
+        return self._tables[table_name]
+
+    def update(self, id: int | str, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         self.create_table(model)
-        return self._tables[model.table_name()].update(id, data)
+        return self.get_table(model).update(id, data)
 
-    def create(self, data, model):
+    def create(self, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         self.create_table(model)
         return self._tables[model.table_name()].create(data)
 
-    def delete(self, id, model):
+    def delete(self, id: int | str, model: clearskies.model.Model) -> bool:
         self.create_table(model)
         return self._tables[model.table_name()].delete(id)
 
-    def count(self, configuration, model):
-        if configuration["table_name"] not in self._tables:
+    def count(self, query: clearskies.query.Query, model: clearskies.model.Model) -> int:
+        table_name = query.model_class.destination_name()
+        if table_name not in self._tables:
             if self._silent_on_missing_tables:
                 return 0
 
@@ -246,7 +252,7 @@ class MemoryBackend(Backend):
         configuration["joins"] = [join for join in configuration["joins"] if join["type"] != "LEFT"]
         return len(self.rows_with_joins(configuration))
 
-    def records(self, configuration, model, next_page_data=None):
+    def records(self, query: clearskies.query.Query, model: clearskies.model.Model, next_page_data=None) -> list[dict[str, Any]]:
         table_name = configuration["table_name"]
         if table_name not in self._tables:
             if self._silent_on_missing_tables:
@@ -282,7 +288,7 @@ class MemoryBackend(Backend):
                 next_page_data["start"] = start + configuration["limit"]
         return rows
 
-    def rows_with_joins(self, configuration):
+    def rows_with_joins(self, query: clearskies.query.Query) -> list[dict[str, Any]]:
         joins = configuration["joins"]
         wheres = configuration["wheres"] if "wheres" in configuration else []
         # quick sanity check
@@ -341,7 +347,7 @@ class MemoryBackend(Backend):
 
         return rows
 
-    def all_rows(self, table_name):
+    def all_rows(self, table_name: str) -> list[dict[str, Any]]:
         if table_name not in self._tables:
             if self._silent_on_missing_tables:
                 return []
@@ -349,7 +355,7 @@ class MemoryBackend(Backend):
             raise ValueError(f"Cannot return rows for unknown table '{table_name}'")
         return self._tables[table_name]._rows
 
-    def _check_query_configuration(self, configuration):
+    def _check_query_configuration(self, query: clearskies.query.Query) -> clearskies.query.Query:
         for key in configuration.keys():
             if key not in self._allowed_configs:
                 raise KeyError(f"MemoryBackend does not support config '{key}'. You may be using the wrong backend")
@@ -364,7 +370,7 @@ class MemoryBackend(Backend):
             configuration["pagination"] = {"start": 0}
         return configuration
 
-    def _wheres_for_table(self, table_name, wheres, is_left=False):
+    def _wheres_for_table(self, table_name: str, conditions: list[clearskies.query.Condition], is_left=False) -> list[clearskies.query.Condition]:
         """
         Returns only the where conditions for the current table
 
@@ -373,7 +379,7 @@ class MemoryBackend(Backend):
         """
         return [where for where in wheres if where["table"] == table_name or (is_left and not where["table"])]
 
-    def join_rows(self, rows, join_rows, join_config, joined_tables):
+    def join_rows(self, rows: list[dict[str, Any]], join_rows: list[dict[str, Any]], join_config: clearskies.query.Join, joined_tables: list[str]) -> list[dict[str, Any]]:
         """
         Adds the rows in `join_rows` in to the `rows` holder.
 
@@ -454,15 +460,15 @@ class MemoryBackend(Backend):
 
         return rows
 
-    def validate_pagination_kwargs(self, kwargs: Dict[str, Any], case_mapping: Callable) -> str:
-        extra_keys = set(kwargs.keys()) - set(self.allowed_pagination_keys())
+    def validate_pagination_data(self, data: dict[str, Any], case_mapping: Callable) -> str:
+        extra_keys = set(data.keys()) - set(self.allowed_pagination_keys())
         if len(extra_keys):
             key_name = case_mapping("start")
             return "Invalid pagination key(s): '" + "','".join(extra_keys) + f"'.  Only '{key_name}' is allowed"
-        if "start" not in kwargs:
+        if "start" not in data:
             key_name = case_mapping("start")
             return f"You must specify '{key_name}' when setting pagination"
-        start = kwargs["start"]
+        start = data["start"]
         try:
             start = int(start)
         except:
@@ -470,16 +476,16 @@ class MemoryBackend(Backend):
             return f"Invalid pagination data: '{key_name}' must be a number"
         return ""
 
-    def allowed_pagination_keys(self) -> List[str]:
+    def allowed_pagination_keys(self) -> list[str]:
         return ["start"]
 
-    def documentation_pagination_next_page_response(self, case_mapping: Callable) -> List[Any]:
+    def documentation_pagination_next_page_response(self, case_mapping: Callable[[str], str]) -> list[Any]:
         return [AutoDocInteger(case_mapping("start"), example=0)]
 
-    def documentation_pagination_next_page_example(self, case_mapping: Callable) -> Dict[str, Any]:
+    def documentation_pagination_next_page_example(self, case_mapping: Callable[[str], str]) -> dict[str, Any]:
         return {case_mapping("start"): 0}
 
-    def documentation_pagination_parameters(self, case_mapping: Callable) -> List[Tuple[Any]]:
+    def documentation_pagination_parameters(self, case_mapping: Callable[[str], str]) -> list[tuple[Any]]:
         return [
             (
                 AutoDocInteger(case_mapping("start"), example=0),

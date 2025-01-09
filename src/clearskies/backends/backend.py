@@ -10,7 +10,7 @@ class Backend(ABC):
     supports_n_plus_one = False
 
     @abstractmethod
-    def update(self, id: str, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
+    def update(self, id: int | str, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         """
         Updates the record with the given id with the information from the data dictionary
         """
@@ -24,7 +24,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def delete(self, id: str, model: clearskies.model.Model) -> bool:
+    def delete(self, id: int | str, model: clearskies.model.Model) -> bool:
         """
         Deletes the record with the given id
         """
