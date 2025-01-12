@@ -78,7 +78,7 @@ class Backend(ABC):
         pass
 
     @abstractmethod
-    def documentation_pagination_parameters(self, case_mapping: Callable) -> list[tuple[Any]]:
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> list[tuple[Any, Any]]:
         """
         Returns a list of autodoc schema objects describing the allowed input keys to set pagination.  It should
         return a list of tuples, with each tuple corresponding to an input key.  The first element in the

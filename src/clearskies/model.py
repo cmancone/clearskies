@@ -604,7 +604,7 @@ class Model(InjectableProperties):
     def documentation_pagination_next_page_example(self: Self, case_mapping: Callable) -> dict[str, Any]:
         return self.backend.documentation_pagination_next_page_example(case_mapping)
 
-    def documentation_pagination_parameters(self: Self, case_mapping: Callable) -> list[tuple[Any]]:
+    def documentation_pagination_parameters(self: Self, case_mapping: Callable) -> list[tuple[Any, Any]]:
         return self.backend.documentation_pagination_parameters(case_mapping)
 
     def no_queries(self) -> None:

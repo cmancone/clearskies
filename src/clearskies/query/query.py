@@ -1,9 +1,12 @@
-from typing import Any, Type, Self
+from typing import Any, Type, Self, TYPE_CHECKING
 
-from clearskies import parameters_to_properties, Model
+from clearskies import parameters_to_properties
 from .condition import Condition
 from .join import Join
 from .sort import Sort
+
+if TYPE_CHECKING:
+    from clearskies import parameters_to_properties, Model
 
 class Query:
     """
@@ -118,6 +121,8 @@ class Query:
         return self.__class__(**new_kwargs)
 
     def set_limit(self, limit: int) -> Self:
+        if not isinstance(limit, int):
+            raise TypeError(f"The limit in a query must be of type int but I received a value of type '{limit.__class__.__name__}'")
         return self.__class__({
             **self.as_kwargs(),
             "limit": limit,
