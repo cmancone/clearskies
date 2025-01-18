@@ -1,9 +1,9 @@
 import clearskies.typing
-from clearskies.column import Column
+from clearskies.columns.string import String
 from clearskies import configs, parameters_to_properties
 
 
-class CreatedByIp(Column):
+class CreatedByIp(String):
     """
     Returns the IP of the client when the record is created.
 
@@ -16,6 +16,8 @@ class CreatedByIp(Column):
     Since this column is always populated automatically, it is never directly writeable.
     """
     is_writeable = configs.Boolean(default=False)
+
+    _allowed_search_operators = ["=", "in", "is not null", "is null", "like"]
 
     @parameters_to_properties.parameters_to_properties
     def __init__(

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Callable
+from typing import Any, Callable, overload, Self
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
@@ -27,7 +27,15 @@ class Json(Column):
     ):
         pass
 
-    def __get__(self, instance, parent) -> dict[str, Any] | None:
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type) -> dict[str, Any]:
+        pass
+
+    def __get__(self, instance, parent) -> dict[str, Any]:
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: dict[str, Any]) -> None:

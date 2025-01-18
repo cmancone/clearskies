@@ -421,7 +421,7 @@ class Model(InjectableProperties):
         self.no_single_model()
         return self.with_query(self.get_query().set_select_all(select_all))
 
-    def where(self: Self, where: str) -> Self:
+    def where(self: Self, where: str | Condition) -> Self:
         """
         Adds the given condition to the query.
 
@@ -442,7 +442,7 @@ class Model(InjectableProperties):
         ```
         """
         self.no_single_model()
-        return self.with_query(self.get_query().add_where(Condition(where)))
+        return self.with_query(self.get_query().add_where(where if isinstance(where, Condition) else Condition(where)))
 
     def join(self: Self, join: str) -> Self:
         """
@@ -501,7 +501,7 @@ class Model(InjectableProperties):
             )
         return self.with_query(self.get_query().set_pagination(pagination_data))
 
-    def find(self: Self, where: str) -> Self:
+    def find(self: Self, where: str | Condition) -> Self:
         """
         Returns the first model matching a given where condition.
 

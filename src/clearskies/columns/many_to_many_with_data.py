@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, overload, Self
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
@@ -153,7 +153,15 @@ class ManyToManyWithData(ManyToMany):
     ):
         pass
 
-    def __get__(self, instance, parent) -> list[Any] | None: # type: ignore
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type) -> list[Any]:
+        pass
+
+    def __get__(self, instance, parent) -> list[Any]:
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: list[dict[str, Any]]) -> None: # type: ignore

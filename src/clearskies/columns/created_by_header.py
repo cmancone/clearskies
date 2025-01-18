@@ -35,6 +35,8 @@ class CreatedByHeader(Column):
     """
     is_writeable = configs.Boolean(default=False)
 
+    _allowed_search_operators = ["=", "in", "is not null", "is null", "like"]
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -48,3 +50,12 @@ class CreatedByHeader(Column):
         on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
         pass
+
+    def equals(self, value: str) -> Condition:
+        return super().equals(value)
+
+    def is_in(self, values: list[str]) -> Condition:
+        return super().is_in(value)
+
+    def like(self, value: str) -> Condition:
+        return super().like(value)

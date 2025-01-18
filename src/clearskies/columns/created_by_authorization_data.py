@@ -35,6 +35,8 @@ class CreatedByAuthorizationData(Column):
     """
     is_writeable = configs.Boolean(default=False)
 
+    _allowed_search_operators = ["=", "in", "is not null", "is null", "like"]
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,

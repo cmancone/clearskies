@@ -1,9 +1,9 @@
 import clearskies.typing
-from clearskies.column import Column
+from clearskies.columns.string import String
 from clearskies import configs, parameters_to_properties
 
 
-class CreatedByRoutingData(Column):
+class CreatedByRoutingData(String):
     """
     This column will automatically take data from the route path in the request and store it in the model upon creation.
 
@@ -34,6 +34,8 @@ class CreatedByRoutingData(Column):
     Since this column is always populated automatically, it is never directly writeable.
     """
     is_writeable = configs.Boolean(default=False)
+
+    _allowed_search_operators = ["=", "in", "is not null", "is null", "like"]
 
     @parameters_to_properties.parameters_to_properties
     def __init__(

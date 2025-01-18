@@ -1,9 +1,9 @@
 import clearskies.typing
-from clearskies.column import Column
+from clearskies.columns.string import String
 from clearskies import configs, parameters_to_properties
 
 
-class Uuid(Column):
+class Uuid(String):
     """
     Populates the column with a UUID upon record creation.
 

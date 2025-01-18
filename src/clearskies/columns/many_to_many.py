@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, overload, Self
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
@@ -183,8 +183,16 @@ class ManyToMany(Column):
             del data[self.name]
         return data
 
-    def __get__(self, instance, parent) -> list[str] | None: #  type: ignore
-        return super().__get__(instance, parent) #  type: ignore
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type) -> list[str]:
+        pass
+
+    def __get__(self, instance, parent) -> list[str]:
+        return super().__get__(instance, parent)
 
     def __set__(self, instance, value: list[str]) -> None: #  type: ignore
         instance._next_data[self.name] = value

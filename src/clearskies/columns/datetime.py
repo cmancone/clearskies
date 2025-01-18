@@ -1,5 +1,5 @@
 import datetime
-from typing import Callable
+from typing import Callable, overload, Self
 
 import dateparser # type: ignore
 
@@ -51,6 +51,8 @@ class Datetime(Column):
     Unlike the default value, a setable value is always set during a save.
     """
     setable = configs.DatetimeOrCallable(default=None)  # type: ignore
+
+    _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
@@ -105,8 +107,40 @@ class Datetime(Column):
             self.name: value.strftime(self.date_format),
         }
 
-    def __get__(self, instance, parent) -> datetime.datetime | None:
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type) -> datetime.datetime:
+        pass
+
+    def __get__(self, instance, parent) -> datetime.datetime:
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: datetime.datetime) -> None:
         instance._next_data[self.name] = value
+
+    def equals(self, value: str | datetime.datetime) -> Condition:
+        super().equals(value)
+
+    def spaceship(self, value: str | datetime.datetime) -> Condition:
+        super().spaceship(value)
+
+    def not_equals(self, value: str | datetime.datetime) -> Condition:
+        super().not_equals(value)
+
+    def less_than_equals(self, value: str | datetime.datetime) -> Condition:
+        super().less_than_equals(value)
+
+    def greater_than_equals(self, value: str | datetime.datetime) -> Condition:
+        super().greater_than_equals(value)
+
+    def less_than(self, value: str | datetime.datetime) -> Condition:
+        super().less_than(value)
+
+    def greater_than(self, value: str | datetime.datetime) -> Condition:
+        super().greater_than(value)
+
+    def is_in(self, values: list[str | datetime.datetime]) -> Condition:
+        super().is_in(value)

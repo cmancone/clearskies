@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING, overload, Self
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
@@ -36,6 +36,20 @@ class BelongsToModel(Column):
         self.model_class = model_class
         self.name = name
         self.finalize_and_validate_configuration()
+
+        # finally, let the belongs to column know about us and make sure it's the right thing.
+        belongs_to_column = getattr(model_class, self.belongs_to_column_name)
+        if not isinstance(belongs_to_column, BelongsTo):
+            raise ValueError(f"Error with configuration for {model_class.__name__}.{name}, which is a BelongsToModel.  It needs to point to a belongs to column, and it was told to use {model_class.__name__}.{self.belongs_to_column_name}, but this is not a BelongsTo column.")
+        belongs_to_column.model_column_name = name
+
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type) -> Model:
+        pass
 
     def __get__(self, model: Model, parent: type) -> Model:
         if not model:

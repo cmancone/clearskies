@@ -1,5 +1,5 @@
 import datetime
-from typing import Callable
+from typing import Callable, overload, Self
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
@@ -79,7 +79,15 @@ class Timestamp(Datetime):
 
         return {**data, self.name: value}
 
-    def __get__(self, instance, parent) -> datetime.datetime | None:
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type) -> datetime.datetime:
+        pass
+
+    def __get__(self, instance, parent) -> datetime.datetime:
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: datetime.datetime) -> None:

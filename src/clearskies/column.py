@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, Self, TYPE_CHECKING
+from typing import Any, overload, Callable, Self, TYPE_CHECKING
 
 import clearskies.di
 import clearskies.model
@@ -11,6 +11,7 @@ import clearskies.configs.select
 import clearskies.configs.string
 import clearskies.configs.string_or_callable
 import clearskies.configs.validators
+from clearskies.query.condition import Condition, ParsedCondition
 from clearskies.validator import Validator
 import clearskies.parameters_to_properties
 
@@ -202,6 +203,14 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     """
     _is_required = False
 
+    """
+    The list of allowed search operators for this column.
+
+    All the various search methods reference this list.  The idea is that a column can just fill out this list
+    instead of having to override all the methods.
+    """
+    _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null", "like"]
+
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -259,12 +268,20 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
         return {**data, self.name: str(data[self.name])}
 
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type):
+        pass
+
     def __get__(self, instance: Model, parent: type):
         if not instance:
             return self
 
         if self.name not in instance._data:
-            return None
+            return None # type: ignore
 
         if self.name not in instance._transformed_data:
             instance._transformed_data[self.name] = self.from_backend(instance, instance._data[self.name])
@@ -614,3 +631,73 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         do some filtering whenever the model shows up in an API endpoint, this is the place for it.
         """
         return model
+
+    def equals(self, value) -> Condition:
+        if not self.is_searchable:
+            raise ValueError(f"'{self.model_class.__name__}.{self.name}' is not a searchable column.")
+        if "=" not in self._allowed_search_operators:
+            raise ValueError(f"An 'equals search' is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        value = self.to_backend({self.name: value}).get(self.name)
+        return ParsedCondition(self.name, '=', [value])
+
+    def spaceship(self, value) -> Condition:
+        if "<=>" not in self._allowed_search_operators:
+            raise ValueError(f"A 'spaceship' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        value = self.to_backend({self.name: value}).get(self.name)
+        return ParsedCondition(self.name, '<=>', [value])
+
+    def not_equals(self, value) -> Condition:
+        if "!=" not in self._allowed_search_operators:
+            raise ValueError(f"A 'not equals' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        value = self.to_backend({self.name: value}).get(self.name)
+        return ParsedCondition(self.name, '!=', [value])
+
+    def less_than_equals(self, value) -> Condition:
+        if "<=" not in self._allowed_search_operators:
+            raise ValueError(f"A 'less than or equals' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        value = self.to_backend({self.name: value}).get(self.name)
+        return ParsedCondition(self.name, '<=', [value])
+
+    def greater_than_equals(self, value) -> Condition:
+        if ">=" not in self._allowed_search_operators:
+            raise ValueError(f"A 'greater than' or equals search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        value = self.to_backend({self.name: value}).get(self.name)
+        return ParsedCondition(self.name, '>=', [value])
+
+    def less_than(self, value) -> Condition:
+        if "<" not in self._allowed_search_operators:
+            raise ValueError(f"A 'less than' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        value = self.to_backend({self.name: value}).get(self.name)
+        return ParsedCondition(self.name, '<', [value])
+
+    def greater_than(self, value) -> Condition:
+        if ">" not in self._allowed_search_operators:
+            raise ValueError(f"A 'greater than' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        value = self.to_backend({self.name: value}).get(self.name)
+        return ParsedCondition(self.name, '>', [value])
+
+    def is_in(self, values) -> Condition:
+        if "in" not in self._allowed_search_operators:
+            raise ValueError(f"An 'in' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        if not isinstance(values, list):
+            raise TypeError("You must pass a list in to column.is_in")
+        final_values = []
+        for value in values:
+            final_values.append(self.to_backend({self.name: value}).get(self.name))
+        return ParsedCondition(self.name, 'in', final_values)
+
+    def is_not_null(self) -> Condition:
+        if "is not null" not in self._allowed_search_operators:
+            raise ValueError(f"An 'is not null' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        return ParsedCondition(self.name, 'is not null', [])
+
+    def is_null(self) -> Condition:
+        if "is null" not in self._allowed_search_operators:
+            raise ValueError(f"An 'is null' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        return ParsedCondition(self.name, 'is null', [])
+
+    def like(self, value) -> Condition:
+        if "like" not in self._allowed_search_operators:
+            raise ValueError(f"A 'like' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+        value = self.to_backend({self.name: value}).get(self.name)
+        return ParsedCondition(self.name, 'like', [value])

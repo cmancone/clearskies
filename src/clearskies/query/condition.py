@@ -190,3 +190,15 @@ class Condition:
 
         # the only thing left is "in" which has a variable number of placeholders
         return f"{quote}{column}{quote} IN (" + ", ".join(["%s" for i in range(len(values))]) + ")"
+
+class ParsedCondition(Condition):
+    def __init__(self, column_name: str, operator: str, values: list[str], table_name: str = ""):
+        self.column_name = column_name
+        if operator not in self.operators:
+            raise ValueError(f"Unknown operator '{operator}'")
+        self.operator = operator
+        self.values = values
+        self.table_name = table_name
+        column_for_parsed = f"{self.table_name}.{self.column_name}" if self.table_name else self.column_name
+        self.parsed = self._with_placeholders(column_for_parsed, self.operator, self.values, escape=False if self.table_name else True)
+        self._raw_condition = self.parsed

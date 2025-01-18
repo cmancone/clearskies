@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, overload, Self
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
@@ -25,6 +25,8 @@ class Float(Column):
     """
     setable = configs.FloatOrCallable(default=None) #  type: ignore
 
+    _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -44,7 +46,15 @@ class Float(Column):
     ):
         pass
 
-    def __get__(self, instance, parent) -> float | None:
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type) -> float:
+        pass
+
+    def __get__(self, instance, parent) -> float:
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: float) -> None:
@@ -58,3 +68,27 @@ class Float(Column):
             return data
 
         return {**data, self.name: float(data[self.name])}
+
+    def equals(self, value: float) -> Condition:
+        super().equals(value)
+
+    def spaceship(self, value: float) -> Condition:
+        super().spaceship(value)
+
+    def not_equals(self, value: float) -> Condition:
+        super().not_equals(value)
+
+    def less_than_equals(self, value: float) -> Condition:
+        super().less_than_equals(value)
+
+    def greater_than_equals(self, value: float) -> Condition:
+        super().greater_than_equals(value)
+
+    def less_than(self, value: float) -> Condition:
+        super().less_than(value)
+
+    def greater_than(self, value: float) -> Condition:
+        super().greater_than(value)
+
+    def is_in(self, values: list[float]) -> Condition:
+        super().is_in(value)

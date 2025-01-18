@@ -59,7 +59,7 @@ class CategoryTree(BelongsTo):
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         parent_id = clearskies.columns.CategoryTree(Tree)
-        parent = clearskies.columns.BelongsToRef("parent_id")
+        parent = clearskies.columns.BelongsToModel("parent_id")
         children = clearskies.columns.CategoryTreeChildren("category_tree")
         descendants = clearskies.columns.CategoryTreeDescendants("category_tree")
         ancestors = clearskies.columns.CategoryTreeAncestors("category_tree")
@@ -107,8 +107,6 @@ class CategoryTree(BelongsTo):
     """
     load_relatives_strategy = configs.Select(["join", "where_in", "individual"], default="join")
 
-    is_searchable = configs.Boolean(default=False)
-
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -126,6 +124,7 @@ class CategoryTree(BelongsTo):
         setable: str | Callable | None = None,
         is_readable: bool = True,
         is_writeable: bool = True,
+        is_searchable: bool = True,
         is_temporary: bool = False,
         validators: clearskies.typing.validator | list[clearskies.typing.validator] = [],
         on_change_pre_save: clearskies.typing.action | list[clearskies.typing.action] = [],

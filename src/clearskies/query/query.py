@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Type, Self, TYPE_CHECKING
 
 from clearskies import parameters_to_properties

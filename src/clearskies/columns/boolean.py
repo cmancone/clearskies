@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING, overload, Self
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
@@ -42,6 +42,8 @@ class Boolean(Column):
     """
     on_false = clearskies.configs.actions.Actions(default=[])
 
+    _allowed_search_operators = ["="]
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -74,7 +76,15 @@ class Boolean(Column):
 
         return {**data, self.name: bool(data[self.name])}
 
-    def __get__(self, instance, parent) -> bool | None:
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type) -> bool:
+        pass
+
+    def __get__(self, instance, parent) -> bool:
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: bool) -> None:
@@ -102,3 +112,6 @@ class Boolean(Column):
             self.execute_actions(self.on_true, model)
         if not getattr(model, self.name) and self.on_false:
             self.execute_actions(self.on_false, model)
+
+    def equals(self, value: bool) -> Condition:
+        return super().equals(value)

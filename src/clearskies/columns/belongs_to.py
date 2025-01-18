@@ -1,16 +1,17 @@
 from __future__ import annotations
 from typing import Callable, TYPE_CHECKING
+from collections import OrderedDict
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
-from clearskies.column import Column
+from clearskies.columns.string import String
 from clearskies.functional import validations
 from clearskies.di.inject import InputOutput
 
 if TYPE_CHECKING:
     from clearskies import Model
 
-class BelongsTo(Column):
+class BelongsTo(String):
     """
     Declares that this model belongs to another - that it has a parent.
 
@@ -85,7 +86,7 @@ class BelongsTo(Column):
     """
     The name of the property used to fetch the parent model itself.
 
-    Note that this isn't set explicitly, but by adding a parent_reference column to the model.
+    Note that this isn't set explicitly, but by adding a BelongsToModel column to the model.
     """
     model_column_name = configs.String()
 
@@ -106,6 +107,7 @@ class BelongsTo(Column):
 
     input_output = InputOutput()
     wants_n_plus_one = True
+    _allowed_search_operators = ["="]
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
@@ -197,3 +199,69 @@ class BelongsTo(Column):
 
     def join_table_alias(self) -> str:
         return self.parent_model.destination_name() + "_" + self.name
+
+    def to_json(self, model: Model) -> dict[str, Any]:
+        """
+        Converts the column into a json-friendly representation
+        """
+        if not self.readable_parent_columns:
+            return super().to_json(model)
+
+        if not self.model_column_name:
+            raise ValueError(f"Configuration error for {model.__class__.__name__}: I can't convert to JSON unless I have a BelongsToModel column attached, and it doesn't appear that one has been attached for me.")
+
+        # otherwise return an object with the readable parent columns
+        columns = self.parent_columns
+        parent = model.__getattr__(self.model_column_name)
+        json = OrderedDict()
+        if parent.id_column_name not in self.readable_parent_columns:
+            json[parent.id_column_name] = list(columns[parent.id_column_name].to_json(parent).values())[0]
+        for column_name in self.readable_parent_columns:
+            json = {**json, **columns[column_name].to_json(parent)}
+        return {
+            **super().to_json(model),
+            self.model_column_name: json,
+        }
+
+    def is_allowed_operator(self, operator, relationship_reference=None):
+        """
+        This is called when processing user data to decide if the end-user is specifying an allowed operator
+        """
+        if not relationship_reference:
+            return "="
+        parent_columns = self.parent_columns
+        if relationship_reference not in self.parent_columns:
+            raise ValueError(
+                "I was asked to search on a related column that doens't exist.  This shouldn't have happened :("
+            )
+        return self.parent_columns[relationship_reference].is_allowed_operator(operator)
+
+    def check_search_value(self, value, operator=None, relationship_reference=None):
+        if not relationship_reference:
+            return self.input_error_for_value(value, operator=operator)
+        parent_columns = self.parent_columns
+        if relationship_reference not in self.parent_columns:
+            raise ValueError(
+                "I was asked to search on a related column that doens't exist.  This shouldn't have happened :("
+            )
+        return self.parent_columns[relationship_reference].check_search_value(value, operator=operator)
+
+    def add_search(
+        self,
+        model: clearskies.model.Model,
+        value: str,
+        operator: str="",
+        relationship_reference: str=""
+    ) -> clearskies.model.Model:
+        if not relationship_reference:
+            return super().add_search(models, value, operator=operator)
+
+        if relationship_reference not in self.parent_columns:
+            raise ValueError(
+                "I was asked to search on a related column that doens't exist.  This shouldn't have happened :("
+            )
+
+        models = self.add_join(model)
+        related_column = self.parent_columns[relationship_reference]
+        alias = self.join_table_alias()
+        return model.where(related_column.build_condition(value, operator=operator, column_prefix=f"{alias}."))
