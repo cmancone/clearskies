@@ -4,6 +4,7 @@ from typing import Callable, TYPE_CHECKING, overload, Self
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
+from clearskies.autodoc.boolean import Boolean as AutoDocBoolean
 import clearskies.configs.actions
 
 if TYPE_CHECKING:
@@ -43,6 +44,11 @@ class Boolean(Column):
     on_false = clearskies.configs.actions.Actions(default=[])
 
     _allowed_search_operators = ["="]
+
+    """
+    The class to use when documenting this column
+    """
+    auto_doc_class: Type[AutoDocSchema] = AutoDocBoolean
 
     @parameters_to_properties.parameters_to_properties
     def __init__(

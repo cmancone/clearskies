@@ -1,5 +1,6 @@
-class Enum:
-    name = None
+from .schema import Schema
+
+class Enum(Schema):
     values = None
     value_type = None
     example = None

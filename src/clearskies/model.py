@@ -42,6 +42,16 @@ class Model(InjectableProperties):
 
     _di = inject.Di()
 
+    def __init__(self):
+        if not self.id_column_name:
+            raise ValueError(f"You must define the 'id_column_name' property for every model class, but this is missing for model '{self.__class__.__name__}'")
+        if not isinstance(self.id_column_name, str):
+            raise TypeError(f"The 'id_column_name' property of a model must be a string that specifies the name of the id column, but that is not the case for model '{self.__class__.__name__}'.")
+        if not self.backend:
+            raise ValueError(f"You must define the 'backend' property for every model class, but this is missing for model '{self.__class__.__name__}'")
+        if not hasattr(self.backend, documentation_pagination_parameters):
+            raise TypeError(f"The 'backend' property of a model must be an object that extends the clearskies.Backend class, but that is not the case for model '{self.__class__.__name__}'.")
+
     @classmethod
     def destination_name(cls: type[Self]) -> str:
         """
@@ -608,9 +618,9 @@ class Model(InjectableProperties):
         return self.backend.documentation_pagination_parameters(case_mapping)
 
     def no_queries(self) -> None:
-        if self._data:
+        if self._query:
             raise ValueError("You attempted to save/read record data for a model being used to make a query.  This is not allowed, as it is typically a sign of a bug in your application code.")
 
     def no_single_model(self):
-        if self._query:
+        if self._data:
             raise ValueError("You have attempted to execute a query against a model that represents an individual record.  This is not allowed, as it is typically a sign of a bug in your application code.")

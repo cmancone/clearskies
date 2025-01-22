@@ -1,9 +1,13 @@
+from __future__ import annotations
 import datetime
-from typing import Optional
+from typing import Any, TYPE_CHECKING
 
 import clearskies.typing
 from clearskies.columns.datetime import Datetime
 from clearskies import configs, parameters_to_properties
+
+if TYPE_CHECKING:
+    from clearskies import Model
 
 
 class Created(Datetime):
@@ -26,7 +30,7 @@ class Created(Datetime):
     def my_application(my_models):
         my_model = my_models.create({"name": "Example"})
 
-        # prints a datetime object with the current time in UTC
+        # prints a datetime object with the time (in UTC) that the above save happened.
         print(my_model.created)
 
     cli = clearskies.contexts.cli(my_model, binding_classes=[MyModel])
@@ -53,3 +57,11 @@ class Created(Datetime):
         on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
         pass
+
+    def pre_save(self, data: dict[str, Any], model: Model) -> dict[str, Any]:
+        if model.exists:
+            return data
+        data = {**data, self.name: self.datetime.datetime.now(self.timezone)}
+        if self.on_change_pre_save:
+            data = self.execute_actions_with_data(self.on_change_pre_save, model, data)
+        return data

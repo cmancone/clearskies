@@ -1,9 +1,12 @@
-from typing import Any, Callable, overload, Self
+from __future__ import annotations
+from typing import Any, Callable, overload, Self, TYPE_CHECKING
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
 from clearskies.columns.many_to_many import ManyToMany
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class ManyToManyWithData(ManyToMany):
     """

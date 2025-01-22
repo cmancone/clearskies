@@ -1,10 +1,13 @@
+from __future__ import annotations
 import datetime
-from typing import Callable, overload, Self
+from typing import Callable, overload, Self, TYPE_CHECKING
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
 from clearskies.columns.datetime import Datetime
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class Timestamp(Datetime):
     """

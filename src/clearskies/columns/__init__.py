@@ -1,8 +1,12 @@
 from .audit import Audit
 from .belongs_to import BelongsTo
+from .belongs_to_model import BelongsToModel
 from .belongs_to_self import BelongsToSelf
 from .boolean import Boolean
 from .category_tree import CategoryTree
+from .category_tree_ancestors import CategoryTreeAncestors
+from .category_tree_children import CategoryTreeChildren
+from .category_tree_descendents import CategoryTreeDescendents
 from .created_by_authorization_data import CreatedByAuthorizationData
 from .created_by_header import CreatedByHeader
 from .created_by_ip import CreatedByIp
@@ -27,9 +31,13 @@ from .uuid import Uuid
 __all__ = [
     "Audit",
     "BelongsTo",
+    "BelongsToModel",
     "BelongsToSelf",
     "Boolean",
     "CategoryTree",
+    "CategoryTreeAncestors",
+    "CategoryTreeChildren",
+    "CategoryTreeDescendents",
     "CreatedByAuthorizationData",
     "CreatedByHeader",
     "CreatedByIp",

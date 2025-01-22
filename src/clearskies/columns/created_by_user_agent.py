@@ -1,7 +1,13 @@
+from __future__ import annotations
+import datetime
+from typing import Any, TYPE_CHECKING
+
 import clearskies.typing
 from clearskies.columns.string import String
 from clearskies import configs, parameters_to_properties
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class CreatedByUserAgent(String):
     """
@@ -30,3 +36,12 @@ class CreatedByUserAgent(String):
         on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
         pass
+
+    def pre_save(self, data: dict[str, Any], model: Model) -> dict[str, Any]:
+        if model.exists:
+            return data
+        input_output = self.di.build("input_output", cache=True)
+        data = {**data, self.name: input_output.get_request_header("user-agent")}
+        if self.on_change_pre_save:
+            data = self.execute_actions_with_data(self.on_change_pre_save, model, data)
+        return data

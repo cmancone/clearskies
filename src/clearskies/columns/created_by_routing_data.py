@@ -49,4 +49,5 @@ class CreatedByRoutingData(String):
         on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
         on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
-        pass
+        self.created_by_source_key = routing_path_name
+        self.created_by_source_type = "routing_data"

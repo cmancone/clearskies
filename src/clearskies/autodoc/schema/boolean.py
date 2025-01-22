@@ -1,11 +1,4 @@
-class Boolean:
-    name = None
-    example = None
-    value = None
-    _type = "boolean"
-    _format = ""
+from .schema import Schema
 
-    def __init__(self, name, example=None, value=None):
-        self.name = name
-        self.example = example
-        self.value = value
+class Boolean(Schema):
+    _type = "boolean"

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, overload, Callable, Self, TYPE_CHECKING
+from typing import Any, overload, Callable, Self, TYPE_CHECKING, Type
 
 import clearskies.di
 import clearskies.model
@@ -11,6 +11,8 @@ import clearskies.configs.select
 import clearskies.configs.string
 import clearskies.configs.string_or_callable
 import clearskies.configs.validators
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.autodoc.string import String as AutoDocString
 from clearskies.query.condition import Condition, ParsedCondition
 from clearskies.validator import Validator
 import clearskies.parameters_to_properties
@@ -211,6 +213,11 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     """
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null", "like"]
 
+    """
+    The class to use when documenting this column
+    """
+    auto_doc_class: Type[AutoDocSchema] = AutoDocString
+
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -362,7 +369,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
         If there are no input errors then this should simply return an empty dictionary.
 
-        This method calls `self.check_input` and then also calls all the validators attached to the
+        This method calls `self.input_error_for_value` and then also calls all the validators attached to the
         column so, if you're building your own column and have some specific input validation you need to do,
         you probably want to extend `input_error_for_value` as that is the one intended checks for a column type.
 
@@ -421,10 +428,10 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         """
         Make any necessary changes to the data before starting the save process
 
-        The difference between this and transform_for_database is that transform_for_database only affects
+        The difference between this and to_backend is that to_backend only affects
         the data as it is going into the database, while this affects the data that will get persisted
         in the object as well.  So for instance, for a "created" field, pre_save may fill in the current
-        date with a Python DateTime object when the record is being saved, and then transform_for_database may
+        date with a Python DateTime object when the record is being saved, and then to_backend may
         turn that into an SQL-compatible date string.
 
         Note: this is called during the `pre_save` step in the lifecycle of the save process.  See the
@@ -582,7 +589,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
         As a result, this is perfectly safe for any user input, assuming normal system flow.
         """
-        return f"{column_prefix}{self.name}={value}"
+        if not operator:
+            operator = "="
+        return f"{column_prefix}{self.name}{operator}{value}"
 
     def is_allowed_operator(
         self,
@@ -592,7 +601,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         """
         This is called when processing user data to decide if the end-user is specifying an allowed operator
         """
-        return operator == "="
+        return operator.lower() in self._allowed_search_operators
 
     def n_plus_one_add_joins(self, model: clearskies.model.Model, column_names: list[str] = []) -> clearskies.model.Model:
         """
@@ -701,3 +710,6 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             raise ValueError(f"A 'like' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
         value = self.to_backend({self.name: value}).get(self.name)
         return ParsedCondition(self.name, 'like', [value])
+
+    def documentation(self, name=None, example=None, value=None) -> list[AutoDocSchema]:
+        return [self.auto_doc_class(name if name is not None else self.name, example=example, value=value)]

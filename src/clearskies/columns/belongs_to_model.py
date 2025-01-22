@@ -1,11 +1,9 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, overload, Self
+from typing import TYPE_CHECKING, overload, Self
 
-import clearskies.typing
 from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
-from clearskies.functional import validations
-from clearskies.di.inject import InputOutput
+from clearskies.columns.belongs_to import BelongsTo
 
 if TYPE_CHECKING:
     from clearskies import Model

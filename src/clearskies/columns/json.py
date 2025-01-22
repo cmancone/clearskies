@@ -1,10 +1,13 @@
+from __future__ import annotations
 import json
-from typing import Any, Callable, overload, Self
+from typing import Any, Callable, overload, Self, TYPE_CHECKING
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class Json(Column):
     is_searchable = configs.Boolean(default=False)

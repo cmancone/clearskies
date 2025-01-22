@@ -1,9 +1,14 @@
-from typing import Callable, overload, Self
+from __future__ import annotations
+from typing import Callable, overload, Self, TYPE_CHECKING
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.autodoc.string import Integer as AutoDocInteger
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class Integer(Column):
     """
@@ -26,6 +31,11 @@ class Integer(Column):
     setable = configs.IntegerOrCallable(default=None) #  type: ignore
 
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
+
+    """
+    The class to use when documenting this column
+    """
+    auto_doc_class: Type[AutoDocSchema] = AutoDocInteger
 
     @parameters_to_properties.parameters_to_properties
     def __init__(

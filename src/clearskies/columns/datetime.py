@@ -1,12 +1,17 @@
+from __future__ import annotations
 import datetime
-from typing import Callable, overload, Self
+from typing import Callable, overload, Self, TYPE_CHECKING
 
 import dateparser # type: ignore
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.autodoc.boolean import Datetime as AutoDocDatetime
 from clearskies.column import Column
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class Datetime(Column):
     """
@@ -53,6 +58,11 @@ class Datetime(Column):
     setable = configs.DatetimeOrCallable(default=None)  # type: ignore
 
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
+
+    """
+    The class to use when documenting this column
+    """
+    auto_doc_class: Type[AutoDocSchema] = AutoDocDatetime
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
@@ -107,6 +117,16 @@ class Datetime(Column):
             self.name: value.strftime(self.date_format),
         }
 
+    def to_json(self, model: clearskies.model.Model) -> dict[str, Any]:
+        """
+        Grabs the column out of the model and converts it into a representation that can be turned into JSON
+        """
+        value = self.__get__(model, model.__class__)
+        if value and isinstance(value, datetime.datetime):
+            value = value.isoformat()
+
+        return {self.name: self.__get__(model, model.__class__)}
+
     @overload
     def __get__(self, instance: None, parent: type) -> Self:
         pass
@@ -144,3 +164,52 @@ class Datetime(Column):
 
     def is_in(self, values: list[str | datetime.datetime]) -> Condition:
         super().is_in(value)
+
+    def input_error_for_value(self, value, operator=None):
+        value = dateparser.parse(value)
+        if not value:
+            return "given value did not appear to be a valid date"
+        if not value.tzinfo:
+            return "date is missing timezone information"
+        return ""
+
+    def values_match(self, value_1, value_2):
+        """
+        Compares two values to see if they are the same
+        """
+        # in this function we deal with data directly out of the backend, so our date is likely
+        # to be string-ified and we want to look for default (e.g. null) values in string form.
+        if type(value_1) == str and ("0000-00-00" in value_1 or value_1 == self.backend_default):
+            value_1 = None
+        if type(value_2) == str and ("0000-00-00" in value_2 or value_2 == self.backend_default):
+            value_2 = None
+        number_values = 0
+        if value_1:
+            number_values += 1
+        if value_2:
+            number_values += 1
+        if number_values == 0:
+            return True
+        if number_values == 1:
+            return False
+
+        if type(value_1) == str:
+            value_1 = dateparser.parse(value_1)
+        if type(value_2) == str:
+            value_2 = dateparser.parse(value_2)
+
+        # we need to make sure we're comparing in the same timezones.  For our purposes, a difference in timezone
+        # is fine as long as they represent the same time (e.g. 16:00EST == 20:00UTC).  For python, same time in different
+        # timezones is treated as different datetime objects.
+        if value_1.tzinfo is not None and value_2.tzinfo is not None:
+            value_1 = value_1.astimezone(value_2.tzinfo)
+
+        # two times can be the same but if one is datetime-aware and one is not, python will treat them as not equal.
+        # we want to treat such times as being the same.  Therefore, check for equality but ignore the timezone.
+        for to_check in ["year", "month", "day", "hour", "minute", "second", "microsecond"]:
+            if getattr(value_1, to_check) != getattr(value_2, to_check):
+                return False
+
+        # and since we already converted the timezones to match (or one has a timezone and one doesn't), we're good to go.
+        # if we passed the above loop then the times are the same.
+        return True

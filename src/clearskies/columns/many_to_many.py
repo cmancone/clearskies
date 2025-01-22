@@ -1,9 +1,16 @@
-from typing import Callable, overload, Self
+from __future__ import annotations
+from typing import Any, Callable, overload, Self, TYPE_CHECKING
+from collections import OrderedDict
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
+from clearskies.functional import string
+from clearskies.autodoc.string import Array as AutoDocArray
+from clearskies.autodoc.string import String as AutoDocString
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class ManyToMany(Column):
     """
@@ -54,28 +61,28 @@ class ManyToMany(Column):
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         name = clearskies'columns.String()
-        thingies = clearskies.columns.ManyToMany(
+        thingy_ids = clearskies.columns.ManyToMany(
             related_model_class=ThingyReference,
             pivot_model_class=ThingyToWidgetReference,
         )
-        thingy_ids = clearskies.columns.ManyToManyIdReference("thingies")
+        thingies = clearskies.columns.ManyToManyModels("thingy_ids")
 
     class Thingy(clearskies.Model):
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         name = clearskies'columns.String()
-        widgets = clearskies.columns.ManyToMany(
+        widget_ids = clearskies.columns.ManyToMany(
             related_model_class=WidgetReference,
             pivot_model_class=ThingyToWidgetReference,
         )
-        widget_ids = clearskies.columns.ManyToManyIdReference("widgets")
+        widgets = clearskies.columns.ManyToManyModels("widget_ids")
 
     def my_application(widgets, thingies):
         thing_1 = thingies.create({"name": "Thing 1"})
         thing_2 = thingies.create({"name": "Thing 2"})
         widget = widgets.create({
             "name": "Widget 1",
-            "thingies": [thing_1.id, thing_2.id],
+            "thingy_ids": [thing_1.id, thing_2.id],
         })
 
         print([thing.name for thing in widget.thingies])
@@ -95,11 +102,11 @@ class ManyToMany(Column):
 
     ```
     widget.save({
-        "thingies": [...widget.thingy_ids, some_other_id],
+        "thingy_ids": [...widget.thingy_ids, some_other_id],
     })
 
     widget.save({
-        "thingies": [id for id in widget.thingy_ids if id != "some_id_to_remove"]
+        "thingy_ids": [id for id in widget.thingy_ids if id != "some_id_to_remove"]
     })
     ```
 
@@ -183,16 +190,104 @@ class ManyToMany(Column):
             del data[self.name]
         return data
 
+    @property
+    def pivot_model(self):
+        return self.di.build(self.pivot_model_class, cache=True)
+
+    @property
+    def related_models(self):
+        return self.di.build(self.related_model_class, cache=True)
+
+    @property
+    def related_columns(self):
+        return self.related_models.get_columns()
+
     @overload
     def __get__(self, instance: None, parent: type) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> list[str]:
+    def __get__(self, instance: Model, parent: type) -> list[str | int]:
         pass
 
-    def __get__(self, instance, parent) -> list[str]:
-        return super().__get__(instance, parent)
+    def __get__(self, instance, parent) -> list[str | int]:
+        related_id_column_name = self.related_model_class.id_column_name
+        return [getattr(model, related_id_column_name) for model in self.get_related_models()]
 
-    def __set__(self, instance, value: list[str]) -> None: #  type: ignore
+    def __set__(self, instance, value: list[str | int]) -> None:
         instance._next_data[self.name] = value
+
+    def get_related_models(self) -> Model:
+        related_column_name_in_pivot = self.related_column_name_in_pivot
+        own_column_name_in_pivot = self.own_column_name_in_pivot
+        own_id_column_name = self.model_class.id_column_name
+        pivot_table = self.pivot_table
+        related_id_column_name = self.related_model_class.id_column_name
+        model = self.related_model
+        join = f"JOIN {pivot_table} ON {pivot_table}.{related_column_name_in_pivot}={model.get_table_name()}.{related_id_column_name}"
+        related_models = model.join(join).where(f"{pivot_table}.{own_column_name_in_pivot}={data[own_id_column_name]}")
+        return related_models
+
+    def post_save(self, data: dict[str, Any], model: clearskies.model.Model, id: int | str) -> None:
+        # if our incoming data is not in the data array or is None, then nothing has been set and we do not want
+        # to make any changes
+        if self.name not in data or data[self.name] is None:
+            return data
+
+        # figure out what ids need to be created or deleted from the pivot table.
+        if not model:
+            old_ids = set()
+        else:
+            old_ids = set(self.__get__(model, model.__class__))
+
+        new_ids = set(data[self.name])
+        to_delete = old_ids - new_ids
+        to_create = new_ids - old_ids
+        pivot_model = self.pivot_model
+        related_column_name_in_pivot = self.related_column_name_in_pivot
+        if to_delete:
+            for model_to_delete in pivot_model.where(
+                f"{related_column_name_in_pivot} IN ({','.join(map(str, to_delete))})"
+            ):
+                model_to_delete.delete()
+        if to_create:
+            own_column_name_in_pivot = self.own_column_name_in_pivot
+            for id_to_create in to_create:
+                pivot_model.create(
+                    {
+                        related_column_name_in_pivot: id_to_create,
+                        own_column_name_in_pivot: id,
+                    }
+                )
+
+        super().post_save(data, model, id)
+
+    def add_search(
+        self,
+        model: Model,
+        value: str,
+        operator: str="",
+        relationship_reference: str=""
+    ) -> Model:
+        related_column_name_in_pivot = self.related_column_name_in_pivot
+        own_column_name_in_pivot = self.own_column_name_in_pivot
+        own_id_column_name = self.model_class.id_column_name
+        pivot_table = self.pivot_table
+        my_table_name = self.model_class.destination_name()
+        related_table_name = self.related_model.destination_name()
+        join_pivot = (
+            f"JOIN {pivot_table} ON {pivot_table}.{own_column_name_in_pivot}={my_table_name}.{own_id_column_name}"
+        )
+        # no reason we can't support searching by both an id or a list of ids
+        values = value if type(value) == list else [value]
+        search = " IN (" + ", ".join([str(val) for val in value]) + ")"
+        return model.join(join_pivot).where(f"{pivot_table}.{related_column_name_in_pivot}{search}")
+
+    def to_json(self, model: Model) -> dict[str, Any]:
+        related_id_column_name = self.related_model_class.id_column_name
+        records = [getattr(related, related_id_column_name) for related in self.get_related_models()]
+        return {self.name: records}
+
+    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None):
+        related_id_column_name = self.related_model_class.id_column_name
+        return AutoDocArray(name if name is not None else self.name, AutoDocString(related_id_column_name))

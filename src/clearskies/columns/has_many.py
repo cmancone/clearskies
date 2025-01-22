@@ -1,7 +1,17 @@
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+from collections import OrderedDict
+
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
+from clearskies.functional import string, validations
+from clearskies.di.inject import InputOutput
 from clearskies.column import Column
+from clearskies.autodoc.string import Array as AutoDocArray
+from clearskies.autodoc.string import Object as AutoDocObject
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class HasMany(Column):
     """
@@ -46,6 +56,8 @@ class HasMany(Column):
     """ Additional queries to add to searches on the child table. """
     where = configs.Conditions()
 
+    input_output = InputOutput()
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -78,3 +90,76 @@ class HasMany(Column):
         foreign_column_name_config.set_model_class(model_class)
 
         super().finalize_configuration(model_class, name)
+
+    @property
+    def child_columns(self):
+        return self.child_model_class.get_columns()
+
+    @property
+    def child_model(self) -> Model:
+        return self.di.build(self.child_model_class, cache=True)
+
+    @overload
+    def __get__(self, instance: None, parent: type) -> Self:
+        pass
+
+    @overload
+    def __get__(self, instance: Model, parent: type) -> Model:
+        pass
+
+    def __get__(self, model: Model, parent: type) -> Model:
+        if not model:
+            return self # type:  ignore
+
+        foreign_column_name = self.foreign_column_name
+        model_id = getattr(model, model.id_column_name)
+        children = self.child_model.where(f"{foreign_column_name}={model_id}")
+
+        if not self.where:
+            return children
+
+        for (index, where) in enumerate(self.where):
+            if callable(where):
+                children = self.di.call_function(where, model=children, **self.input_output.get_context_for_callables())
+                if not validations.is_model(children):
+                    raise ValueError(
+                        f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index+1} was called, it did not return the models class"
+                    )
+            else:
+                children = children.where(where)
+        return children
+
+    def __set__(self, model: Model, value: Model) -> None:
+        raise ValueError(f"Attempt to set a value to {model.__class__.__name__}.{self.name}: this is not allowed because it is a HasMany column, which is not writeable.")
+
+    def to_json(self, model: Model) -> dict[str, Any]:
+        children = []
+        columns = self.child_columns
+        child_id_column_name = self.child_model_class.id_column_name
+        for child in getattr(model, self.name):
+            json = OrderedDict()
+            json = {
+                **json,
+                **columns[child_id_column_name].to_json(child),
+            }
+            for column_name in self.readable_child_columns:
+                json = {
+                    **json,
+                    **columns[column_name].to_json(child),
+                }
+            children.append(json)
+        return {self.name: children}
+
+    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None):
+        columns = self.child_columns
+        child_id_column_name = self.child_model.id_column_name
+        child_properties = [columns[child_id_column_name].documentation()]
+
+        for column_name in self.readable_child_columns:
+            child_properties.extend(columns[column_name].documentation())
+
+        child_object = AutoDocObject(
+            string.title_case_to_nice(self.child_model_class.__name__),
+            child_properties,
+        )
+        return AutoDocArray(name if name is not None else self.name, child_object, value=value)

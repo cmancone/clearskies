@@ -1,9 +1,14 @@
-from typing import Callable, overload, Self
+from __future__ import annotations
+from typing import Callable, overload, Self, TYPE_CHECKING
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.autodoc.boolean import Number as AutoDocNumber
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class Float(Column):
     """
@@ -26,6 +31,11 @@ class Float(Column):
     setable = configs.FloatOrCallable(default=None) #  type: ignore
 
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
+
+    """
+    The class to use when documenting this column
+    """
+    auto_doc_class: Type[AutoDocSchema] = AutoDocNumber
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
@@ -92,3 +102,10 @@ class Float(Column):
 
     def is_in(self, values: list[float]) -> Condition:
         super().is_in(value)
+
+    def input_error_for_value(self, value, operator=None):
+        return (
+            "value should be an integer or float"
+            if (type(value) != int and type(value) != float and value is not None)
+            else ""
+        )

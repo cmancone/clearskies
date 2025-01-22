@@ -1,5 +1,10 @@
+from __future__ import annotations
+from typing import overload, Self, TYPE_CHECKING
+
 from clearskies.column import Column
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
 class String(Column):
     """

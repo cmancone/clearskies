@@ -1,9 +1,16 @@
+from __future__ import annotations
 import clearskies.typing
-from clearskies.column import Column
+from typing import Any, TYPE_CHECKING
+
+import clearskies.typing
+from clearskies.columns.string import String
 from clearskies import configs, parameters_to_properties
 
+if TYPE_CHECKING:
+    from clearskies import Model
 
-class CreatedByAuthorizationData(Column):
+
+class CreatedByAuthorizationData(String):
     """
     This column will automatically take data from the authorization data attached to a request and store it in the model upon creation.
 
@@ -49,4 +56,5 @@ class CreatedByAuthorizationData(Column):
         on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
         on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
-        pass
+        self.created_by_source_key = authorization_data_key_name
+        self.created_by_source_type = "authorization_data"

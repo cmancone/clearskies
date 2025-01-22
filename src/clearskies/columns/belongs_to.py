@@ -7,6 +7,9 @@ from clearskies import configs, parameters_to_properties
 from clearskies.columns.string import String
 from clearskies.functional import validations
 from clearskies.di.inject import InputOutput
+from clearskies.autodoc.string import String as AutoDocString
+from clearskies.autodoc.schema import String as AutoDocSchema
+from clearskies.autodoc.schema import String as AutoDocObject
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -137,7 +140,7 @@ class BelongsTo(String):
         parents = self.di.build(self.parent_model_class, cache=True)
         for (index, where) in enumerate(self.where):
             if callable(where):
-                parents = self.di.call_function(where, model=parents)
+                parents = self.di.call_function(where, model=parents, **self.input_output.get_context_for_callables())
                 if not validations.is_model(parents):
                     raise ValueError(
                         f"Configuration error for {self.model_class.__name__}.{self.name}: when 'where' is a callable, it must return a model class, but when the callable in where entry #{index+1} was called, it returned something else."
@@ -265,3 +268,26 @@ class BelongsTo(String):
         related_column = self.parent_columns[relationship_reference]
         alias = self.join_table_alias()
         return model.where(related_column.build_condition(value, operator=operator, column_prefix=f"{alias}."))
+
+    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None) -> list[AutoDocSchema]:
+        columns = self.parent_columns
+        parent_id_column_name = self.parent_model.id_column_name
+        parent_properties = [columns[parent_id_column_name].documentation()]
+        parent_id_doc = [AutoDocString(name if name is not None else self.name)]
+
+        readable_parent_columns = self.readable_parent_columns
+        if not readable_parent_columns:
+            return [parent_id_doc]
+
+        for column_name in readable_parent_columns:
+            if column_name == parent_id_column_name:
+                continue
+            parent_properties.append(columns[column_name].documentation())
+
+        return [
+            parent_id_doc,
+            AutoDocObject(
+                self.model_column_name,
+                parent_properties,
+            ),
+        ]

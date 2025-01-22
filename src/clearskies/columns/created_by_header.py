@@ -1,9 +1,10 @@
 import clearskies.typing
-from clearskies.column import Column
+from clearskies.query import Condition
+from clearskies.column.string import String
 from clearskies import configs, parameters_to_properties
 
 
-class CreatedByHeader(Column):
+class CreatedByHeader(String):
     """
     This column will automatically take data from the header attached to a request and store it in the model upon creation.
 
@@ -49,13 +50,5 @@ class CreatedByHeader(Column):
         on_change_post_save: clearskies.typing.action | list[clearskies.typing.action] = [],
         on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
-        pass
-
-    def equals(self, value: str) -> Condition:
-        return super().equals(value)
-
-    def is_in(self, values: list[str]) -> Condition:
-        return super().is_in(value)
-
-    def like(self, value: str) -> Condition:
-        return super().like(value)
+        self.created_by_source_key = header_name
+        self.created_by_source_type = "http_header"
