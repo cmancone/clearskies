@@ -1,18 +1,18 @@
 from typing import Callable
 
 import clearskies.typing
-from clearskies.columns.belongs_to import BelongsTo
+from clearskies.columns.belongs_to_id import BelongsToId
 from clearskies import parameters_to_properties
 
 
-class BelongsToSelf(BelongsTo):
+class BelongsToSelf(BelongsToId):
     """
-    This is a standard BelongsTo column except it's used in cases where the model relates to itself.
+    This is a standard BelongsToId column except it's used in cases where the model relates to itself.
 
     This exists because a model can't refer to itself inside it's own class definition.  There are
     workarounds, but having this class is usually quicker for the developer.
 
-    The only difference between this and BelongsTo is that you don't have to provide the parent class.
+    The only difference between this and BelongsToId is that you don't have to provide the parent class.
 
     See also HasManySelf
     """

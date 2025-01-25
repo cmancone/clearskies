@@ -12,14 +12,15 @@ from clearskies.autodoc.schema import String as AutoDocSchema
 from clearskies.autodoc.schema import String as AutoDocObject
 
 if TYPE_CHECKING:
+    from clearskies import Column
     from clearskies import Model
 
-class BelongsTo(String):
+class BelongsToId(String):
     """
     Declares that this model belongs to another - that it has a parent.
 
     The way that a belongs to relationship works is that the child model (e.g. the one with
-    the BelongsTo column) needs to have a column that stores the id of the parent it is related
+    the BelongsToId column) needs to have a column that stores the id of the parent it is related
     to.  So if there are two models, `Category` (the parent) and `Product` (the child) then:
 
     ```
@@ -29,11 +30,11 @@ class BelongsTo(String):
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
-        category_id = clearskies.columns.BelongsTo(Category)
-        category = clearskies.columns.BelongsToModel(belongs_to_column_name="category_id")
+        category_id = clearskies.columns.BelongsToId(Category)
+        category = clearskies.columns.BelongsToModel("category_id")
     ```
 
-    The opposite of a BelongsTo relationship is a HasMany relationship, so the parent gets:
+    The opposite of a BelongsToId relationship is a HasMany relationship, so the parent gets:
 
     ```
     import clearskies
@@ -77,7 +78,7 @@ class BelongsTo(String):
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
-        category_id = clearskies.columns.BelongsTo(CategoryReference)
+        category_id = clearskies.columns.BelongsToId(CategoryReference)
         category = clearskies.columns.BelongsToModel(belongs_to_column_name="category_id")
     ```
 
@@ -150,7 +151,7 @@ class BelongsTo(String):
         return parents
 
     @property
-    def parent_columns(self):
+    def parent_columns(self) -> dict[str, Any]:
         return self.parent_model_class.get_columns()
 
     def input_error_for_value(self, value: str, operator: str | None=None) -> str:

@@ -16,8 +16,8 @@ class CreatedByHeader(String):
     this exact same function.  Why do we have those properties and this column?  This column works well if we have
     some simple string values that we want to always pull from the header data.  The properties work better if you need to
     pull header data but it's not just a string type.  An example might be if you wanted to pull the user id out of the
-    header data to populate a `BelongsTo` column.  You wouldn't use this column because it can't provide all the functionality
-    related to `BelongsTo`, so instead you would use the `BelongsTo` column and set `created_by_source_type` to `http_header` and
+    header data to populate a `BelongsToId` column.  You wouldn't use this column because it can't provide all the functionality
+    related to `BelongsToId`, so instead you would use the `BelongsToId` column and set `created_by_source_type` to `http_header` and
     `created_by_source_key` to `user_id`.
     """
 

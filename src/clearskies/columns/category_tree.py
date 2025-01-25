@@ -3,12 +3,12 @@ from typing import Callable, Any, TYPE_CHECKING
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
-from clearskies.columns.belongs_to import BelongsTo
+from clearskies.columns.belongs_to import BelongsToId
 
 if TYPE_CHECKING:
     from clearskies import Model
 
-class CategoryTree(BelongsTo):
+class CategoryTree(BelongsToId):
     """
     The category tree helps you do quick lookups on a typical category tree.
 
@@ -42,7 +42,7 @@ class CategoryTree(BelongsTo):
     )
     ```
 
-    Then you would attach this column to your category model as a replacement for a typical BelongsTo relationship:
+    Then you would attach this column to your category model as a replacement for a typical BelongsToId relationship:
 
     ```
     import clearskies

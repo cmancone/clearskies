@@ -10,9 +10,10 @@ from clearskies.autodoc.string import Array as AutoDocArray
 from clearskies.autodoc.string import String as AutoDocString
 
 if TYPE_CHECKING:
+    from clearskies import Column
     from clearskies import Model
 
-class ManyToMany(Column):
+class ManyToManyIds(Column):
     """
     A column to represent a many-to-many relationship.
 
@@ -23,7 +24,7 @@ class ManyToMany(Column):
     You can specify the names of these columns but it also follows the standard naming convention by default:
     take the class name, convert it to snake case, and append `_id`.
 
-    Note, there is a variation on this (`ManyToManyWithData`) where additional data is stored in the pivot table
+    Note, there is a variation on this (`ManyToManyIdsWithData`) where additional data is stored in the pivot table
     to record information about the relationship.
 
     This column is writeable.  You would set it to a list of ids from the related model that denotes which
@@ -61,7 +62,7 @@ class ManyToMany(Column):
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         name = clearskies'columns.String()
-        thingy_ids = clearskies.columns.ManyToMany(
+        thingy_ids = clearskies.columns.ManyToManyIds(
             related_model_class=ThingyReference,
             pivot_model_class=ThingyToWidgetReference,
         )
@@ -71,7 +72,7 @@ class ManyToMany(Column):
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         name = clearskies'columns.String()
-        widget_ids = clearskies.columns.ManyToMany(
+        widget_ids = clearskies.columns.ManyToManyIds(
             related_model_class=WidgetReference,
             pivot_model_class=ThingyToWidgetReference,
         )
@@ -191,16 +192,20 @@ class ManyToMany(Column):
         return data
 
     @property
-    def pivot_model(self):
+    def pivot_model(self) -> Model:
         return self.di.build(self.pivot_model_class, cache=True)
 
     @property
-    def related_models(self):
+    def related_model(self) -> Model:
         return self.di.build(self.related_model_class, cache=True)
 
     @property
-    def related_columns(self):
-        return self.related_models.get_columns()
+    def related_columns(self) -> dict[str, Column]:
+        return self.related_model.get_columns()
+
+    @property
+    def pivot_columns(self) -> dict[str, Column]:
+        return self.pivot_model.get_columns()
 
     @overload
     def __get__(self, instance: None, parent: type) -> Self:
@@ -212,21 +217,24 @@ class ManyToMany(Column):
 
     def __get__(self, instance, parent) -> list[str | int]:
         related_id_column_name = self.related_model_class.id_column_name
-        return [getattr(model, related_id_column_name) for model in self.get_related_models()]
+        return [getattr(model, related_id_column_name) for model in self.get_related_models(model)]
 
     def __set__(self, instance, value: list[str | int]) -> None:
         instance._next_data[self.name] = value
 
-    def get_related_models(self) -> Model:
+    def get_related_models(self, model: Model) -> Model:
         related_column_name_in_pivot = self.related_column_name_in_pivot
         own_column_name_in_pivot = self.own_column_name_in_pivot
-        own_id_column_name = self.model_class.id_column_name
         pivot_table = self.pivot_table
         related_id_column_name = self.related_model_class.id_column_name
+        model_id = getattr(model, self.model_class.id_column_name)
         model = self.related_model
         join = f"JOIN {pivot_table} ON {pivot_table}.{related_column_name_in_pivot}={model.get_table_name()}.{related_id_column_name}"
         related_models = model.join(join).where(f"{pivot_table}.{own_column_name_in_pivot}={data[own_id_column_name]}")
         return related_models
+
+    def get_pivot_models(self, model: Model) -> Model:
+        return self.pivot_model.where(f"{self.own_column_name_in_pivot}=" + getattr(model, self.model_class.id_column_name))
 
     def post_save(self, data: dict[str, Any], model: clearskies.model.Model, id: int | str) -> None:
         # if our incoming data is not in the data array or is None, then nothing has been set and we do not want
@@ -285,7 +293,7 @@ class ManyToMany(Column):
 
     def to_json(self, model: Model) -> dict[str, Any]:
         related_id_column_name = self.related_model_class.id_column_name
-        records = [getattr(related, related_id_column_name) for related in self.get_related_models()]
+        records = [getattr(related, related_id_column_name) for related in self.get_related_models(model)]
         return {self.name: records}
 
     def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None):

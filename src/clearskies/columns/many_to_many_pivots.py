@@ -13,9 +13,9 @@ from clearskies.columns.many_to_many import ManyToManyIds
 if TYPE_CHECKING:
     from clearskies import Model
 
-class ManyToManyModels(Column):
+class ManyToManyPivots(Column):
     """
-    A companion for the ManyToManyIds column that returns the matching models instead of the ids
+    A companion for the ManyToManyIds column that returns the matching pivot models instead of the ids
     """
 
     """ The name of the many-to-many column we are attached to. """
@@ -70,28 +70,13 @@ class ManyToManyModels(Column):
         pass
 
     def __get__(self, instance, parent) -> list[str | int]:
-        return self.get_related_models(instance)
+        many_to_many_column = self.many_to_many_column
+        own_column_name_in_pivot = self.config("own_column_name_in_pivot")
+        my_id = data[self.config("own_id_column_name")]
+        return [model for model in self.pivot_models.where(f"{own_column_name_in_pivot}={my_id}")]
 
     def __set__(self, instance, value: Model | list[Model] | list[dict[str, Any]) -> None:
-        # we allow a list of models or a model, but if it's a model it may represent a single record or a query.
-        # if it's a single record then we want to wrap it in a list so we can iterate over it.
-        if hasattr(value, "_data") and value._data:
-            value = []
-        related_model_class = self.many_to_many_column.related_model_class
-        related_id_column_name = related_model_class.id_column_name
-        record_ids = []
-        for (index, record) in enumerate(value):
-            if isinstance(record, dict):
-                if not record.get(related_id_column_name):
-                    raise KeyError(f"A list of dictionaries was set to '{self.model_class.__name__}.{self.name}', in which case each dictionary should contain the key '{related_id_column_name}', which should be the id of an entry for the '{related_model_class.__name__}' model.  However, no such key was found for entry #{index+1}")
-                records_ids.append(record[related_id_column_name])
-                continue
-
-            # if we get here then the entry should be a model for our related model class
-            if not isinstance(record, related_model_class):
-                raise TypeError(f"Models were sent to '{self.model_class.__name__}.{self.name}', in which case it should be a list of models of type {related_model_class.__name__}.  However, an object of type '{record.__class__.__name__}' was found for entry #{index+1}")
-            record_ids.append(getattr(record, related_id_column_name))
-        setattr(model, self.many_to_many_column_name, record_ids)
+        raise NotImplementedError("Saving not supported for ManyToManyPivots")
 
     def add_search(
         self,
@@ -100,19 +85,20 @@ class ManyToManyModels(Column):
         operator: str="",
         relationship_reference: str=""
     ) -> Model:
-        return self.many_to_many_column.add_search(model, value, operator, relationship_reference=relationship_reference)
+        raise NotImplementedError("Searching not supported for ManyToManyPivots")
 
     def to_json(self, model: Model) -> dict[str, Any]:
         records = []
         many_to_many_column = self.many_to_many_column
-        columns = many_to_many_column.related_columns
-        related_id_column_name = many_to_many_column.related_model_class.id_column_name
-        for related in many_to_many_column.get_related_models(model):
+        columns = many_to_many_column.pivot_columns
+        readable_columns = many_to_many_column.readable_pivot_columns
+        pivot_id_column_name = many_to_many_column.pivot_model_class.id_column_name
+        for pivot in many_to_many_column.get_pivot_models(model):
             json = OrderedDict()
-            if related_id_column_name not in many_to_many_column.readable_related_columns:
-                json[related_id_column_name] = columns[related_id_column_name].to_json(related)
-            for column_name in many_to_many_column.readable_related_columns:
-                column_data = columns[column_name].to_json(related)
+            if pivot_id_column_name not in readable_columns:
+                json[pivot_id_column_name] = columns[pivot_id_column_name].to_json(pivot)
+            for column_name in readable_columns:
+                column_data = columns[column_name].to_json(pivot)
                 if type(column_data) == dict:
                     json = {**json, **column_data}
                 else:
@@ -122,18 +108,18 @@ class ManyToManyModels(Column):
 
     def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None):
         many_to_many_column = self.many_to_many_column
-        columns = many_to_many_column.related_columns
-        related_id_column_name = many_to_many_column.related_model_class.id_column_name
-        related_properties = [columns[related_id_column_name].documentation()]
+        columns = many_to_many_column.pivot_columns
+        pivot_id_column_name = many_to_many_column.pivot_model_class.id_column_name
+        pivot_properties = [columns[pivot_id_column_name].documentation()]
 
-        for column_name in many_to_many_column.readable_related_columns:
-            related_docs = columns[column_name].documentation()
-            if type(related_docs) != list:
-                related_docs = [related_docs]
-            related_properties.extend(related_docs)
+        for column_name in many_to_many_column.readable_pivot_columns:
+            pivot_docs = columns[column_name].documentation()
+            if type(pivot_docs) != list:
+                pivot_docs = [pivot_docs]
+            pivot_properties.extend(pivot_docs)
 
-        related_object = AutoDocObject(
-            string.title_case_to_nice(many_to_many_column.related_model_class.__name__),
-            related_properties,
+        pivot_object = AutoDocObject(
+            string.title_case_to_nice(many_to_many_column.pivot_model_class.__name__),
+            pivot_properties,
         )
-        return AutoDocArray(name if name is not None else self.name, related_object, value=value)
+        return AutoDocArray(name if name is not None else self.name, pivot_object, value=value)

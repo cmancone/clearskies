@@ -3,14 +3,14 @@ from typing import TYPE_CHECKING, overload, Self
 
 from clearskies import configs, parameters_to_properties
 from clearskies.column import Column
-from clearskies.columns.belongs_to import BelongsTo
+from clearskies.columns.belongs_to_id import BelongsToId
 
 if TYPE_CHECKING:
     from clearskies import Model
 
 class BelongsToModel(Column):
     """
-    Returns the model object for a belongs to relationship.  See the docs on the BelongsTo column for usage.
+    Returns the model object for a belongs to relationship.  See the docs on the BelongsToId column for usage.
     """
 
     """ The name of the belongs to column we are connected to. """
@@ -37,8 +37,8 @@ class BelongsToModel(Column):
 
         # finally, let the belongs to column know about us and make sure it's the right thing.
         belongs_to_column = getattr(model_class, self.belongs_to_column_name)
-        if not isinstance(belongs_to_column, BelongsTo):
-            raise ValueError(f"Error with configuration for {model_class.__name__}.{name}, which is a BelongsToModel.  It needs to point to a belongs to column, and it was told to use {model_class.__name__}.{self.belongs_to_column_name}, but this is not a BelongsTo column.")
+        if not isinstance(belongs_to_column, BelongsToId):
+            raise ValueError(f"Error with configuration for {model_class.__name__}.{name}, which is a BelongsToModel.  It needs to point to a belongs to column, and it was told to use {model_class.__name__}.{self.belongs_to_column_name}, but this is not a BelongsToId column.")
         belongs_to_column.model_column_name = name
 
     @overload

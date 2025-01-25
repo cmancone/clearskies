@@ -1,5 +1,5 @@
 from .audit import Audit
-from .belongs_to import BelongsTo
+from .belongs_to_id import BelongsToId
 from .belongs_to_model import BelongsToModel
 from .belongs_to_self import BelongsToSelf
 from .boolean import Boolean
@@ -20,8 +20,9 @@ from .has_many_self import HasManySelf
 from .has_one import HasOne
 from .integer import Integer
 from .json import Json
-from .many_to_many import ManyToMany
-from .many_to_many_with_data import ManyToManyWithData
+from .many_to_many_ids import ManyToManyIds
+from .many_to_many_models import ManyToManyModels
+from .many_to_many_with_data_ids import ManyToManyIdsWithData
 from .phone import Phone
 from .select import Select
 from .string import String
@@ -30,7 +31,7 @@ from .uuid import Uuid
 
 __all__ = [
     "Audit",
-    "BelongsTo",
+    "BelongsToId",
     "BelongsToModel",
     "BelongsToSelf",
     "Boolean",
@@ -51,8 +52,9 @@ __all__ = [
     "HasOne",
     "Integer",
     "Json",
-    "ManyToMany",
-    "ManyToManyWithData",
+    "ManyToManyIds",
+    "ManyToManyModels",
+    "ManyToManyWithDataIds",
     "Phone",
     "Select",
     "String",

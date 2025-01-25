@@ -11,6 +11,7 @@ from clearskies.autodoc.string import Array as AutoDocArray
 from clearskies.autodoc.string import Object as AutoDocObject
 
 if TYPE_CHECKING:
+    from clearskies import Column
     from clearskies import Model
 
 class HasMany(Column):
@@ -28,7 +29,7 @@ class HasMany(Column):
     id in your child model, then just update the `foreign_column_name` proeprty on the `HasMany`
     column accordingly.
 
-    See the BelongsTo class for additional background and usage examples.
+    See the BelongsToId class for additional background and usage examples.
     """
 
     """
@@ -92,7 +93,7 @@ class HasMany(Column):
         super().finalize_configuration(model_class, name)
 
     @property
-    def child_columns(self):
+    def child_columns(self) -> dict[str, Column]:
         return self.child_model_class.get_columns()
 
     @property
