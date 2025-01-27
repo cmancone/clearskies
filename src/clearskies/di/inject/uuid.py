@@ -1,4 +1,4 @@
-import types.ModuleType
+import types
 import datetime
 import uuid
 

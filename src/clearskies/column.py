@@ -12,7 +12,7 @@ import clearskies.configs.string
 import clearskies.configs.string_or_callable
 import clearskies.configs.validators
 from clearskies.autodoc.schema import Schema as AutoDocSchema
-from clearskies.autodoc.string import String as AutoDocString
+from clearskies.autodoc.schema import String as AutoDocString
 from clearskies.query.condition import Condition, ParsedCondition
 from clearskies.validator import Validator
 import clearskies.parameters_to_properties

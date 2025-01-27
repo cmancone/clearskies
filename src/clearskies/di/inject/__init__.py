@@ -6,7 +6,7 @@ from clearskies.di.inject.input_output import InputOutput
 from clearskies.di.inject.now import Now
 from clearskies.di.inject.requests import Requests
 from clearskies.di.inject.utcnow import Utcnow
-from clearskies.di.uuid import Uuid
+from clearskies.di.inject.uuid import Uuid
 
 __all__ = [
     "ByClass",
