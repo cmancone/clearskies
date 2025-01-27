@@ -2,6 +2,7 @@ from __future__ import annotations
 import datetime
 from typing import Any, TYPE_CHECKING
 
+import clearskies.di
 import clearskies.typing
 from clearskies.columns.datetime import Datetime
 from clearskies import configs, parameters_to_properties
@@ -43,6 +44,8 @@ class Created(Datetime):
     """
     is_writeable = configs.Boolean(default=False)
 
+    now = clearskies.di.inject.Now()
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -59,9 +62,12 @@ class Created(Datetime):
         pass
 
     def pre_save(self, data: dict[str, Any], model: Model) -> dict[str, Any]:
-        if model.exists:
+        if model:
             return data
-        data = {**data, self.name: self.datetime.datetime.now(self.timezone)}
+        now = self.now
+        if self.timezone_aware:
+            now = now.astimezone(self.timezone)
+        data = {**data, self.name: now}
         if self.on_change_pre_save:
             data = self.execute_actions_with_data(self.on_change_pre_save, model, data)
         return data

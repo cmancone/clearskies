@@ -22,7 +22,7 @@ from .integer import Integer
 from .json import Json
 from .many_to_many_ids import ManyToManyIds
 from .many_to_many_models import ManyToManyModels
-from .many_to_many_with_data_ids import ManyToManyIdsWithData
+from .many_to_many_ids_with_data import ManyToManyIdsWithData
 from .phone import Phone
 from .select import Select
 from .string import String
@@ -54,7 +54,7 @@ __all__ = [
     "Json",
     "ManyToManyIds",
     "ManyToManyModels",
-    "ManyToManyWithDataIds",
+    "ManyToManyIdsWithData",
     "Phone",
     "Select",
     "String",

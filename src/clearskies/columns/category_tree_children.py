@@ -1,8 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, overload, Self
+from typing import TYPE_CHECKING, overload, Self, Type
 
-from clearskies import configs, parameters_to_properties
+import clearskies.parameters_to_properties
+from clearskies import configs
 from clearskies.column import Column
+from clearskies.columns import CategoryTree
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -18,7 +20,7 @@ class CategoryTreeChildren(Column):
     is_writeable = configs.Boolean(default=False)
     is_searchable = configs.Boolean(default=False)
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         category_tree_column_name: str,
@@ -40,14 +42,14 @@ class CategoryTreeChildren(Column):
             raise ValueError(f"Error with configuration for {model_class.__name__}.{name}, which is a {self.__class__.__name__}.  It needs to point to a category tree column, and it was told to use {model_class.__name__}.{self.category_tree_column_name}, but this is not a CategoryTree column.")
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> Model:
+    def __get__(self, instance: Model, parent: Type[Model]) -> Model:
         pass
 
-    def __get__(self, model: Model, parent: type) -> Model:
+    def __get__(self, model, parent):
         if not model:
             return self # type:  ignore
 
@@ -56,7 +58,7 @@ class CategoryTreeChildren(Column):
     def __set__(self, model: Model, value: Model) -> None:
         raise ValueError(f"Attempt to set a value to '{model.__class__.__name__}.{self.name}, but this column is not writeable")
 
-    def relatives(self, model: Model, include_all: bool=False, find_parents: bool=False) -> Model:
+    def relatives(self, model: Model, include_all: bool=False, find_parents: bool=False) -> Model | list[Model]:
         id_column_name = model.id_column_name
         model_id = getattr(model, id_column_name)
         model_table_name = model.destination_name()
@@ -76,7 +78,7 @@ class CategoryTreeChildren(Column):
 
         # if we can join then use a join.
         if category_tree_column.load_relatives_strategy:
-            relatives = self.parent_model.join(
+            relatives = category_tree_column.parent_model.join(
                 f"{tree_table_name} as tree on tree.{join_on}={model_table_name}.{id_column_name}"
             )
             relatives = relatives.where(f"tree.{search_on}={model_id}")
@@ -87,7 +89,7 @@ class CategoryTreeChildren(Column):
             return relatives
 
         # joins only work for SQL-like backends.  Otherwise, we have to pull out our list of ids
-        branches = self.tree_model.where(f"{search_on}={model_id}")
+        branches = category_tree_column.tree_model.where(f"{search_on}={model_id}")
         if not include_all:
             branches = branches.where(f"{is_parent_column_name}=1")
         if find_parents:
@@ -96,7 +98,7 @@ class CategoryTreeChildren(Column):
 
         # Can we search with a WHERE IN() clause?  If the backend supports it, it is probably faster
         if category_tree_column.load_relatives_strategy == "where_in":
-            return self.parent_model.where(f"{id_column_name} IN ('" + "','".join(ids) + "')")
+            return category_tree_column.parent_model.where(f"{id_column_name} IN ('" + "','".join(ids) + "')")
 
         # otherwise we have to load each model individually which is SLOW....
-        return [self.parent_model.find(f"{id_column_name}={id}") for id in ids]
+        return [category_tree_column.parent_model.find(f"{id_column_name}={id}") for id in ids]

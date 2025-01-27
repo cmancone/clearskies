@@ -1,6 +1,13 @@
+from typing import Any, TYPE_CHECKING
+
+from clearskies import configs
+import clearskies.parameters_to_properties
+import clearskies.di
 import clearskies.typing
 from clearskies.columns.string import String
-from clearskies import configs, parameters_to_properties
+
+if TYPE_CHECKING:
+    from clearskies import Model
 
 
 class Uuid(String):
@@ -29,7 +36,9 @@ class Uuid(String):
 
     is_writeable = configs.Boolean(default=False)
 
-    @parameters_to_properties.parameters_to_properties
+    uuid = clearskies.di.inject.Uuid()
+
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         is_readable: bool = True,
@@ -40,3 +49,11 @@ class Uuid(String):
         on_change_save_finished: clearskies.typing.action | list[clearskies.typing.action] = [],
     ):
         pass
+
+    def pre_save(self, data: dict[str, Any], model: Model) -> dict[str, Any]:
+        if model:
+            return data
+        data = {**data, self.name: str(self.uuid.uuid4())}
+        if self.on_change_pre_save:
+            data = self.execute_actions_with_data(self.on_change_pre_save, model, data)
+        return data

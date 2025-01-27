@@ -1,14 +1,15 @@
 from __future__ import annotations
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
+from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
 from collections import OrderedDict
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+import clearskies.parameters_to_properties
+from clearskies import configs
 from clearskies.column import Column
 from clearskies.functional import string
-from clearskies.autodoc.string import Array as AutoDocArray
-from clearskies.autodoc.string import Object as AutoDocObject
-from clearskies.columns.many_to_many import ManyToManyIds
+from clearskies.autodoc.schema import Array as AutoDocArray
+from clearskies.autodoc.schema import Object as AutoDocObject
+from clearskies.columns.many_to_many_ids import ManyToManyIds
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -24,7 +25,7 @@ class ManyToManyModels(Column):
     is_writeable = configs.Boolean(default=False)
     is_searchable = configs.Boolean(default=False)
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         many_to_many_column_name,
@@ -58,40 +59,41 @@ class ManyToManyModels(Column):
         return self.related_models.get_columns()
 
     @property
-    def many_to_many_column(self) -> ManyToMany:
+    def many_to_many_column(self) -> ManyToManyIds:
         return getattr(self.model_class, self.many_to_many_column_name)
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> Model:
+    def __get__(self, instance: Model, parent: Type[Model]) -> Model:
         pass
 
-    def __get__(self, instance, parent) -> list[str | int]:
-        return self.get_related_models(instance)
+    def __get__(self, instance, parent):
+        return self.many_to_many_column.get_related_models(instance)
 
-    def __set__(self, instance, value: Model | list[Model] | list[dict[str, Any]) -> None:
+    def __set__(self, instance, value: Model | list[Model] | list[dict[str, Any]]) -> None:
         # we allow a list of models or a model, but if it's a model it may represent a single record or a query.
         # if it's a single record then we want to wrap it in a list so we can iterate over it.
         if hasattr(value, "_data") and value._data:
             value = []
-        related_model_class = self.many_to_many_column.related_model_class
+        many_to_many_column: ManyToManyIds = self.many_to_many_column # type: ignore
+        related_model_class = many_to_many_column.related_model_class
         related_id_column_name = related_model_class.id_column_name
         record_ids = []
         for (index, record) in enumerate(value):
             if isinstance(record, dict):
                 if not record.get(related_id_column_name):
                     raise KeyError(f"A list of dictionaries was set to '{self.model_class.__name__}.{self.name}', in which case each dictionary should contain the key '{related_id_column_name}', which should be the id of an entry for the '{related_model_class.__name__}' model.  However, no such key was found for entry #{index+1}")
-                records_ids.append(record[related_id_column_name])
+                record_ids.append(record[related_id_column_name])
                 continue
 
             # if we get here then the entry should be a model for our related model class
             if not isinstance(record, related_model_class):
                 raise TypeError(f"Models were sent to '{self.model_class.__name__}.{self.name}', in which case it should be a list of models of type {related_model_class.__name__}.  However, an object of type '{record.__class__.__name__}' was found for entry #{index+1}")
             record_ids.append(getattr(record, related_id_column_name))
-        setattr(model, self.many_to_many_column_name, record_ids)
+        setattr(instance, self.many_to_many_column_name, record_ids)
 
     def add_search(
         self,
@@ -100,11 +102,11 @@ class ManyToManyModels(Column):
         operator: str="",
         relationship_reference: str=""
     ) -> Model:
-        return self.many_to_many_column.add_search(model, value, operator, relationship_reference=relationship_reference)
+        return self.many_to_many_column.add_search(model, value, operator, relationship_reference=relationship_reference) # type: ignore
 
     def to_json(self, model: Model) -> dict[str, Any]:
         records = []
-        many_to_many_column = self.many_to_many_column
+        many_to_many_column: ManyToManyIds = self.many_to_many_column # type: ignore
         columns = many_to_many_column.related_columns
         related_id_column_name = many_to_many_column.related_model_class.id_column_name
         for related in many_to_many_column.get_related_models(model):
@@ -114,14 +116,14 @@ class ManyToManyModels(Column):
             for column_name in many_to_many_column.readable_related_columns:
                 column_data = columns[column_name].to_json(related)
                 if type(column_data) == dict:
-                    json = {**json, **column_data}
+                    json = {**json, **column_data} # type: ignore
                 else:
                     json[column_name] = column_data
             records.append(json)
         return {self.name: records}
 
     def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None):
-        many_to_many_column = self.many_to_many_column
+        many_to_many_column = self.many_to_many_column # type: ignore
         columns = many_to_many_column.related_columns
         related_id_column_name = many_to_many_column.related_model_class.id_column_name
         related_properties = [columns[related_id_column_name].documentation()]

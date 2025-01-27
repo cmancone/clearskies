@@ -3,7 +3,8 @@ from typing import Any, TYPE_CHECKING
 
 import clearskies.typing
 from clearskies.columns.string import String
-from clearskies import configs, parameters_to_properties
+from clearskies import configs
+import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -24,7 +25,7 @@ class CreatedByIp(String):
 
     _allowed_search_operators = ["=", "in", "is not null", "is null", "like"]
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         is_readable: bool = True,
@@ -37,7 +38,7 @@ class CreatedByIp(String):
         pass
 
     def pre_save(self, data: dict[str, Any], model: Model) -> dict[str, Any]:
-        if model.exists:
+        if model:
             return data
         input_output = self.di.build("input_output", cache=True)
         data = {**data, self.name: input_output.get_client_ip()}

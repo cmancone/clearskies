@@ -1,15 +1,16 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING, Any
 from collections import OrderedDict
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+import clearskies.parameters_to_properties
+from clearskies import configs
 from clearskies.columns.string import String
 from clearskies.functional import validations
 from clearskies.di.inject import InputOutput
-from clearskies.autodoc.string import String as AutoDocString
-from clearskies.autodoc.schema import String as AutoDocSchema
-from clearskies.autodoc.schema import String as AutoDocObject
+from clearskies.autodoc.schema import String as AutoDocString
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.autodoc.schema import Object as AutoDocObject
 
 if TYPE_CHECKING:
     from clearskies import Column
@@ -113,7 +114,7 @@ class BelongsToId(String):
     wants_n_plus_one = True
     _allowed_search_operators = ["="]
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         parent_model_class,
@@ -216,12 +217,12 @@ class BelongsToId(String):
 
         # otherwise return an object with the readable parent columns
         columns = self.parent_columns
-        parent = model.__getattr__(self.model_column_name)
+        parent = getattr(model, self.model_column_name)
         json = OrderedDict()
         if parent.id_column_name not in self.readable_parent_columns:
             json[parent.id_column_name] = list(columns[parent.id_column_name].to_json(parent).values())[0]
         for column_name in self.readable_parent_columns:
-            json = {**json, **columns[column_name].to_json(parent)}
+            json = {**json, **columns[column_name].to_json(parent)} # type: ignore
         return {
             **super().to_json(model),
             self.model_column_name: json,
@@ -258,14 +259,14 @@ class BelongsToId(String):
         relationship_reference: str=""
     ) -> clearskies.model.Model:
         if not relationship_reference:
-            return super().add_search(models, value, operator=operator)
+            return super().add_search(model, value, operator=operator)
 
         if relationship_reference not in self.parent_columns:
             raise ValueError(
                 "I was asked to search on a related column that doens't exist.  This shouldn't have happened :("
             )
 
-        models = self.add_join(model)
+        model = self.add_join(model)
         related_column = self.parent_columns[relationship_reference]
         alias = self.join_table_alias()
         return model.where(related_column.build_condition(value, operator=operator, column_prefix=f"{alias}."))
@@ -274,7 +275,7 @@ class BelongsToId(String):
         columns = self.parent_columns
         parent_id_column_name = self.parent_model.id_column_name
         parent_properties = [columns[parent_id_column_name].documentation()]
-        parent_id_doc = [AutoDocString(name if name is not None else self.name)]
+        parent_id_doc = AutoDocString(name if name is not None else self.name)
 
         readable_parent_columns = self.readable_parent_columns
         if not readable_parent_columns:

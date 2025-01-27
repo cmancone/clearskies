@@ -1,7 +1,8 @@
 import clearskies.typing
+import clearskies.parameters_to_properties
 from clearskies.query import Condition
-from clearskies.column.string import String
-from clearskies import configs, parameters_to_properties
+from clearskies.columns.string import String
+from clearskies import configs
 
 
 class CreatedByHeader(String):
@@ -38,7 +39,7 @@ class CreatedByHeader(String):
 
     _allowed_search_operators = ["=", "in", "is not null", "is null", "like"]
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         header_name: str,

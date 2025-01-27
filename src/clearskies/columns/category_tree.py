@@ -2,8 +2,9 @@ from __future__ import annotations
 from typing import Callable, Any, TYPE_CHECKING
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
-from clearskies.columns.belongs_to import BelongsToId
+import clearskies.parameters_to_properties
+from clearskies import configs
+from clearskies.columns.belongs_to_id import BelongsToId
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -107,7 +108,7 @@ class CategoryTree(BelongsToId):
     """
     load_relatives_strategy = configs.Select(["join", "where_in", "individual"], default="join")
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         tree_model_class,

@@ -32,3 +32,6 @@ class Select(String):
         created_by_source_strict: bool = True,
     ):
         pass
+
+    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+        return f"Invalid value for {self.name}" if value not in self.allowed_values else ""

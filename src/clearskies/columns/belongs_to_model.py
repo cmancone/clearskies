@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, overload, Self
+from typing import Type, TYPE_CHECKING, overload, Self
 
-from clearskies import configs, parameters_to_properties
+from clearskies import configs
 from clearskies.column import Column
 from clearskies.columns.belongs_to_id import BelongsToId
+import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -19,7 +20,7 @@ class BelongsToModel(Column):
     is_writeable = configs.Boolean(default=False)
     is_searchable = configs.Boolean(default=False)
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         belongs_to_column_name: str,
@@ -42,14 +43,14 @@ class BelongsToModel(Column):
         belongs_to_column.model_column_name = name
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> Model:
+    def __get__(self, instance: Model, parent: Type[Model]) -> Model:
         pass
 
-    def __get__(self, model: Model, parent: type) -> Model:
+    def __get__(self, model, parent):
         if not model:
             return self # type:  ignore
 

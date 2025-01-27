@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, overload, Self
 
-from clearskies.column import CategoryTreeChildren
+from clearskies.columns import CategoryTreeChildren
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -15,7 +15,7 @@ class CategoryTreeAncestors(CategoryTreeChildren):
     def __get__(self, instance: Model, parent: type) -> Model:
         pass
 
-    def __get__(self, model: Model, parent: type) -> Model:
+    def __get__(self, model, parent):
         if not model:
             return self # type:  ignore
 

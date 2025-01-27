@@ -1,11 +1,13 @@
 from __future__ import annotations
-from typing import Callable, overload, Self, TYPE_CHECKING
+from typing import Callable, overload, Self, TYPE_CHECKING, Type
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+from clearskies import configs
+import clearskies.parameters_to_properties
 from clearskies.column import Column
+from clearskies.query import Condition
 from clearskies.autodoc.schema import Schema as AutoDocSchema
-from clearskies.autodoc.string import Integer as AutoDocInteger
+from clearskies.autodoc.schema import Integer as AutoDocInteger
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -37,7 +39,7 @@ class Integer(Column):
     """
     auto_doc_class: Type[AutoDocSchema] = AutoDocInteger
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         default: int | None = None,
@@ -57,15 +59,15 @@ class Integer(Column):
         pass
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> int:
+    def __get__(self, instance: Model, parent: Type[Model]) -> int:
         pass
 
-    def __get__(self, instance, parent) -> int:
-        return super().__get__(instance, parent)
+    def __get__(self, instance, parent):
+        return int(super().__get__(instance, parent))
 
     def __set__(self, instance, value: int) -> None:
         instance._next_data[self.name] = value
@@ -80,25 +82,25 @@ class Integer(Column):
         return {**data, self.name: int(data[self.name])}
 
     def equals(self, value: int) -> Condition:
-        super().equals(value)
+        return super().equals(value)
 
     def spaceship(self, value: int) -> Condition:
-        super().spaceship(value)
+        return super().spaceship(value)
 
     def not_equals(self, value: int) -> Condition:
-        super().not_equals(value)
+        return super().not_equals(value)
 
     def less_than_equals(self, value: int) -> Condition:
-        super().less_than_equals(value)
+        return super().less_than_equals(value)
 
     def greater_than_equals(self, value: int) -> Condition:
-        super().greater_than_equals(value)
+        return super().greater_than_equals(value)
 
     def less_than(self, value: int) -> Condition:
-        super().less_than(value)
+        return super().less_than(value)
 
     def greater_than(self, value: int) -> Condition:
-        super().greater_than(value)
+        return super().greater_than(value)
 
     def is_in(self, values: list[int]) -> Condition:
-        super().is_in(value)
+        return super().is_in(values)

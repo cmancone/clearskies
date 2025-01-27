@@ -255,7 +255,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         self.name = name
         self.finalize_and_validate_configuration()
 
-    def from_backend(self, instance, value):
+    def from_backend(self, model: Model, value):
         """
         Takes the backend representation and returns a python representation
 
@@ -263,7 +263,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         """
         return str(value)
 
-    def to_backend(self, data):
+    def to_backend(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Makes any changes needed to save the data to the backend.
 
@@ -591,6 +591,8 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         """
         if not operator:
             operator = "="
+        if operator.lower() == "like":
+            return f"{column_prefix}{self.name} LIKE '%{value}%'"
         return f"{column_prefix}{self.name}{operator}{value}"
 
     def is_allowed_operator(

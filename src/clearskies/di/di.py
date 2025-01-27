@@ -880,4 +880,5 @@ class Di:
         return autodoc.formats.oai3_json.OAI3SchemaResolver()
 
     def provide_uuid(self):
+        import uuid
         return uuid

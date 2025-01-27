@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
+from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+import clearskies.parameters_to_properties
+from clearskies import configs
 from clearskies.columns.many_to_many_ids import ManyToManyIds
 
 if TYPE_CHECKING:
@@ -136,7 +137,7 @@ class ManyToManyIdsWithData(ManyToManyIds):
     """
     setable = configs.ListAnyDictOrCallable(default=None) #  type: ignore
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         related_model_class,
@@ -162,17 +163,17 @@ class ManyToManyIdsWithData(ManyToManyIds):
         pass
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> list[Any]:
+    def __get__(self, instance: Model, parent: Type[Model]) -> list[Any]:
         pass
 
-    def __get__(self, instance, parent) -> list[Any]:
+    def __get__(self, instance, parent):
         return super().__get__(instance, parent)
 
-    def __set__(self, instance, value: list[dict[str, Any]]) -> None:
+    def __set__(self, instance, value: list[dict[str, Any]]) -> None: # type: ignore
         instance._next_data[self.name] = value
 
     def post_save(self, data, model, id):

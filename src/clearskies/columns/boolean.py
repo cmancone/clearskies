@@ -1,11 +1,14 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, overload, Self
+from typing import Callable, TYPE_CHECKING, overload, Self, Type
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+from clearskies import configs
 from clearskies.column import Column
-from clearskies.autodoc.boolean import Boolean as AutoDocBoolean
+from clearskies.autodoc.schema import Boolean as AutoDocBoolean
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.query import Condition
 import clearskies.configs.actions
+import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -50,7 +53,7 @@ class Boolean(Column):
     """
     auto_doc_class: Type[AutoDocSchema] = AutoDocBoolean
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         default: bool | None = None,
@@ -83,14 +86,14 @@ class Boolean(Column):
         return {**data, self.name: bool(data[self.name])}
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> bool:
+    def __get__(self, instance: Model, parent: type[Model]) -> bool:
         pass
 
-    def __get__(self, instance, parent) -> bool:
+    def __get__(self, instance, parent):
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: bool) -> None:

@@ -1,9 +1,10 @@
 from __future__ import annotations
 import json
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
+from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+import clearskies.parameters_to_properties
+from clearskies import configs
 from clearskies.column import Column
 
 if TYPE_CHECKING:
@@ -12,7 +13,7 @@ if TYPE_CHECKING:
 class Json(Column):
     is_searchable = configs.Boolean(default=False)
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         default: dict[str, Any] | None = None,
@@ -31,14 +32,14 @@ class Json(Column):
         pass
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> dict[str, Any]:
+    def __get__(self, instance: Model, parent: Type[Model]) -> dict[str, Any]:
         pass
 
-    def __get__(self, instance, parent) -> dict[str, Any]:
+    def __get__(self, instance, parent):
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: dict[str, Any]) -> None:

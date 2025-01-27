@@ -1,14 +1,16 @@
 from __future__ import annotations
 import datetime
-from typing import Callable, overload, Self, TYPE_CHECKING
+from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
 
 import dateparser # type: ignore
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+import clearskies.parameters_to_properties
+from clearskies import configs
 from clearskies.autodoc.schema import Schema as AutoDocSchema
-from clearskies.autodoc.boolean import Datetime as AutoDocDatetime
+from clearskies.autodoc.schema import Datetime as AutoDocDatetime
 from clearskies.column import Column
+from clearskies.query import Condition
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -64,7 +66,7 @@ class Datetime(Column):
     """
     auto_doc_class: Type[AutoDocSchema] = AutoDocDatetime
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         date_format: str = "%Y-%m-%d %H:%M:%S",
@@ -104,7 +106,7 @@ class Datetime(Column):
 
         return value
 
-    def to_backend(self, data):
+    def to_backend(self, data: dict[str, Any]) -> dict[str, Any]:
         if self.name not in data or isinstance(data[self.name], str) or data[self.name] is None:
             return data
 
@@ -123,47 +125,47 @@ class Datetime(Column):
         """
         value = self.__get__(model, model.__class__)
         if value and isinstance(value, datetime.datetime):
-            value = value.isoformat()
+            value = value.isoformat() # type: ignore
 
-        return {self.name: self.__get__(model, model.__class__)}
+        return {self.name: value}
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> datetime.datetime:
+    def __get__(self, instance: Model, parent: Type[Model]) -> datetime.datetime:
         pass
 
-    def __get__(self, instance, parent) -> datetime.datetime:
+    def __get__(self, instance, parent):
         return super().__get__(instance, parent)
 
     def __set__(self, instance, value: datetime.datetime) -> None:
         instance._next_data[self.name] = value
 
     def equals(self, value: str | datetime.datetime) -> Condition:
-        super().equals(value)
+        return super().equals(value)
 
     def spaceship(self, value: str | datetime.datetime) -> Condition:
-        super().spaceship(value)
+        return super().spaceship(value)
 
     def not_equals(self, value: str | datetime.datetime) -> Condition:
-        super().not_equals(value)
+        return super().not_equals(value)
 
     def less_than_equals(self, value: str | datetime.datetime) -> Condition:
-        super().less_than_equals(value)
+        return super().less_than_equals(value)
 
     def greater_than_equals(self, value: str | datetime.datetime) -> Condition:
-        super().greater_than_equals(value)
+        return super().greater_than_equals(value)
 
     def less_than(self, value: str | datetime.datetime) -> Condition:
-        super().less_than(value)
+        return super().less_than(value)
 
     def greater_than(self, value: str | datetime.datetime) -> Condition:
-        super().greater_than(value)
+        return super().greater_than(value)
 
     def is_in(self, values: list[str | datetime.datetime]) -> Condition:
-        super().is_in(value)
+        return super().is_in(values)
 
     def input_error_for_value(self, value, operator=None):
         value = dateparser.parse(value)

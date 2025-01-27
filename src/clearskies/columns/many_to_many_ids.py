@@ -1,13 +1,14 @@
 from __future__ import annotations
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
+from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
 from collections import OrderedDict
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+import clearskies.parameters_to_properties
+from clearskies import configs
 from clearskies.column import Column
 from clearskies.functional import string
-from clearskies.autodoc.string import Array as AutoDocArray
-from clearskies.autodoc.string import String as AutoDocString
+from clearskies.autodoc.schema import Array as AutoDocArray
+from clearskies.autodoc.schema import String as AutoDocString
 
 if TYPE_CHECKING:
     from clearskies import Column
@@ -161,7 +162,7 @@ class ManyToManyIds(Column):
 
     is_searchable = configs.Boolean(default=False)
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         related_model_class,
@@ -208,14 +209,14 @@ class ManyToManyIds(Column):
         return self.pivot_model.get_columns()
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> list[str | int]:
+    def __get__(self, instance: Model, parent: Type[Model]) -> list[str | int]:
         pass
 
-    def __get__(self, instance, parent) -> list[str | int]:
+    def __get__(self, instance, parent):
         related_id_column_name = self.related_model_class.id_column_name
         return [getattr(model, related_id_column_name) for model in self.get_related_models(model)]
 
@@ -229,8 +230,8 @@ class ManyToManyIds(Column):
         related_id_column_name = self.related_model_class.id_column_name
         model_id = getattr(model, self.model_class.id_column_name)
         model = self.related_model
-        join = f"JOIN {pivot_table} ON {pivot_table}.{related_column_name_in_pivot}={model.get_table_name()}.{related_id_column_name}"
-        related_models = model.join(join).where(f"{pivot_table}.{own_column_name_in_pivot}={data[own_id_column_name]}")
+        join = f"JOIN {pivot_table} ON {pivot_table}.{related_column_name_in_pivot}={model.destination_name()}.{related_id_column_name}"
+        related_models = model.join(join).where(f"{pivot_table}.{own_column_name_in_pivot}={model_id}")
         return related_models
 
     def get_pivot_models(self, model: Model) -> Model:
@@ -240,7 +241,7 @@ class ManyToManyIds(Column):
         # if our incoming data is not in the data array or is None, then nothing has been set and we do not want
         # to make any changes
         if self.name not in data or data[self.name] is None:
-            return data
+            return
 
         # figure out what ids need to be created or deleted from the pivot table.
         if not model:

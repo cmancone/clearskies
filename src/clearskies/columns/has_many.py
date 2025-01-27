@@ -1,14 +1,15 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
-from collections import OrderedDict
+from typing import Any, TYPE_CHECKING, Type, overload, Self
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties
+import clearskies.parameters_to_properties
+from clearskies import configs
 from clearskies.functional import string, validations
 from clearskies.di.inject import InputOutput
 from clearskies.column import Column
-from clearskies.autodoc.string import Array as AutoDocArray
-from clearskies.autodoc.string import Object as AutoDocObject
+from clearskies.autodoc.schema import Array as AutoDocArray
+from clearskies.autodoc.schema import Object as AutoDocObject
+from clearskies.autodoc.schema import Schema as AutoDocSchema
 
 if TYPE_CHECKING:
     from clearskies import Column
@@ -59,7 +60,7 @@ class HasMany(Column):
 
     input_output = InputOutput()
 
-    @parameters_to_properties.parameters_to_properties
+    @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         child_model_class,
@@ -101,14 +102,14 @@ class HasMany(Column):
         return self.di.build(self.child_model_class, cache=True)
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, parent: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> Model:
+    def __get__(self, instance: Model, parent: Type[Model]) -> Model:
         pass
 
-    def __get__(self, model: Model, parent: type) -> Model:
+    def __get__(self, model, parent):
         if not model:
             return self # type:  ignore
 
@@ -138,8 +139,7 @@ class HasMany(Column):
         columns = self.child_columns
         child_id_column_name = self.child_model_class.id_column_name
         for child in getattr(model, self.name):
-            json = OrderedDict()
-            json = {
+            json: dict[str, Any] = {
                 **json,
                 **columns[child_id_column_name].to_json(child),
             }
@@ -151,16 +151,16 @@ class HasMany(Column):
             children.append(json)
         return {self.name: children}
 
-    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None):
+    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None) -> list[AutoDocSchema]:
         columns = self.child_columns
         child_id_column_name = self.child_model.id_column_name
         child_properties = [columns[child_id_column_name].documentation()]
 
         for column_name in self.readable_child_columns:
-            child_properties.extend(columns[column_name].documentation())
+            child_properties.extend(columns[column_name].documentation()) # type: ignore
 
         child_object = AutoDocObject(
             string.title_case_to_nice(self.child_model_class.__name__),
             child_properties,
         )
-        return AutoDocArray(name if name is not None else self.name, child_object, value=value)
+        return [AutoDocArray(name if name is not None else self.name, child_object, value=value)]
