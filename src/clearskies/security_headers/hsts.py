@@ -1,24 +1,22 @@
-from .base import Base
-from ..binding_config import BindingConfig
+from clearskies.security_header import SecurityHeader
+import clearskies.configs
+import clearskies.parameters_to_properties
 
 
-class HSTS(Base):
-    max_age = None
-    include_sub_domains = None
+class Hsts(SecurityHeader):
+    max_age = clearskies.configs.Integer(default=31536000)
+    include_sub_domains = clearskies.configs.Boolean()
 
-    def __init__(self, environment):
-        super().__init__(environment)
-
-    def configure(self, max_age=31536000, include_sub_domains=False):
-        self.max_age = max_age
-        self.include_sub_domains = include_sub_domains
+    @clearskies.parameters_to_properties.parameters_to_properties
+    def __init__(
+        self,
+        max_age: int = 31536000,
+        include_sub_domains: bool = False,
+    ):
+        self.finalize_and_validate_configuration()
 
     def set_headers_for_input_output(self, input_output):
         value = f"max-age={self.max_age} ;"
         if self.include_sub_domains:
             value += " includeSubDomains"
         input_output.set_header("strict-transport-security", value)
-
-
-def hsts(max_age=31536000, include_sub_domains=False):
-    return BindingConfig(HSTS, max_age=max_age, include_sub_domains=include_sub_domains)

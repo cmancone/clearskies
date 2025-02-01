@@ -55,7 +55,7 @@ class Configurable:
         attribute_names = self.get_descriptor_config_map().values()
         for attribute_name in attribute_names:
             config = getattr(my_class, attribute_name)
-            if config.default is not None and attribute_name not in self._config:
+            if attribute_name not in self._config:
                 self._config[attribute_name] = config.default
 
             if config.required and not self._config.get(attribute_name):
@@ -68,3 +68,5 @@ class Configurable:
         # values are specified before we have the configs do their validation.
         for attribute_name in attribute_names:
             getattr(my_class, attribute_name).finalize_and_validate_configuration(self)
+            if attribute_name not in self._config:
+                self._config[attribute_name] = None

@@ -1,12 +1,11 @@
 import unittest
 from unittest.mock import MagicMock, call
-from .csp import CSP
+from .csp import Csp
 
 
 class CSPTest(unittest.TestCase):
     def test_a_bunch(self):
-        csp = CSP({})
-        csp.configure(img_src="'self'", default_src="'self'")
+        csp = Csp(img_src="self", default_src="self")
         input_output = type(
             "",
             (),

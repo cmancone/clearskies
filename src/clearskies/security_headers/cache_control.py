@@ -1,76 +1,61 @@
-from .base import Base
-from ..binding_config import BindingConfig
-
-numbers = [
-    "max_age",
-    "stale_if_error",
-    "stale_while_revalidate",
-    "s_maxage",
-]
-bools = [
-    "immutable",
-    "must_understand",
-    "no_cache",
-    "no_store",
-    "no_transform",
-    "private",
-    "public",
-    "s_maxage",
-]
+from clearskies.security_header import SecurityHeader
+import clearskies.configs
+import clearskies.parameters_to_properties
 
 
-class CacheControl(Base):
-    max_age = None
-    no_cache = None
-    no_store = None
-    no_transform = None
-    s_maxage = None
-    must_understand = None
-    private = None
-    public = None
-    immutable = None
-    stale_while_revalidate = None
-    stale_if_error = None
+class CacheControl(SecurityHeader):
+    max_age = clearskies.configs.Integer()
+    s_maxage = clearskies.configs.Integer()
+    stale_while_revalidate = clearskies.configs.Integer()
+    stale_if_error = clearskies.configs.Integer()
+    immutable = clearskies.configs.Boolean(default=False)
+    must_understand = clearskies.configs.Boolean(default=False)
+    no_cache = clearskies.configs.Boolean(default=False)
+    no_store = clearskies.configs.Boolean(default=False)
+    no_transform = clearskies.configs.Boolean(default=False)
+    private = clearskies.configs.Boolean(default=False)
+    public = clearskies.configs.Boolean(default=False)
 
-    def __init__(self, environment):
-        super().__init__(environment)
+    numbers: list[str] = [
+        "max_age",
+        "stale_if_error",
+        "stale_while_revalidate",
+        "s_maxage",
+    ]
+    bools: list[str] = [
+        "immutable",
+        "must_understand",
+        "no_cache",
+        "no_store",
+        "no_transform",
+        "private",
+        "public",
+    ]
 
-    def configure(
-        self,
-        no_cache=None,
-        no_store=None,
-        no_transform=None,
-        max_age=None,
-        s_maxage=None,
-        must_revalidate=None,
-        proxy_revalidate=None,
-        must_understand=None,
-        private=None,
-        public=None,
-        immutable=None,
-        stale_while_revalidate=None,
-        stale_if_error=None,
+    @clearskies.parameters_to_properties.parameters_to_properties
+    def __init__(self,
+        max_age: int | None = None,
+        s_maxage: int | None = None,
+        stale_while_revalidate: int | None = None,
+        stale_if_error: int | None = None,
+        immutable: bool = False,
+        must_understand: bool = False,
+        no_cache: bool = False,
+        no_store: bool = False,
+        no_transform: bool = False,
+        private: bool = False,
+        public: bool = False,
     ):
-        self.max_age = max_age
-        self.no_cache = no_cache
-        self.no_store = no_store
-        self.no_transform = no_transform
-        self.s_maxage = s_maxage
-        self.must_understand = must_understand
-        self.private = private
-        self.public = public
-        self.immutable = immutable
-        self.stale_while_revalidate = stale_while_revalidate
-        self.stale_if_error = stale_if_error
+        self.finalize_and_validate_configuration()
 
     def set_headers_for_input_output(self, input_output):
         parts = []
-        for variable_name in bools:
+        for variable_name in self.bools:
             value = getattr(self, variable_name)
             if not value:
                 continue
             parts.append(variable_name.replace("_", "-"))
-        for variable_name in numbers:
+        for variable_name in self.numbers:
             value = getattr(self, variable_name)
             if value is None:
                 continue
@@ -79,52 +64,3 @@ class CacheControl(Base):
         if not parts:
             return
         input_output.set_header("cache-control", ", ".join(parts))
-
-
-# Use an explicity param list, even though long, so that Python can provide some input checking directly
-def cache_control(
-    self,
-    no_cache=None,
-    no_store=None,
-    no_transform=None,
-    max_age=None,
-    s_maxage=None,
-    must_revalidate=None,
-    proxy_revalidate=None,
-    must_understand=None,
-    private=None,
-    public=None,
-    immutable=None,
-    stale_while_revalidate=None,
-    stale_if_error=None,
-):
-    for variable_name in numbers:
-        value = locals()[variable_name]
-        if value is not None and type(value) != int:
-            actual_type = type(value)
-            raise ValueError(
-                f"Invalid configuration value for cache control: {variable_name} should be an integer but instead is '{actual_type}'"
-            )
-    for variable_name in bools:
-        value = locals()[variable_name]
-        if value is not None and type(value) != bool:
-            actual_type = type(value)
-            raise ValueError(
-                f"Invalid configuration value for cache control: {variable_name} should be True/False but instead is of type '{actual_type}'"
-            )
-    return BindingConfig(
-        CacheControl,
-        no_cache=no_cache,
-        no_store=no_store,
-        no_transform=no_transform,
-        max_age=max_age,
-        s_maxage=s_maxage,
-        must_revalidate=must_revalidate,
-        proxy_revalidate=proxy_revalidate,
-        must_understand=must_understand,
-        private=private,
-        public=public,
-        immutable=immutable,
-        stale_while_revalidate=stale_while_revalidate,
-        stale_if_error=stale_if_error,
-    )

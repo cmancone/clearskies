@@ -2,7 +2,7 @@ from . import typing
 
 from . import (
     # authentication,
-    # autodoc,
+    autodoc,
     backends,
     columns,
     configs,
@@ -12,7 +12,7 @@ from . import (
     functional,
     query,
     # secrets,
-    # security_headers,
+    security_headers,
 )
 
 from . import parameters_to_properties as parameters_to_properties_module
@@ -24,12 +24,13 @@ parameters_to_properties = parameters_to_properties_module.parameters_to_propert
 from .action import Action
 from .model import Model
 from .validator import Validator
-
+from .security_header import SecurityHeader
 from .environment import Environment
 from .model import Model
 
 __all__ = [
     "Action",
+    "autodoc",
     "backends",
     "Column",
     "columns",
@@ -48,5 +49,6 @@ __all__ = [
     # "autodoc",
     # "contexts",
     # "secrets",
-    # "security_headers",
+    "SecurityHeader",
+    "security_headers",
 ]

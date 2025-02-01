@@ -1,169 +1,94 @@
-from .base import Base
-from ..binding_config import BindingConfig
-
-directives = [
-    "default_src",
-    "script_src",
-    "style_src",
-    "img_src",
-    "connect_src",
-    "font_src",
-    "object_src",
-    "media_src",
-    "frame_src",
-    "sandbox",
-    "report_uri",
-    "child_src",
-    "form_action",
-    "frame_ancestors",
-    "plugin_types",
-    "base_uri",
-    "report_to",
-    "worker_src",
-    "manifest_src",
-    "prefetch_src",
-    "navigate_to",
-]
+from clearskies.security_header import SecurityHeader
+import clearskies.configs
+import clearskies.parameters_to_properties
 
 
-class CSP(Base):
+class Csp(SecurityHeader):
     header_name = "content-security-policy"
-    default_src = None
-    script_src = None
-    style_src = None
-    img_src = None
-    connect_src = None
-    font_src = None
-    object_src = None
-    media_src = None
-    frame_src = None
-    sandbox = None
-    report_uri = None
-    child_src = None
-    form_action = None
-    frame_ancestors = None
-    plugin_types = None
-    base_uri = None
-    report_to = None
-    worker_src = None
-    manifest_src = None
-    prefetch_src = None
-    navigate_to = None
+    default_src = clearskies.configs.String()
+    script_src = clearskies.configs.String()
+    style_src = clearskies.configs.String()
+    img_src = clearskies.configs.String()
+    connect_src = clearskies.configs.String()
+    font_src = clearskies.configs.String()
+    object_src = clearskies.configs.String()
+    media_src = clearskies.configs.String()
+    frame_src = clearskies.configs.String()
+    sandbox = clearskies.configs.String()
+    report_uri = clearskies.configs.String()
+    child_src = clearskies.configs.String()
+    form_action = clearskies.configs.String()
+    frame_ancestors = clearskies.configs.String()
+    plugin_types = clearskies.configs.String()
+    base_uri = clearskies.configs.String()
+    report_to = clearskies.configs.String()
+    worker_src = clearskies.configs.String()
+    manifest_src = clearskies.configs.String()
+    prefetch_src = clearskies.configs.String()
+    navigate_to = clearskies.configs.String()
 
-    def __init__(self, environment):
-        super().__init__(environment)
+    directives = [
+        "default_src",
+        "script_src",
+        "style_src",
+        "img_src",
+        "connect_src",
+        "font_src",
+        "object_src",
+        "media_src",
+        "frame_src",
+        "sandbox",
+        "report_uri",
+        "child_src",
+        "form_action",
+        "frame_ancestors",
+        "plugin_types",
+        "base_uri",
+        "report_to",
+        "worker_src",
+        "manifest_src",
+        "prefetch_src",
+        "navigate_to",
+    ]
 
-    def configure(
+    @clearskies.parameters_to_properties.parameters_to_properties
+    def __init__(
         self,
-        default_src=None,
-        script_src=None,
-        style_src=None,
-        img_src=None,
-        connect_src=None,
-        font_src=None,
-        object_src=None,
-        media_src=None,
-        frame_src=None,
-        sandbox=None,
-        report_uri=None,
-        child_src=None,
-        form_action=None,
-        frame_ancestors=None,
-        plugin_types=None,
-        base_uri=None,
-        report_to=None,
-        worker_src=None,
-        manifest_src=None,
-        prefetch_src=None,
-        navigate_to=None,
+        default_src: str = "",
+        script_src: str = "",
+        style_src: str = "",
+        img_src: str = "",
+        connect_src: str = "",
+        font_src: str = "",
+        object_src: str = "",
+        media_src: str = "",
+        frame_src: str = "",
+        sandbox: str = "",
+        report_uri: str = "",
+        child_src: str = "",
+        form_action: str = "",
+        frame_ancestors: str = "",
+        plugin_types: str = "",
+        base_uri: str = "",
+        report_to: str = "",
+        worker_src: str = "",
+        manifest_src: str = "",
+        prefetch_src: str = "",
+        navigate_to: str = "",
     ):
-        self.default_src = default_src
-        self.script_src = script_src
-        self.style_src = style_src
-        self.img_src = img_src
-        self.connect_src = connect_src
-        self.font_src = font_src
-        self.object_src = object_src
-        self.media_src = media_src
-        self.frame_src = frame_src
-        self.sandbox = sandbox
-        self.report_uri = report_uri
-        self.child_src = child_src
-        self.form_action = form_action
-        self.frame_ancestors = frame_ancestors
-        self.plugin_types = plugin_types
-        self.base_uri = base_uri
-        self.report_to = report_to
-        self.worker_src = worker_src
-        self.manifest_src = manifest_src
-        self.prefetch_src = prefetch_src
-        self.navigate_to = navigate_to
+        self.finalize_and_validate_configuration()
 
     def set_headers_for_input_output(self, input_output):
         parts = []
-        for variable_name in directives:
+        for variable_name in self.directives:
             value = getattr(self, variable_name)
             if not value:
                 continue
+            if value.lower().strip() == "self":
+                value = "'self'"
             header_key_name = variable_name.replace("_", "-")
             parts.append(f"{header_key_name} {value}")
         if not parts:
             return
         header_value = "; ".join(parts)
         input_output.set_header(self.header_name, header_value)
-
-
-def csp(
-    default_src=None,
-    script_src=None,
-    style_src=None,
-    img_src=None,
-    connect_src=None,
-    font_src=None,
-    object_src=None,
-    media_src=None,
-    frame_src=None,
-    sandbox=None,
-    report_uri=None,
-    child_src=None,
-    form_action=None,
-    frame_ancestors=None,
-    plugin_types=None,
-    base_uri=None,
-    report_to=None,
-    worker_src=None,
-    manifest_src=None,
-    prefetch_src=None,
-    navigate_to=None,
-):
-    for variable_name in directives:
-        value = locals()[variable_name]
-        if value is not None and type(value) != str:
-            actual_type = type(value)
-            raise ValueError(
-                f"Invalid configuration value for CSP: {variable_name} should be a string but instead is '{actual_type}'"
-            )
-    return BindingConfig(
-        CSP,
-        default_src=default_src,
-        script_src=script_src,
-        style_src=style_src,
-        img_src=img_src,
-        connect_src=connect_src,
-        font_src=font_src,
-        object_src=object_src,
-        media_src=media_src,
-        frame_src=frame_src,
-        sandbox=sandbox,
-        report_uri=report_uri,
-        child_src=child_src,
-        form_action=form_action,
-        frame_ancestors=frame_ancestors,
-        plugin_types=plugin_types,
-        base_uri=base_uri,
-        report_to=report_to,
-        worker_src=worker_src,
-        manifest_src=manifest_src,
-        prefetch_src=prefetch_src,
-        navigate_to=navigate_to,
-    )

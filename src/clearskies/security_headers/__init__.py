@@ -1,11 +1,11 @@
-from .cache_control import cache_control
-from .cors import cors
-from .csp import csp
-from .hsts import hsts
+from clearskies.security_headers.cache_control import CacheControl
+from clearskies.security_headers.cors import Cors
+from clearskies.security_headers.csp import Csp
+from clearskies.security_headers.hsts import Hsts
 
 __all__ = [
-    "cache_control",
-    "cors",
-    "csp",
-    "hsts",
+    "CacheControl",
+    "Cors",
+    "Csp",
+    "Hsts",
 ]
