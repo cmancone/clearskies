@@ -140,13 +140,20 @@ class InputOutput(ABC):
     def get_request_header(self, header_name, silent=True):
         pass
 
-    @abstractmethod
-    def get_query_parameter(self, key):
-        pass
+    def _parse_query_parameters(self):
+        if self._query_parameters is None:
+            self._query_parameters = {
+                key: val[0] if len(val) == 1 else val
+                for (key, val) in urllib.parse.parse_qs(self.get_query_string()).items()
+            }
 
-    @abstractmethod
+    def get_query_parameter(self, key):
+        self._parse_query_parameters()
+        return self._query_parameters[key] if key in self._query_parameters else None
+
     def get_query_parameters(self):
-        pass
+        self._parse_query_parameters()
+        return self._query_parameters
 
     @abstractmethod
     def get_client_ip(self):
