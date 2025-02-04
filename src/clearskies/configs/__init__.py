@@ -68,6 +68,8 @@ from .any_dict import AnyDict
 from .any_dict_or_callable import AnyDictOrCallable
 from .boolean import Boolean
 from .boolean_or_callable import BooleanOrCallable
+from .callable_config import Callable
+from .columns import Columns
 from .conditions import Conditions
 from .config import Config
 from .datetime import Datetime
@@ -85,6 +87,8 @@ from .model_destination_name import ModelDestinationName
 from .model_to_id_column import ModelToIdColumn
 from .readable_model_column import ReadableModelColumn
 from .readable_model_columns import ReadableModelColumns
+from .schema import Schema
+from .security_headers import SecurityHeaders
 from .select import Select
 from .select_list import SelectList
 from .string import String
@@ -104,6 +108,8 @@ __all__ = [
     "AnyDictOrCallable",
     "Boolean",
     "BooleanOrCallable",
+    "Callable",
+    "Columns",
     "Conditions",
     "Config",
     "Datetime",
@@ -121,6 +127,8 @@ __all__ = [
     "ModelDestinationName",
     "ReadableModelColumn",
     "ReadableModelColumns",
+    "Schema",
+    "SecurityHeaders",
     "Select",
     "SelectList",
     "String",

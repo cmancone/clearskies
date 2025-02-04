@@ -8,12 +8,13 @@ import re
 from clearskies.functional import string
 from clearskies.di import InjectableProperties, inject
 from clearskies.query import Query, Sort, Condition, Join
+from clearskies.schema import Schema
 if TYPE_CHECKING:
     from clearskies import Column
     from clearskies.backends import Backend
 
 
-class Model(InjectableProperties):
+class Model(Schema, InjectableProperties):
     """
     A clearskies model.
 
@@ -26,7 +27,6 @@ class Model(InjectableProperties):
 
     """
 
-    _columns: dict[str, Column] = {}
     _previous_data: dict[str, Any] = {}
     _data: dict[str, Any] = {}
     _next_data: dict[str, Any] = {}
@@ -71,42 +71,6 @@ class Model(InjectableProperties):
         if singular[-1] == "s":
             return singular + "es"
         return f"{singular}s"
-
-    @classmethod
-    def get_columns(cls: type[Self], overrides: dict[str, Column]={}) -> dict[str, Column]:
-        """
-        Returns an ordered dictionary with the configuration for the columns
-
-        Generally, this method is meant for internal use.  It just pulls the column configuration
-        information out of class attributes.  It doesn't return the fully prepared columns,
-        so you probably can't use the return value of this function.  For that, see
-        `model.columns()`.
-        """
-        # no caching if we have overrides
-        if cls._columns and not overrides:
-            return cls._columns
-
-        overrides = {**overrides}
-        columns: dict[str, Column] = OrderedDict()
-        for attribute_name in dir(cls):
-            attribute = getattr(cls, attribute_name)
-            # use duck typing instead of isinstance to decide which attribute is a column.
-            # We have to do this to avoid circular imports.
-            if not hasattr(attribute, "setable") and not hasattr(attribute, "default"):
-                continue
-
-            if attribute_name in overrides:
-                columns[attribute_name] = overrides[attribute_name]
-                del overrides[attribute_name]
-            attribute.finalize_configuration(cls, attribute_name)
-            columns[attribute_name] = attribute
-
-        for (attribute_name, column) in overrides.items():
-            columns[attribute_name] = column  # type: ignore
-
-        if not overrides:
-            cls._columns = columns
-        return columns
 
     def supports_n_plus_one(self: Self):
         return self.backend.supports_n_plus_one #  type: ignore

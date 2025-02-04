@@ -46,7 +46,6 @@ __all__ = [
     "Validator",
     "query",
     # "authentication",
-    # "autodoc",
     # "contexts",
     # "secrets",
     "SecurityHeader",

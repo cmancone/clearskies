@@ -25,7 +25,7 @@ class StringListOrCallable(config.Config):
                 if not isinstance(item, str):
                     error_prefix = self._error_prefix(instance)
                     raise TypeError(
-                        f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' for item #{index+1}.  A string was expected."
+                        f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index+1}.  A string was expected."
                     )
         instance._set_config(self, value)
 
