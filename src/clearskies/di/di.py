@@ -14,6 +14,7 @@ from clearskies.di.additional_config_auto_import import AdditionalConfigAutoImpo
 from clearskies.functional import string
 from clearskies.environment import Environment
 import clearskies.input_outputs.input_output
+import clearskies.secrets
 
 
 class Di:
@@ -633,11 +634,11 @@ class Di:
         # ignore the first argument because that is just `self`
         build_arguments = init_args.args[1:]
         if not build_arguments:
+            if hasattr(class_to_build, "injectable_properties"):
+                class_to_build.injectable_properties(self)
             built_value = class_to_build()
             if cache:
                 self._prepared[class_to_build] = built_value  # type: ignore
-            if hasattr(built_value, "injectable_properties"):
-                built_value.injectable_properties(self)
             return built_value
 
         # self._building will help us keep track of what we're already building, and what we are building it for.
@@ -824,7 +825,10 @@ class Di:
     def provide_connection_no_autocommit(self, connection_details):
         # I should probably just switch things so that autocommit is *off* by default
         # and only have one of these, but for now I'm being lazy.
-        import pymysql
+        try:
+            import pymysql
+        except:
+            raise ValueError("The cursor requires pymysql to be installed.  This is an optional dependency of clearskies, so to include it do a `pip install 'clear-skies[mysql]'`")
 
         return pymysql.connect(
             user=connection_details["username"],
@@ -839,7 +843,10 @@ class Di:
         )
 
     def provide_connection(self, connection_details):
-        import pymysql
+        try:
+            import pymysql
+        except:
+            raise ValueError("The cursor requires pymysql to be installed.  This is an optional dependency of clearskies, so to include it do a `pip install 'clear-skies[mysql]'`")
 
         return pymysql.connect(
             user=connection_details["username"],
@@ -882,3 +889,6 @@ class Di:
     def provide_uuid(self):
         import uuid
         return uuid
+
+    def provide_secrets(self):
+        return clearskies.secrets.Secrets()

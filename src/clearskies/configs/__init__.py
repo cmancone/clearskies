@@ -66,6 +66,8 @@ from .actions import Actions
 from .any import Any
 from .any_dict import AnyDict
 from .any_dict_or_callable import AnyDictOrCallable
+from .authentication import Authentication
+from .authorization import Authorization
 from .boolean import Boolean
 from .boolean_or_callable import BooleanOrCallable
 from .callable_config import Callable
@@ -106,6 +108,8 @@ __all__ = [
     "Any",
     "AnyDict",
     "AnyDictOrCallable",
+    "Authentication",
+    "Authorization",
     "Boolean",
     "BooleanOrCallable",
     "Callable",

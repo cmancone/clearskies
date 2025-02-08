@@ -1,15 +1,33 @@
 from __future__ import annotations
 from typing import Any, Callable, TYPE_CHECKING
 
+import clearskies.di
 import clearskies.configurable
 import clearskies.config
 import clearskies.parameters_to_properties
 import clearskies.configs
+from clearskies.authentication import Authentication, Authorization, Public
 
 if TYPE_CHECKING:
     from clearskies import Column, SecurityHeader
+    from clearskies.input_output import InputOutput
 
 class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
+    """
+    The dependency injection container
+    """
+    di = clearskies.di.inject.Di()
+
+    """
+    Whether or not this endpoint can handle CORS
+    """
+    has_cors = False
+
+    """
+    The actual CORS header
+    """
+    cors_header: SecurityHeader | None = None
+
     """
     Set some response headers that should be returned for this endpoint.
 
@@ -32,9 +50,15 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     """
     response_headers = clearskies.configs.StringListOrCallable(default=[])
 
-    # authentication = clearskies.configs.Authentication()
+    """
+    The authentication for this endpoint (default is public)
+    """
+    authentication = clearskies.configs.Authentication(default=Public())
 
-    # authorization = clearskies.configs.Authorization()
+    """
+    The authorization rules for this endpoint
+    """
+    authorization = clearskies.configs.Authorization(default=Authorization())
 
     """
     An override of the default model-to-json mapping for endpoints that auto-convert models to json.  The model being converted is always injected
@@ -66,12 +90,12 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
     endpoint = clearskies.Endpoint(
         column_overrides = {
-            "name": clearskies.columns.String(validators=clearskies.validators.Requird()),
+            "name": clearskies.columns.String(validators=clearskies.validators.Required()),
         }
     )
     ```
     """
-    column_overrides = clearksies.configs.Columns()
+    column_overrides = clearksies.configs.Columns(default={})
 
     """
     The name of the column to use when looking up records from routing parameters.
@@ -116,15 +140,47 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     """
     security_headers = clearskies.configs.SecurityHeaders(default=[])
 
+    """
+    A description for this endpoint.  This is added to any auto-documentation
+    """
+    description = clearskies.configs.String()
+
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         response_headers: list[str | Callable[..., list[str]] = [],
-        output_map: Callable[..., dict[str, Any]],
+        output_map: Callable[..., dict[str, Any]] | None = None,
         column_overrides: dict[str, Column] = {},
         id_column_name: str = "",
         internal_casing: str = "snake_case",
         external_casing: str = "snake_case",
         security_headers: list[SecurityHeader] = [],
+        description: str = "",
+        authentication: Authentication = Public(),
+        authorization: Authorization = Authorization(),
     );
         self.finalize_and_validate_configuration()
+
+    def top_level_authentication_and_authorization(self, input_output: InputOutput, authentication=None):
+        if authentication is None:
+            authentication = self._configuration.get("authentication")
+        if not authentication:
+            return
+        try:
+            if not authentication.authenticate(input_output):
+                raise exceptions.Authentication("Not Authenticated")
+        except exceptions.ClientError as client_error:
+            raise exceptions.Authentication(str(client_error))
+        authorization = self._configuration.get("authorization")
+        if authorization:
+            authorization_data = input_output.get_authorization_data()
+            try:
+                allowed = True
+                if hasattr(authorization, "gate"):
+                    allowed = authorization.gate(authorization_data, input_output)
+                elif callable(authorization):
+                    allowed = authorization(authorization_data, input_output)
+                if not allowed:
+                    raise exceptions.Authorization("Not Authorized")
+            except exceptions.ClientError as client_error:
+                raise exception.Authorization(str(client_error))

@@ -1,6 +1,3 @@
-from abc import ABC, abstractmethod
-
-
 class Authorization:
     def gate(self, authorization_data, input_output):
         """

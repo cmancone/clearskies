@@ -84,9 +84,15 @@ class InjectableProperties:
     _injectable_descriptors: list[str] = []
     _injectable_properties: list[str] = []
     _injectable_properties_found = False
+    _injectable_properties_injected = False
 
-    def injectable_properties(self, di: Di):
-        cls = self.__class__
+    @classmethod
+    def injectable_properties(cls, di: Di):
+        if cls._injectable_properties_injected:
+            return
+
+        # probably don't need to cache these now that this all happens at the class level,
+        # but I'm leaving this here while I decide if it should happen at the class or instance level.
         if not cls._injectable_properties_found:
             cls._injectable_descriptors = []
             cls._injectable_properties = []
@@ -98,7 +104,7 @@ class InjectableProperties:
                 # be stored in self, and not in the descriptor object.  When it's not a descriptor, then we can modify the object
                 # directly (since we're operating at the object level, not class level).  Either way, while we go, let's keep track
                 # of what our dependencies are and which ones are cached, so we only have to list the objects attributes the first time.
-                attribute = getattr(self.__class__, attribute_name)
+                attribute = getattr(cls, attribute_name)
 
                 if issubclass(attribute.__class__, Injectable):
                     cls._injectable_descriptors.append(attribute_name)
@@ -110,7 +116,9 @@ class InjectableProperties:
             cls._injectable_properties_found = True
 
         for attribute_name in cls._injectable_properties:
-            getattr(self, attribute_name).injectable_properties(di)
+            getattr(cls, attribute_name).injectable_properties(di)
 
         for attribute_name in cls._injectable_descriptors:
             getattr(cls, attribute_name).set_di(di)
+
+        cls._injectable_properties_injected = True

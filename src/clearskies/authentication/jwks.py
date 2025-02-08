@@ -1,38 +1,92 @@
-from clearskies.authentication import Auth0JWKS
-from clearskies.handlers.exceptions import ClientError
-import datetime
+from typing import Any
+import clearskies.di
+from clearskies.authentication.authentication import Authentication
+from clearskies.exceptions import ClientError
+import clearskies.configs
+import clearskies.parameters_to_properties
+from clearskies.security_header import SecurityHeader
 
 
-class JWKS(Auth0JWKS):
-    _audience = None
-    _jwks_url = None
-    _jwks_cache_time = None
-    _authorization_url = None
+class Jwks(Authentication, clearskies.di.InjectableProperties):
+    """
+    The URL where the JWKS can be found.
+    """
+    jwks_url = clearskies.configs.String(required=True)
 
-    def __init__(self, environment, requests, jose_jwt):
-        super().__init__(environment, requests, jose_jwt)
+    """
+    The audience to accept JWTs for.
+    """
+    audience = clearskies.configs.StringList(default=[])
 
-    def configure(
+    """
+    The expected issuer of the JWTs.
+    """
+    issuer = clearskies.configs.String(default="")
+
+    """
+    The allowed algorithms
+    """
+    algorithms = clearskies.configs.StringList(default=["RS256"])
+
+    """
+    The number of seconds for which the JWKS URL contents can be cached
+    """
+    jwks_cache_time = clearskies.configs.Integer(default=86400)
+
+    """
+    The Authorization URL (used in the auto-generated documentation)
+    """
+    authorization_url = clearskies.configs.String()
+
+    """
+    The name of the security scheme in the auto-generated documentation.
+    """
+    documentation_security_name = clearskies.configs.String(default="jwt")
+
+    """
+    The environment helper.
+    """
+    environment = clearskies.di.inject.Environment()
+
+    """
+    The requests object.
+    """
+    requests = clearskies.di.inject.Requests()
+
+    """
+    The JoseJwt library
+    """
+    jose_jwt = clearskies.di.inject.ByName("jose_jwt")
+
+    """
+    The current time
+    """
+    now = clearskies.di.inject.Now()
+
+    """
+    Local cache of the JWKS
+    """
+    _jwks = None
+
+    """
+    The time when the JWKS was last fetched
+    """
+    _jwks_fetched = None
+
+    @clearskies.parameters_to_properties.parameters_to_properties
+    def __init__(
         self,
-        jwks_url=None,
-        algorithms=None,
-        audience=None,
-        issuer=None,
-        documentation_security_name=None,
-        authorization_url=None,
-        jwks_cache_time=86400,
+        jwks_url: str,
+        audience: str = "",
+        issuer: str = "",
+        algorithms: list[str] = ["RS256"],
+        jwks_cache_time: int = 86400,
+        authorization_url: str = "",
+        documentation_security_name: str = "jwt",
     ):
-        self._audience = audience
-        self._issuer = issuer
-        self._jwks_url = jwks_url
-        self._jwks_cache_time = jwks_cache_time
-        if not self._jwks_url:
-            raise ValueError("Must provide 'jwks_url' when using JWKS authentication")
-        self._algorithms = ["RS256"] if algorithms is None else algorithms
-        self._documentation_security_name = documentation_security_name
-        self._authorization_url = authorization_url if authorization_url else ""
+        self.finalize_and_validate_configuration()
 
-    def authenticate(self, input_output):
+    def authenticate(self, input_output) -> bool:
         auth_header = input_output.get_request_header("authorization", True)
         if not auth_header:
             raise ClientError("Missing 'Authorization' header in request")
@@ -44,45 +98,59 @@ class JWKS(Auth0JWKS):
 
     def validate_jwt(self, raw_jwt):
         try:
-            unverified_header = self._jose_jwt.get_unverified_header(raw_jwt)
-        except self._jose_jwt.JWTError as e:
+            from jwcrypto import jws, jwk, jwt
+            from jwcrypto.common import JWException
+        except:
+            raise ValueError("The JWKS authentication method requires the jwcrypto libraries to be installed.  These are optional dependencies of clearskies, so to include them do a `pip install 'clear-skies[jwcrypto]'`")
+
+        keys = jwk.JWKSet()
+        keys.import_keyset(json.dumps(self._get_jwks()))
+
+        client_jwt = jwt.JWT()
+        try:
+            client_jwt.deserialize(raw_jwt)
+        except Exception as e:
             raise ClientError(str(e))
-        jwks = self._get_jwks()
-        # find a matching key in the JWKS for the key in the JWT
-        rsa_key = next((key for key in jwks["keys"] if key["kid"] == unverified_header["kid"]), False)
-        if not rsa_key:
-            raise ClientError("No matching keys found")
 
         try:
-            self.jwt_claims = self._jose_jwt.decode(
-                raw_jwt,
-                rsa_key,
-                audience=self._audience,
-                issuer=self._issuer,
-                algorithms=self._algorithms,
-            )
-        except self._jose_jwt.ExpiredSignatureError:
-            raise ClientError("JWT is expired")
-        except self._jose_jwt.JWTClaimsError:
-            raise ClientError("JWT has incorrect claims: double check the audience and issuer")
-        except Exception:
-            raise ClientError("Unable to parse JWT")
+            client_jwt.validate(keys)
+            self.jwt_claims = json.loads(client_jwt.claims)
+        except JWException as e:
+            raise ClientError(str(e))
+
+        if self.issuer and self.jwt_claims.get("iss") != self.issuer:
+            raise ClientError("Issuer does not match")
+
+        if self.audience:
+            jwt_audience = self.jwt_claims.get("aud")
+            if not jwt_audience:
+                raise ClientError("Audience required, but missing in JWT")
+            has_match = False
+            for audience in jwt_audience:
+                if audience == self._audience:
+                    has_match = True
+            if not has_match:
+                raise ClientError("Audience does not match")
+
         return True
 
+
     def _get_jwks(self):
-        now = datetime.datetime.now()
-        if self._jwks is None or ((now - self._jwks_fetched).total_seconds() > self._jwks_cache_time):
-            self._jwks = self._requests.get(self._jwks_url).json()
-            self._jwks_fetched = now
+        if self._jwks is None or ((self.now - self._jwks_fetched).total_seconds() > self.jwks_cache_time):
+            self._jwks = self.requests.get(self.jwks_url).json()
+            self._jwks_fetched = self.now
 
         return self._jwks
 
-    def documentation_security_scheme(self):
+    def documentation_security_scheme(self) -> dict[str, Any]:
         return {
             "type": "oauth2",
             "description": "JWT based authentication",
-            "flows": {"implicit": {"authorizationUrl": self._authorization_url, "scopes": {}}},
+            "flows": {"implicit": {"authorizationUrl": self.authorization_url, "scopes": {}}},
         }
 
-    def documentation_security_scheme_name(self):
-        return self._documentation_security_name if self._documentation_security_name is not None else "jwt"
+    def documentation_security_scheme_name(self) -> str:
+        return self.documentation_security_name
+
+    def set_headers_for_cors(self, cors: SecurityHeader):
+        cors.add_header("Authorization")

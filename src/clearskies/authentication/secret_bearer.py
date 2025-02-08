@@ -1,59 +1,90 @@
-from .. import autodoc
+from clearskies import autodoc
+from clearskies.authentication.authentication import Authentication
+import clearskies.di
+import clearskies.configs
+import clearskies.parameters_to_properties
 
 
-class SecretBearer:
+class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     is_public = False
     can_authorize = False
     has_dynamic_credentials = False
-    _environment = None
-    _secrets = None
-    _logging = None
-    _secret = None
-    _header_prefix = None
-    _header_prefix_length = None
-    _documentation_security_name = None
 
-    def __init__(self, secrets, environment, logging):
-        self._environment = environment
-        self._secrets = secrets
-        self._logging = logging
+    environment = clearskies.di.inject.Environment()
+    secrets = clearskies.di.inject.Secrets()
 
-    def configure(
-        self, secret_key=None, secret=None, environment_key=None, header_prefix=None, documentation_security_name=None
+    """
+    Our actual secret.
+    """
+    secret = clearskies.configs.String()
+
+    """
+    The path in our secret manager from which the secret should be fetched.
+
+    You must set either secret_key or environment_key
+    """
+    secret_key = clearskies.configs.String(default="")
+
+    """
+    The name of the environment variable from which we should fetch our key.
+
+    You must set either secret_key or environment_key
+    """
+    environment_key = clearskies.configs.String(default="")
+
+    """
+    The expected prefix (if any) that should come before the secret key in the authorization header.
+    """
+    header_prefix = clearskies.configs.String(default="")
+
+    """
+    The length of our header prefix
+    """
+    header_prefix_length = None
+
+    """
+    The name of our security scheme in the auto-generated documentation
+    """
+    documentation_security_name = clearskies.configs.String(default="ApiKey")
+
+    @clearskies.parameters_to_properties.parameters_to_properties
+    def __init__(
+        self,
+        secret_key: str="",
+        environment_key: str="",
+        header_prefix: str="",
+        documentation_security_name: str="",
     ):
         if secret_key:
-            self._secret = self._secrets.get(secret_key)
+            self.secret = self.secrets.get(secret_key)
         elif environment_key:
-            self._secret = self._environment.get(environment_key)
-        elif secret:
-            self._secret = secret
+            self.secret = self.environment.get(environment_key)
         else:
             raise ValueError(
-                "Must set either 'secret_key', 'environment_key', or 'secret', when configuring the SecretBearer"
+                "Must set either 'secret_key' or 'environment_key' when configuring the SecretBearer"
             )
-        self._header_prefix = header_prefix if header_prefix else "authorization "
-        self._header_prefix_length = len(self._header_prefix)
-        self._documentation_security_name = documentation_security_name
+        self.header_prefix_length = len(header_prefix)
+        self.finalize_and_validate_configuration()
 
     def headers(self, retry_auth=False):
         self._configured_guard()
-        return {"Authorization": f"{self._header_prefix}{self._secret}"}
+        return {"Authorization": f"{self.header_prefix}{self.secret}"}
 
     def authenticate(self, input_output):
         self._configured_guard()
         auth_header = input_output.get_request_header("authorization", True)
-        if auth_header[: self._header_prefix_length].lower() != self._header_prefix.lower():
-            self._logging.debug(
-                "Authentication failure due to prefix mismatch.  Configured prefix: "
-                + self._header_prefix.lower()
-                + ".  Found prefix: "
-                + auth_header[: self._header_prefix_length].lower()
-            )
+        if auth_header[: self.header_prefix_length].lower() != self.header_prefix.lower():
+            # self._logging.debug(
+            #     "Authentication failure due to prefix mismatch.  Configured prefix: "
+            #     + self._header_prefix.lower()
+            #     + ".  Found prefix: "
+            #     + auth_header[: self._header_prefix_length].lower()
+            # )
             return False
-        if self._secret == auth_header[self._header_prefix_length :]:
-            self._logging.debug("Authentication success")
+        if self.secret == auth_header[self.header_prefix_length :]:
+            # self._logging.debug("Authentication success")
             return True
-        self._logging.debug("Authentication failure due to secret mismatch")
+        # self._logging.debug("Authentication failure due to secret mismatch")
         return False
 
     def authorize(self, authorization):
@@ -63,7 +94,7 @@ class SecretBearer:
         cors.add_header("Authorization")
 
     def _configured_guard(self):
-        if not self._secret:
+        if not self.secret:
             raise ValueError("Attempted to use SecretBearer authentication class without providing the configuration")
 
     def documentation_request_parameters(self):
@@ -77,4 +108,4 @@ class SecretBearer:
         }
 
     def documentation_security_scheme_name(self):
-        return self._documentation_security_name if self._documentation_security_name is not None else "ApiKey"
+        return self.documentation_security_name
