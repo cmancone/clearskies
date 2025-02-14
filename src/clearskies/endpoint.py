@@ -1,11 +1,13 @@
 from __future__ import annotations
 from typing import Any, Callable, TYPE_CHECKING
+import urllib.parse
 
 import clearskies.di
 import clearskies.configurable
 import clearskies.config
 import clearskies.parameters_to_properties
 import clearskies.configs
+from clearskies import exceptions
 from clearskies.authentication import Authentication, Authorization, Public
 
 if TYPE_CHECKING:
@@ -161,26 +163,100 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     );
         self.finalize_and_validate_configuration()
 
-    def top_level_authentication_and_authorization(self, input_output: InputOutput, authentication=None):
-        if authentication is None:
-            authentication = self._configuration.get("authentication")
-        if not authentication:
+    def top_level_authentication_and_authorization(self, input_output: InputOutput) -> None:
+        """
+        Handle authentication and authorization for this endpoint.
+
+        In the event of an AuthN/AuthZ issue, raise an exception.  Otherwise, return None
+        """
+        if not self.authentication:
             return
         try:
-            if not authentication.authenticate(input_output):
+            if not self.authentication.authenticate(input_output):
                 raise exceptions.Authentication("Not Authenticated")
         except exceptions.ClientError as client_error:
             raise exceptions.Authentication(str(client_error))
-        authorization = self._configuration.get("authorization")
-        if authorization:
+        if self.authorization:
             authorization_data = input_output.get_authorization_data()
             try:
-                allowed = True
-                if hasattr(authorization, "gate"):
-                    allowed = authorization.gate(authorization_data, input_output)
-                elif callable(authorization):
-                    allowed = authorization(authorization_data, input_output)
-                if not allowed:
+                if not authorization.gate(authorization_data, input_output):
                     raise exceptions.Authorization("Not Authorized")
             except exceptions.ClientError as client_error:
                 raise exception.Authorization(str(client_error))
+
+    def __call__(self, input_output: InputOutput) -> Any:
+        """
+        Execute the endpoint!
+
+        This function mostly just checks AuthN/AuthZ and then passes along control to the handle method.
+        It also checks for all the appropriate exceptions from clearskies.exceptions and turns those into the
+        expected response.  As a result, when building a new endpoint, you normally modify the handle method
+        rather than this one.
+        """
+        self.di.add_binding("input_output", input_output)
+        try:
+            self.top_level_authentication_and_authorization(input_output)
+        except exceptions.Authentication as auth_error:
+            return self.error(input_output, str(auth_error), 401)
+        except exceptions.Authorization as auth_error:
+            return self.error(input_output, str(auth_error), 403)
+        except exceptions.NotFound as auth_error:
+            return self.error(input_output, str(auth_error), 404)
+        except exceptions.MovedPermanently as redirect:
+            return self.redirect(input_output, str(redirect), 302)
+        except exceptions.MovedTemporarily as redirect:
+            return self.redirect(input_output, str(redirect), 307)
+
+        try:
+            response = self.handle(input_output)
+        except exceptions.ClientError as client_error:
+            return self.error(input_output, str(client_error), 400)
+        except exceptions.InputError as input_error:
+            return self.input_errors(input_output, input_error.errors)
+        except exceptions.Authentication as auth_error:
+            return self.error(input_output, str(auth_error), 401)
+        except exceptions.Authorization as auth_error:
+            return self.error(input_output, str(auth_error), 403)
+        except exceptions.NotFound as auth_error:
+            return self.error(input_output, str(auth_error), 404)
+        except exceptions.MovedPermanently as redirect:
+            return self.redirect(input_output, str(redirect), 302)
+        except exceptions.MovedTemporarily as redirect:
+            return self.redirect(input_output, str(redirect), 307)
+
+        return response
+
+    def input_errors(self, input_output: InputOutput, errors: dict[str, str], status_code: int=200):
+        return self.respond(input_output, {"status": "input_errors", "input_errors": errors}, status_code)
+
+    def error(self, input_output: InputOutput, message: str, status_code: int):
+        return self.respond(input_output, {"status": "client_error", "error": message}, status_code)
+
+    def redirect(self, input_output: InputOutput, location: str, status_code: int):
+        input_output.set_headers("content-type: text/html")
+        input_output.set_headers(f"location: {location}")
+        return input_output.respond('<meta http-equiv="refresh" content="0; url=' + urllib.parse.quote(location) + '">Redirecting', status_code)
+
+    def success(self, input_output: InputOutput, data: dict[str, Any], number_results: int | None=None, limit: int | None=None, next_page: Any=None):
+        response_data = {"status": "success", "data": data, "pagination": {}}
+
+        if number_results is not None:
+            for value in [number_results, limit]:
+                if value is not None and type(value) != int:
+                    raise ValueError("number_results and limit must all be integers")
+
+            response_data["pagination"] = {
+                "number_results": number_results,
+                "limit": limit,
+                "next_page": next_page,
+            }
+
+        return self.respond(input_output, response_data, 200)
+
+    def respond(self, input_output, response_data, status_code):
+        response_headers = self.configuration("response_headers")
+        if response_headers:
+            input_output.set_headers(response_headers)
+        for security_header in self.configuration("security_headers"):
+            security_header.set_headers_for_input_output(input_output)
+        return input_output.respond(self._normalize_response(response_data), status_code)

@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from clearskies.exceptions import ClientError
 import json
+import re
 
 
 class InputOutput(ABC):
@@ -40,7 +41,7 @@ class InputOutput(ABC):
     def set_header(self, key, value):
         if self._response_headers is None:
             self._response_headers = OrderedDict()
-        self._response_headers[key.upper()] = value
+        self._response_headers[re.sub("\\s+", " ", key.upper())] = re.sub("\\s+", " ", value)
 
     def clear_header(self, key):
         if self._response_headers is None:
