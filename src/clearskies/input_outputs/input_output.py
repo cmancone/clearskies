@@ -5,7 +5,7 @@ from urllib.parse import parse_qs
 
 import clearskies.configurable
 from clearskies.exceptions import ClientError
-from clearskies.input_outputs import Headers
+from .headers import Headers
 import clearskies.typing
 import clearskies.parameters_to_properties
 from clearskies.configs import AnyDict, StringDict

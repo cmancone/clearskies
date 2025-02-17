@@ -18,6 +18,7 @@ from . import (
 from . import parameters_to_properties as parameters_to_properties_module
 from .configurable import Configurable
 from .column import Column
+from .endpoint import Endpoint
 
 parameters_to_properties = parameters_to_properties_module.parameters_to_properties
 
@@ -37,6 +38,7 @@ __all__ = [
     "configs",
     "Configurable",
     "di",
+    "Endpoint",
     "Environment",
     "exceptions",
     "functional",

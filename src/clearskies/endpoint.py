@@ -6,14 +6,13 @@ from clearskies.autodoc.request import Request
 from clearskies.autodoc.response import Response
 from clearskies.autodoc import schema
 import clearskies.configurable
-import clearskies.config
 import clearskies.configs
 import clearskies.di
 import clearskies.parameters_to_properties
 import clearskies.typing
 from clearskies import exceptions
 from clearskies.authentication import Authentication, Authorization, Public
-from clearskies.funtional import string
+from clearskies.functional import string
 
 if TYPE_CHECKING:
     from clearskies import Column, Model, SecurityHeader
@@ -83,6 +82,16 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     output_map = clearskies.configs.Callable()
 
     """
+    The model class that we will be passing back to the user.
+    """
+    model_class = clearskies.configs.ModelClass()
+
+    """
+    Columns from the model class that should be returned to the client.
+    """
+    readable_column_names = clearskies.configs.ReadableModelColumns("model_class")
+
+    """
     A dictionary with columns that should override columns in the model.
 
     This is typically used to change column definitions on specific endpoints to adjust behavior: for intstance a model might use a `created_by_*`
@@ -102,7 +111,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     )
     ```
     """
-    column_overrides = clearksies.configs.Columns(default={})
+    column_overrides = clearskies.configs.Columns(default={})
 
     """
     The name of the column to use when looking up records from routing parameters.
@@ -158,7 +167,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        response_headers: list[str | Callable[..., list[str]] = [],
+        response_headers: list[str | Callable[..., list[str]]] = [],
         output_map: Callable[..., dict[str, Any]] | None = None,
         column_overrides: dict[str, Column] = {},
         id_column_name: str = "",
@@ -168,7 +177,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         description: str = "",
         authentication: Authentication = Public(),
         authorization: Authorization = Authorization(),
-    );
+    ):
         self.finalize_and_validate_configuration()
         for security_header in security_headers:
             if not security_header.is_cors:
@@ -382,6 +391,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     def documentation_pagination_response(self, include_pagination=True) -> schema.Schema:
         if not include_pagination:
             return schema.Object(self.auto_case_internal_column_name("pagination"), [], value={})
+        model = self.di.build(self.model_class)
         return schema.Object(
             self.auto_case_internal_column_name("pagination"),
             [
@@ -389,8 +399,8 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
                 schema.Integer(self.auto_case_internal_column_name("limit"), example=100),
                 schema.Object(
                     self.auto_case_internal_column_name("next_page"),
-                    self.model.documentation_pagination_next_page_response(self.auto_case_internal_column_name),
-                    self.model.documentation_pagination_next_page_example(self.auto_case_internal_column_name),
+                    model.documentation_pagination_next_page_response(self.auto_case_internal_column_name),
+                    model.documentation_pagination_next_page_example(self.auto_case_internal_column_name),
                 ),
             ],
         )
@@ -462,22 +472,19 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         name = authentication.documentation_security_scheme_name()
         return [{name: []}] if name else []
 
-    # def documentation_data_schema(self):
-    #     id_column_name = self.id_column_name
-    #     properties = []
-    #     if self.configuration("id_column_name"):
-    #         properties.append(
-    #             self._columns[id_column_name].documentation(name=self.auto_case_internal_column_name("id"))
-    #             if id_column_name in self._columns
-    #             else AutoDocString(self.auto_case_internal_column_name("id"))
-    #         )
-    #
-    #     for column in self._get_readable_columns().values():
-    #         column_doc = column.documentation()
-    #         if type(column_doc) != list:
-    #             column_doc = [column_doc]
-    #         for doc in column_doc:
-    #             doc.name = self.auto_case_internal_column_name(doc.name)
-    #             properties.append(doc)
-    #
-    #     return properties
+    def documentation_data_schema(self):
+        id_column_name = self.model_class.id_column_name
+        columns = self.model_class.get_columns()
+        properties = [
+            columns[id_column_name].documentation(name=self.auto_case_column_name(id_column_name, True))
+        ]
+
+        for column_name in self.readable_column_names:
+            column_doc = columns[column_name].documentation()
+            if type(column_doc) != list:
+                column_doc = [column_doc]
+            for doc in column_doc:
+                doc.name = self.auto_case_internal_column_name(doc.name)
+                properties.append(doc)
+
+        return properties

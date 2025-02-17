@@ -1,5 +1,5 @@
 import clearskies.di
-from clearskies.authentication import Jwks
+from .jwks import Jwks
 
 
 class AuthorizationPassThrough(Jwks):
