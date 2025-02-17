@@ -5,5 +5,6 @@ from clearskies.validator import Validator
 
 action = Callable[..., dict[str, Any]] | Action
 condition = str | Callable[..., str]
+join = str | Callable[..., str]
 validator = Callable[..., str] | Validator
 response = str | bytes | dict[str, Any] | list[Any]

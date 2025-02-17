@@ -80,6 +80,7 @@ from .float import Float
 from .float_or_callable import FloatOrCallable
 from .integer import Integer
 from .integer_or_callable import IntegerOrCallable
+from .joins import Joins
 from .list_any_dict import ListAnyDict
 from .list_any_dict_or_callable import ListAnyDictOrCallable
 from .model_class import ModelClass
@@ -90,6 +91,7 @@ from .model_to_id_column import ModelToIdColumn
 from .readable_model_column import ReadableModelColumn
 from .readable_model_columns import ReadableModelColumns
 from .schema import Schema
+from .searchable_model_columns import SearchableModelColumns
 from .security_headers import SecurityHeaders
 from .select import Select
 from .select_list import SelectList
@@ -121,6 +123,7 @@ __all__ = [
     "DatetimeOrCallable",
     "Float",
     "FloatOrCallable",
+    "Joins",
     "Integer",
     "IntegerOrCallable",
     "ListAnyDict",
@@ -133,6 +136,7 @@ __all__ = [
     "ReadableModelColumn",
     "ReadableModelColumns",
     "Schema",
+    "SearchableModelColumns",
     "SecurityHeaders",
     "Select",
     "SelectList",

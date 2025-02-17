@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Any, Callable, TYPE_CHECKING
 import urllib.parse
 
-from clearskies.autodoc.request import Request
+from clearskies.autodoc.request import Request, Parameter
 from clearskies.autodoc.response import Response
 from clearskies.autodoc import schema
 import clearskies.configurable
@@ -55,6 +55,16 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     ```
     """
     response_headers = clearskies.configs.StringListOrCallable(default=[])
+
+    """
+    The URL for this endpoint.
+    """
+    url = clearskies.configs.String(default="")
+
+    """
+    The allowed request methods for this endpoint.
+    """
+    request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["GET"])
 
     """
     The authentication for this endpoint (default is public)
@@ -114,13 +124,6 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     column_overrides = clearskies.configs.Columns(default={})
 
     """
-    The name of the column to use when looking up records from routing parameters.
-
-    By default, this is populated with the model.id_column_name
-    """
-    id_column_name = clearskies.configs.String()
-
-    """
     Used in conjunction with external_casing to change the casing of the key names in the outputted JSON of the endpoint.
 
     To use these, set internal_casing to the casing scheme used in your model, and then set external_casing to the casing
@@ -163,14 +166,18 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
     cors_header: SecurityHeader = None  # type: ignore
     has_cors: bool = False
+    _model = None
+    _columns = None
+    _readable_columns = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
+        url: str = "",
+        request_methods: list[str] = ["GET"],
         response_headers: list[str | Callable[..., list[str]]] = [],
         output_map: Callable[..., dict[str, Any]] | None = None,
         column_overrides: dict[str, Column] = {},
-        id_column_name: str = "",
         internal_casing: str = "snake_case",
         external_casing: str = "snake_case",
         security_headers: list[SecurityHeader] = [],
@@ -187,6 +194,24 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             self.has_cors = True
             break
 
+    @property
+    def model(self) -> Model:
+        if self._model is None:
+            self._model = self.di.build(self.model_class)
+        return self._model
+
+    @property
+    def columns(self) -> dict[str, Column]:
+        if self._columns is None:
+            self._columns = self.model.get_columns()
+        return self._columns
+
+    @property
+    def readable_columns(self) -> dict[str, Column]:
+        if self._readable_columns is None:
+            self._readable_columns = {name: self._columns[name] for name in self.readable_column_names}
+        return self._readable_columns
+
     def top_level_authentication_and_authorization(self, input_output: InputOutput) -> None:
         """
         Handle authentication and authorization for this endpoint.
@@ -201,9 +226,8 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         except exceptions.ClientError as client_error:
             raise exceptions.Authentication(str(client_error))
         if self.authorization:
-            authorization_data = input_output.get_authorization_data()
             try:
-                if not authorization.gate(authorization_data, input_output):
+                if not authorization.gate(input_output.authorization_data, input_output):
                     raise exceptions.Authorization("Not Authorized")
             except exceptions.ClientError as client_error:
                 raise exception.Authorization(str(client_error))
@@ -472,15 +496,14 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         name = authentication.documentation_security_scheme_name()
         return [{name: []}] if name else []
 
-    def documentation_data_schema(self):
+    def documentation_data_schema(self) -> list[Schema]:
         id_column_name = self.model_class.id_column_name
-        columns = self.model_class.get_columns()
         properties = [
-            columns[id_column_name].documentation(name=self.auto_case_column_name(id_column_name, True))
+            self.columns[id_column_name].documentation(name=self.auto_case_column_name(id_column_name, True))
         ]
 
-        for column_name in self.readable_column_names:
-            column_doc = columns[column_name].documentation()
+        for column in self.readable_columns:
+            column_doc = column.documentation()
             if type(column_doc) != list:
                 column_doc = [column_doc]
             for doc in column_doc:
@@ -488,3 +511,10 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
                 properties.append(doc)
 
         return properties
+
+    def documentation_id_url_parameter(self) -> Parameter:
+        return autodoc.request.URLPath(
+            self.columns[self.model_class.id_column_name].documentation(),
+            description="The id of the record to fetch",
+            required=True,
+        )

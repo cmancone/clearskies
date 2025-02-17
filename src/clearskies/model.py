@@ -8,6 +8,7 @@ import re
 from clearskies.functional import string
 from clearskies.di import InjectableProperties, inject
 from clearskies.query import Query, Sort, Condition, Join
+from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.schema import Schema
 if TYPE_CHECKING:
     from clearskies import Column
@@ -578,7 +579,7 @@ class Model(Schema, InjectableProperties):
     def documentation_pagination_next_page_example(self: Self, case_mapping: Callable) -> dict[str, Any]:
         return self.backend.documentation_pagination_next_page_example(case_mapping)
 
-    def documentation_pagination_parameters(self: Self, case_mapping: Callable) -> list[tuple[Any, Any]]:
+    def documentation_pagination_parameters(self: Self, case_mapping: Callable) -> list[tuple[AutoDocSchmea, str]]:
         return self.backend.documentation_pagination_parameters(case_mapping)
 
     def no_queries(self) -> None:

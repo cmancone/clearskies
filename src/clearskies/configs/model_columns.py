@@ -2,7 +2,7 @@ from clearskies.configs import select_list
 
 
 class ModelColumns(select_list.SelectList):
-    def __init__(self, model_column_config_name="", required=False, default=None):
+    def __init__(self, model_column_config_name="", allow_relationship_references=False, required=False, default=None):
         self.required = required
         self.default = default
         self.model_column_config_name = model_column_config_name
@@ -43,6 +43,8 @@ class ModelColumns(select_list.SelectList):
             return
 
         for value in values:
+            if self.allow_relationship_references and "." in value:
+                value = value.split(".")[0]
             if value not in allowed_columns:
                 error_prefix = self._error_prefix(instance)
                 my_description = self.my_description()

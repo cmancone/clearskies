@@ -93,7 +93,7 @@ class Jwks(Authentication, clearskies.di.InjectableProperties):
         if auth_header[:7].lower() != "bearer ":
             raise ClientError("Missing 'Bearer ' prefix in authorization header")
         self.validate_jwt(auth_header[7:])
-        input_output.set_authorization_data(self.jwt_claims)
+        input_output.authorization_data = self.jwt_claims
         return True
 
     def validate_jwt(self, raw_jwt):

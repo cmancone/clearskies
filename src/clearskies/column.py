@@ -628,6 +628,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         """
         return "join_table_" + self.name
 
+    def add_join(self, model: Model) -> Model:
+        return model
+
     def where_for_request(
         self,
         model: clearskies.model.Model,
