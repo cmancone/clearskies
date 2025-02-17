@@ -91,4 +91,4 @@ class Csp(SecurityHeader):
         if not parts:
             return
         header_value = "; ".join(parts)
-        input_output.set_header(self.header_name, header_value)
+        input_output.response_headers.add(self.header_name, header_value)

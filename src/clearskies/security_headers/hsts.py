@@ -19,4 +19,4 @@ class Hsts(SecurityHeader):
         value = f"max-age={self.max_age} ;"
         if self.include_sub_domains:
             value += " includeSubDomains"
-        input_output.set_header("strict-transport-security", value)
+        input_output.response_headers.add("strict-transport-security", value)

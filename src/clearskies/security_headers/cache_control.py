@@ -63,4 +63,4 @@ class CacheControl(SecurityHeader):
             parts.append(f"{key_name}={value}")
         if not parts:
             return
-        input_output.set_header("cache-control", ", ".join(parts))
+        input_output.response_headers.add("cache-control", ", ".join(parts))

@@ -41,10 +41,10 @@ class Cors(SecurityHeader):
             value = getattr(self, key)
             if not value:
                 continue
-            input_output.set_header(f"access-control-allow-{key}".replace("_", "-"), ", ".join(value))
+            input_output.response_headers.add(f"access-control-allow-{key}".replace("_", "-"), ", ".join(value))
         if self.credentials:
-            input_output.set_header("access-control-allow-credentials", "true")
+            input_output.response_headers.add("access-control-allow-credentials", "true")
         if self.max_age:
-            input_output.set_header("access-control-max-age", str(self.max_age))
+            input_output.response_headers.add("access-control-max-age", str(self.max_age))
         if self.origin:
-            input_output.set_header("access-control-allow-origin", str(self.origin))
+            input_output.response_headers.add("access-control-allow-origin", str(self.origin))

@@ -94,6 +94,7 @@ from .security_headers import SecurityHeaders
 from .select import Select
 from .select_list import SelectList
 from .string import String
+from .string_dict import StringDict
 from .string_list import StringList
 from .string_list_or_callable import StringListOrCallable
 from .string_or_callable import StringOrCallable
@@ -136,6 +137,7 @@ __all__ = [
     "Select",
     "SelectList",
     "String",
+    "StringDict",
     "StringList",
     "StringListOrCallable",
     "StringOrCallable",
