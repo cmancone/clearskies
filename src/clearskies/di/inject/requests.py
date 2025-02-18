@@ -6,6 +6,6 @@ class Requests(Injectable):
         self.cache = cache
 
     def __get__(self, instance, parent) -> requests.Session:
-        if not instance:
+        if instance is None:
             return self  # type: ignore
         return self._di.build_class(requests.Session, cache=self.cache)

@@ -72,7 +72,7 @@ class Integer(Column):
     def __set__(self, instance, value: int) -> None:
         instance._next_data[self.name] = value
 
-    def from_backend(self, instance, value) -> int:
+    def from_backend(self, value) -> int:
         return int(value)
 
     def to_backend(self, data):

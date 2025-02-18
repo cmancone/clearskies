@@ -1,6 +1,7 @@
 #from .api_backend import ApiBackend
 #from .api_get_only_backend import ApiGetOnlyBackend
-from .backend import Backend
+from clearskies.backends.backend import Backend
+from clearskies.backends.memory_backend import MemoryBackend
 #from .cursor_backend import CursorBackend
 #from .example_backend import ExampleBackend
 #from .file_backend import FileBackend
@@ -18,7 +19,7 @@ __all__ = [
     #"ExampleBackend",
     #"FileBackend",
     #"JsonBackend",
-    #"MemoryBackend",
+    "MemoryBackend",
     #"RestfulApiAdvancedSearchBackend",
     #"SecretsBackend",
 ]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Self, TYPE_CHECKING
+from collections import OrderedDict
 
 if TYPE_CHECKING:
     from clearskies import Column
@@ -43,7 +44,7 @@ class Schema:
             attribute = getattr(cls, attribute_name)
             # use duck typing instead of isinstance to decide which attribute is a column.
             # We have to do this to avoid circular imports.
-            if not hasattr(attribute, "setable") and not hasattr(attribute, "default"):
+            if not hasattr(attribute, "from_backend") and not hasattr(attribute, "to_backend"):
                 continue
 
             if attribute_name in overrides:

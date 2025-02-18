@@ -74,7 +74,7 @@ class Boolean(Column):
     ):
         pass
 
-    def from_backend(self, instance, value) -> bool:
+    def from_backend(self, value) -> bool:
         if value == "0":
             return False
         return bool(value)

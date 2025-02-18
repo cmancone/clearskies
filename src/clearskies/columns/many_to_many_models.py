@@ -71,6 +71,8 @@ class ManyToManyModels(Column):
         pass
 
     def __get__(self, instance, parent):
+        if instance is None:
+            return self
         return self.many_to_many_column.get_related_models(instance)
 
     def __set__(self, instance, value: Model | list[Model] | list[dict[str, Any]]) -> None:

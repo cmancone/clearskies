@@ -70,6 +70,9 @@ class ManyToManyPivots(Column):
         pass
 
     def __get__(self, instance, parent):
+        if instance is None:
+            return self
+
         many_to_many_column = self.many_to_many_column # type: ignore
         own_column_name_in_pivot = self.config("own_column_name_in_pivot")
         my_id = data[self.config("own_id_column_name")]

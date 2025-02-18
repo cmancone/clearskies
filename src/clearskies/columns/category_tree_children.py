@@ -50,7 +50,7 @@ class CategoryTreeChildren(Column):
         pass
 
     def __get__(self, model, parent):
-        if not model:
+        if model is None:
             return self # type:  ignore
 
         return self.relatives(model)

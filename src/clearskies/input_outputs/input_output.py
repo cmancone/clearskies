@@ -7,7 +7,6 @@ import clearskies.configurable
 from clearskies.exceptions import ClientError
 from .headers import Headers
 import clearskies.typing
-import clearskies.parameters_to_properties
 from clearskies.configs import AnyDict, StringDict
 
 
@@ -24,8 +23,7 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
     _body_as_json: dict[str, Any] = {}
     _body_loaded_as_json = False
 
-    @clearskies.parameters_to_properties.parameters_to_properties
-    def __init__(self, routing_data: dict[str, str] = {}, authorization_data: dict[str, Any] = {}):
+    def __init__(self):
         self.response_headers = Headers()
         self.request_headers = Headers(self.get_request_headers())
         self.query_parameters = {key: val[0] for (key, val) in parse_qs(self.get_query_string())}

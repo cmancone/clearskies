@@ -89,7 +89,7 @@ class Datetime(Column):
     ):
         pass
 
-    def from_backend(self, instance, value) -> datetime.datetime | None:
+    def from_backend(self, value) -> datetime.datetime | None:
         if not value or value == self.backend_default:
             return None
         if isinstance(value, str):

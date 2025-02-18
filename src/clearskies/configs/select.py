@@ -4,6 +4,8 @@ from clearskies.configs import string
 class Select(string.String):
     def __init__(self, allowed_values: list[str], required=False, default=None):
         self.allowed_values = allowed_values
+        self.required = required
+        self.default=default
 
     def __set__(self, instance, value: str):
         if value is None:

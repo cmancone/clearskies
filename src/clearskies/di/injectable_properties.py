@@ -96,7 +96,7 @@ class InjectableProperties:
         if not cls._injectable_properties_found:
             cls._injectable_descriptors = []
             cls._injectable_properties = []
-            for attribute_name in dir(self):
+            for attribute_name in dir(cls):
                 # Per the docs above, we want to inject properties for one of two things: the injectables from clearskies.di.inject,
                 # and any object that itself extends this class.  This is mildly tricky because the injectables are descriptors, and
                 # so we get them using getattr on the class, while if it's not a descriptor, then we want to use getattr on self.

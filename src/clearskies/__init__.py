@@ -1,12 +1,12 @@
 from . import typing
 
 from . import (
-    # authentication,
+    authentication,
     autodoc,
     backends,
     columns,
     configs,
-    # contexts,
+    contexts,
     di,
     exceptions,
     functional,
@@ -31,12 +31,14 @@ from .model import Model
 
 __all__ = [
     "Action",
+    "Authentication",
     "autodoc",
     "backends",
     "Column",
     "columns",
     "configs",
     "Configurable",
+    "contexts",
     "di",
     "Endpoint",
     "Environment",
@@ -47,8 +49,6 @@ __all__ = [
     "typing",
     "Validator",
     "query",
-    # "authentication",
-    # "contexts",
     # "secrets",
     "SecurityHeader",
     "security_headers",

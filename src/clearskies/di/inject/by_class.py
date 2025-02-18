@@ -9,7 +9,7 @@ class ByClass(Injectable):
         self.cache = cache
 
     def __get__(self, instance, parent) -> Any:
-        if not instance:
+        if instance is None:
             return self  # type: ignore
 
         if self.cls in self._di._class_overrides_by_class:

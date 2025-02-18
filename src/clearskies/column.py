@@ -165,7 +165,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     only available during an HTTP request, so if you set this on the model level, you'll get an error
     if you try to make saves to the model in a context where authorization data and/or headers don't exist.
     """
-    created_by_source_type = clearskies.configs.select.Select(["authorization_data", "http_header", "routing_data"])
+    created_by_source_type = clearskies.configs.select.Select(["authorization_data", "http_header", "routing_data", ""], default="")
 
     """
     If True, and the key requested via created_by_source_key doesn't exist in the designated source, an error will be raised.
@@ -255,7 +255,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         self.name = name
         self.finalize_and_validate_configuration()
 
-    def from_backend(self, model: Model, value):
+    def from_backend(self, value):
         """
         Takes the backend representation and returns a python representation
 
@@ -284,7 +284,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         pass
 
     def __get__(self, instance: Model, parent: type):
-        if not instance:
+        if instance is None:
             return self
 
         if self.name not in instance._data:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Any, Callable, Iterator, Self, TYPE_CHECKING
 from abc import abstractmethod
-from collections import OrderedDict
 import re
 
 
@@ -50,7 +49,7 @@ class Model(Schema, InjectableProperties):
             raise TypeError(f"The 'id_column_name' property of a model must be a string that specifies the name of the id column, but that is not the case for model '{self.__class__.__name__}'.")
         if not self.backend:
             raise ValueError(f"You must define the 'backend' property for every model class, but this is missing for model '{self.__class__.__name__}'")
-        if not hasattr(self.backend, documentation_pagination_parameters):
+        if not hasattr(self.backend, "documentation_pagination_parameters"):
             raise TypeError(f"The 'backend' property of a model must be an object that extends the clearskies.Backend class, but that is not the case for model '{self.__class__.__name__}'.")
 
     @classmethod
@@ -154,7 +153,7 @@ class Model(Schema, InjectableProperties):
         data = self.columns_post_save(data, id, save_columns)
         self.post_save(data, id)
 
-        self.data = new_data
+        self.set_raw_data(new_data)
         self._transformed_data = {}
         self._previous_data = old_data
         self._touched_columns = {key: True for key in data.keys()}
@@ -275,11 +274,7 @@ class Model(Schema, InjectableProperties):
     def columns_post_save(self: Self, data: dict[str, Any], id: str | int, columns) -> dict[str, Any]:
         """Uses the column information present in the model to make additional changes as needed after saving"""
         for column in columns.values():
-            data = column.post_save(data, self, id)
-            if data is None:
-                raise ValueError(
-                    f"Column {column.name} of type {column.__class__.__name__} did not return any data for post_save"
-                )
+            column.post_save(data, self, id)
         return data
 
     def columns_save_finished(self: Self, columns) -> None:
@@ -534,6 +529,7 @@ class Model(Schema, InjectableProperties):
         NOTE: the difference between this and `model.create` is that model.create() actually saves a record in the backend,
         while this method just creates a model object populated with the given data.
         """
+        print("GO!")
         model = self._di.build(self.__class__, cache=False)
         model.set_raw_data(data)
         return model

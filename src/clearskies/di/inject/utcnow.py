@@ -6,6 +6,6 @@ class Utcnow(Injectable):
         self.cache = cache
 
     def __get__(self, instance, parent) -> datetime.datetime:
-        if not instance:
+        if instance is None:
             return self  # type: ignore
         return self._di.build_from_name("utcnow", cache=self.cache)

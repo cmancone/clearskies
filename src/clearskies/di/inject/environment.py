@@ -7,6 +7,6 @@ class Environment(Injectable):
         self.cache = cache
 
     def __get__(self, instance, parent) -> EnvironmentDependency:
-        if not instance:
+        if instance is None:
             return self  # type: ignore
         return self._di.build_from_name("environment", cache=self.cache)

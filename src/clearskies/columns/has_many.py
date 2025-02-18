@@ -110,7 +110,7 @@ class HasMany(Column):
         pass
 
     def __get__(self, model, parent):
-        if not model:
+        if model is None:
             return self # type:  ignore
 
         foreign_column_name = self.foreign_column_name

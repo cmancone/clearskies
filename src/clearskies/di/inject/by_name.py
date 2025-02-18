@@ -9,6 +9,6 @@ class ByName(Injectable):
         self.cache = cache
 
     def __get__(self, instance, parent) -> Any:
-        if not instance:
+        if instance is None:
             return self  # type: ignore
         return self._di.build_from_name(self.name, cache=self.cache)

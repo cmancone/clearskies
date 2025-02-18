@@ -21,14 +21,14 @@ class String(Column):
         pass
 
     def __get__(self, instance, parent):
-        if not instance:
+        if instance is None:
             return self
 
         if self.name not in instance._data:
             return None # type: ignore
 
         if self.name not in instance._transformed_data:
-            instance._transformed_data[self.name] = self.from_backend(instance, instance._data[self.name])
+            instance._transformed_data[self.name] = self.from_backend(instance._data[self.name])
 
         return instance._transformed_data[self.name]
 

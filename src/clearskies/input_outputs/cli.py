@@ -1,31 +1,24 @@
 import json
-from . import exceptions
-from ..handlers.exceptions import ClientError
+import sys
+from sys import stdin
+from os import isatty
 
+from clearskies.input_outputs.input_output import InputOutput
 
-class CLI:
-    _sys = None
-    _args = None
-    _flags = None
-    _cached_body = None
-    _has_body = None
-    _input_type = None
-    _body_loaded_as_json = None
-    _body_as_json = None
-    _routing_data = None
-    _authorization_data = None
+class Cli(InputOutput):
+    _args: list[str] = []
+    _has_body: bool = False
+    _body: str = ""
+    _request_method: str = ""
+    _request_headers = {}
 
-    def __init__(self, sys):
-        self._sys = sys
+    def __init__(self):
+        self._request_headers = {}
         self._args = []
-        self._kwargs = {}
-        self._request_method = None
-        self._parse_args(self._sys.argv)
-        self._authorization_data = None
+        self._parse_args(sys.argv)
+        super().__init__()
 
     def respond(self, response, status_code=200):
-        if status_code == 404:
-            raise exceptions.CLINotFound()
         if status_code != 200:
             self._sys.exit(response)
         if type(response) != str:
@@ -33,39 +26,102 @@ class CLI:
         else:
             print(response)
 
-    def error(self, body):
-        return self.respond(body, 400)
-
-    def success(self, body):
-        return self.respond(body, 200)
-
     def get_arguments(self):
         return self._sys.argv
 
     def _parse_args(self, argv):
-        for arg in argv[1:]:
-            if arg[0] == "-":
-                arg = arg.lstrip("-")
-                if "=" in arg:
-                    name = arg[: arg.index("=")]
-                    value = arg[arg.index("=") + 1 :]
-                else:
-                    name = arg
-                    value = True
-                if name in self._kwargs:
-                    raise exceptions.CLIInputError(f"Received multiple flags for '{name}'")
-                if name == "X":
-                    name = "request_method"
-                if name == "request_method":
-                    if self._request_method:
-                        raise ValueError(
-                            "Received multiple flags for the request method (setablve via 'request_method' and 'X')"
-                        )
-                    self._request_method = value.upper()
-                else:
-                    self._kwargs[name] = value
+        tty_data = None
+        if not isatty(stdin.fileno()):
+            tty_data = sys.stdin.read().strip()
+
+        request_headers = {}
+        args = []
+        kwargs = {}
+        index = 0
+        # In general we will use positional arguments for routing, and kwargs for request data.
+        # If things start with a dash then they are assumed to be a kwarg.  If not, then a positional argument.
+        # we don't allow for simple flags: everything is a positional argument or a key/value pair
+        # For kwargs, we'll allow for using an equal sign or not, e.g.: '--key=value' or '--key value' or '-d thing'.
+        while index < len(argv)-1:
+            index += 1
+
+            # if we don't start with a dash then we are a positional argument
+            arg = argv[index]
+            if arg[0] != "-":
+                self.args.append(arg)
+                continue
+
+            # otherwise a kwarg
+            arg = arg.strip("-")
+
+            # if we have an equal sign in our kwarg then it's self-contained
+            if "=" in arg:
+                [key, value] = arg.split("=", 1)
+
+            # otherwise we have to grab the next argument to get the value
             else:
-                self._args.append(arg)
+                key = arg
+                value = argv[index+1]
+                if "-" in value:
+                    raise ValueError(f"Invalid clearskies cli calling sequence: found two key names next to eachother without any values: '-{arg} {value}'")
+                index += 1
+
+            if key.lower() == "h":
+                parts = value.split(":", 1)
+                if len(parts) != 2:
+                    raise ValueError(f"Invalid clearskies cli calling sequence: a parameter named '-H' was found, which is treated as a request header, but it didn't have the proper 'key: value' format.")
+                request_headers[parts[0]] = parts[1]
+                continue
+
+            kwargs[key] = value
+
+        self.request_headers = request_headers
+        self._request_method = "GET"
+        request_method_source = ""
+        for key in ["x", "X", "request_method"]:
+            if key not in kwargs:
+                continue
+
+            if request_method_source:
+                raise ValueError(f"Invalid clearskies cli calling sequence: the request method was specified via both the -{key} parameter and the -{request_method_source} parameter. To avoid ambiguity, it should only be set once.")
+            self._request_method = kwargs[key]
+            del kwargs[key]
+            request_method_source = key
+
+        final_data = None
+        data_source = None
+        if tty_data:
+            final_data = tty_data
+            data_source = "piped input"
+        if kwargs.get("d"):
+            if final_data:
+                raise ValueError(f"Invalid clearskies cli calling sequence: request data was sent by both the -d parameter and {data_source}.  To avoid ambiguity, it should only be sent one way.")
+            final_data = kwargs.get("d")
+            data_source = "the -d parameter"
+            del kwargs["d"]
+        if kwargs.get("data"):
+            if final_data:
+                raise ValueError(f"Invalid calling sequence: request data was sent by both the -data parameter and {data_source}.  To avoid ambiguity, it should only be sent one way.")
+            final_data = kwargs.get("data")
+            data_source = "the -data parameter"
+            del kwargs["data"]
+        if final_data and len(kwargs):
+            raise ValueError(f"Invalid calling sequence: extra parameters were specified after sending a body via {data_source}.  To avoid ambiguity, send all data via {data_source}.")
+        if not final_data and len(kwargs):
+            final_data = kwargs
+            data_source = "kwargs"
+
+        # Most of the above inputs result in a string for our final data, in which case we'll leave it as the "raw body"
+        # so that it can optionally be interpreted as JSON.  If we received a bunch of kwargs though, we'll allow those to
+        # only be "read" as JSON.
+        if data_source == "kwargs":
+            self._body_as_json = final_data
+            self._body_loaded_as_json = True
+            self._has_body = True
+            self._body = json.dumps(final_data)
+        elif final_data:
+            self._has_body = True
+            self._body = final_data
 
     def get_script_name(self):
         return sys.argv[0]
@@ -77,106 +133,25 @@ class CLI:
         return self.get_path_info()
 
     def get_request_method(self):
-        return self._request_method if self._request_method else "GET"
-
-    def request_data(self, required=True):
-        request_data = self.json_body(False)
-        if not request_data:
-            if self.has_body():
-                raise ClientError("Request body was not valid JSON")
-            request_data = {}
-        return request_data
+        return self._request_method
 
     def has_body(self):
-        if self._has_body is None:
-            self._has_body = False
-            # we have a number of different input modes that we will treat as data input,
-            # all of which the callable handler will use as structured input when trying to
-            # compare data against a schema:
-
-            # isatty() means that someone is piping input into the program
-            # however, it behaves unreliably in "alternate" environments in later versions
-            # of python, so I'm removing it until I can find a better solution
-            # if not self._sys.stdin.isatty():
-            # self._has_body = True
-            # self._input_type = 'atty'
-            # or if the user set 'data' or 'd' keys
-            if "data" in self._kwargs or "d" in self._kwargs:
-                self._has_body = True
-                self._input_type = "data" if "data" in self._kwargs else "d"
-            # or finally if we have kwargs in general
-            elif len(self._kwargs):
-                self._has_body = True
-                self._input_type = "kwargs"
         return self._has_body
 
     def get_body(self):
         if not self.has_body():
             return ""
 
-        if self._cached_body is None:
-            if self._input_type == "atty":
-                self._cached_body = "\n".join([line.strip() for line in self._sys.stdin])
-            elif self._input_type == "data":
-                self._cached_body = self._kwargs["data"]
-            elif self._input_type == "data":
-                self._cached_body = self._kwargs["d"]
-            # we don't do anything about self._input_type == 'kwargs' because that only
-            # makes sense when trying to interpret the body as JSON, so we cover it
-            # in the _get_json_body method
-        return self._cached_body
-
-    def json_body(self, required=True):
-        json = self._get_json_body()
-        # if we get None then either the body was not JSON or was empty.
-        # If it is required then we have an exception either way.  If it is not required
-        # then we have an exception if a body was provided but it was not JSON.  We can check for this
-        # if json is None and there is an actual request body.  If json is none, the body is empty,
-        # and it was not required, then we can just return None
-        if json is None:
-            if required or self.has_body():
-                raise ClientError("Request body was not valid JSON")
-        return json
-
-    def _get_json_body(self):
-        if not self.has_body():
-            return None
-        if not self._body_loaded_as_json:
-            if self._input_type == "kwargs":
-                self._body_loaded_as_json = True
-                self._body_as_json = self._kwargs
-            elif self.get_body() is None:
-                self._body_as_json = None
-            else:
-                self._body_loaded_as_json = True
-                try:
-                    self._body_as_json = json.loads(self.get_body())
-                except json.JSONDecodeError:
-                    self._body_as_json = None
-        return self._body_as_json
-
-    def routing_data(self):
-        return self._routing_data if self._routing_data is not None else {}
-
-    def set_routing_data(self, data):
-        self._routing_data = data
-
-    def add_routing_data(self, key, value=None):
-        if self._routing_data is None:
-            self._routing_data = {}
-        if type(key) == dict:
-            self._routing_data = {**self._routing_data, **key}
-        else:
-            self._routing_data[key] = value
+        return self._body
 
     def context_specifics(self):
         return {}
 
     def get_client_ip(self):
-        return "cli"
+        return "127.0.0.1"
 
-    def set_authorization_data(self, data):
-        self._authorization_data = data
+    def get_query_string(self):
+        return ""
 
-    def get_authorization_data(self):
-        return self._authorization_data if self._authorization_data else {}
+    def get_request_headers(self):
+        return self._request_headers

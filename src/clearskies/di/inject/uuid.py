@@ -9,6 +9,6 @@ class Uuid(Injectable):
         self.cache = cache
 
     def __get__(self, instance, parent) -> uuid:
-        if not instance:
+        if instance is None:
             return self  # type: ignore
         return self._di.build_from_name("uuid", cache=self.cache) # type: ignore

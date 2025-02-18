@@ -51,7 +51,7 @@ class BelongsToModel(Column):
         pass
 
     def __get__(self, model, parent):
-        if not model:
+        if model is None:
             return self # type:  ignore
 
         belongs_to_column = getattr(model.__class__, self.belongs_to_column_name)

@@ -217,6 +217,8 @@ class ManyToManyIds(Column):
         pass
 
     def __get__(self, instance, parent):
+        if instance is None:
+            return self
         related_id_column_name = self.related_model_class.id_column_name
         return [getattr(model, related_id_column_name) for model in self.get_related_models(model)]
 

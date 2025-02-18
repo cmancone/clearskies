@@ -6,6 +6,6 @@ class Di(Injectable):
         pass
 
     def __get__(self, instance, parent) -> Any:
-        if not instance:
+        if instance is None:
             return self  # type: ignore
         return self._di

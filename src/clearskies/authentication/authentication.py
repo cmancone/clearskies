@@ -1,6 +1,10 @@
-from typing import Any
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+
 from clearskies.authentication.authorization import Authorization
-from clearskies.security_header import SecurityHeader
+
+if TYPE_CHECKING:
+    from clearskies.security_header import SecurityHeader
 
 class Authentication:
     is_public = True

@@ -72,7 +72,7 @@ class Float(Column):
     def __set__(self, instance, value: float) -> None:
         instance._next_data[self.name] = value
 
-    def from_backend(self, instance, value) -> float:
+    def from_backend(self, value) -> float:
         return float(value)
 
     def to_backend(self, data):

@@ -43,7 +43,7 @@ class Timestamp(Datetime):
     ):
         pass
 
-    def from_backend(self, instance: Model, value) -> datetime.datetime | None:
+    def from_backend(self, value) -> datetime.datetime | None:
         mult = 1000 if self.include_microseconds else 1
         if not value:
             date = None
