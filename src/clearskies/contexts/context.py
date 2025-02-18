@@ -37,6 +37,21 @@ class Context(ABC):
         self.application = application
 
     def execute_application(self, input_output: InputOutput):
-        if callable(self.application):
-            return self.di.call_function(self.application, **input_output.get_context_for_callables())
-
+        if isinstance(self.application, clearskies.endpoint.Endpoint):
+            self.application.injectable_properties(self.di)
+            return self.application(input_output)
+        elif callable(self.application):
+            try:
+                return input_output.respond(self.di.call_function(self.application, **input_output.get_context_for_callables()))
+            except clearskies.exceptions.ClientError as e:
+                return input_output.respond(str(e), 400)
+            except clearskies.exceptions.Authentication as e:
+                return input_output.respond(str(e), 401)
+            except clearskies.exceptions.Authorization as e:
+                return input_output.respond(str(e), 403)
+            except clearskies.exceptions.NotFound as e:
+                return input_output.respond(str(e), 404)
+            except clearskies.exceptions.MovedPermanently as e:
+                return input_output.respond(str(e), 302)
+            except clearskies.exceptions.MovedTemporarily as e:
+                return input_output.respond(str(e), 307)

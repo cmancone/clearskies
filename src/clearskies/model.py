@@ -88,6 +88,7 @@ class Model(Schema, InjectableProperties):
     def set_raw_data(self: Self, data: dict[str, Any]) -> None:
         self.no_queries()
         self._data = {} if data is None else data
+        self._transformed_data = {}
 
     def save(self: Self, data: dict[str, Any] | None = None, columns: dict[str, Column]={}) -> bool:
         """
@@ -498,8 +499,7 @@ class Model(Schema, InjectableProperties):
             self.get_query(),
             next_page_data=self._next_page_data,
         )
-        models = iter([self.model(row) for row in raw_rows])
-        return models
+        return iter([self.model(row) for row in raw_rows])
 
     def paginate_all(self: Self) -> list[Self]:
         """
@@ -529,7 +529,6 @@ class Model(Schema, InjectableProperties):
         NOTE: the difference between this and `model.create` is that model.create() actually saves a record in the backend,
         while this method just creates a model object populated with the given data.
         """
-        print("GO!")
         model = self._di.build(self.__class__, cache=False)
         model.set_raw_data(data)
         return model

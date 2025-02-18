@@ -18,6 +18,7 @@ class ModelColumn(select.Select):
                 f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' to a string parameter"
             )
 
+        instance._set_config(self, value)
         # unlike select, we won't validate the value currently because we won't be able to
         # do that until the finalize_and_validate_configuration phase
 
@@ -27,7 +28,7 @@ class ModelColumn(select.Select):
     def my_description(self):
         return "column"
 
-    def get_model_class(self):
+    def get_model_class(self, instance):
         model_class = self.model_class
         if not model_class and self.model_column_config_name:
             model_class = getattr(instance, self.model_column_config_name)
@@ -42,14 +43,14 @@ class ModelColumn(select.Select):
         # to check for a valid column we need to know the name of the model class.
         # This can be either provided to us directly or we may be given the name of a configuration
         # from which we fetch the model class
-        model_class = self.get_model_class()
+        model_class = self.get_model_class(instance)
 
         # if we don't have one though, no worries - some classes have to provide it later and
         # can trigger validation then.
         if not model_class:
             return
 
-        allowed_columns = self.get_allowed_columns(model_class, model_class.get_column_configs())
+        allowed_columns = self.get_allowed_columns(model_class, model_class.get_columns())
 
         value = instance._get_config(self)
         if not value:

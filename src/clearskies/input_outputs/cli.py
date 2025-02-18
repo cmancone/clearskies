@@ -20,7 +20,7 @@ class Cli(InputOutput):
 
     def respond(self, response, status_code=200):
         if status_code != 200:
-            self._sys.exit(response)
+            sys.exit(response)
         if type(response) != str:
             print(json.dumps(response))
         else:
@@ -75,7 +75,7 @@ class Cli(InputOutput):
 
             kwargs[key] = value
 
-        self.request_headers = request_headers
+        self._request_headers = request_headers
         self._request_method = "GET"
         request_method_source = ""
         for key in ["x", "X", "request_method"]:

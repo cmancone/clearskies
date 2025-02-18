@@ -2,11 +2,13 @@ from functools import cmp_to_key
 import inspect
 from typing import Any, Callable, Type
 
+from clearskies import functional
 from clearskies.autodoc.schema import Integer as AutoDocInteger
 from clearskies.autodoc.schema import Schema as AutoDocSchema
 import clearskies.model
 import clearskies.query
 from clearskies.backends.backend import Backend
+from clearskies.di import InjectableProperties, inject
 
 
 class Null:
@@ -178,7 +180,9 @@ class MemoryTable:
         return self._operator_lambda_builders[condition.operator.lower()](column, values, self.null)
 
 
-class MemoryBackend(Backend):
+class MemoryBackend(Backend, InjectableProperties):
+    default_data = inject.ByName("memory_backend_default_data")
+    default_data_loaded = False
     _tables: dict[str, MemoryTable] = {}
     _silent_on_missing_tables: bool = False
 
@@ -186,16 +190,39 @@ class MemoryBackend(Backend):
         self._tables = {}
         self._silent_on_missing_tables = True
 
+    def load_default_data(self):
+        if self.default_data_loaded:
+            return
+        self.default_data_loaded = True
+        if not isinstance(self.default_data, list):
+            raise TypeError(f"'memory_backend_default_data' should be populated with a list, but I received a value of type '{self.default_data.__class__.__name__}'")
+        for (index, table_data) in enumerate(self.default_data):
+            if "model_class" not in table_data:
+                raise TypeError(f"Each entry in the 'memory_backend_default_data' list should have a key named 'model_class', but entry #{index+1} is missing this key.")
+            model_class = table_data["model_class"]
+            if not functional.validations.is_model_class(table_data["model_class"]):
+                raise TypeError(f"The 'model_class' key in 'memory_backend_default_data' for entry #{index+1} is not a model class.")
+            if "records" not in table_data:
+                raise TypeError(f"Each entry in the 'memory_backend_default_data' list should have a key named 'records', but entry #{index+1} is missing this key.")
+            records = table_data["records"]
+            if not isinstance(records, list):
+                raise TypeError(f"The 'records' key in 'memory_backend_default_data' for entry #{index+1} was not a list.")
+            self.create_table(model_class)
+            for record in records:
+                self.create_with_model_class(record, model_class)
+
     def silent_on_missing_tables(self, silent=True):
         self._silent_on_missing_tables = silent
 
     def create_table(self, model_class: Type[clearskies.model.Model]):
+        self.load_default_data()
         table_name = model_class.destination_name()
         if table_name in self._tables:
             return
         self._tables[table_name] = MemoryTable(model_class)
 
     def has_table(self, model_class: Type[clearskies.model.Model]) -> bool:
+        self.load_default_data()
         table_name = model_class.destination_name()
         return table_name in self._tables
 
@@ -207,6 +234,10 @@ class MemoryBackend(Backend):
             else:
                 raise ValueError(f"The memory backend was asked to work with the model '{model_class.__name__}' but this model hasn't been explicitly added to the memory backend.  This typically means that you are querying for records in a model but haven't created any yet.")
         return self._tables[table_name]
+
+    def create_with_model_class(self, data: dict[str, Any], model_class: Type[clearskies.model.Model]) -> dict[str, Any]:
+        self.create_table(model_class)
+        return self.get_table(model_class).create(data)
 
     def update(self, id: int | str, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         self.create_table(model.__class__)

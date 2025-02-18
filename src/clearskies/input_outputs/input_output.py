@@ -16,9 +16,9 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
     """
     response_headers: Headers = None # type: ignore
     request_headers: Headers = None # type: ignore
-    query_parameters = clearskies.configs.StringDict()
-    routing_data = clearskies.configs.StringDict()
-    authorization_data = clearskies.configs.AnyDict()
+    query_parameters = clearskies.configs.AnyDict(default={})
+    routing_data = clearskies.configs.StringDict(default={})
+    authorization_data = clearskies.configs.AnyDict(default={})
 
     _body_as_json: dict[str, Any] = {}
     _body_loaded_as_json = False
@@ -26,7 +26,9 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
     def __init__(self):
         self.response_headers = Headers()
         self.request_headers = Headers(self.get_request_headers())
-        self.query_parameters = {key: val[0] for (key, val) in parse_qs(self.get_query_string())}
+        self.query_parameters = {key: val[0] for (key, val) in parse_qs(self.get_query_string()).items()}
+        self.authorization_data = {}
+        self.routing_data = {}
         self.finalize_and_validate_configuration()
 
     @abstractmethod

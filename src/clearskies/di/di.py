@@ -892,3 +892,6 @@ class Di:
 
     def provide_secrets(self):
         return clearskies.secrets.Secrets()
+
+    def provide_memory_backend_default_data(self):
+        return {}

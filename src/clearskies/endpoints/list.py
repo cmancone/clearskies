@@ -2,6 +2,7 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING
 
+from clearskies import authentication
 from clearskies import autodoc
 from clearskies import typing
 from clearskies.endpoint import Endpoint
@@ -10,13 +11,141 @@ from clearskies import autodoc
 from clearskies.functional import string
 from clearskies.input_outputs import InputOutput
 import clearskies.configs
-import clearskies.Exceptions
+import clearskies.exceptions
 
 if TYPE_CHECKING:
     from clearskies.model import Model
 
 
 class List(Endpoint):
+    """
+    Create a list endpoint that fetches and returns records to the end client.
+
+    A list endpoint has four required parameters:
+
+    | Name                       | Value                                                                                 |
+    |----------------------------|---------------------------------------------------------------------------------------|
+    | `model_class`              | The model class for the endpoint to use to find and return records.                   |
+    | `readable_column_names`    | A list of columns from the model class that the endpoint should return to the client. |
+    | `sortable_column_names`    | A list of columns that the client is allowed to sort by.                              |
+    | `default_sort_column_name` | The default column to sort by.                                                        |
+
+    Here's a basic working example:
+
+    ```
+    import clearskies
+
+    class User(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+
+    list_users = clearskies.endpoints.List(
+        model_class=User,
+        readable_column_names=["id", "name"],
+        sortable_column_names=["id", "name"],
+        default_sort_column_name="name",
+    )
+
+    wsgi = clearskies.contexts.WsgiRef(
+        list_users,
+        classes=[User],
+        bindings={
+            "memory_backend_default_data": [
+                {
+                    "model_class": User,
+                    "records": [
+                        {"id": "1-2-3-4", "name": "Bob"},
+                        {"id": "1-2-3-5", "name": "Jane"},
+                        {"id": "1-2-3-6", "name": "Greg"},
+                    ]
+                },
+            ]
+        }
+    )
+    wsgi()
+    ```
+
+    You can then fetch your records:
+
+    ```
+    $ curl 'http://localhost:8080/' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {"id": "1-2-3-4", "name": "Bob"},
+            {"id": "1-2-3-6", "name": "Greg"},
+            {"id": "1-2-3-5", "name": "Jane"},
+        ],
+        "pagination": {
+            "number_results": 3,
+            "limit": 50,
+            "next_page": {}
+        },
+        "input_errors": {}
+    }
+    ```
+
+    Pagination can be set via query parameters or a JSON body:
+
+    ```
+    $ curl 'http://localhost:8080/?sort=name&direction=desc&limit=2' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {"id": "1-2-3-5", "name": "Jane"},
+            {"id": "1-2-3-6", "name": "Greg"},
+        ],
+        "pagination": {
+            "number_results": 3,
+            "limit": 2,
+            "next_page": {"start": 2}
+        },
+        "input_errors": {}
+    }
+    ```
+
+    In the response, '.pagination.next_page` is a dictionary that returns the query parameters to set in order to fetch the next page of results.
+    Note that the pagination method depends on the backend.  The memory backend supports pagination via start/limit, while other backends may
+    support alternate pagination schemes.  Clearskies automatically handles the difference, so it's important to use `.pagination.next_page` to fetch
+    the next page of results.
+
+    Use `where`, `joins`, and `group_by` to automatically adjust the query used by the list endpoint.  In particular, where is a list of either
+    conditions (as a string) or a callable that can modify the query directly via the model class.  For example:
+
+    ```
+    list_users = clearskies.endpoints.List(
+        model_class=User,
+        readable_column_names=["id", "name"],
+        sortable_column_names=["id", "name"],
+        default_sort_column_name="name",
+        where=["name=Jane"],
+    )
+    ```
+
+    With the above definition, the list endpoint will only ever return records with a name of "Jane".  The following uses standard dependency
+    injection rules to execute a similar filter based on arbitrary logic required:
+
+    ```
+    import datetime
+
+    list_users = clearskies.endpoints.List(
+        model_class=User,
+        readable_column_names=["id", "name"],
+        sortable_column_names=["id", "name"],
+        default_sort_column_name="name",
+        where=[lambda models, now: models.where("name=Jane") if now > datetime.datetime(2025, 1, 1) else models],
+    )
+    ```
+
+    As shown in the above example, a function called in this way can request additional dependencies as needed, per the standard dependency rules.
+    The function needs to return the adjusted models object, which is usually as simple as returning the result of `models.where(?)`.  While the
+    above example uses a lambda function, of course you can attach any other kind of callable - a function, a method of a class, etc...
+    """
+
     """
     Columns from the model class that should be returned to the client.
     """
@@ -55,12 +184,12 @@ class List(Endpoint):
     """
     Additional conditions to always added to the results.
     """
-    where = clearskies.configs.Conditions()
+    where = clearskies.configs.Conditions(default=[])
 
     """
     Additional joins to always add to the results.
     """
-    joins = clearskies.configs.Joins()
+    joins = clearskies.configs.Joins(default=[])
 
     """
     A column to group by.
@@ -75,9 +204,10 @@ class List(Endpoint):
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
+        model_class: Type[clearskies.model.Model],
         readable_column_names: list[str],
         sortable_column_names: list[str],
-        default_sort_column: str,
+        default_sort_column_name: str,
         default_sort_direction: str = "ASC",
         default_limit: int = 50,
         maximum_limit: int = 200,
@@ -92,8 +222,8 @@ class List(Endpoint):
         external_casing: str = "snake_case",
         security_headers: list[SecurityHeader] = [],
         description: str = "",
-        authentication: Authentication = Public(),
-        authorization: Authorization = Authorization(),
+        authentication: Authentication = authentication.Public(),
+        authorization: Authorization = authentication.Authorization(),
     ):
         # we need to call the parent but don't have to pass along any of our kwargs.  They are all optional in our parent, and our parent class
         # just stores them in parameters, which we have already done.  However, the parent does do some extra initialization stuff that we need,
@@ -117,6 +247,8 @@ class List(Endpoint):
         for where in self.where:
             if callable(where):
                 models = self.di.call_function(where, models=models, **input_output.get_context_for_callables())
+            else:
+                models = models.where(where)
         models = models.where_for_request(
             models,
             input_output.routing_data,
@@ -145,8 +277,8 @@ class List(Endpoint):
         if not models.get_query().sorts:
             models = models.sort_by(
                 self.default_sort_column_name,
-                self.default_sort_direction_name,
-                primary_table=models.destination_name(),
+                self.default_sort_direction,
+                models.destination_name(),
             )
 
         return self.success(
@@ -158,16 +290,16 @@ class List(Endpoint):
         )
 
     def configure_models_from_request_data(self, models: Model, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]):
-        limit = int(query_parameters.get("limit", self.default_limit))
+        limit = int(self.from_either(request_data, query_parameters, "limit", default=self.default_limit))
         models = models.limit(limit)
         if pagination_data:
             models = models.pagination(**pagination_data)
-        sort = query_parameters.get("sort")
-        direction = query_parameters.get("direction")
+        sort = self.from_either(request_data, query_parameters, "sort")
+        direction = self.from_either(request_data, query_parameters, "direction")
         if sort and direction:
             models = self.add_join(sort, models)
             [sort_column, sort_table] = self.resolve_references_for_query(sort)
-            models = models.sort_by(sort_column, direction, primary_table=sort_table)
+            models = models.sort_by(sort_column, direction, sort_table)
 
         return [models, limit]
 
@@ -209,18 +341,18 @@ class List(Endpoint):
 
     def check_request_data(self, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]) -> None:
         if pagination_data:
-            error = self.model.validate_pagination_kwargs(pagination_data, self.auto_case_internal_column_name)
+            error = self.model.validate_pagination_data(pagination_data, self.auto_case_internal_column_name)
             if error:
-                raise clearskies.Exceptions.ClientError(error)
+                raise clearskies.exceptions.ClientError(error)
         for key in request_data.keys():
-            if key not in self.allowed_request_keys or key in ["sort", "direction", "limit"]:
+            if key not in self.allowed_request_keys:
                 raise clearskies.exceptions.ClientError(f"Invalid request parameter found in request body: '{key}'")
         for key in query_parameters.keys():
             if key not in self.allowed_request_keys:
                 raise clearskies.Exceptions.ClientError(f"Invalid request parameter found in URL data: '{key}'")
             if key in request_data:
                 raise clearskies.Exceptions.ClientError(f"Ambiguous request: '{key}' was found in both the request body and URL data")
-        limit = query_parameters.get("limit")
+        limit = self.from_either(request_data, query_parameters, "limit")
         if limit is not None and type(limit) != int and type(limit) != float and type(limit) != str:
             raise clearskies.Exceptions.ClientError("Invalid request: 'limit' should be an integer")
         if limit:
@@ -228,7 +360,7 @@ class List(Endpoint):
                 limit = int(limit)
             except ValueError:
                 raise clearskies.Exceptions.ClientError("Invalid request: 'limit' should be an integer")
-        if limit and limit > self.max_limit:
+        if limit and limit > self.maximum_limit:
             raise clearskies.Exceptions.ClientError(f"Invalid request: 'limit' must be at most {self.max_limit}")
         sort = self.from_either(request_data, query_parameters, "sort")
         direction = self.from_either(request_data, query_parameters, "direction")

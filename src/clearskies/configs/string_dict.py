@@ -19,12 +19,12 @@ class StringDict(config.Config):
             if not isinstance(key, str):
                 error_prefix = self._error_prefix(instance)
                 raise TypeError(
-                    f"{error_prefix} attempt to set a key of type '{item.__class__.__name__}' when only string keys are allowed."
+                    f"{error_prefix} attempt to set a key of type '{key.__class__.__name__}' when only string keys are allowed."
                 )
             if not isinstance(val, str):
                 error_prefix = self._error_prefix(instance)
                 raise TypeError(
-                    f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for key '{key}'.  A string was expected."
+                    f"{error_prefix} attempt to set a value of type '{val.__class__.__name__}' for key '{key}'.  A string was expected."
                 )
         instance._set_config(self, value)
 

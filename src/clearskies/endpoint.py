@@ -1,10 +1,12 @@
 from __future__ import annotations
 from typing import Any, Callable, TYPE_CHECKING
 import urllib.parse
+from collections import OrderedDict
 
 from clearskies.autodoc.request import Request, Parameter
 from clearskies.autodoc.response import Response
 from clearskies.autodoc import schema
+import clearskies.column
 import clearskies.configurable
 import clearskies.configs
 import clearskies.di
@@ -166,9 +168,10 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
     cors_header: SecurityHeader = None  # type: ignore
     has_cors: bool = False
-    _model = None
-    _columns = None
-    _readable_columns = None
+    _model: clearskies.model.Model = None
+    _columns: dict[str, clearskies.column.Column] = None
+    _readable_columns: dict[str, clearskies.column.Column] = None
+    _as_json_map: dict[str, clearskies.column.Column] = None # type: ignore
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -209,7 +212,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     @property
     def readable_columns(self) -> dict[str, Column]:
         if self._readable_columns is None:
-            self._readable_columns = {name: self._columns[name] for name in self.readable_column_names}
+            self._readable_columns = {name: self.columns[name] for name in self.readable_column_names}
         return self._readable_columns
 
     def top_level_authentication_and_authorization(self, input_output: InputOutput) -> None:
@@ -227,7 +230,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             raise exceptions.Authentication(str(client_error))
         if self.authorization:
             try:
-                if not authorization.gate(input_output.authorization_data, input_output):
+                if not self.authorization.gate(input_output.authorization_data, input_output):
                     raise exceptions.Authorization("Not Authorized")
             except exceptions.ClientError as client_error:
                 raise exception.Authorization(str(client_error))
@@ -259,8 +262,8 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             response = self.handle(input_output)
         except exceptions.ClientError as client_error:
             return self.error(input_output, str(client_error), 400)
-        except exceptions.InputError as input_error:
-            return self.input_errors(input_output, input_error.errors)
+        except exceptions.InputErrors as input_errors:
+            return self.input_errors(input_output, input_errors.errors)
         except exceptions.Authentication as auth_error:
             return self.error(input_output, str(auth_error), 401)
         except exceptions.Authorization as auth_error:
@@ -314,7 +317,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         return self.respond_json(input_output, response_data, 200)
 
     def respond_json(self, input_output: InputOutput, response_data: dict[str, Any], status_code: int) -> Any:
-        input_output.respons_headers.add("content-type", "application/json")
+        input_output.response_headers.add("content-type", "application/json")
         return input_output.respond(self.normalize_response(response_data), status_code)
 
     def respond(self, input_output: InputOutput, response: clearskies.typing.response, status_code: int) -> Any:
@@ -391,6 +394,31 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             self.authentication.set_headers_for_cors(self.cors)
         cors.set_headers_for_input_output(input_output)
         return self.respond(input_output, "", 200)
+
+    def model_as_json(self, model: clearskies.model.Model, input_output: clearskies.input_output.InputOutput) -> dict[str, Any]:
+        if self.output_map:
+            return self.di.call_function(output_map, model=model, **input_output.get_context_for_callables())
+
+        if self._as_json_map is None:
+            self._as_json_map = self._build_as_json_map(model)
+
+        json = OrderedDict()
+        for output_name, column in self._as_json_map.items():
+            column_data = column.to_json(model)
+            if len(column_data) == 1:
+                json[output_name] = list(column_data.values())[0]
+            else:
+                for key, value in column_data.items():
+                    json[self.auto_case_column_name(key, True)] = value
+        return json
+
+    def _build_as_json_map(self, model: clearskies.model.Model) -> dict[str, clearskies.column.Column]:
+        conversion_map = {}
+        conversion_map[self.auto_case_column_name(model.id_column_name, True)] = model.get_columns()[model.id_column_name]
+
+        for column in self.readable_columns.values():
+            conversion_map[self.auto_case_column_name(column.name, True)] = column
+        return conversion_map
 
     def documentation(self) -> list[Request]:
         return []

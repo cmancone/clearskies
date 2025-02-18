@@ -6,6 +6,7 @@ class ModelColumns(select_list.SelectList):
         self.required = required
         self.default = default
         self.model_column_config_name = model_column_config_name
+        self.allow_relationship_references = allow_relationship_references
 
     def __set__(self, instance, value: list[str]):
         if value is None:
@@ -17,6 +18,7 @@ class ModelColumns(select_list.SelectList):
                 f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' to a list parameter"
             )
 
+        instance._set_config(self, value)
         # unlike select_list, we won't validate the value currently because we won't be able to
         # do that until the finalize_and_validate_configuration phase
 
@@ -36,7 +38,7 @@ class ModelColumns(select_list.SelectList):
             return
 
         model_class = getattr(instance, self.model_column_config_name)
-        allowed_columns = self.get_allowed_columns(model_class, model_class.get_column_configs())
+        allowed_columns = self.get_allowed_columns(model_class, model_class.get_columns())
 
         values = instance._get_config(self)
         if not values:

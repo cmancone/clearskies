@@ -69,7 +69,7 @@ class Query:
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        model_class: Model,
+        model_class: Type[Model],
         conditions: list[Condition] = [],
         joins: list[Join] = [],
         sorts: list[Sort] = [],
@@ -124,20 +124,20 @@ class Query:
     def set_limit(self, limit: int) -> Self:
         if not isinstance(limit, int):
             raise TypeError(f"The limit in a query must be of type int but I received a value of type '{limit.__class__.__name__}'")
-        return self.__class__({
+        return self.__class__(**{
             **self.as_kwargs(),
             "limit": limit,
         })
 
     def set_group_by(self, column_name) -> Self:
         self.validate_column(column_name, "group")
-        return self.__class__({
+        return self.__class__(**{
             **self.as_kwargs(),
             "group_by": column_name,
         })
 
     def set_pagination(self, pagination: dict[str, Any]) -> Self:
-        return self.__class__({
+        return self.__class__(**{
             **self.as_kwargs(),
             "pagination": pagination,
         })
@@ -148,7 +148,7 @@ class Query:
         return self.__class__(**new_kwargs)
 
     def set_select_all(self, select_all: bool) -> Self:
-        return self.__class__({
+        return self.__class__(**{
             **self.as_kwargs(),
             "select_all": select_all,
         })
