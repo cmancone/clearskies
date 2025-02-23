@@ -24,6 +24,7 @@ class ManyToManyModels(Column):
 
     is_writeable = configs.Boolean(default=False)
     is_searchable = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -63,15 +64,16 @@ class ManyToManyModels(Column):
         return getattr(self.model_class, self.many_to_many_column_name)
 
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> Model:
+    def __get__(self, instance: Model, cls: Type[Model]) -> Model:
         pass
 
-    def __get__(self, instance, parent):
+    def __get__(self, instance, cls):
         if instance is None:
+            self.model_class = cls
             return self
         return self.many_to_many_column.get_related_models(instance)
 

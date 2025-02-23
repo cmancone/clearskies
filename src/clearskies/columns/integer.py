@@ -39,6 +39,8 @@ class Integer(Column):
     """
     auto_doc_class: Type[AutoDocSchema] = AutoDocInteger
 
+    _descriptor_config_map = None
+
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -59,15 +61,19 @@ class Integer(Column):
         pass
 
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> int:
+    def __get__(self, instance: Model, cls: Type[Model]) -> int:
         pass
 
-    def __get__(self, instance, parent):
-        return int(super().__get__(instance, parent))
+    def __get__(self, instance, cls):
+        if instance is None:
+            self.model_class = cls
+            return self
+
+        return int(super().__get__(instance, cls))
 
     def __set__(self, instance, value: int) -> None:
         instance._next_data[self.name] = value

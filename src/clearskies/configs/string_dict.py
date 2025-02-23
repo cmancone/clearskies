@@ -15,7 +15,7 @@ class StringDict(config.Config):
             raise TypeError(
                 f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' to a dict parameter"
             )
-        for key, val in enumerate(value):
+        for key, val in value.items():
             if not isinstance(key, str):
                 error_prefix = self._error_prefix(instance)
                 raise TypeError(

@@ -38,6 +38,7 @@ class HasMany(Column):
     """
     is_writeable = configs.Boolean(default=False)
     is_searchable = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     """ The model class for the child table we keep our "many" records in. """
     child_model_class = configs.ModelClass(required=True)
@@ -102,15 +103,16 @@ class HasMany(Column):
         return self.di.build(self.child_model_class, cache=True)
 
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> Model:
+    def __get__(self, instance: Model, cls: Type[Model]) -> Model:
         pass
 
-    def __get__(self, model, parent):
+    def __get__(self, model, cls):
         if model is None:
+            self.model_class = cls
             return self # type:  ignore
 
         foreign_column_name = self.foreign_column_name

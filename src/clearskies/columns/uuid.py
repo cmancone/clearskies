@@ -36,8 +36,10 @@ class Uuid(String):
     """
 
     is_writeable = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     uuid = clearskies.di.inject.Uuid()
+
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(

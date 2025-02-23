@@ -136,6 +136,7 @@ class ManyToManyIdsWithData(ManyToManyIds):
     Unlike the default value, a setable value is always set during a save.
     """
     setable = configs.ListAnyDictOrCallable(default=None) #  type: ignore
+    _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -163,15 +164,15 @@ class ManyToManyIdsWithData(ManyToManyIds):
         pass
 
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> list[Any]:
+    def __get__(self, instance: Model, cls: Type[Model]) -> list[Any]:
         pass
 
-    def __get__(self, instance, parent):
-        return super().__get__(instance, parent)
+    def __get__(self, instance, cls):
+        return super().__get__(instance, cls)
 
     def __set__(self, instance, value: list[dict[str, Any]]) -> None: # type: ignore
         instance._next_data[self.name] = value

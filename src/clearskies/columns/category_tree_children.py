@@ -19,6 +19,7 @@ class CategoryTreeChildren(Column):
 
     is_writeable = configs.Boolean(default=False)
     is_searchable = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -42,15 +43,16 @@ class CategoryTreeChildren(Column):
             raise ValueError(f"Error with configuration for {model_class.__name__}.{name}, which is a {self.__class__.__name__}.  It needs to point to a category tree column, and it was told to use {model_class.__name__}.{self.category_tree_column_name}, but this is not a CategoryTree column.")
 
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> Model:
+    def __get__(self, instance: Model, cls: Type[Model]) -> Model:
         pass
 
-    def __get__(self, model, parent):
+    def __get__(self, model, cls):
         if model is None:
+            self.model_class = cls
             return self # type:  ignore
 
         return self.relatives(model)

@@ -276,22 +276,28 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         return {**data, self.name: str(data[self.name])}
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, cls: type) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type):
+    def __get__(self, instance: Model, cls: type):
         pass
 
-    def __get__(self, instance: Model, parent: type):
+    def __get__(self, instance: Model, cls: type):
         if instance is None:
+            # Normally this gets filled in when the model is initialized.  However, the condition builders (self.equals, etc...)
+            # can be called from the class directly, before the model is initialized and everything is populated.  This
+            # can cause trouble, but by filling in the model class we can give enough information for them to get the
+            # job done.  They have a special flow for this, we just have to provide the model class (and the __get__
+            # function is always called, so this fixes it).
+            self.model_class = cls
             return self
 
         if self.name not in instance._data:
             return None # type: ignore
 
         if self.name not in instance._transformed_data:
-            instance._transformed_data[self.name] = self.from_backend(instance, instance._data[self.name])
+            instance._transformed_data[self.name] = self.from_backend(instance._data[self.name])
 
         return instance._transformed_data[self.name]
 
@@ -646,75 +652,99 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         """
         return model
 
+    def name_for_building_condition(self) -> str:
+        if self._config and "name" in self._config:
+            return self.name
+
+        if not self._config or not self._config.get("model_class"):
+            raise ValueError(f"A condition builder was called but the model class isn't set.  This means that the __get__ method for column class {self.__class__.__name__} forgot to set `self.model_class = cls`")
+
+        for attribute_name in dir(self.model_class):
+            if id(getattr(self.model_class, attribute_name)) != id(self):
+                continue
+            self.name = attribute_name
+            break
+
+        return self.name
+
     def equals(self, value) -> Condition:
-        if not self.is_searchable:
-            raise ValueError(f"'{self.model_class.__name__}.{self.name}' is not a searchable column.")
+        name = self.name_for_building_condition()
         if "=" not in self._allowed_search_operators:
-            raise ValueError(f"An 'equals search' is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        value = self.to_backend({self.name: value}).get(self.name)
-        return ParsedCondition(self.name, '=', [value])
+            raise ValueError(f"An 'equals search' is not allowed for '{self.model_class.__name__}.{name}'.")
+        value = self.to_backend({name: value}).get(name)
+        return ParsedCondition(name, '=', [value])
 
     def spaceship(self, value) -> Condition:
+        name = self.name_for_building_condition()
         if "<=>" not in self._allowed_search_operators:
-            raise ValueError(f"A 'spaceship' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        value = self.to_backend({self.name: value}).get(self.name)
-        return ParsedCondition(self.name, '<=>', [value])
+            raise ValueError(f"A 'spaceship' search is not allowed for '{self.model_class.__name__}.{name}'.")
+        value = self.to_backend({name: value}).get(name)
+        return ParsedCondition(name, '<=>', [value])
 
     def not_equals(self, value) -> Condition:
+        name = self.name_for_building_condition()
         if "!=" not in self._allowed_search_operators:
-            raise ValueError(f"A 'not equals' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        value = self.to_backend({self.name: value}).get(self.name)
-        return ParsedCondition(self.name, '!=', [value])
+            raise ValueError(f"A 'not equals' search is not allowed for '{self.model_class.__name__}.{name}'.")
+        value = self.to_backend({name: value}).get(name)
+        return ParsedCondition(name, '!=', [value])
 
     def less_than_equals(self, value) -> Condition:
+        name = self.name_for_building_condition()
         if "<=" not in self._allowed_search_operators:
-            raise ValueError(f"A 'less than or equals' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        value = self.to_backend({self.name: value}).get(self.name)
-        return ParsedCondition(self.name, '<=', [value])
+            raise ValueError(f"A 'less than or equals' search is not allowed for '{self.model_class.__name__}.{name}'.")
+        value = self.to_backend({name: value}).get(name)
+        return ParsedCondition(name, '<=', [value])
 
     def greater_than_equals(self, value) -> Condition:
+        name = self.name_for_building_condition()
         if ">=" not in self._allowed_search_operators:
-            raise ValueError(f"A 'greater than' or equals search is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        value = self.to_backend({self.name: value}).get(self.name)
-        return ParsedCondition(self.name, '>=', [value])
+            raise ValueError(f"A 'greater than' or equals search is not allowed for '{self.model_class.__name__}.{name}'.")
+        value = self.to_backend({name: value}).get(name)
+        return ParsedCondition(name, '>=', [value])
 
     def less_than(self, value) -> Condition:
+        name = self.name_for_building_condition()
         if "<" not in self._allowed_search_operators:
-            raise ValueError(f"A 'less than' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        value = self.to_backend({self.name: value}).get(self.name)
-        return ParsedCondition(self.name, '<', [value])
+            raise ValueError(f"A 'less than' search is not allowed for '{self.model_class.__name__}.{name}'.")
+        value = self.to_backend({name: value}).get(name)
+        return ParsedCondition(name, '<', [value])
 
     def greater_than(self, value) -> Condition:
+        name = self.name_for_building_condition()
         if ">" not in self._allowed_search_operators:
-            raise ValueError(f"A 'greater than' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        value = self.to_backend({self.name: value}).get(self.name)
-        return ParsedCondition(self.name, '>', [value])
+            raise ValueError(f"A 'greater than' search is not allowed for '{self.model_class.__name__}.{name}'.")
+        value = self.to_backend({name: value}).get(name)
+        return ParsedCondition(name, '>', [value])
 
     def is_in(self, values) -> Condition:
+        name = self.name_for_building_condition()
         if "in" not in self._allowed_search_operators:
-            raise ValueError(f"An 'in' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
+            raise ValueError(f"An 'in' search is not allowed for '{self.model_class.__name__}.{name}'.")
         if not isinstance(values, list):
             raise TypeError("You must pass a list in to column.is_in")
         final_values = []
         for value in values:
-            final_values.append(self.to_backend({self.name: value}).get(self.name))
-        return ParsedCondition(self.name, 'in', final_values)
+            final_values.append(self.to_backend({name: value}).get(name))
+        return ParsedCondition(name, 'in', final_values)
 
     def is_not_null(self) -> Condition:
+        name = self.name_for_building_condition()
         if "is not null" not in self._allowed_search_operators:
-            raise ValueError(f"An 'is not null' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        return ParsedCondition(self.name, 'is not null', [])
+            raise ValueError(f"An 'is not null' search is not allowed for '{self.model_class.__name__}.{name}'.")
+        return ParsedCondition(name, 'is not null', [])
 
     def is_null(self) -> Condition:
+        name = self.name_for_building_condition()
         if "is null" not in self._allowed_search_operators:
-            raise ValueError(f"An 'is null' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        return ParsedCondition(self.name, 'is null', [])
+            raise ValueError(f"An 'is null' search is not allowed for '{self.model_class.__name__}.{name}'.")
+        return ParsedCondition(name, 'is null', [])
 
     def like(self, value) -> Condition:
+        name = self.name_for_building_condition()
         if "like" not in self._allowed_search_operators:
-            raise ValueError(f"A 'like' search is not allowed for '{self.model_class.__name__}.{self.name}'.")
-        value = self.to_backend({self.name: value}).get(self.name)
-        return ParsedCondition(self.name, 'like', [value])
+            raise ValueError(f"A 'like' search is not allowed for '{self.model_class.__name__}.{name}'.")
+        value = self.to_backend({name: value}).get(name)
+        return ParsedCondition(name, 'like', [value])
 
     def documentation(self, name=None, example=None, value=None) -> list[AutoDocSchema]:
         return [self.auto_doc_class(name if name is not None else self.name, example=example, value=value)]

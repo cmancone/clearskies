@@ -139,11 +139,17 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
         | routing_data       | dict[str, str]                   | input_output.routing_data       | A dictionary of data extracted from URL path parameters.                        |
         | authorization_data | dict[str, Any]                   | input_output.authorization_data | A dictionary containing the authorization data set by the authentication method |
         | request_data       | dict[str, Any] | None            | input_output.request_data       | The data sent along with the request (assuming a JSON request body)             |
+        | query_parameters   | dict[str, Any]                   | input_output.query_parameters   | The query parameters                                                            |
         | request_headers    | clearskies.input_outputs.Headers | input_output.request_headers    | The request headers sent by the client                                          |
+        | **routing_data     | string                           | **input_output.routing_data     | The routing data is unpacked so keys can be fetched directly                    |
         """
         return {
-            "routing_data": self.routing_data,
-            "authorization_data": self.authorization_data,
-            "request_data": self.request_data,
-            "request_headers": self.request_headers,
+            **self.routing_data,
+            **{
+                "routing_data": self.routing_data,
+                "authorization_data": self.authorization_data,
+                "request_data": self.request_data,
+                "request_headers": self.request_headers,
+                "query_parameters": self.query_parameters,
+            },
         }

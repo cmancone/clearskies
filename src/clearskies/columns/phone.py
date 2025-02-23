@@ -18,6 +18,7 @@ class Phone(String):
 
     """ Whether or not to allow non-USA numbers. """
     usa_only = configs.Boolean(default=True)
+    _descriptor_config_map = None
 
     @parameters_to_properties.parameters_to_properties
     def __init__(

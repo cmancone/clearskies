@@ -38,6 +38,7 @@ class Float(Column):
     The class to use when documenting this column
     """
     auto_doc_class: Type[AutoDocSchema] = AutoDocNumber
+    _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -59,15 +60,15 @@ class Float(Column):
         pass
 
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> float:
+    def __get__(self, instance: Model, cls: Type[Model]) -> float:
         pass
 
-    def __get__(self, instance, parent):
-        return float(super().__get__(instance, parent))
+    def __get__(self, instance, cls):
+        return float(super().__get__(instance, cls))
 
     def __set__(self, instance, value: float) -> None:
         instance._next_data[self.name] = value

@@ -7,16 +7,19 @@ if TYPE_CHECKING:
     from clearskies import Model
 
 class CategoryTreeDescendents(CategoryTreeChildren):
+    _descriptor_config_map = None
+
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> Model:
+    def __get__(self, instance: Model, cls: Type[Model]) -> Model:
         pass
 
-    def __get__(self, model, parent):
+    def __get__(self, model, cls):
         if model is None:
+            self.model_class = cls
             return self # type:  ignore
 
         return self.relatives(model, include_all=True)

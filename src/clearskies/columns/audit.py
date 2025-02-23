@@ -57,6 +57,7 @@ class Audit(HasMany):
     """
     is_writeable = configs.Boolean(default=False)
     is_searchable = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     @parameters_to_properties.parameters_to_properties
     def __init__(

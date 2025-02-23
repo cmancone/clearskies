@@ -161,6 +161,7 @@ class ManyToManyIds(Column):
     setable = configs.StringListOrCallable(default=None) #  type: ignore
 
     is_searchable = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -209,15 +210,16 @@ class ManyToManyIds(Column):
         return self.pivot_model.get_columns()
 
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> list[str | int]:
+    def __get__(self, instance: Model, cls: Type[Model]) -> list[str | int]:
         pass
 
-    def __get__(self, instance, parent):
+    def __get__(self, instance, cls):
         if instance is None:
+            self.model_class = cls
             return self
         related_id_column_name = self.related_model_class.id_column_name
         return [getattr(model, related_id_column_name) for model in self.get_related_models(model)]

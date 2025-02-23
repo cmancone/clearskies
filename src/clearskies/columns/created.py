@@ -43,6 +43,7 @@ class Created(Datetime):
     Created fields are never writeable because they always set the created time automatically.
     """
     is_writeable = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     now = clearskies.di.inject.Now()
 

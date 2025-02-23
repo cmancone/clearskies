@@ -22,6 +22,7 @@ class Timestamp(Datetime):
 
     # whether or not to include the microseconds in the timestamp
     include_microseconds = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -84,15 +85,15 @@ class Timestamp(Datetime):
         return {**data, self.name: value}
 
     @overload
-    def __get__(self, instance: None, parent: type) -> Self:
+    def __get__(self, instance: None, cls: type) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type) -> datetime.datetime:
+    def __get__(self, instance: Model, cls: type) -> datetime.datetime:
         pass
 
-    def __get__(self, instance, parent):
-        return super().__get__(instance, parent)
+    def __get__(self, instance, cls):
+        return super().__get__(instance, cls)
 
     def __set__(self, instance, value: datetime.datetime) -> None:
         instance._next_data[self.name] = value

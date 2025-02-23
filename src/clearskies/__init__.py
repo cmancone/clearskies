@@ -20,6 +20,7 @@ from . import parameters_to_properties as parameters_to_properties_module
 from .configurable import Configurable
 from .column import Column
 from .endpoint import Endpoint
+from .schema import Schema
 
 parameters_to_properties = parameters_to_properties_module.parameters_to_properties
 
@@ -48,6 +49,7 @@ __all__ = [
     "functional",
     "Model",
     "parameters_to_properties",
+    "Schema",
     "typing",
     "Validator",
     "query",

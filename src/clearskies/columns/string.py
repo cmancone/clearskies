@@ -11,17 +11,19 @@ class String(Column):
     A simple string column
     """
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null", "like"]
+    _descriptor_config_map = None
 
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> str:
+    def __get__(self, instance: Model, cls: Type[Model]) -> str:
         pass
 
-    def __get__(self, instance, parent):
+    def __get__(self, instance, cls):
         if instance is None:
+            self.model_class = cls
             return self
 
         if self.name not in instance._data:

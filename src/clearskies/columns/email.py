@@ -3,6 +3,8 @@ import re
 
 
 class Email(String):
+    _descriptor_config_map = None
+
     """
     A column that always requires an email address.
     """

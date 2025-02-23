@@ -38,12 +38,11 @@ class ModelColumns(select_list.SelectList):
             return
 
         model_class = getattr(instance, self.model_column_config_name)
-        allowed_columns = self.get_allowed_columns(model_class, model_class.get_columns())
-
         values = instance._get_config(self)
-        if not values:
+        if not values or not model_class:
             return
 
+        allowed_columns = self.get_allowed_columns(model_class, model_class.get_columns())
         for value in values:
             if self.allow_relationship_references and "." in value:
                 value = value.split(".")[0]

@@ -350,6 +350,12 @@ class Model(Schema, InjectableProperties):
     ##############################################################
     ### From here down is functionality related to list/search ###
     ##############################################################
+    def has_query(self) -> bool:
+        """
+        Whether or not this model instance represents a query.
+        """
+        return bool(self._query)
+
     def get_query(self) -> Query:
         """
         Fetch the query object in the model

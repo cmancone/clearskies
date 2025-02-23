@@ -108,6 +108,8 @@ class CategoryTree(BelongsToId):
     """
     load_relatives_strategy = configs.Select(["join", "where_in", "individual"], default="join")
 
+    _descriptor_config_map = None
+
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,

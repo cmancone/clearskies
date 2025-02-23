@@ -113,6 +113,7 @@ class BelongsToId(String):
     input_output = InputOutput()
     wants_n_plus_one = True
     _allowed_search_operators = ["="]
+    _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(

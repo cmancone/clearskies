@@ -19,6 +19,7 @@ class BelongsToModel(Column):
 
     is_writeable = configs.Boolean(default=False)
     is_searchable = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -43,15 +44,16 @@ class BelongsToModel(Column):
         belongs_to_column.model_column_name = name
 
     @overload
-    def __get__(self, instance: None, parent: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: Type[Model]) -> Model:
+    def __get__(self, instance: Model, cls: Type[Model]) -> Model:
         pass
 
-    def __get__(self, model, parent):
+    def __get__(self, model, cls):
         if model is None:
+            self.model_class = cls
             return self # type:  ignore
 
         belongs_to_column = getattr(model.__class__, self.belongs_to_column_name)

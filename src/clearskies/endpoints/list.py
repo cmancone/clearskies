@@ -88,7 +88,7 @@ class List(Endpoint):
     }
     ```
 
-    Pagination can be set via query parameters or a JSON body:
+    Pagination can be set via query parameters or the JSON body:
 
     ```
     $ curl 'http://localhost:8080/?sort=name&direction=desc&limit=2' | jq
@@ -122,7 +122,7 @@ class List(Endpoint):
         readable_column_names=["id", "name"],
         sortable_column_names=["id", "name"],
         default_sort_column_name="name",
-        where=["name=Jane"],
+        where=[User.name.equals("Jane")], # equivalent: where=["name=Jane"]
     )
     ```
 
@@ -194,7 +194,7 @@ class List(Endpoint):
     """
     A column to group by.
     """
-    group_by = clearskies.configs.ModelColumn("model_class")
+    group_by_column_name = clearskies.configs.ModelColumn("model_class")
 
     allowed_request_keys = ["sort", "direction", "limit"]
     internal_request_keys = ["sort", "direction", "limit"]
@@ -217,6 +217,7 @@ class List(Endpoint):
         request_methods: list[str] = ["GET"],
         response_headers: list[str | Callable[..., list[str]]] = [],
         output_map: Callable[..., dict[str, Any]] | None = None,
+        output_schema: Schema | None = None,
         column_overrides: dict[str, Column] = {},
         internal_casing: str = "snake_case",
         external_casing: str = "snake_case",
@@ -280,6 +281,8 @@ class List(Endpoint):
                 self.default_sort_direction,
                 models.destination_name(),
             )
+        if self.group_by_column_name:
+            models = models.group_by(self.group_by_column_name)
 
         return self.success(
             input_output,

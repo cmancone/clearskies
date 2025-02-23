@@ -17,6 +17,8 @@ class BelongsToSelf(BelongsToId):
     See also HasManySelf
     """
 
+    _descriptor_config_map = None
+
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,

@@ -53,6 +53,8 @@ class Boolean(Column):
     """
     auto_doc_class: Type[AutoDocSchema] = AutoDocBoolean
 
+    _descriptor_config_map = None
+
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
@@ -86,15 +88,15 @@ class Boolean(Column):
         return {**data, self.name: bool(data[self.name])}
 
     @overload
-    def __get__(self, instance: None, parent: type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, parent: type[Model]) -> bool:
+    def __get__(self, instance: Model, cls: type[Model]) -> bool:
         pass
 
-    def __get__(self, instance, parent):
-        return super().__get__(instance, parent)
+    def __get__(self, instance, cls):
+        return super().__get__(instance, cls)
 
     def __set__(self, instance, value: bool) -> None:
         instance._next_data[self.name] = value

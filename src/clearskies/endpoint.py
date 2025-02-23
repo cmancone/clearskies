@@ -14,13 +14,33 @@ import clearskies.parameters_to_properties
 import clearskies.typing
 from clearskies import exceptions
 from clearskies.authentication import Authentication, Authorization, Public
-from clearskies.functional import string
+from clearskies.functional import string, routing
 
 if TYPE_CHECKING:
     from clearskies import Column, Model, SecurityHeader
     from clearskies.input_output import InputOutput
+    from clearskies.schema import Schema
 
 class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
+    """
+    Endpoints - the clearskies workhorse.
+
+    With clearskies, endpoints exist to offload some drudgery and make your life easier, but they can also
+    get out of your way when you don't need them.  Think of them as pre-built endpoints that can execute
+    common functionality needed for web applications/APIs.  Instead of defining a function that fetches
+    records from your backend and returns them to the end user, you can let the list endpoint do this for you
+    with a minimal amount of configuration.  Instead of making an endpoint that creates records, just deploy
+    a create endpoint.  Each endpoint has their own configuration settings, but there are some configuration
+    settings that are common to all endpoints, which are listed below:
+
+    ## Url
+
+    The URL for the endpoint.  Note that this is a relative URL.  If the endpoint is attached directly to a context,
+    then it will become the exact path to execute the endpoint.  Endpoints can also be attached to endpoint groups,
+    which have their own URL prefixes, in which case the endpoint
+
+    """
+
     """
     The dependency injection container
     """
@@ -40,68 +60,377 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     Set some response headers that should be returned for this endpoint.
 
     Provide a list of response headers to return to the caller when this endpoint is executed.
-    This should be given a list of either strings or callables that return strings.  In the case of callables,
-    they should return a list of strings that represent the header key/value pairs, and can accept any of the
-    standard dependencies or context-specific values:
+    This should be given a list containing a combination of strings or callables that return a list of strings.
+    The strings in question should be headers formatted as "key: value".  If you attach a callable, it can accept
+    any of the standard dependencies or context-specific values like any other callable in a clearskies
+    application:
 
     ```
-    import clearskies
+    def custom_headers(query_parameters):
+        some_value = "yes" if query_parameters.get("stuff") else "no"
+        return [f"x-custom: {some_value}", "content-type: application/custom"]
 
-    def custom_headers(request_data):
-        some_value = "yes" if request_data.get("stuff") else "no"
-        return [f"x-custom: {some_value}"]
-
-    endpoint = clearskies.endpoint(
-        response_headers=["content-type: application/custom", custom_headers],
+    endpoint = clearskies.endpoints.Callable(
+        lambda: {"hello": "world"},
+        response_headers=custom_headers,
     )
+
+    wsgi = clearskies.contexts.WsgiRef(endpoint)
+    wsgi()
     ```
     """
     response_headers = clearskies.configs.StringListOrCallable(default=[])
 
     """
-    The URL for this endpoint.
+    Set the URL for the endpoint
+
+    When an endpoint is attached directly to a context, then the endpoint's URL becomes the exact URL
+    to invoke the endpoint.  If it is instead attached to an endpoint group, then the URL of the endpoint
+    becomes a suffix on the URL of the group.  This is described in more detail in the documentation for endpoint
+    groups, so here's an example of attaching endpoints directly and setting the URL:
+
+    ```
+    import clearskies
+
+    endpoint = clearskies.endpoints.Callable(
+        lambda: {"hello": "World"},
+        url="/hello/world",
+    )
+
+    wsgi = clearskies.contexts.WsgiRef(endpoint)
+    wsgi()
+    ```
+
+    Which then acts as expected:
+
+    ```
+    $ curl 'http://localhost:8080/hello/asdf' | jq
+    {
+        "status": "client_error",
+        "error": "Not Found",
+        "data": [],
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl 'http://localhost:8080/hello/world' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "hello": "world"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    Some endpoints allow or require the use of named routing parameters.  Named routing paths are created using either the
+    `/{name}/` syntax or `/:name/`.  These parameters can be injected into any callable via the `routing_data`
+    dependency injection name, as well as via their name:
+
+    ```
+    import clearskies
+
+    endpoint = clearskies.endpoints.Callable(
+        lambda first_name, last_name: {"hello": f"{first_name} {last_name}"},
+        url="/hello/:first_name/{last_name}",
+    )
+
+    wsgi = clearskies.contexts.WsgiRef(endpoint)
+    wsgi()
+    ```
+
+    Which you can then invoke in the usual way:
+
+    ```
+    $ curl 'http://localhost:8080/hello/bob/brown' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "hello": "bob brown"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    ```
+
     """
-    url = clearskies.configs.String(default="")
+    url = clearskies.configs.Url(default="")
 
     """
     The allowed request methods for this endpoint.
+
+    By default, only GET is allowed.
+
+    ```
+    import clearskies
+
+    endpoint = clearskies.endpoints.Callable(
+        lambda: {"hello": "world"},
+        request_methods=["POST"],
+    )
+
+    wsgi = clearskies.contexts.WsgiRef(endpoint)
+    wsgi()
+    ```
+
+    And to execute:
+
+    ```
+    $ curl 'http://localhost:8080/' -X POST | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "hello": "world"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl 'http://localhost:8080/' -X GET | jq
+    {
+        "status": "client_error",
+        "error": "Not Found",
+        "data": [],
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
     """
     request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["GET"])
 
     """
     The authentication for this endpoint (default is public)
+
+    Use this to attach an instance of `clearskies.authentication.Authentication` to an endpoint, which enforces authentication.
+    For more details, see the dedicated documentation section on authentication and authorization. By default, all endpoints are public.
     """
     authentication = clearskies.configs.Authentication(default=Public())
 
     """
     The authorization rules for this endpoint
+
+    Use this to attach an instance of `clearskies.authentication.Authorization` to an endpoint, which enforces authorization.
+    For more details, see the dedicated documentation section on authentication and authorization. By default, no authorization is enforced.
     """
     authorization = clearskies.configs.Authorization(default=Authorization())
 
     """
-    An override of the default model-to-json mapping for endpoints that auto-convert models to json.  The model being converted is always injected
-    via an argument named "model".
+    An override of the default model-to-json mapping for endpoints that auto-convert models to json.
+
+    Many endpoints allow you to return a model which is then automatically converted into a JSON response.  When this is the case,
+    you can provide a callable in the `output_map` parameter which will be called instead of following the usual method for
+    JSON conversion.  Note that if you use this method, you should also specify `output_schema`, which the autodocumentation
+    will then use for the endpoint.
+
+    Your function can request any named dependency injection parameter as well as the standard context parameters for the request.
 
     ```
-    def convert_model_to_json(model, utcnow):
-        return {"id": model.some_other_column, "normalized_name": model.name.lower().replace(" ", "-"), "response_at": utcnow.isoformat()}
+    import clearskies
+    import datetime
+    from dateutil.relativedelta import relativedelta
 
-    endpoint = clearskies.Endpoint(
-        output_map = convert_model_to_json,
+    class User(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        dob = clearskies.columns.Datetime()
+
+    class UserResponse(clearskies.Schema):
+        id = clearskies.columns.String()
+        name = clearskies.columns.String()
+        age = clearskies.columns.Integer()
+        is_special = clearskies.columns.Boolean()
+
+    def user_to_json(model: User, utcnow: datetime.datetime, special_person: str):
+        return {
+            "id": model.id,
+            "name": model.name,
+            "age": relativedelta(utcnow, model.dob).years,
+            "is_special": model.name.lower() == special_person.lower(),
+        }
+
+    list_users = clearskies.endpoints.List(
+        model_class=User,
+        url="/{special_person}",
+        output_map = user_to_json,
+        output_schema = UserResponse,
+        readable_column_names=["id", "name"],
+        sortable_column_names=["id", "name", "dob"],
+        default_sort_column_name="dob",
+        default_sort_direction="DESC",
     )
+
+    wsgi = clearskies.contexts.WsgiRef(
+        list_users,
+        classes=[User],
+        bindings={
+            "memory_backend_default_data": [
+                {
+                    "model_class": User,
+                    "records": [
+                        {"id": "1-2-3-4", "name": "Bob", "dob": datetime.datetime(1990, 1, 1)},
+                        {"id": "1-2-3-5", "name": "Jane", "dob": datetime.datetime(2020, 1, 1)},
+                        {"id": "1-2-3-6", "name": "Greg", "dob": datetime.datetime(1980, 1, 1)},
+                    ]
+                },
+            ]
+        }
+    )
+    wsgi()
     ```
-    """
-    output_map = clearskies.configs.Callable()
+
+    Which gives:
+
+    ```
+    $ curl 'http://localhost:8080/jane' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {
+                "id": "1-2-3-5",
+                "name": "Jane",
+                "age": 5,
+                "is_special": true
+            }
+            {
+                "id": "1-2-3-4",
+                "name": "Bob",
+                "age": 35,
+                "is_special": false
+            },
+            {
+                "id": "1-2-3-6",
+                "name": "Greg",
+                "age": 45,
+                "is_special": false
+            },
+        ],
+        "pagination": {
+            "number_results": 3,
+            "limit": 50,
+            "next_page": {}
+        },
+        "input_errors": {}
+    }
+
+    ```
 
     """
-    The model class that we will be passing back to the user.
+    output_map = clearskies.configs.Callable(default=None)
+
     """
-    model_class = clearskies.configs.ModelClass()
+    A schema that describes the expected output to the client.
+
+    This is used to build the auto-documentation.  See the documentation for clearskies.endpoint.output_map for examples.
+    Note that this is typically not required - when returning models and relying on clearskies to auto-convert to JSON,
+    it will also automatically generate your documentation.
+    """
+    output_schema = clearskies.configs.Schema(default=None)
+
+    """
+    The model class used by this endpoint.
+
+    The majority of endpoints require a model class that tells the endpoint where to get/save its data.
+    """
+    model_class = clearskies.configs.ModelClass(default=None)
 
     """
     Columns from the model class that should be returned to the client.
+
+    Most endpoints use a model to build the return response to the user.  In this case, `readable_column_names`
+    instructs the model what columns should be sent back to the uesr.  This information is similarly used when generating
+    the documentation for the endpoint.
+
+    ```
+    import clearskies
+
+    class User(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        secret = clearskies.columns.String()
+
+    list_users = clearskies.endpoints.List(
+        model_class=User,
+        readable_column_names=["id", "name"],
+        sortable_column_names=["id", "name"],
+        default_sort_column_name="name",
+    )
+
+    wsgi = clearskies.contexts.WsgiRef(
+        list_users,
+        classes=[User],
+        bindings={
+            "memory_backend_default_data": [
+                {
+                    "model_class": User,
+                    "records": [
+                        {"id": "1-2-3-4", "name": "Bob", "secret": "Awesome dude"},
+                        {"id": "1-2-3-5", "name": "Jane", "secret": "Gets things done"},
+                        {"id": "1-2-3-6", "name": "Greg", "secret": "Loves chocolate"},
+                    ]
+                },
+            ]
+        }
+    )
+    wsgi()
+    ```
+
+    And then:
+
+    ```
+    $ curl 'http://localhost:8080'
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {
+                "id": "1-2-3-4",
+                "name": "Bob"
+            },
+            {
+                "id": "1-2-3-6",
+                "name": "Greg"
+            },
+            {
+                "id": "1-2-3-5",
+                "name": "Jane"
+                }
+        ],
+        "pagination": {
+            "number_results": 3,
+            "limit": 50,
+            "next_page": {}
+        },
+        "input_errors": {}
+    }
+
+    ```
     """
-    readable_column_names = clearskies.configs.ReadableModelColumns("model_class")
+    readable_column_names = clearskies.configs.ReadableModelColumns("model_class", default=[])
+
+    """
+    Columns from the model class that can be set by the client.
+    """
+    writeable_column_names = clearskies.configs.WriteableModelColumns("model_class", default=[])
+
+    """
+    Columns from the model class that can be searched by the client.
+    """
+    searchable_column_names = clearskies.configs.SearchableModelColumns("model_class", default=[])
+
+    """
+    A function to call to add custom input validation logic.
+    """
+    input_validation_callable = clearskies.configs.Callable(default=None)
 
     """
     A dictionary with columns that should override columns in the model.
@@ -164,13 +493,15 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     """
     A description for this endpoint.  This is added to any auto-documentation
     """
-    description = clearskies.configs.String()
+    description = clearskies.configs.String(default="")
 
     cors_header: SecurityHeader = None  # type: ignore
     has_cors: bool = False
     _model: clearskies.model.Model = None
     _columns: dict[str, clearskies.column.Column] = None
     _readable_columns: dict[str, clearskies.column.Column] = None
+    _writeable_columns: dict[str, clearskies.column.Column] = None
+    _searchable_columns: dict[str, clearskies.column.Column] = None
     _as_json_map: dict[str, clearskies.column.Column] = None # type: ignore
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -215,6 +546,19 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             self._readable_columns = {name: self.columns[name] for name in self.readable_column_names}
         return self._readable_columns
 
+    @property
+    def writeable_columns(self) -> dict[str, Column]:
+        if self._writeable_columns is None:
+            self._writeable_columns = {name: self.columns[name] for name in self.writeable_column_names}
+        return self._writeable_columns
+
+    @property
+    def sortable_columns(self) -> dict[str, Column]:
+        if self._sortable_columns is None:
+            self._sortable_columns = {name: self._columns[name] for name in self.sortable_column_names}
+        return self._sortable_columns
+
+
     def top_level_authentication_and_authorization(self, input_output: InputOutput) -> None:
         """
         Handle authentication and authorization for this endpoint.
@@ -235,7 +579,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             except exceptions.ClientError as client_error:
                 raise exception.Authorization(str(client_error))
 
-    def __call__(self, input_output: InputOutput) -> Any:
+    def __call__(self, input_output: InputOutput, route_standalone=True) -> Any:
         """
         Execute the endpoint!
 
@@ -244,6 +588,20 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         expected response.  As a result, when building a new endpoint, you normally modify the handle method
         rather than this one.
         """
+
+        # If we have been attached directly to a context then we get to do some routing ourselves.
+        if route_standalone:
+            if input_output.get_request_method().upper() not in self.request_methods:
+                return self.error(input_output, "Not Found", 404)
+            expected_url = self.url.strip('/')
+            incoming_url = input_output.get_full_path().strip('/')
+            if expected_url or incoming_url:
+                matches, routing_data = routing.match_route(expected_url, incoming_url, allow_partial=False)
+                if not matches:
+                    return self.error(input_output, "Not Found", 404)
+                print(routing_data)
+                input_output.routing_data = routing_data
+
         self.di.add_binding("input_output", input_output)
         try:
             self.top_level_authentication_and_authorization(input_output)
@@ -317,25 +675,24 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         return self.respond_json(input_output, response_data, 200)
 
     def respond_json(self, input_output: InputOutput, response_data: dict[str, Any], status_code: int) -> Any:
-        input_output.response_headers.add("content-type", "application/json")
-        return input_output.respond(self.normalize_response(response_data), status_code)
+        if "content-type" not in input_output.response_headers:
+            input_output.response_headers.add("content-type", "application/json")
+        return self.respond(input_output, self.normalize_response(response_data), status_code)
 
     def respond(self, input_output: InputOutput, response: clearskies.typing.response, status_code: int) -> Any:
         if self.response_headers:
-            for (index, response_header) in enumerate(self.response_headers):
-                # each entry is either a string or a callable that returns a list of strings.  Since the callable returns a list,
-                # we end up with another loop
-                if callable(response_header):
-                    more_response_headers = self.di.call_function(response_header, **input_output.get_context_for_callables())
-                else:
-                    more_response_headers = [response_header]
-                for header in more_response_headers:
-                    if not isinstance(header, str):
-                        raise TypeError(f"Invalid response header in entry #{index+1}: the header should be a string, but I was given a type of '{header.__class__.__name__}' instead.")
-                    parts = header.split(":", 1)
-                    if len(parts) != 2:
-                        raise ValueError(f"Invalid response header in entry #{index+1}: the header should be a string in the form of 'key: value' but the given header did not have a colon to separate key and value.")
-                    input_output.response_headers.add(parts[0], parts[1])
+            if callable(self.response_headers):
+                response_headers = self.di.call_function(self.response_headers, **input_output.get_context_for_callables())
+            else:
+                response_headers = self.response_headers
+
+            for (index, response_header) in enumerate(response_headers):
+                if not isinstance(response_header, str):
+                    raise TypeError(f"Invalid response header in entry #{index+1}: the header should be a string, but I was given a type of '{header.__class__.__name__}' instead.")
+                parts = response_header.split(":", 1)
+                if len(parts) != 2:
+                    raise ValueError(f"Invalid response header in entry #{index+1}: the header should be a string in the form of 'key: value' but the given header did not have a colon to separate key and value.")
+                input_output.response_headers.add(parts[0], parts[1])
         for security_header in self.security_headers:
             security_header.set_headers_for_input_output(input_output)
         return input_output.respond(response, status_code)
@@ -397,7 +754,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
     def model_as_json(self, model: clearskies.model.Model, input_output: clearskies.input_output.InputOutput) -> dict[str, Any]:
         if self.output_map:
-            return self.di.call_function(output_map, model=model, **input_output.get_context_for_callables())
+            return self.di.call_function(self.output_map, model=model, **input_output.get_context_for_callables())
 
         if self._as_json_map is None:
             self._as_json_map = self._build_as_json_map(model)
@@ -419,6 +776,47 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         for column in self.readable_columns.values():
             conversion_map[self.auto_case_column_name(column.name, True)] = column
         return conversion_map
+
+    def validate_input_against_schema(self, request_data: dict[str, Any], schema: Schema) -> None:
+        if not self.writeable_column_names:
+            raise ValueError(f"I was asked to validate input against a schema, but no writeable columns are defined, so I can't :(  This is probably a bug in the endpoint class - {self.__class__.__name__}.")
+        request_data = self.map_request_data_external_to_internal(request_data)
+
+    def map_request_data_external_to_internal(self, input_output, required=True):
+        # we have to map from internal names to external names, because case mapping
+        # isn't always one-to-one, so we want to do it exactly the same way that the documentation
+        # is built.
+        key_map = {self.auto_case_column_name(key, True): key for key in self.writeable_column_names}
+
+        # and make sure we don't drop any data along the way, because the input validation
+        # needs to return an error for unexpected data.
+        return {key_map.get(key, key): value for (key, value) in request_data.items()}
+
+    def find_input_errors(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema) -> None:
+        input_errors = {}
+        for column in self.writeable_columns:
+            input_errors = {
+                **input_errors,
+                **column.input_errors(schema, request_data),
+            }
+        if self.input_error_callable:
+            more_input_errors = self.di.call_function(
+                self.input_error_callable,
+                **input_output.get_context_for_callables()
+            )
+            if not isinstance(more_input_errors, dict):
+                raise ValueError(
+                    "The input error callable did not return a dictionary as required"
+                )
+            input_errors = {
+                **input_errors,
+                **more_input_errors,
+            }
+        for extra_column_name in set(request_data.keys()) - set(self.writeable_column_names):
+            external_column_name = self.auto_case_column_name(extra_column_name, False)
+            input_errors[external_column_name] = f"Input column {external_column_name} is not an allowed input column."
+        if input_errors:
+            raise exceptions.InputErrors(input_errors)
 
     def documentation(self) -> list[Request]:
         return []
@@ -524,13 +922,16 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         name = authentication.documentation_security_scheme_name()
         return [{name: []}] if name else []
 
-    def documentation_data_schema(self) -> list[Schema]:
-        id_column_name = self.model_class.id_column_name
-        properties = [
-            self.columns[id_column_name].documentation(name=self.auto_case_column_name(id_column_name, True))
-        ]
+    def documentation_data_schema(self, schema: Schema=None, column_names: list[str] = []) -> list[Schema]:
+        if schema is None:
+            schema = self.model_class
+        if column_names is None and self.readable_column_names:
+            readable_column_names = self.readable_column_names
+        properties = []
 
-        for column in self.readable_columns:
+        columns = schema.get_columns()
+        for column_name in readable_column_names:
+            column = columns[readable_column_names]
             column_doc = column.documentation()
             if type(column_doc) != list:
                 column_doc = [column_doc]
@@ -540,9 +941,36 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
         return properties
 
-    def documentation_id_url_parameter(self) -> Parameter:
-        return autodoc.request.URLPath(
-            self.columns[self.model_class.id_column_name].documentation(),
-            description="The id of the record to fetch",
-            required=True,
-        )
+    def standard_json_request_parameters(self, schema: Schema=None, column_names: list[str] = []) -> list[Parameter]:
+        if not column_names:
+            if not self.writeable_column_names:
+                return []
+            column_names = self.writeable_column_names
+
+        if not schema:
+            if not self.model_class:
+                return []
+            schema = self.model_class
+
+        model_name = string.camel_case_to_snake_case(schema.__name__)
+        columns = schema.get_columns()
+        return [
+            autodoc.request.JSONBody(
+                columns[column_name].documentation(name=self.auto_case_column_name(column_name, True)),
+                description=f"Set '{column.name}' for the {model_name}",
+                required=columns[column_name].is_required,
+            )
+            for column_name in writeable_column_names
+        ]
+
+    def standard_url_request_parameters(self) -> list[Parameter]:
+        parameter_names = routing.extract_url_parameter_name_map(self.url.strip('/'))
+        return [
+            autodoc.request.URLPath(
+                autodoc.schema.String(parameter_name),
+                description=f"The {parameter_name}.",
+                required=True,
+            )
+            for parameter_name in parameter_names.keys()
+        ]
+

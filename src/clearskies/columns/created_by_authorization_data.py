@@ -41,6 +41,7 @@ class CreatedByAuthorizationData(String):
     Since this column is always populated automatically, it is never directly writeable.
     """
     is_writeable = configs.Boolean(default=False)
+    _descriptor_config_map = None
 
     _allowed_search_operators = ["=", "in", "is not null", "is null", "like"]
 

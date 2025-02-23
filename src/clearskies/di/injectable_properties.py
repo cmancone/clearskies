@@ -81,44 +81,33 @@ class InjectableProperties:
     print((stop - start).seconds) # prints 1
     ```
     """
-    _injectable_descriptors: list[str] = []
-    _injectable_properties: list[str] = []
-    _injectable_properties_found = False
-    _injectable_properties_injected = False
+    _injectables_loaded: dict[str, bool] = {}
 
     @classmethod
     def injectable_properties(cls, di: Di):
-        if cls._injectable_properties_injected:
+        # you would think that I would be able to just use a simple true/false flag attached to the class,
+        # but I'm having this weird issue where (when I tried that) the flag was being shared between classes.
+        # It shouldn't happen like that, but it is, so there is probably something subtle going on that I
+        # haven't figured out yet, but this also works identitally, so :shrug:.
+        if cls in cls._injectables_loaded:
             return
 
-        # probably don't need to cache these now that this all happens at the class level,
-        # but I'm leaving this here while I decide if it should happen at the class or instance level.
-        if not cls._injectable_properties_found:
-            cls._injectable_descriptors = []
-            cls._injectable_properties = []
-            for attribute_name in dir(cls):
-                # Per the docs above, we want to inject properties for one of two things: the injectables from clearskies.di.inject,
-                # and any object that itself extends this class.  This is mildly tricky because the injectables are descriptors, and
-                # so we get them using getattr on the class, while if it's not a descriptor, then we want to use getattr on self.
-                # The important part here is that we modify descriptors at the class level, so the actual injected values have to
-                # be stored in self, and not in the descriptor object.  When it's not a descriptor, then we can modify the object
-                # directly (since we're operating at the object level, not class level).  Either way, while we go, let's keep track
-                # of what our dependencies are and which ones are cached, so we only have to list the objects attributes the first time.
-                attribute = getattr(cls, attribute_name)
+        injectable_descriptors = []
+        injectable_properties = []
+        for attribute_name in dir(cls):
+            # Per the docs above, we want to inject properties for one of two things: the injectables from clearskies.di.inject,
+            # and any object that itself extends this class.  This is mildly tricky because the injectables are descriptors, and
+            # so we get them using getattr on the class, while if it's not a descriptor, then we want to use getattr on self.
+            # The important part here is that we modify descriptors at the class level, so the actual injected values have to
+            # be stored in self, and not in the descriptor object.  When it's not a descriptor, then we can modify the object
+            # directly (since we're operating at the object level, not class level).  Either way, while we go, let's keep track
+            # of what our dependencies are and which ones are cached, so we only have to list the objects attributes the first time.
+            attribute = getattr(cls, attribute_name)
 
-                if issubclass(attribute.__class__, Injectable):
-                    cls._injectable_descriptors.append(attribute_name)
-                    continue
+            if issubclass(attribute.__class__, Injectable):
+                attribute.set_di(di)
+                continue
 
-                if hasattr(attribute, 'injectable_properties'):
-                    cls._injectable_properties.append(attribute_name)
-                    continue
-            cls._injectable_properties_found = True
-
-        for attribute_name in cls._injectable_properties:
-            getattr(cls, attribute_name).injectable_properties(di)
-
-        for attribute_name in cls._injectable_descriptors:
-            getattr(cls, attribute_name).set_di(di)
-
-        cls._injectable_properties_injected = True
+            if hasattr(attribute, 'injectable_properties'):
+                attribute.injectable_properties(di)
+        cls._injectables_loaded[cls] = True

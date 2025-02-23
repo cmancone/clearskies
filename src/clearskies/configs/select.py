@@ -17,6 +17,7 @@ class Select(string.String):
                 f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' to a string parameter"
             )
         if value not in self.allowed_values:
+            error_prefix = self._error_prefix(instance)
             raise ValueError(
                 f"{error_prefix} attempt to set a value of type '{value}' which is not in the list of allowed values.  It must be one of '"  # type: ignore
                 + "', '".join(self.allowed_values)
