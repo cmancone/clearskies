@@ -1,19 +1,9 @@
-from .time_delta import TimeDelta
+from clearskies.validators.timedelta import Timedelta
 import datetime
-import dateparser
 
 
-class InThePastAtLeast(TimeDelta):
-    def check(self, model, data):
-        if self.column_name not in data or not data[self.column_name]:
-            return ""
-        as_date = dateparser.parse(data[self.column_name])
-        if not as_date:
-            return f"'{self.column_name}' was not a valid date"
-        now = (
-            self.datetime.datetime.now() if not as_date.tzinfo else self.datetime.datetime.now(tz=datetime.timezone.utc)
-        )
-        if as_date > now - self.time_delta:
-            human_friendly = self.delta_human_friendly()
-            return f"'{self.column_name}' must be at least {human_friendly} in the past."
+class InThePastAtLeast(Timedelta):
+    def check_timedelta(self, as_date: datetime.datetime, column_name: str) -> str:
+        if as_date > self.utcnow - self.timedelta:
+            return f"'{column_name}' must be at least {self.delta_human_friendly()} in the past."
         return ""

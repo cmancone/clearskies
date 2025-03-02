@@ -1,19 +1,26 @@
-from .requirement import Requirement
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+import datetime
+
+from clearskies.validator import Validator
+import clearskies.configs
+from clearskies import parameters_to_properties
+
+if TYPE_CHECKING:
+    import clearskies.model
 
 
-class MaximumLength(Requirement):
-    maximum_length = None
+class MaximumLength(Validator):
+    maximum_length = clearskies.configs.Integer(required=True)
 
-    def configure(self, maximum_length):
-        if type(maximum_length) != int:
-            raise ValueError(
-                f"Maximum length must be an int to use the MaximumLength class for column '{self.column_name}'"
-            )
-        self.maximum_length = maximum_length
+    @parameters_to_properties
+    def __init__(self, maximum_length: int):
+        self.finalize_and_validate_configuration()
 
-    def check(self, model, data):
-        if self.column_name not in data or not data[self.column_name]:
+    def check(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
+        # we won't check anything for missing values (columns should be required if that is an issue)
+        if not data.get(column_name):
             return ""
-        if len(data[self.column_name]) <= self.maximum_length:
+        if len(data[column_name]) <= self.maximum_length:
             return ""
-        return f"'{self.column_name}' must be at most {self.maximum_length} characters long."
+        return f"'{column_name}' must be at most {self.maximum_length} characters long."

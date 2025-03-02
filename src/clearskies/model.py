@@ -362,6 +362,44 @@ class Model(Schema, InjectableProperties):
         """
         return self._query if self._query else Query(self.__class__)
 
+    def as_query(self) -> Query:
+        """
+        Make the model queryable!
+
+        This is used to remove the ambiguity of attempting execute a query against a model object that stores a record.
+
+        The reason this exists is because the model class is used both to query as well as to operate on single records, which can cause
+        subtle bugs if a developer accidentally confuses the two usages.  Consider the following (partial) example:
+
+        ```
+        def some_function(models):
+            model = models.find("id=5")
+            if model:
+                models.save({"test":"example"})
+            other_record = model.find("id=6")
+        ```
+
+        In the above example it seems likely that the intention was to use `model.save()`, not `models.save()`.  Similarly, the last line
+        should be `models.find()`, not `model.find()`.  To minimize these kinds of issues, clearskies won't let you execute a query against
+        an individual model record, nor will it let you execute a save against a model being used to make a query.  In both cases, you'll
+        get an exception from clearskies, as the models track exactly how they are being used.
+
+        In some rare cases though, you may want to start a new query aginst a model that represents a single record.  This is most common
+        if you have a function that was passed an individual model, and you'd like to use it to fetch more records without having to
+        inject the model class more generally.  That's where the `as_query()` method comes in.  It's basically just a way of telling clearskies
+        "yes, I really do want to start a query using a model that represents a record".  So, for example:
+
+        ```
+        def some_function(models):
+            model = models.find("id=5")
+            more_models = model.where("test=example") # throws an exception.
+            more_models = model.as_query().where("test=example") # works as expected.
+        ```
+        """
+        new_model= self._di.build(self.__class__, cache=False)
+        new_model.set_query(Query(self.__class__))
+        return new_model
+
     def set_query(self, query: Query) -> Self:
         """
         Set the query object
@@ -589,4 +627,4 @@ class Model(Schema, InjectableProperties):
 
     def no_single_model(self):
         if self._data:
-            raise ValueError("You have attempted to execute a query against a model that represents an individual record.  This is not allowed, as it is typically a sign of a bug in your application code.")
+            raise ValueError("You have attempted to execute a query against a model that represents an individual record.  This is not allowed, as it is typically a sign of a bug in your application code.  If this is intentional, call model.as_query() before executing your query.")

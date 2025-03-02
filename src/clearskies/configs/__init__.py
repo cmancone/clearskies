@@ -100,6 +100,7 @@ from .string_dict import StringDict
 from .string_list import StringList
 from .string_list_or_callable import StringListOrCallable
 from .string_or_callable import StringOrCallable
+from .timedelta import Timedelta
 from .timezone import Timezone
 from .url import Url
 from .validators import Validators
@@ -146,6 +147,7 @@ __all__ = [
     "StringList",
     "StringListOrCallable",
     "StringOrCallable",
+    "Timedelta",
     "Timezone",
     "Url",
     "Validators",

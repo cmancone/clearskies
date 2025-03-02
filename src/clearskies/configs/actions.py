@@ -1,6 +1,11 @@
-from clearskies import typing, action
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+from clearskies import action
 from clearskies.configs import config
 
+if TYPE_CHECKING:
+    from clearskies import typing
 
 class Actions(config.Config):
     """

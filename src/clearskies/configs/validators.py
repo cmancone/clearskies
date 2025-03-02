@@ -1,6 +1,10 @@
-from clearskies import typing
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from clearskies.configs import config
-from clearskies.validator import Validator
+
+if TYPE_CHECKING:
+    from clearskies import typing
 
 
 class Validators(config.Config):
@@ -22,7 +26,7 @@ class Validators(config.Config):
             value = [value]
 
         for index, item in enumerate(value):
-            if isinstance(item, Validator):
+            if hasattr(item, "additional_write_columns") and hasattr(item, "check"):
                 continue
 
             error_prefix = self._error_prefix(instance)

@@ -1,19 +1,29 @@
-from .requirement import Requirement
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+import datetime
+
+from clearskies.validator import Validator
+import clearskies.configs
+from clearskies import parameters_to_properties
+
+if TYPE_CHECKING:
+    import clearskies.model
 
 
-class MaximumValue(Requirement):
-    maximum_value = None
+class MaximumValue(Validator):
+    maximum_value = clearskies.configs.Integer(required=True)
 
-    def configure(self, maximum_value):
-        if type(maximum_value) != int:
-            raise ValueError(
-                f"Maximum value must be an int to use the MaximumValue class for column '{self.column_name}'"
-            )
-        self.maximum_value = maximum_value
+    @parameters_to_properties
+    def __init__(self, maximum_value: int):
+        self.finalize_and_validate_configuration()
 
-    def check(self, model, data):
-        if self.column_name not in data or not data[self.column_name]:
+    def check(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
+        if column_name not in data:
             return ""
-        if int(data[self.column_name]) <= self.maximum_value:
+        try:
+            value = float(data[column_name])
+        except ValueError:
+            return f"{column_name} must be an integer or float"
+        if float(value) <= self.maximum_value:
             return ""
-        return f"'{self.column_name}' must be at most {self.maximum_value}."
+        return f"'{column_name}' must be at most {self.maximum_value}."

@@ -1,13 +1,12 @@
 from __future__ import annotations
 from typing import Any, Type, Self, TYPE_CHECKING
 
-from clearskies import parameters_to_properties
 from .condition import Condition
 from .join import Join
 from .sort import Sort
 
 if TYPE_CHECKING:
-    from clearskies import parameters_to_properties, Model
+    from clearskies import Model
 
 class Query:
     """
@@ -24,7 +23,7 @@ class Query:
     """
     The list of where conditions for the query.
     """
-    conditions: list[Condition] = []
+    conditions: list[Condition] = None
 
     """
     The conditions, but organized by column.
@@ -66,7 +65,6 @@ class Query:
     """
     group_by = ""
 
-    @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
         model_class: Type[Model],
@@ -79,6 +77,15 @@ class Query:
         selects: list[str] = [],
         select_all: bool = True,
     ):
+        self.model_class = model_class
+        self.conditions = [*conditions]
+        self.joins = [*joins]
+        self.sorts = [*sorts]
+        self.limit = limit
+        self.group_by = group_by
+        self.paginatoin = {**pagination}
+        self.selects = [*selects]
+        self.select_all = select_all
         self.conditions_by_column = {}
         if conditions:
             for condition in conditions:

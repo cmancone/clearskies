@@ -1,20 +1,30 @@
-from .requirement import Requirement
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+import datetime
+
+from clearskies.validator import Validator
+import clearskies.configs
+from clearskies import parameters_to_properties
+
+if TYPE_CHECKING:
+    import clearskies.model
 
 
-class Unique(Requirement):
+class Unique(Validator):
     is_unique = True
 
-    def check(self, model, data):
+    def check(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
         # Unique is mildly tricky.  We obviously want to search the backend for the new value,
         # but we need to first skip this if our column is not being set, or if we're editing
         # the model and nothing is changing.
-        if self.column_name not in data:
+        if column_name not in data:
             return ""
-        new_value = data[self.column_name]
-        if model.exists and model.__getattr__(self.column_name) == new_value:
+        new_value = data[column_name]
+        if model and getattr(model, column_name) == new_value:
             return ""
 
-        matching_model = model.find(f"{self.column_name}={new_value}")
-        if matching_model.exists:
-            return f"Invalid value for '{self.column_name}': the given value already exists, and must be unique."
+        as_query = model.as_query()
+        matching_model = as_query.find(f"{column_name}={new_value}")
+        if matching_model:
+            return f"Invalid value for '{column_name}': the given value already exists, and must be unique."
         return ""

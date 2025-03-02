@@ -418,17 +418,82 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     readable_column_names = clearskies.configs.ReadableModelColumns("model_class", default=[])
 
     """
-    Columns from the model class that can be set by the client.
+    Specifies which columns from a model class can be set by the client.
+
+    Many endpoints allow or require input from the client.  The most common way to provide input validation
+    is by setting the model class and using `writeable_column_names` to specify which columns the end client can
+    set.  Clearskies will then use the model schema to validate the input and also auto-generate documentation
+    for the endpoint.
+
+    ```
+    import clearskies
+
+    class User(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        date_of_birth = clearskies.columns.Datetime()
+
+    send_user = clearskies.endpoints.Callable(
+        lambda request_data: request_data,
+        request_methods=["GET","POST"],
+        writeable_column_names=["name", "date_of_birth"],
+        model_class=User,
+    )
+
+    wsgi = clearskies.contexts.WsgiRef(send_user)
+    wsgi()
+    ```
+
+    If we send a valid payload:
+
+    ```
+    $ curl 'http://localhost:8080' -d '{"name":"Jane","date_of_birth":"01/01/1990"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "name": "Jane",
+            "date_of_birth": "01/01/1990"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    And we can see the automatic input validation by sending some incorrect data:
+
+    ```
+    $ curl 'http://localhost:8080' -d '{"name":1,"date_of_birth":"this is not a date","other_column":"hey"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "name": "value should be a string",
+            "date_of_birth": "given value did not appear to be a valid date",
+            "other_column": "Input column other_column is not an allowed input column."
+        }
+    }
+    ```
+
     """
     writeable_column_names = clearskies.configs.WriteableModelColumns("model_class", default=[])
 
     """
     Columns from the model class that can be searched by the client.
+
+    Sets which columns the client is allowed to search (for endpoints that support searching).
     """
     searchable_column_names = clearskies.configs.SearchableModelColumns("model_class", default=[])
 
     """
     A function to call to add custom input validation logic.
+
+    Endpoints that accept input validation also allow you to add additional validation logic
+
     """
     input_validation_callable = clearskies.configs.Callable(default=None)
 
@@ -777,12 +842,13 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             conversion_map[self.auto_case_column_name(column.name, True)] = column
         return conversion_map
 
-    def validate_input_against_schema(self, request_data: dict[str, Any], schema: Schema) -> None:
+    def validate_input_against_schema(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema) -> None:
         if not self.writeable_column_names:
             raise ValueError(f"I was asked to validate input against a schema, but no writeable columns are defined, so I can't :(  This is probably a bug in the endpoint class - {self.__class__.__name__}.")
         request_data = self.map_request_data_external_to_internal(request_data)
+        self.find_input_errors(request_data, input_output, schema)
 
-    def map_request_data_external_to_internal(self, input_output, required=True):
+    def map_request_data_external_to_internal(self, request_data, required=True):
         # we have to map from internal names to external names, because case mapping
         # isn't always one-to-one, so we want to do it exactly the same way that the documentation
         # is built.
@@ -794,14 +860,16 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
     def find_input_errors(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema) -> None:
         input_errors = {}
-        for column in self.writeable_columns:
+        columns = schema.get_columns()
+        for column_name in self.writeable_column_names:
+            column = columns[column_name]
             input_errors = {
                 **input_errors,
                 **column.input_errors(schema, request_data),
             }
-        if self.input_error_callable:
+        if self.input_validation_callable:
             more_input_errors = self.di.call_function(
-                self.input_error_callable,
+                self.input_validation_callable,
                 **input_output.get_context_for_callables()
             )
             if not isinstance(more_input_errors, dict):

@@ -1,5 +1,10 @@
-from clearskies import typing
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from clearskies.configs import config
+
+if TYPE_CHECKING:
+    from clearskies import typing
 
 
 class Joins(config.Config):

@@ -1,10 +1,19 @@
-from .requirement import Requirement
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+import datetime
+
+from clearskies.validator import Validator
+import clearskies.configs
+from clearskies import parameters_to_properties
+
+if TYPE_CHECKING:
+    import clearskies.model
 
 
-class Required(Requirement):
+class Required(Validator):
     is_required = True
 
-    def check(self, model, data):
+    def check(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
         # you'd think that "required" is straight forward and we want an input error if it isn't found.
         # this isn't strictly true though.  If the model already exists, the column has a value in the model already,
         # and the column is completely missing from the input data, then it is actually perfectly fine (because
@@ -12,14 +21,14 @@ class Required(Requirement):
         # we must require the column in the data with an actual value.
         has_value = False
         has_some_value = False
-        if self.column_name in data:
+        if column_name in data:
             has_some_value = True
-            if type(data[self.column_name]) == str:
-                has_value = bool(data[self.column_name].strip())
+            if type(data[column_name]) == str:
+                has_value = bool(data[column_name].strip())
             else:
-                has_value = bool(data[self.column_name])
+                has_value = bool(data[column_name])
         if has_value:
             return ""
-        if model.exists and model[self.column_name] and not has_some_value:
+        if model and getattr(model, column_name) and not has_some_value:
             return ""
-        return f"'{self.column_name}' is required."
+        return f"'{column_name}' is required."
