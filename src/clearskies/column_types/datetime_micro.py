@@ -1,4 +1,3 @@
-from re import T
 from .datetime import DateTime
 from datetime import datetime, timezone
 import dateparser
