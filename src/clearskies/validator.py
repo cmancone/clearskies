@@ -11,6 +11,9 @@ class Validator(ABC, configurable.Configurable):
     is_unique = False
     is_required = False
 
+    def __call__(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
+        return self.check(model, column_name, data)
+
     @abstractmethod
     def check(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
         pass

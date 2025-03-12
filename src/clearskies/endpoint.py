@@ -432,7 +432,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
         id = clearskies.columns.Uuid()
-        name = clearskies.columns.String()
+        name = clearskies.columns.String(validators=[clearskies.validators.Required()])
         date_of_birth = clearskies.columns.Datetime()
 
     send_user = clearskies.endpoints.Callable(
@@ -465,14 +465,14 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     And we can see the automatic input validation by sending some incorrect data:
 
     ```
-    $ curl 'http://localhost:8080' -d '{"name":1,"date_of_birth":"this is not a date","other_column":"hey"}' | jq
+    $ curl 'http://localhost:8080' -d '{"name":"","date_of_birth":"this is not a date","other_column":"hey"}' | jq
     {
         "status": "input_errors",
         "error": "",
         "data": [],
         "pagination": {},
         "input_errors": {
-            "name": "value should be a string",
+            "name": "'name' is required.",
             "date_of_birth": "given value did not appear to be a valid date",
             "other_column": "Input column other_column is not an allowed input column."
         }
@@ -492,7 +492,9 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     """
     A function to call to add custom input validation logic.
 
-    Endpoints that accept input validation also allow you to add additional validation logic
+    Typically input validation happens by choosing the appropriate column in your schema and adding validators where necessary.  You
+    can also create custom columns with their own input validation logic.  However, if desired, columns that accept user input also
+    allow you to add callables for custom validation logic:
 
     """
     input_validation_callable = clearskies.configs.Callable(default=None)

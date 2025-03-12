@@ -4,7 +4,6 @@ import datetime
 
 from clearskies.validator import Validator
 import clearskies.configs
-from clearskies import parameters_to_properties
 
 if TYPE_CHECKING:
     import clearskies.model
@@ -13,8 +12,8 @@ if TYPE_CHECKING:
 class MaximumLength(Validator):
     maximum_length = clearskies.configs.Integer(required=True)
 
-    @parameters_to_properties
     def __init__(self, maximum_length: int):
+        self.maximum_length = maximum_length
         self.finalize_and_validate_configuration()
 
     def check(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
