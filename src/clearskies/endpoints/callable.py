@@ -160,6 +160,10 @@ class Callable(Endpoint):
     def handle(self, input_output: InputOutput):
         if self.writeable_column_names:
             self.validate_input_against_schema(input_output.request_data, input_output, self.input_schema if self.input_schema else self.model_class)
+        else:
+            input_errors = self.find_input_errors_from_callable(input_output.request_data, input_output)
+            if input_errors:
+                raise clearskies.exceptions.InputErrors(input_errors)
         response = self.di.call_function(self.to_call, **input_output.get_context_for_callables())
 
         if not self.return_standard_response:

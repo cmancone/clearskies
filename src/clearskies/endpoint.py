@@ -492,9 +492,63 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     """
     A function to call to add custom input validation logic.
 
-    Typically input validation happens by choosing the appropriate column in your schema and adding validators where necessary.  You
-    can also create custom columns with their own input validation logic.  However, if desired, columns that accept user input also
-    allow you to add callables for custom validation logic:
+    Typically, input validation happens by choosing the appropriate column in your schema and adding validators where necessary.  You
+    can also create custom columns with their own input validation logic.  However, if desired, endpoints that accept user input also
+    allow you to add callables for custom validation logic.  These functions should return a dictionary where the key name
+    represents the name of the column that has invalid input, and the value is a human-readable error message.  If no input errors are
+    found, then the callable should return an empty dictionary.  As usual, the callable can request any standard dependencies configured
+    in the dependency injection container or proivded by input_output.get_context_for_callables.
+
+    Note that most endpoints (such as Create and Update) explicitly require input.  As a result, if a request comes in without input
+    from the end user, it will be rejected before calling your input validator.  In these cases you can depend on request_data always
+    being a dictionary.  The Callable endpoint, however, only requires input if `writeable_column_names` is set.  If it's not set,
+    and the end-user doesn't provide a request body, then request_data will be None.
+
+    ```
+    import clearskies
+
+    def check_input(request_data):
+        if not request_data:
+            return {}
+        if request_data.get("name"):
+            return {"name":"This is a privacy-preserving system, so please don't tell us your name"}
+        return {}
+
+    send_user = clearskies.endpoints.Callable(
+        lambda request_data: request_data,
+        request_methods=["GET", "POST"],
+        input_validation_callable=check_input,
+    )
+
+    wsgi = clearskies.contexts.WsgiRef(send_user)
+    wsgi()
+    ```
+
+    And when invoked:
+
+    ```
+    $ curl http://localhost:8080 -d '{"name":"sup"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "name": "This is a privacy-preserving system, so please don't tell us your name"
+        }
+    }
+
+    $ curl http://localhost:8080 -d '{"hello":"world"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "hello": "world"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
 
     """
     input_validation_callable = clearskies.configs.Callable(default=None)
@@ -869,24 +923,29 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
                 **input_errors,
                 **column.input_errors(schema, request_data),
             }
-        if self.input_validation_callable:
-            more_input_errors = self.di.call_function(
-                self.input_validation_callable,
-                **input_output.get_context_for_callables()
-            )
-            if not isinstance(more_input_errors, dict):
-                raise ValueError(
-                    "The input error callable did not return a dictionary as required"
-                )
-            input_errors = {
-                **input_errors,
-                **more_input_errors,
-            }
+        input_errors = {
+            **input_errors,
+            **self.find_input_errors_from_callable(request_data, input_output),
+        }
         for extra_column_name in set(request_data.keys()) - set(self.writeable_column_names):
             external_column_name = self.auto_case_column_name(extra_column_name, False)
             input_errors[external_column_name] = f"Input column {external_column_name} is not an allowed input column."
         if input_errors:
             raise exceptions.InputErrors(input_errors)
+
+    def find_input_errors_from_callable(self, request_data: dict[str, Any], input_output: InputOutput) -> dict[str, str]:
+        if not self.input_validation_callable:
+            return {}
+
+        more_input_errors = self.di.call_function(
+            self.input_validation_callable,
+            **input_output.get_context_for_callables()
+        )
+        if not isinstance(more_input_errors, dict):
+            raise ValueError(
+                "The input error callable did not return a dictionary as required"
+            )
+        return more_input_errors
 
     def documentation(self) -> list[Request]:
         return []
