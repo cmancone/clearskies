@@ -580,34 +580,109 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
     To use these, set internal_casing to the casing scheme used in your model, and then set external_casing to the casing
     scheme you want for your API endpoints.  clearskies will then automatically convert all output key names accordingly.
+    Note that for callables, this only works when you return a model and set `readable_columns`.  If you set `writeable_columns`,
+    it will also map the incoming data.
+
+    The allowed casing schemas are:
+
+     1. `snake_case`
+     2. `camelCase`
+     3. `TitleCase`
 
     By default internal_casing and external_casing are both set to 'snake_case', which means that no conversion happens.
+
+    ```
+    import clearskies
+    import datetime
+
+    class User(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        date_of_birth = clearskies.columns.Datetime()
+
+    send_user = clearskies.endpoints.Callable(
+        lambda users: users.create({"name":"Example","date_of_birth": datetime.datetime(2050, 1, 15)}),
+        readable_column_names=["name", "date_of_birth"],
+        internal_casing="snake_case",
+        external_casing="TitleCase",
+        model_class=User,
+    )
+
+    # because we're using name-based injection in our lambda callable (instead of type hinting) we have to explicitly
+    # add the user model to the dependency injection container
+    wsgi = clearskies.contexts.WsgiRef(send_user, classes=[User])
+    wsgi()
+    ```
+
+    And then when called:
+
+    ```
+    $ curl http://localhost:8080  | jq
+    {
+        "Status": "Success",
+        "Error": "",
+        "Data": {
+            "Id": "4401fe38-bb4f-4109-8efb-3723cfdfff77",
+            "Name": "Example",
+            "DateOfBirth": "2050-01-15T00:00:00+00:00"
+        },
+        "Pagination": {},
+        "InputErrors": {}
+    }
+    ```
     """
     internal_casing = clearskies.configs.Select(['snake_case', 'camelCase', 'TitleCase'], default='snake_case')
 
     """
     Used in conjunction with internal_casing to change the casing of the key names in the outputted JSON of the endpoint.
 
-    To use these, set internal_casing to the casing scheme used in your model, and then set external_casing to the casing
-    scheme you want for your API endpoints.  clearskies will then automatically convert all output key names accordingly.
-
-    By default internal_casing and external_casing are both set to 'snake_case', which means that no conversion happens.
+    See the docs for `internal_casing` for more details and usage examples.
     """
     external_casing = clearskies.configs.Select(['snake_case', 'camelCase', 'TitleCase'], default='snake_case')
 
     """
     Configure standard security headers to be sent along in the response from this endpoint.
 
+    Note that, with CORS, you generally only have to specify the origin.  The routing system will automatically add
+    in the appropriate HTTP verbs, and the authorization classes will add in the appropriate headers.
+
     ```
     import clearskies
 
-    endpoint = clearskies.Endpoint(
+    hello_world = clearskies.endpoints.Callable(
+        lambda: {"hello": "world"},
+        request_methods=["PATCH", "POST"],
+        authentication=clearskies.authentication.SecretBearer(environment_key="MY_SECRET"),
         security_headers=[
             clearskies.security_headers.Hsts(),
             clearskies.security_headers.Cors(origin="https://example.com"),
         ],
     )
+
+    wsgi = clearskies.contexts.WsgiRef(hello_world)
+    wsgi()
     ```
+
+    And then execute the options endpoint to see all the security headers:
+
+    ```
+    $ curl -v http://localhost:8080 -X OPTIONS
+    * Host localhost:8080 was resolved.
+    < HTTP/1.0 200 Ok
+    < Server: WSGIServer/0.2 CPython/3.11.6
+    < ACCESS-CONTROL-ALLOW-METHODS: PATCH, POST
+    < ACCESS-CONTROL-ALLOW-HEADERS: Authorization
+    < ACCESS-CONTROL-MAX-AGE: 5
+    < ACCESS-CONTROL-ALLOW-ORIGIN: https://example.com
+    < STRICT-TRANSPORT-SECURITY: max-age=31536000 ;
+    < CONTENT-TYPE: application/json; charset=UTF-8
+    < Content-Length: 0
+    <
+    * Closing connection
+    ```
+
     """
     security_headers = clearskies.configs.SecurityHeaders(default=[])
 
@@ -641,10 +716,9 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         authorization: Authorization = Authorization(),
     ):
         self.finalize_and_validate_configuration()
-        for security_header in security_headers:
+        for security_header in self.security_headers:
             if not security_header.is_cors:
                 continue
-
             self.cors_header = security_header
             self.has_cors = True
             break
@@ -710,9 +784,21 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         rather than this one.
         """
 
+        # these two configs can have arbitrary classes attached, which may use injectable properties.  Because they are
+        # hiding in configs, the system for automatically discovering these won't work, so we have to manually check them.
+        # We can't do this in the constructor because self.di hasn't been populated yet, and we can't do this in
+        # our own injectable_properties class method because we need to operate at the instance level
+        for config_name in ["authentication", "authorization"]:
+            config = getattr(self, config_name)
+            if config and hasattr(config, "injectable_properties"):
+                config.injectable_properties(self.di)
+
         # If we have been attached directly to a context then we get to do some routing ourselves.
         if route_standalone:
-            if input_output.get_request_method().upper() not in self.request_methods:
+            request_method = input_output.get_request_method().upper()
+            if request_method == "OPTIONS":
+                return self.cors(input_output)
+            if request_method not in self.request_methods:
                 return self.error(input_output, "Not Found", 404)
             expected_url = self.url.strip('/')
             incoming_url = input_output.get_full_path().strip('/')
@@ -946,6 +1032,21 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
                 "The input error callable did not return a dictionary as required"
             )
         return more_input_errors
+
+    def cors(self, input_output: InputOutput):
+        from clearskies.security_headers.cors import Cors
+        print(self.has_cors)
+        cors_header = self.cors_header if self.has_cors else Cors()
+        for method in self.request_methods:
+            cors_header.add_method(method)
+        if self.authentication:
+            self.authentication.set_headers_for_cors(cors_header)
+        cors_header.set_headers_for_input_output(input_output)
+        for security_header in self.security_headers:
+            if security_header.is_cors:
+                continue
+            security_header.set_headers_for_input_output(input_output)
+        return input_output.respond("", 200)
 
     def documentation(self) -> list[Request]:
         return []

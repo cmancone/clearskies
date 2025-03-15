@@ -2,11 +2,12 @@ from __future__ import annotations
 from typing import Any, TYPE_CHECKING
 
 from clearskies.authentication.authorization import Authorization
+import clearskies.configurable
 
 if TYPE_CHECKING:
     from clearskies.security_header import SecurityHeader
 
-class Authentication:
+class Authentication(clearskies.configurable.Configurable):
     is_public = True
     can_authorize = False
     has_dynamic_credentials = False

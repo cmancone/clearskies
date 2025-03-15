@@ -4,7 +4,7 @@ class Headers:
     _headers: dict[str, str] = {}
 
     def __init__(self, headers: dict[str, str] = {}):
-        self.__dict__["headers"] = {*headers} if headers else {}
+        self.__dict__["_headers"] = {key.upper(): value for (key, value) in headers.items()} if headers else {}
 
     def __contains__(self, key: str):
         return key.upper().replace("_", "-") in self._headers
