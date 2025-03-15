@@ -60,7 +60,7 @@ class Configurable:
             if attribute_name not in self._config:
                 self._config[attribute_name] = config.default
 
-            if config.required and not self._config.get(attribute_name):
+            if config.required and self._config.get(attribute_name) is None:
                 raise ValueError(
                     f"Missing required configuration property '{attribute_name}' for class '{my_class.__name__}'"
                 )

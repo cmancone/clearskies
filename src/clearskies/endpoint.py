@@ -1003,11 +1003,12 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     def find_input_errors(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema) -> None:
         input_errors = {}
         columns = schema.get_columns()
+        model = self.di.build(schema)
         for column_name in self.writeable_column_names:
             column = columns[column_name]
             input_errors = {
                 **input_errors,
-                **column.input_errors(schema, request_data),
+                **column.input_errors(model, request_data),
             }
         input_errors = {
             **input_errors,

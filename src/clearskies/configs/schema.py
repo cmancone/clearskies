@@ -19,3 +19,4 @@ class Schema(config.Config):
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)
+

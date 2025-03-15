@@ -1,22 +1,25 @@
-from .requirement import Requirement
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+import datetime
+
+from clearskies.validator import Validator
+import clearskies.configs
+
+if TYPE_CHECKING:
+    import clearskies.model
 
 
-class MinimumLength(Requirement):
-    minimum_length = None
+class MinimumLength(Validator):
+    minimum_length = clearskies.configs.Integer(required=True)
 
-    def configure(self, minimum_length):
-        if type(minimum_length) != int:
-            raise ValueError(
-                f"Minimum length must be an int to use the MinimumLength class for column '{self.column_name}'"
-            )
+    def __init__(self, minimum_length: int):
         self.minimum_length = minimum_length
+        self.finalize_and_validate_configuration()
 
-    def check(self, model, data):
-        # If the column isn't in the data then skip this check.  Otherwise, setting a minimum length would implicitly
-        # make a column required, and this will likely cause more problems than it solves.  In short, the minimum
-        # length should only apply if data is actually being set
-        if self.column_name not in data or not data[self.column_name]:
+    def check(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
+        # we won't check anything for missing values (columns should be required if that is an issue)
+        if not data.get(column_name):
             return ""
-        if len(data[self.column_name]) >= self.minimum_length:
+        if len(data[column_name]) >= self.minimum_length:
             return ""
-        return f"'{self.column_name}' must be at least {self.minimum_length} characters long."
+        return f"'{column_name}' must be at least {self.minimum_length} characters long."

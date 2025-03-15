@@ -24,6 +24,9 @@ class Schema:
 
     _columns: dict[str, Column] = {}
 
+    def __init__(self):
+        self._data = {}
+
     @classmethod
     def get_columns(cls: type[Self], overrides={}) -> dict[str, Column]:
         """
@@ -59,3 +62,7 @@ class Schema:
         if not overrides:
             cls._columns = columns
         return columns
+
+
+    def __bool__(self):
+        return False

@@ -1,19 +1,28 @@
-from .requirement import Requirement
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+import datetime
+
+from clearskies.validator import Validator
+import clearskies.configs
+
+if TYPE_CHECKING:
+    import clearskies.model
 
 
-class MinimumValue(Requirement):
-    minimum_value = None
+class MinimumValue(Validator):
+    minimum_value = clearskies.configs.Integer(required=True)
 
-    def configure(self, minimum_value):
-        if type(minimum_value) != int:
-            raise ValueError(
-                f"Minimum value must be an int to use the MinimumValue class for column '{self.column_name}'"
-            )
+    def __init__(self, minimum_value: int):
         self.minimum_value = minimum_value
+        self.finalize_and_validate_configuration()
 
-    def check(self, model, data):
-        if self.column_name not in data or not data[self.column_name]:
+    def check(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
+        if column_name not in data:
             return ""
-        if int(data[self.column_name]) >= self.minimum_value:
+        try:
+            value = float(data[column_name])
+        except ValueError:
+            return f"{column_name} must be an integer or float"
+        if float(value) >= self.minimum_value:
             return ""
-        return f"'{self.column_name}' must be at least {self.minimum_value}."
+        return f"'{column_name}' must be at least {self.minimum_value}."

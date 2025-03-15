@@ -15,7 +15,7 @@ class Config:
             except KeyError:
                 instance._set_config(self.default)
 
-        if self.required and not instance._get_config(self):
+        if self.required and instance._get_config(self) is None:
             name = instance._descriptor_to_name(self)
             prefix = self._error_prefix(instance)
             raise ValueError("{prefix} {name} is a required configuration setting, but no value was set")

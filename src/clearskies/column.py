@@ -173,7 +173,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     created_by_source_strict = clearskies.configs.boolean.Boolean(default=True)
 
     """ The model class this column is associated with. """
-    model_class = clearskies.configs.ModelClass()
+    model_class = clearskies.configs.Schema()
 
     """ The name of this column. """
     name = clearskies.configs.string.String()
@@ -387,7 +387,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             if  error:
                 return {self.name: error}
 
+        print(self.name)
         for validator in self.validators:
+            print(validator)
             if hasattr(validator, "injectable_properties"):
                 validator.injectable_properties(self.di)
 

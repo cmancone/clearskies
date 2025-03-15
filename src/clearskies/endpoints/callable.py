@@ -115,11 +115,116 @@ class Callable(Endpoint):
 
     Note that if this is specified it will take precedence over writeable_column_names and model_class, which
     can also be used to specify the expected input.
+
+    ```
+    import clearskies
+
+    class ExpectedInput(clearskies.Schema):
+        first_name = clearskies.columns.String(validators=[clearskies.validators.Required()])
+        last_name = clearskies.columns.String()
+        age = clearskies.columns.Integer(validators=[clearskies.validators.MinimumValue(0)])
+
+    reflect = clearskies.endpoints.Callable(
+        lambda request_data: request_data,
+        request_methods=["POST"],
+        input_schema=ExpectedInput,
+    )
+
+    wsgi = clearskies.contexts.WsgiRef(reflect)
+    wsgi()
+    ```
+
+    And then valid and invalid requests:
+
+    ```
+    $ curl http://localhost:8080 -d '{"first_name":"Jane","last_name":"Doe","age":1}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "age": 1
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl http://localhost:8080 -d '{"last_name":10,"age":-1,"check":"cool"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "age": "'age' must be at least 0.",
+            "first_name": "'first_name' is required.",
+            "last_name": "value should be a string",
+            "check": "Input column check is not an allowed input column."
+        }
+    }
+    ```
+
     """
     input_schema = clearskies.configs.Schema(default=None)
 
     """
     Whether or not the return value is meant to be wrapped up in the standard clearskies response schema.
+
+    With the standard response schema, the return value of the function will be placed in the `data` portion of
+    the standard clearskies response:
+
+    ```
+    import clearskies
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Callable(
+            lambda: {"hello": "world"},
+            return_standard_response=True, # the default value
+        )
+    )
+    wsgi()
+    ```
+
+    Results in:
+
+    ```
+    $ curl http://localhost:8080 | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "hello": "world"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+    But if you want to build your own response:
+
+    ```
+    import clearskies
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Callable(
+            lambda: {"hello": "world"},
+            return_standard_response=False,
+        )
+    )
+    wsgi()
+    ```
+
+    Results in:
+
+    ```
+    $ curl http://localhost:8080 | jq
+    {
+        "hello": "world"
+    }
+    ```
+
+    Note that you can also return strings this way instead of objects/JSON.
+
     """
     return_standard_response = clearskies.configs.Boolean(default=True)
 
@@ -157,8 +262,11 @@ class Callable(Endpoint):
         # which is why we have to call the parent.
         super().__init__()
 
+        if self.input_schema and not self.writeable_column_names:
+            self.writeable_column_names = list(self.input_schema.get_columns().keys())
+
     def handle(self, input_output: InputOutput):
-        if self.writeable_column_names:
+        if self.writeable_column_names or self.input_schema:
             self.validate_input_against_schema(input_output.request_data, input_output, self.input_schema if self.input_schema else self.model_class)
         else:
             input_errors = self.find_input_errors_from_callable(input_output.request_data, input_output)
