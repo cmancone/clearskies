@@ -225,7 +225,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     Many endpoints allow you to return a model which is then automatically converted into a JSON response.  When this is the case,
     you can provide a callable in the `output_map` parameter which will be called instead of following the usual method for
     JSON conversion.  Note that if you use this method, you should also specify `output_schema`, which the autodocumentation
-    will then use for the endpoint.
+    will then use to document the endpoint.
 
     Your function can request any named dependency injection parameter as well as the standard context parameters for the request.
 
@@ -270,6 +270,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         list_users,
         classes=[User],
         bindings={
+            "special_person": "jane",
             "memory_backend_default_data": [
                 {
                     "model_class": User,
@@ -345,7 +346,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     Columns from the model class that should be returned to the client.
 
     Most endpoints use a model to build the return response to the user.  In this case, `readable_column_names`
-    instructs the model what columns should be sent back to the uesr.  This information is similarly used when generating
+    instructs the model what columns should be sent back to the user.  This information is similarly used when generating
     the documentation for the endpoint.
 
     ```
@@ -403,7 +404,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             {
                 "id": "1-2-3-5",
                 "name": "Jane"
-                }
+            }
         ],
         "pagination": {
             "number_results": 3,
@@ -433,7 +434,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         backend = clearskies.backends.MemoryBackend()
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String(validators=[clearskies.validators.Required()])
-        date_of_birth = clearskies.columns.Datetime()
+        date_of_birth = clearskies.columns.Date()
 
     send_user = clearskies.endpoints.Callable(
         lambda request_data: request_data,
@@ -465,7 +466,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     And we can see the automatic input validation by sending some incorrect data:
 
     ```
-    $ curl 'http://localhost:8080' -d '{"name":"","date_of_birth":"this is not a date","other_column":"hey"}' | jq
+    $ curl 'http://localhost:8080' -d '{"name":"","date_of_birth":"this is not a date","id":"hey"}' | jq
     {
         "status": "input_errors",
         "error": "",
@@ -600,7 +601,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         backend = clearskies.backends.MemoryBackend()
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
-        date_of_birth = clearskies.columns.Datetime()
+        date_of_birth = clearskies.columns.Date()
 
     send_user = clearskies.endpoints.Callable(
         lambda users: users.create({"name":"Example","date_of_birth": datetime.datetime(2050, 1, 15)}),
@@ -624,9 +625,8 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         "Status": "Success",
         "Error": "",
         "Data": {
-            "Id": "4401fe38-bb4f-4109-8efb-3723cfdfff77",
             "Name": "Example",
-            "DateOfBirth": "2050-01-15T00:00:00+00:00"
+            "DateOfBirth": "2050-01-15"
         },
         "Pagination": {},
         "InputErrors": {}
@@ -806,7 +806,6 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
                 matches, routing_data = routing.match_route(expected_url, incoming_url, allow_partial=False)
                 if not matches:
                     return self.error(input_output, "Not Found", 404)
-                print(routing_data)
                 input_output.routing_data = routing_data
 
         self.di.add_binding("input_output", input_output)
@@ -978,8 +977,6 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
     def _build_as_json_map(self, model: clearskies.model.Model) -> dict[str, clearskies.column.Column]:
         conversion_map = {}
-        conversion_map[self.auto_case_column_name(model.id_column_name, True)] = model.get_columns()[model.id_column_name]
-
         for column in self.readable_columns.values():
             conversion_map[self.auto_case_column_name(column.name, True)] = column
         return conversion_map
@@ -1036,7 +1033,6 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
     def cors(self, input_output: InputOutput):
         from clearskies.security_headers.cors import Cors
-        print(self.has_cors)
         cors_header = self.cors_header if self.has_cors else Cors()
         for method in self.request_methods:
             cors_header.add_method(method)

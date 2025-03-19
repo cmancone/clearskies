@@ -17,7 +17,7 @@ class Headers:
             raise TypeError(f"Header keys must be strings, but an object of type '{value.__class__.__name__}' was provided.")
         if not isinstance(value, str):
             raise TypeError(f"Header values must be strings, but an object of type '{value.__class__.__name__}' was provided.")
-        self._headers[re.sub("\\s+", " ", key.upper().replace("_", "-"))] = re.sub("\\s+", " ", value)
+        self._headers[re.sub("\\s+", " ", key.upper().replace("_", "-"))] = re.sub("\\s+", " ", value.strip())
 
     def keys(self) -> list[str]:
         return list(self._headers.keys())

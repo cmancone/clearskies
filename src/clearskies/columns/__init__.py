@@ -12,6 +12,7 @@ from .created_by_header import CreatedByHeader
 from .created_by_ip import CreatedByIp
 from .created_by_routing_data import CreatedByRoutingData
 from .created_by_user_agent import CreatedByUserAgent
+from .date import Date
 from .datetime import Datetime
 from .email import Email
 from .float import Float
@@ -44,6 +45,7 @@ __all__ = [
     "CreatedByIp",
     "CreatedByRoutingData",
     "CreatedByUserAgent",
+    "Date",
     "Datetime",
     "Email",
     "Float",

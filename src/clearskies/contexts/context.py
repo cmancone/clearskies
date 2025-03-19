@@ -1,16 +1,16 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
 import datetime
 from typing import Any, Callable, TYPE_CHECKING
 from types import ModuleType
 import clearskies.endpoint
 from clearskies.di.additional_config import AdditionalConfig
 from clearskies.di import Di
+from clearskies.input_outputs import Programmatic
 
 if TYPE_CHECKING:
     from clearskies.input_outputs import InputOutput
 
-class Context(ABC):
+class Context:
     di = None
 
     def __init__(
@@ -55,3 +55,19 @@ class Context(ABC):
                 return input_output.respond(str(e), 302)
             except clearskies.exceptions.MovedTemporarily as e:
                 return input_output.respond(str(e), 307)
+
+    def __call__(
+        self,
+        url: str="",
+        request_method: str="GET",
+        body: str | dict[str, Any] | list[Any]="",
+        query_parameters: dict[str, str]={},
+        request_headers: dict[str, str]={},
+    ):
+        return self.execute_application(Programmatic(
+            url=url,
+            request_method=request_method,
+            body=body,
+            query_parameters=query_parameters,
+            request_headers=request_headers,
+        ))

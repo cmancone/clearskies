@@ -181,6 +181,11 @@ class MemoryTable:
 
 
 class MemoryBackend(Backend, InjectableProperties):
+    """
+    Store data in an in-memory store built in to clearskies.
+
+
+    """
     default_data = inject.ByName("memory_backend_default_data")
     default_data_loaded = False
     _tables: dict[str, MemoryTable] = {}

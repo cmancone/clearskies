@@ -22,6 +22,7 @@ class InjectableProperties:
     The following table shows the dependencies that can be injected as properties via the clearskies.di.inject module:
 
     | Class                            | Type                                 | Result                                          |
+    |----------------------------------|--------------------------------------|-------------------------------------------------|
     | clearskies.di.inject.ByClass     | N/A                                  | The specified class will be built               |
     | clearskies.di.inject.ByName      | N/A                                  | The specified dependnecy name will be built     |
     | clearskies.di.inject.Cursor      | N/A                                  | The PyMySQL cursor                              |
@@ -89,7 +90,10 @@ class InjectableProperties:
         # but I'm having this weird issue where (when I tried that) the flag was being shared between classes.
         # It shouldn't happen like that, but it is, so there is probably something subtle going on that I
         # haven't figured out yet, but this also works identitally, so :shrug:.
-        if cls in cls._injectables_loaded:
+        # Also, keep track of the id of DI.  We use class level caching but tests often use multiple DI containers
+        # in one run, which means that we need to re-inject dependencies if we get a new DI container
+        cache_name = str(cls) + str(id(di))
+        if cache_name in cls._injectables_loaded:
             return
 
         injectable_descriptors = []
@@ -110,4 +114,4 @@ class InjectableProperties:
 
             if hasattr(attribute, 'injectable_properties'):
                 attribute.injectable_properties(di)
-        cls._injectables_loaded[cls] = True
+        cls._injectables_loaded[cache_name] = True

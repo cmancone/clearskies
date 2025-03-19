@@ -7,33 +7,23 @@ import dateparser # type: ignore
 import clearskies.typing
 import clearskies.parameters_to_properties
 from clearskies import configs
+from clearskies.columns.datetime import Datetime
 from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.autodoc.schema import Datetime as AutoDocDatetime
-from clearskies.column import Column
 from clearskies.query import Condition
 
 if TYPE_CHECKING:
     from clearskies import Model
 
-class Datetime(Column):
+class Date(Datetime):
     """
-    Stores date+time data in a column.
+    Stores date data in a column.
     """
 
     """
-    Whether or not to make datetime objects timezone-aware
+    The format string to use when sending to the backend (default: %Y-%m-%d)
     """
-    timezone_aware = configs.Boolean(default=True)
-
-    """
-    The timezone to use for the datetime object (if it is timezone aware)
-    """
-    timezone = configs.Timezone(default=datetime.timezone.utc)
-
-    """
-    The format string to use when sending to the backend (default: %Y-%m-%d %H:%M:%S)
-    """
-    date_format = configs.String(default="%Y-%m-%d %H:%M:%S")
+    date_format = configs.String(default="%Y-%m-%d")
 
     """
     A default value to set for this column.
@@ -50,7 +40,7 @@ class Datetime(Column):
     instead of null.  By setting this equal to that default value, clearskies can detect
     when a given value is actually a non-value.
     """
-    backend_default = configs.String(default="0000-00-00 00:00:00")
+    backend_default = configs.String(default="0000-00-00")
 
     """
     A value to set for this column during a save operation.
@@ -70,10 +60,8 @@ class Datetime(Column):
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        date_format: str = "%Y-%m-%d %H:%M:%S",
-        backend_default: str = "0000-00-00 00:00:00",
-        timezone_aware: bool = True,
-        timezone: datetime.timezone = datetime.timezone.utc,
+        date_format: str = "%Y-%m-%d",
+        backend_default: str = "0000-00-00",
         default: datetime.datetime | None = None,
         setable: datetime.datetime | Callable[..., datetime.datetime] | None = None,
         is_readable: bool = True,
@@ -90,29 +78,22 @@ class Datetime(Column):
     ):
         pass
 
-    def from_backend(self, value) -> datetime.datetime | None:
+    def from_backend(self, value) -> datetime.date | None:
         if not value or value == self.backend_default:
             return None
         if isinstance(value, str):
             value = dateparser.parse(value)
         if not isinstance(value, datetime.datetime):
             raise TypeError(f"I was expecting to get a datetime from the backend but I didn't get anything recognizable.  I have a value of type '{value.__class__.__name__}'.  I need either a datetime object or a datetime serialized as a string.")
-        if self.timezone_aware:
-            if not value.tzinfo:
-                value = value.replace(tzinfo=self.timezone)
-            elif value.tzinfo != self.timezone:
-                value = value.astimezone(self.timezone)
-        else:
-            value = value.replace(tzinfo=None)
 
-        return value
+        return datetime.date(value.year, value.month, value.day)
 
     def to_backend(self, data: dict[str, Any]) -> dict[str, Any]:
         if self.name not in data or isinstance(data[self.name], str) or data[self.name] is None:
             return data
 
         value = data[self.name]
-        if not isinstance(data[self.name], datetime.datetime):
+        if not isinstance(data[self.name], datetime.datetime) and not isinstance(data[self.name], datetime.date):
             raise TypeError(f"I was expecting a stringified-date or a datetime object to send to the backend, but instead I found a value of {value.__class__.__name__}")
 
         return {
@@ -120,60 +101,48 @@ class Datetime(Column):
             self.name: value.strftime(self.date_format),
         }
 
-    def to_json(self, model: clearskies.model.Model) -> dict[str, Any]:
-        """
-        Grabs the column out of the model and converts it into a representation that can be turned into JSON
-        """
-        value = self.__get__(model, model.__class__)
-        if value and (isinstance(value, datetime.datetime) or isinstance(value, datetime.date)):
-            value = value.isoformat() # type: ignore
-
-        return {self.name: value}
-
     @overload
     def __get__(self, instance: None, cls: Type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> datetime.datetime:
+    def __get__(self, instance: Model, cls: Type[Model]) -> datetime.date:
         pass
 
     def __get__(self, instance, cls):
         return super().__get__(instance, cls)
 
-    def __set__(self, instance, value: datetime.datetime) -> None:
+    def __set__(self, instance, value: datetime.datetime | datetime.date) -> None:
         instance._next_data[self.name] = value
 
-    def equals(self, value: str | datetime.datetime) -> Condition:
+    def equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
         return super().equals(value)
 
-    def spaceship(self, value: str | datetime.datetime) -> Condition:
+    def spaceship(self, value: str | datetime.datetime | datetime.date) -> Condition:
         return super().spaceship(value)
 
-    def not_equals(self, value: str | datetime.datetime) -> Condition:
+    def not_equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
         return super().not_equals(value)
 
-    def less_than_equals(self, value: str | datetime.datetime) -> Condition:
+    def less_than_equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
         return super().less_than_equals(value)
 
-    def greater_than_equals(self, value: str | datetime.datetime) -> Condition:
+    def greater_than_equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
         return super().greater_than_equals(value)
 
-    def less_than(self, value: str | datetime.datetime) -> Condition:
+    def less_than(self, value: str | datetime.datetime | datetime.date) -> Condition:
         return super().less_than(value)
 
-    def greater_than(self, value: str | datetime.datetime) -> Condition:
+    def greater_than(self, value: str | datetime.datetime | datetime.date) -> Condition:
         return super().greater_than(value)
 
-    def is_in(self, values: list[str | datetime.datetime]) -> Condition:
+    def is_in(self, values: list[str | datetime.datetime | datetime.date]) -> Condition:
         return super().is_in(values)
 
     def input_error_for_value(self, value, operator=None):
         value = dateparser.parse(value)
         if not value:
             return "given value did not appear to be a valid date"
-        if not value.tzinfo and self.timezone_aware:
-            return "date is missing timezone information"
         return ""
 
     def values_match(self, value_1, value_2):
@@ -198,18 +167,14 @@ class Datetime(Column):
 
         if type(value_1) == str:
             value_1 = dateparser.parse(value_1)
+            value_1 = datetime.date(value_1.year, value_1.month, value_1.day)
         if type(value_2) == str:
             value_2 = dateparser.parse(value_2)
-
-        # we need to make sure we're comparing in the same timezones.  For our purposes, a difference in timezone
-        # is fine as long as they represent the same time (e.g. 16:00EST == 20:00UTC).  For python, same time in different
-        # timezones is treated as different datetime objects.
-        if value_1.tzinfo is not None and value_2.tzinfo is not None:
-            value_1 = value_1.astimezone(value_2.tzinfo)
+            value_2 = datetime.date(value_2.year, value_2.month, value_2.day)
 
         # two times can be the same but if one is datetime-aware and one is not, python will treat them as not equal.
         # we want to treat such times as being the same.  Therefore, check for equality but ignore the timezone.
-        for to_check in ["year", "month", "day", "hour", "minute", "second", "microsecond"]:
+        for to_check in ["year", "month", "day"]:
             if getattr(value_1, to_check) != getattr(value_2, to_check):
                 return False
 

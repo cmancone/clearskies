@@ -387,9 +387,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             if  error:
                 return {self.name: error}
 
-        print(self.name)
         for validator in self.validators:
-            print(validator)
             if hasattr(validator, "injectable_properties"):
                 validator.injectable_properties(self.di)
 
