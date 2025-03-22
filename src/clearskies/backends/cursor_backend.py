@@ -96,13 +96,15 @@ class CursorBackend(Backend, InjectableProperties):
         def destination_name(cls):
             return "preferences"
 
-    cli = clearskies.contexts.Cli(clearskies.endpoints.Callable(
-        lambda user_preferences: user_preferences.create().id,
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
+            lambda user_preferences: user_preferences.create(no_data=True).id,
+        ),
         classes=[UserPreference],
         bindings={
             "global_table_prefix": "user_",
         }
-    ))
+    )
     ```
 
     """
