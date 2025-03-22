@@ -99,7 +99,7 @@ class Model(Schema, InjectableProperties):
         self._data = {} if data is None else data
         self._transformed_data = {}
 
-    def save(self: Self, data: dict[str, Any] | None = None, columns: dict[str, Column]={}) -> bool:
+    def save(self: Self, data: dict[str, Any] | None = None, columns: dict[str, Column]={}, no_data=False) -> bool:
         """
         Save data to the database and update the model!
 
@@ -126,8 +126,8 @@ class Model(Schema, InjectableProperties):
         in a dictionary of data to the save, then an exception will be raised.
         """
         self.no_queries()
-        if not data and not self._next_data:
-            raise ValueError("You have to pass in something to save!")
+        if not data and not self._next_data and not no_data:
+            raise ValueError("You have to pass in something to save, or set no_data=True in your call to save/create.")
         if data and self._next_data:
             raise ValueError(
                 "Save data was provided to the model class by both passing in a dictionary and setting new values on the column attributes.  This is not allowed.  You will have to use just one method of specifying save data."
@@ -586,14 +586,14 @@ class Model(Schema, InjectableProperties):
         model.set_raw_data(data)
         return model
 
-    def create(self: Self, data: dict[str, Any]) -> Self:
+    def create(self: Self, data: dict[str, Any] = {}, no_data=False) -> Self:
         """
         Creates a new record in the backend using the information in `data`.
 
         new_model = models.create({"column": "value"})
         """
         empty = self.model()
-        empty.save(data)
+        empty.save(data, no_data=no_data)
         return empty
 
     def first(self: Self) -> Self:

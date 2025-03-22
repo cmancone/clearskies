@@ -194,9 +194,13 @@ class MemoryBackend(Backend, InjectableProperties):
     in the exact same way, so this can be an easy way to mock out databases/api endpoints/etc...  Of course,
     there can be behavioral differences between the memory backend and other backends, so this isn't always perfect.
     Hence why this works well for unit tests, but can't replace all testing, especially integration tests or
-    end-to-end tests.
+    end-to-end tests.  Here's an example of that:
 
-    Here's an example of a simple application that uses the memory backend and pre-populates the data for one model.
+    ```
+
+    ```
+
+    Here's an example of an application that uses the memory backend and pre-populates the data for one model.
     In this example, our application manages pet information.  It has three models: `Species`, `Owner`, and `Pet`.
     Three different pet species are predefined with the default memory data.  The application itself then creates
     two owners, creates three pets, and then queries the memory backend to return all dogs.
@@ -443,7 +447,7 @@ class MemoryBackend(Backend, InjectableProperties):
         query.joins = [join for join in query.joins if join.join_type != "LEFT"]
         return len(self.rows_with_joins(query))
 
-    def records(self, query: clearskies.query.Query, next_page_data=None) -> list[dict[str, Any]]:
+    def records(self, query: clearskies.query.Query, next_page_data: dict[str, str]=None) -> list[dict[str, Any]]:
         self.check_query(query)
         if not self.has_table(query.model_class):
             if self._silent_on_missing_tables:

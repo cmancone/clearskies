@@ -861,11 +861,23 @@ class Di:
         )
 
     def provide_connection_details(self, environment):
+        try:
+            port = environment.get("db_port")
+        except:
+            port = 3306
+
+        try:
+            ssl_ca = environment.get("db_ssl_ca")
+        except:
+            ssl_ca = None
+
         return {
             "username": environment.get("db_username"),
             "password": environment.get("db_password"),
             "host": environment.get("db_host"),
             "database": environment.get("db_database"),
+            "port": port,
+            "ssl_ca": ssl_ca,
         }
 
     def provide_cursor(self, connection):
@@ -895,3 +907,6 @@ class Di:
 
     def provide_memory_backend_default_data(self):
         return []
+
+    def provide_global_table_prefix(self):
+        return ""

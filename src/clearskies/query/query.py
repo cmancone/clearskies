@@ -83,7 +83,7 @@ class Query:
         self.sorts = [*sorts]
         self.limit = limit
         self.group_by = group_by
-        self.paginatoin = {**pagination}
+        self.pagination = {**pagination}
         self.selects = [*selects]
         self.select_all = select_all
         self.conditions_by_column = {}

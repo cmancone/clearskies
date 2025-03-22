@@ -28,7 +28,7 @@ class MyModel(clearskies.model):
 #from .api_get_only_backend import ApiGetOnlyBackend
 from clearskies.backends.backend import Backend
 from clearskies.backends.memory_backend import MemoryBackend
-#from .cursor_backend import CursorBackend
+from clearskies.backends.cursor_backend import CursorBackend
 #from .memory_backend import MemoryBackend
 #from .restful_api_advanced_search_backend import RestfulApiAdvancedSearchBackend
 #from .secrets_backend import SecretsBackend
@@ -38,7 +38,7 @@ __all__ = [
     #"ApiBackend",
     #"ApiGetOnlyBackend",
     "Backend",
-    #"CursorBackend",
+    "CursorBackend",
     "MemoryBackend",
     #"RestfulApiAdvancedSearchBackend",
     #"SecretsBackend",
