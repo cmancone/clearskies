@@ -184,7 +184,176 @@ class MemoryBackend(Backend, InjectableProperties):
     """
     Store data in an in-memory store built in to clearskies.
 
+    Since the memory backend is built into clearskies, there's no configuration necessary to make it work:
+    simply attach it to any of your models and they will manage data themselves.  If you want though, you can declare
+    a binding named "memory_backend_default_data" which you fill with records for your models to pre-populate
+    the memory backend.  This can be helpful for tests as well as tables with fixed values.
 
+    A primary use case of the memory backend is for building unit tests of your code.  You can use the dependency
+    injection system to override other backends with the memory backend.  You can still operate with model classes
+    in the exact same way, so this can be an easy way to mock out databases/api endpoints/etc...  Of course,
+    there can be behavioral differences between the memory backend and other backends, so this isn't always perfect.
+    Hence why this works well for unit tests, but can't replace all testing, especially integration tests or
+    end-to-end tests.
+
+    Here's an example of a simple application that uses the memory backend and pre-populates the data for one model.
+    In this example, our application manages pet information.  It has three models: `Species`, `Owner`, and `Pet`.
+    Three different pet species are predefined with the default memory data.  The application itself then creates
+    two owners, creates three pets, and then queries the memory backend to return all dogs.
+
+    ```
+    import clearskies
+    from clearskies.columns import BelongsToId, BelongsToModel, Created, Email, Integer, String, Uuid
+    from clearskies.validators import Required, Unique
+
+    ###########################
+    # First define our models #
+    ###########################
+    class Species(clearskies.Model):
+        id_column_name = "name"
+        backend = clearskies.backends.MemoryBackend()
+
+        name = String(validators=[Required(), Unique()])
+
+    class Owner(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = Uuid()
+        name = String(validators=[Required()])
+        email = Email()
+
+    class Pet(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = Uuid()
+        name = String(validators=[Required()])
+        age = Integer()
+        owner_id = BelongsToId(Owner, readable_parent_columns=["id", "name", "email"])
+        owner = BelongsToModel("owner_id")
+        species = BelongsToId(Species)
+        created_at = Created()
+
+    ##################################
+    # Then define our business logic #
+    ##################################
+    def demo_memory_backend(pets: Pet, owners: Owner, species: Species):
+        # compact form of new user creation
+        bob = owners.create({"name":"Bob", "email": "bob@example.com"})
+
+        # user creation with strict type checking
+        jane = owners.model()
+        jane.name = "Jane"
+        jane.email = "jane@example.com"
+        jane.save()
+
+        # find our pet species
+        dog = species.find("name=Dog")
+        bird = species.find("name=bird")
+
+        # the same, but with strict type checking
+        cat = species.find(Species.name.equals("Cat"))
+
+        # and now we can create some pets!
+        fido = pets.create({
+            "name": "Fido",
+            "age": 2,
+            "owner_id": jane.id,
+            "species": dog.name,
+        })
+
+        spot = pets.create({
+            "name": "Spot",
+            "age": 10,
+            "owner_id": bob.id,
+            "species": dog.name,
+        })
+
+        polly = pets.create({
+            "name": "Polly",
+            "age": 32,
+            "owner_id": jane.id,
+            "species": bird.name,
+        })
+
+        return pets.where(Pet.species.equals(dog.name))
+
+    ################################################
+    # Finally configure the clearskies application #
+    ################################################
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
+            # give it the callable we want it to execute
+            demo_memory_backend,
+
+            # and tell it what model class we will return, and how to unpack it to JSON
+            model_class=Pet,
+            readable_column_names=["name", "age", "owner", "species", "created_at"]
+        ),
+        # pass in the classes that we will use so the DI system can provide them
+        classes=[Pet, Owner, Species],
+        # and configure the default data for the memory backend.
+        bindings={
+            "memory_backend_default_data": [
+                {
+                    "model_class": Species,
+                    "records": [
+                        {"name": "Dog"},
+                        {"name": "Cat"},
+                        {"name": "Bird"},
+                    ],
+                },
+            ]
+        }
+    )
+
+    ####################################
+    # Finally, execute the application #
+    ####################################
+    if __name__ == "__main__":
+        cli()
+    ```
+
+    As a CLI application you then just run it with python:
+
+    ```
+    $ python pets.py | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {
+                "name": "Fido",
+                "age": 2,
+                "owner": {
+                    "id": "27abe41e-e1fb-4219-b842-d8c0486f53e3",
+                    "name": "Jane",
+                    "email": "jane@example.com"
+                },
+                "species": "Dog",
+                "created_at": "2025-03-21T19:26:18+00:00"
+            },
+            {
+                "name": "Spot",
+                "age": 10,
+                "owner": {
+                    "id": "ff1848ea-9aae-4b75-b047-12840ee9f01d",
+                    "name": "Bob",
+                    "email": "bob@example.com"
+                },
+                "species": "Dog",
+                "created_at": "2025-03-21T19:26:18+00:00"
+            }
+        ],
+        "pagination": {
+            "number_results": 2,
+            "limit": null,
+            "next_page": {}
+        },
+        "input_errors": {}
+    }
+    ```
     """
     default_data = inject.ByName("memory_backend_default_data")
     default_data_loaded = False
@@ -378,7 +547,7 @@ class MemoryBackend(Backend, InjectableProperties):
 
     def check_query(self, query: clearskies.query.Query) -> None:
         if query.group_by:
-            raise KeyError(f"MemoryBackend does not support config group_by clauses in queries. You may be using the wrong backend.")
+            raise KeyError(f"MemoryBackend does not support group_by clauses in queries. You may be using the wrong backend.")
 
     def conditions_for_table(self, table_name: str, conditions: list[clearskies.query.Condition], is_left=False) -> list[clearskies.query.Condition]:
         """

@@ -7,6 +7,7 @@ from .category_tree import CategoryTree
 from .category_tree_ancestors import CategoryTreeAncestors
 from .category_tree_children import CategoryTreeChildren
 from .category_tree_descendents import CategoryTreeDescendents
+from .created import Created
 from .created_by_authorization_data import CreatedByAuthorizationData
 from .created_by_header import CreatedByHeader
 from .created_by_ip import CreatedByIp
@@ -28,6 +29,7 @@ from .phone import Phone
 from .select import Select
 from .string import String
 from .timestamp import Timestamp
+from .updated import Updated
 from .uuid import Uuid
 
 __all__ = [
@@ -40,6 +42,7 @@ __all__ = [
     "CategoryTreeAncestors",
     "CategoryTreeChildren",
     "CategoryTreeDescendents",
+    "Created",
     "CreatedByAuthorizationData",
     "CreatedByHeader",
     "CreatedByIp",
@@ -61,5 +64,6 @@ __all__ = [
     "Select",
     "String",
     "Timestamp",
+    "Updated",
     "Uuid",
 ]

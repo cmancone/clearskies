@@ -53,7 +53,6 @@ class Schema:
             if attribute_name in overrides:
                 columns[attribute_name] = overrides[attribute_name]
                 del overrides[attribute_name]
-            attribute.finalize_configuration(cls, attribute_name)
             columns[attribute_name] = attribute
 
         for (attribute_name, column) in overrides.items():
@@ -61,6 +60,13 @@ class Schema:
 
         if not overrides:
             cls._columns = columns
+
+        # now go through and finalize everything.  We have to do this after setting cls._columns, because finalization
+        # sometimes depends on fetching the list of columns, so if we do it before caching the answer, we may end up
+        # creating circular loops.  I don't *think* this will cause painful side-effects, but we'll find out!
+        for (column_name, column) in cls._columns.items():
+            column.finalize_configuration(cls, column_name)
+
         return columns
 
 

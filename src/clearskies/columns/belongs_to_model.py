@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Type, TYPE_CHECKING, overload, Self
+from collections import OrderedDict
 
 from clearskies import configs
 from clearskies.column import Column
@@ -80,3 +81,21 @@ class BelongsToModel(Column):
 
     def __set__(self, model: Model, value: Model) -> None:
         setattr(model, self.belongs_to_column_name, getattr(value, value.id_column_name))
+
+    def to_json(self, model: Model) -> dict[str, Any]:
+        """
+        Converts the column into a json-friendly representation
+        """
+        belongs_to_column = getattr(model.__class__, self.belongs_to_column_name)
+        if not belongs_to_column.readable_parent_columns:
+            raise ValueError(f"Configuration error for {model.__class__.__name__}: I can't convert to JSON unless you set readable_parent_columns on my parent attribute, {model.__class__.__name__}.{self.belongs_to_column_name}.")
+
+        # otherwise return an object with the readable parent columns
+        columns = belongs_to_column.parent_columns
+        parent = getattr(model, self.name)
+        json = OrderedDict()
+        for column_name in belongs_to_column.readable_parent_columns:
+            json = {**json, **columns[column_name].to_json(parent)} # type: ignore
+        return {
+            self.name: json,
+        }

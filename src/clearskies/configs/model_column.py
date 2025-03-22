@@ -2,6 +2,8 @@ from clearskies.configs import select
 
 
 class ModelColumn(select.Select):
+    count = {}
+
     def __init__(self, model_column_config_name="", required=False, default=None):
         self.required = required
         self.default = default
@@ -50,6 +52,11 @@ class ModelColumn(select.Select):
         if not model_class:
             return
 
+        if self.model_class.__name__ not in self.count:
+            self.count[self.model_class.__name__] = 0
+        self.count[self.model_class.__name__] += 1
+        if self.count[self.model_class.__name__] > 2:
+            raise ValueError("BAH")
         allowed_columns = self.get_allowed_columns(model_class, model_class.get_columns())
 
         value = instance._get_config(self)

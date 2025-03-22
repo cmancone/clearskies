@@ -141,6 +141,9 @@ class BelongsToId(String):
     @property
     def parent_model(self) -> Model:
         parents = self.di.build(self.parent_model_class, cache=True)
+        if not self.where:
+            return parents
+
         for (index, where) in enumerate(self.where):
             if callable(where):
                 parents = self.di.call_function(where, model=parents, **self.input_output.get_context_for_callables())
@@ -205,29 +208,6 @@ class BelongsToId(String):
 
     def join_table_alias(self) -> str:
         return self.parent_model.destination_name() + "_" + self.name
-
-    def to_json(self, model: Model) -> dict[str, Any]:
-        """
-        Converts the column into a json-friendly representation
-        """
-        if not self.readable_parent_columns:
-            return super().to_json(model)
-
-        if not self.model_column_name:
-            raise ValueError(f"Configuration error for {model.__class__.__name__}: I can't convert to JSON unless I have a BelongsToModel column attached, and it doesn't appear that one has been attached for me.")
-
-        # otherwise return an object with the readable parent columns
-        columns = self.parent_columns
-        parent = getattr(model, self.model_column_name)
-        json = OrderedDict()
-        if parent.id_column_name not in self.readable_parent_columns:
-            json[parent.id_column_name] = list(columns[parent.id_column_name].to_json(parent).values())[0]
-        for column_name in self.readable_parent_columns:
-            json = {**json, **columns[column_name].to_json(parent)} # type: ignore
-        return {
-            **super().to_json(model),
-            self.model_column_name: json,
-        }
 
     def is_allowed_operator(self, operator, relationship_reference=None):
         """

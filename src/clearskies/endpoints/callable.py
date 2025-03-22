@@ -286,8 +286,8 @@ class Callable(Endpoint):
                 return self.success(
                     input_output,
                     converted_models,
-                    number_results=len(models),
-                    next_page=models.next_page_data(),
+                    number_results=len(response),
+                    next_page=response.next_page_data(),
                 )
             else:
                 return self.success(input_output, self.model_as_json(response, input_output))

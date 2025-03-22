@@ -51,6 +51,15 @@ class Model(Schema, InjectableProperties):
             raise ValueError(f"You must define the 'backend' property for every model class, but this is missing for model '{self.__class__.__name__}'")
         if not hasattr(self.backend, "documentation_pagination_parameters"):
             raise TypeError(f"The 'backend' property of a model must be an object that extends the clearskies.Backend class, but that is not the case for model '{self.__class__.__name__}'.")
+        self._previous_data = {}
+        self._data = {}
+        self._next_data = {}
+        self._transformed_data = {}
+        self._touched_columns = {}
+        self._query = None
+        self._query_executed = False
+        self._count = None
+        self._next_page_data = None
 
     @classmethod
     def destination_name(cls: type[Self]) -> str:
