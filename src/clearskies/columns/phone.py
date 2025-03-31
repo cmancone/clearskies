@@ -23,6 +23,7 @@ class Phone(String):
     @parameters_to_properties.parameters_to_properties
     def __init__(
         self,
+        usa_only: bool = True,
         default: str | None = None,
         setable: str | Callable[..., str] | None = None,
         is_readable: bool = True,

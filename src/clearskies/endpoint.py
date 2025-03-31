@@ -867,10 +867,12 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         """
         response_data = {"status": "success", "data": data, "pagination": {}}
 
-        if number_results is not None:
-            for value in [number_results, limit]:
-                if value is not None and type(value) != int:
-                    raise ValueError("number_results and limit must all be integers")
+
+        if next_page:
+            if number_results is not None:
+                for value in [number_results, limit]:
+                    if value is not None and type(value) != int:
+                        raise ValueError("number_results and limit must all be integers")
 
             response_data["pagination"] = {
                 "number_results": number_results,

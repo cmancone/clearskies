@@ -203,7 +203,7 @@ class Di:
     _classes: dict[str, dict[str, int | type]] = {}
     _prepared: dict[str, Any] = {}
     _class_overrides_by_name: dict[str, type] = {}
-    _class_overrides_by_class: dict[type, type] = {}
+    _class_overrides_by_class: dict[type, Any] = {}
     _type_hint_disallow_list = [int, float, str, dict, list, datetime.datetime]
     _now: datetime.datetime | None = None
     _utcnow: datetime.datetime | None = None
@@ -463,7 +463,7 @@ class Di:
         else:
             self._prepared[key] = value
 
-    def add_class_override(self, class_to_override: type, replacement_class: type) -> None:
+    def add_class_override(self, class_to_override: type, replacement: Any) -> None:
         """
         Overrides a class for type-based injection.
 
@@ -497,13 +497,22 @@ class Di:
             raise ValueError(
                 "Invalid value passed to add_class_override for 'class_or_name' parameter: it was neither a name nor a class"
             )
-        if not inspect.isclass(replacement_class):
-            raise ValueError(
-                "Invalid value passed to add_class_override for 'replacement_class' parameter: a class should be passed but I got a "
-                + str(type(replacement_class))
-            )
 
-        self._class_overrides_by_class[class_to_override] = replacement_class
+        self._class_overrides_by_class[class_to_override] = replacement
+
+    def has_class_override(self, class_to_check: type) -> bool:
+        return class_to_check in self._class_overrides_by_class
+
+    def get_override_by_class(self, object_to_override: Any) -> Any:
+        if object_to_override.__class__ not in self._class_overrides_by_class:
+            return object_to_override
+
+        override = self._class_overrides_by_class[object_to_override.__class__]
+        if inspect.isclass(override):
+            return self.build_class(override)
+        if hasattr(override, "injectable_properties"):
+            override.injectable_properties(self)
+        return override
 
     def add_override(self, name: str, replacement_class: type) -> None:
         """

@@ -184,180 +184,174 @@ class MemoryBackend(Backend, InjectableProperties):
     """
     Store data in an in-memory store built in to clearskies.
 
+    ## Usage
+
     Since the memory backend is built into clearskies, there's no configuration necessary to make it work:
-    simply attach it to any of your models and they will manage data themselves.  If you want though, you can declare
-    a binding named "memory_backend_default_data" which you fill with records for your models to pre-populate
+    simply attach it to any of your models and it will manage data for you.  If you want though, you can declare
+    a binding named `memory_backend_default_data` which you fill with records for your models to pre-populate
     the memory backend.  This can be helpful for tests as well as tables with fixed values.
+
+    ### Testing
 
     A primary use case of the memory backend is for building unit tests of your code.  You can use the dependency
     injection system to override other backends with the memory backend.  You can still operate with model classes
     in the exact same way, so this can be an easy way to mock out databases/api endpoints/etc...  Of course,
     there can be behavioral differences between the memory backend and other backends, so this isn't always perfect.
     Hence why this works well for unit tests, but can't replace all testing, especially integration tests or
-    end-to-end tests.  Here's an example of that:
-
-    ```
-
-    ```
-
-    Here's an example of an application that uses the memory backend and pre-populates the data for one model.
-    In this example, our application manages pet information.  It has three models: `Species`, `Owner`, and `Pet`.
-    Three different pet species are predefined with the default memory data.  The application itself then creates
-    two owners, creates three pets, and then queries the memory backend to return all dogs.
+    end-to-end tests.  Here's an example of that.  Note that the UserPreference model uses the cursor backend,
+    but when you run this code it will actually end up with the memory backend, so the code will run even without
+    attempting to connect to a database.
 
     ```
     import clearskies
-    from clearskies.columns import BelongsToId, BelongsToModel, Created, Email, Integer, String, Uuid
-    from clearskies.validators import Required, Unique
 
-    ###########################
-    # First define our models #
-    ###########################
-    class Species(clearskies.Model):
-        id_column_name = "name"
-        backend = clearskies.backends.MemoryBackend()
+    class UserPreference(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.CursorBackend()
+        id = clearskies.columns.Uuid()
 
-        name = String(validators=[Required(), Unique()])
+    cli = clearskies.contexts.Cli(clearskies.endpoints.Callable(
+            lambda user_preferences: user_preferences.create(no_data=True).id,
+        ),
+        classes=[UserPreference],
+        class_overrides={
+            clearskies.backends.CursorBackend: clearskies.backends.MemoryBackend(),
+        },
+    )
+
+    if __name__ == "__main__":
+        cli()
+    ```
+
+    Note that the model requests the CursorBackend, but then we switch that for the memory backend via the
+    `class_overrides` kwarg to `clearskies.contexts.Cli`.  Therefore, the above code works regardless of
+    whether or not a database is running.  Since the models are used to interact with the backend
+    (rather than using the cursor directly), the above code works the same despite the change in backend.
+
+    Again, this is helpful as a quick way to manage tests - swap out a database backend (or any other backend)
+    for the memory backend, and then pre-populate records to test your application logic.  Obviously, this
+    won't cach backend-specific issues (e.g. forgetting to add a column to your database, mismatches between
+    column schema and backend schema, missing indexes, etc...), which is why this helps for unit tests
+    but not for integration tests.
+
+    ### Production Usage
+
+    You can use the memory backend in production if you want, although there are some important caveats to keep
+    in mind:
+
+     1. There is limited attempts at performance optimization, so you should test it before putting it under
+        substantial loads.
+     2. There's no concept of replication.  If you have multiple workers, then write operations won't be
+        persisted between them.
+
+    So, while there may be some cases where this is useful in production, it's by no means a replacement for
+    more typical in-memory data stores.
+
+    ### Predefined Records
+
+    You can declare a binding named `memory_backend_default_data` to seed the memory backend with records.  This
+    can be helpful in testing to setup your tests, and is occassionally helpful for keeping track of data in
+    fixed, read-only tables.  Here's an example:
+
+    ```
+    import clearskies
 
     class Owner(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
-        id = Uuid()
-        name = String(validators=[Required()])
-        email = Email()
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        phone = clearskies.columns.Phone()
 
     class Pet(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
-        id = Uuid()
-        name = String(validators=[Required()])
-        age = Integer()
-        owner_id = BelongsToId(Owner, readable_parent_columns=["id", "name", "email"])
-        owner = BelongsToModel("owner_id")
-        species = BelongsToId(Species)
-        created_at = Created()
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        species = clearskies.columns.String()
+        owner_id = clearskies.columns.BelongsToId(Owner, readable_parent_columns=["id", "name"])
+        owner = clearskies.columns.BelongsToModel("owner_id")
 
-    ##################################
-    # Then define our business logic #
-    ##################################
-    def demo_memory_backend(pets: Pet, owners: Owner, species: Species):
-        # compact form of new user creation
-        bob = owners.create({"name":"Bob", "email": "bob@example.com"})
-
-        # user creation with strict type checking
-        jane = owners.model()
-        jane.name = "Jane"
-        jane.email = "jane@example.com"
-        jane.save()
-
-        # find our pet species
-        dog = species.find("name=Dog")
-        bird = species.find("name=bird")
-
-        # the same, but with strict type checking
-        cat = species.find(Species.name.equals("Cat"))
-
-        # and now we can create some pets!
-        fido = pets.create({
-            "name": "Fido",
-            "age": 2,
-            "owner_id": jane.id,
-            "species": dog.name,
-        })
-
-        spot = pets.create({
-            "name": "Spot",
-            "age": 10,
-            "owner_id": bob.id,
-            "species": dog.name,
-        })
-
-        polly = pets.create({
-            "name": "Polly",
-            "age": 32,
-            "owner_id": jane.id,
-            "species": bird.name,
-        })
-
-        return pets.where(Pet.species.equals(dog.name))
-
-    ################################################
-    # Finally configure the clearskies application #
-    ################################################
-    cli = clearskies.contexts.Cli(
-        clearskies.endpoints.Callable(
-            # give it the callable we want it to execute
-            demo_memory_backend,
-
-            # and tell it what model class we will return, and how to unpack it to JSON
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.List(
             model_class=Pet,
-            readable_column_names=["name", "age", "owner", "species", "created_at"]
+            readable_column_names=["id", "name", "species", "owner"],
+            sortable_column_names=["id", "name", "species"],
+            default_sort_column_name="name",
         ),
-        # pass in the classes that we will use so the DI system can provide them
-        classes=[Pet, Owner, Species],
-        # and configure the default data for the memory backend.
+        classes=[Owner, Pet],
         bindings={
             "memory_backend_default_data": [
                 {
-                    "model_class": Species,
+                    "model_class": Owner,
                     "records": [
-                        {"name": "Dog"},
-                        {"name": "Cat"},
-                        {"name": "Bird"},
+                        {"id": "1-2-3-4", "name": "John Doe", "phone": "555-123-4567"},
+                        {"id": "5-6-7-8", "name": "Jane Doe", "phone": "555-321-0987"},
                     ],
                 },
-            ]
+                {
+                    "model_class": Pet,
+                    "records": [
+                        {"id": "a-b-c-d", "name": "Fido", "species": "Dog", "owner_id": "1-2-3-4"},
+                        {"id": "e-f-g-h", "name": "Spot", "species": "Dog", "owner_id": "1-2-3-4"},
+                        {"id": "i-j-k-l", "name": "Puss in Boots", "species": "Cat", "owner_id": "5-6-7-8"},
+                    ],
+                },
+            ],
         }
     )
 
-    ####################################
-    # Finally, execute the application #
-    ####################################
     if __name__ == "__main__":
-        cli()
+        wsgi()
     ```
 
-    As a CLI application you then just run it with python:
+    And if you invoke it:
 
     ```
-    $ python pets.py | jq
+    $ curl 'http://localhost:8080' | jq
     {
         "status": "success",
         "error": "",
         "data": [
             {
+                "id": "a-b-c-d",
                 "name": "Fido",
-                "age": 2,
-                "owner": {
-                    "id": "27abe41e-e1fb-4219-b842-d8c0486f53e3",
-                    "name": "Jane",
-                    "email": "jane@example.com"
-                },
                 "species": "Dog",
-                "created_at": "2025-03-21T19:26:18+00:00"
+                "owner": {
+                    "id": "1-2-3-4",
+                    "name": "John Doe"
+                }
             },
             {
-                "name": "Spot",
-                "age": 10,
+                "id": "i-j-k-l",
+                "name": "Puss in Boots",
+                "species": "Cat",
                 "owner": {
-                    "id": "ff1848ea-9aae-4b75-b047-12840ee9f01d",
-                    "name": "Bob",
-                    "email": "bob@example.com"
-                },
+                    "id": "5-6-7-8",
+                    "name": "Jane Doe"
+                }
+            },
+            {
+                "id": "e-f-g-h",
+                "name": "Spot",
                 "species": "Dog",
-                "created_at": "2025-03-21T19:26:18+00:00"
+                "owner": {
+                    "id": "1-2-3-4",
+                    "name": "John Doe"
+                }
             }
         ],
         "pagination": {
-            "number_results": 2,
-            "limit": null,
+            "number_results": 3,
+            "limit": 50,
             "next_page": {}
         },
         "input_errors": {}
     }
     ```
+
     """
     default_data = inject.ByName("memory_backend_default_data")
     default_data_loaded = False

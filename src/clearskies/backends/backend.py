@@ -10,6 +10,7 @@ from clearskies.autodoc.schema import Schema as AutoDocSchema
 
 class Backend(ABC):
     supports_n_plus_one = False
+    can_count = True
 
     @abstractmethod
     def update(self, id: int | str, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:

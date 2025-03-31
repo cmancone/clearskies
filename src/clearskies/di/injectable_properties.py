@@ -108,10 +108,15 @@ class InjectableProperties:
             # of what our dependencies are and which ones are cached, so we only have to list the objects attributes the first time.
             attribute = getattr(cls, attribute_name)
 
+            if di.has_class_override(attribute.__class__):
+                setattr(cls, attribute_name, di.get_override_by_class(attribute))
+                continue
+
             if issubclass(attribute.__class__, Injectable):
                 attribute.set_di(di)
                 continue
 
             if hasattr(attribute, 'injectable_properties'):
                 attribute.injectable_properties(di)
+
         cls._injectables_loaded[cache_name] = True

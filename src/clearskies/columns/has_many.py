@@ -140,6 +140,7 @@ class HasMany(Column):
         children = []
         columns = self.child_columns
         child_id_column_name = self.child_model_class.id_column_name
+        json: dict[str, Any] = {}
         for child in getattr(model, self.name):
             json: dict[str, Any] = {
                 **json,

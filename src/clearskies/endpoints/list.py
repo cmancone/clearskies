@@ -257,7 +257,6 @@ class List(Endpoint):
             input_output,
             overrides=self.column_overrides,
         )
-        limit = self.default_limit
         models = self.authorization.filter_model(models, input_output.authorization_data, input_output)
         request_data = self.map_input_to_internal_names(input_output.request_data)
         query_parameters = self.map_input_to_internal_names(input_output.query_parameters)
@@ -274,8 +273,10 @@ class List(Endpoint):
                 del query_parameters[key]
         if request_data or query_parameters or pagination_data:
             self.check_request_data(request_data, query_parameters, pagination_data)
-            [models, limit] = self.configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
-        if not models.get_query().sorts:
+            models = self.configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
+        if not models.get_query().limit:
+            models = models.limit(self.default_limit)
+        if not models.get_query().sorts and self.default_sort_column_name:
             models = models.sort_by(
                 self.default_sort_column_name,
                 self.default_sort_direction,
@@ -287,12 +288,12 @@ class List(Endpoint):
         return self.success(
             input_output,
             [self.model_as_json(model, input_output) for model in models],
-            number_results=len(models),
-            limit=limit,
+            number_results=len(models) if models.backend.can_count else None,
+            limit=models.get_query().limit,
             next_page=models.next_page_data(),
         )
 
-    def configure_models_from_request_data(self, models: Model, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]):
+    def configure_models_from_request_data(self, models: Model, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]) -> Model:
         limit = int(self.from_either(request_data, query_parameters, "limit", default=self.default_limit))
         models = models.limit(limit)
         if pagination_data:
@@ -304,7 +305,7 @@ class List(Endpoint):
             [sort_column, sort_table] = self.resolve_references_for_query(sort)
             models = models.sort_by(sort_column, direction, sort_table)
 
-        return [models, limit]
+        return models
 
     def map_input_to_internal_names(self, data: dict[str, Any]) -> dict[str, Any]:
         if not data:
