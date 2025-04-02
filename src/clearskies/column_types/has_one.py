@@ -23,6 +23,8 @@ class HasOne(HasMany):
     def provide(self, data, column_name):
         foreign_column_name = self.config("foreign_column_name")
         id_column_name = self.config("parent_id_column_name")
+        if not data.get(id_column_name):
+            return self.child_models.empty_model()
         return self.child_models.find(f"{foreign_column_name}={data[id_column_name]}")
 
     def to_json(self, model):
