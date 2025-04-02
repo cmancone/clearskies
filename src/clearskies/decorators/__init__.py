@@ -1,3 +1,4 @@
+from .allow_non_json_bodies import allow_non_json_bodies
 from .auth0_jwks import auth0_jwks
 from .authorization import authorization
 from .bindings import bindings
@@ -18,6 +19,7 @@ from .secret_bearer import secret_bearer
 from .security_headers import security_headers
 
 __all__ = [
+    "allow_non_json_bodies",
     "auth0_jwks",
     "authorization",
     "bindings",
