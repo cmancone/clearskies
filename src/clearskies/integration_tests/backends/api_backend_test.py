@@ -101,3 +101,145 @@ class ApiBackendTest(unittest.TestCase):
                 {"id": 3, "full_name": "repo_2", "html_url":"https://another.com"},
             ]
         }
+
+    def test_overview_list(self):
+        class User(clearskies.Model):
+            id_column_name = "login"
+            backend = clearskies.backends.ApiBackend(
+                pagination_parameter_name="since",
+                base_url="https://api.github.com",
+                limit_parameter_name="per_page",
+            )
+
+            id = clearskies.columns.Integer()
+            login = clearskies.columns.String()
+            gravatar_id = clearskies.columns.String()
+            avatar_url = clearskies.columns.String()
+            html_url = clearskies.columns.String()
+            repos_url = clearskies.columns.String()
+
+        requests = MagicMock()
+        response = MagicMock()
+        response.ok = True
+        response.headers = {"link": ' <https://api.github.com/users?per_page=5&since=5>; rel="next", <https://api.github.com/users{?since}>; rel="first"'}
+        response.json = MagicMock(return_value=[
+            {"id": "4", "login": "eijerei", "html_url": "https://github.com/eijerei"},
+            {"id": "5", "login": "qwerty", "html_url": "https://github.com/qwerty"},
+        ])
+        requests.request = MagicMock(return_value=response)
+
+        context = Context(
+            clearskies.endpoints.List(
+                model_class=User,
+                readable_column_names=["id", "login", "html_url"],
+                sortable_column_names=["id"],
+                default_sort_column_name=None,
+                default_limit=10,
+            ),
+            classes=[User],
+            bindings={"requests": requests},
+        )
+
+        (status_code, response, response_headers) = context()
+        assert status_code == 200
+        assert response["data"] == [
+            {"id": 4, "login": "eijerei", "html_url": "https://github.com/eijerei"},
+            {"id": 5, "login": "qwerty", "html_url": "https://github.com/qwerty"},
+        ]
+        assert response["pagination"] == {
+            "limit": 10,
+            "next_page": {
+                "since": "5",
+            },
+            "number_results": None,
+        }
+
+    def test_casing(self):
+        class User(clearskies.Model):
+            id_column_name = "login"
+            backend = clearskies.backends.ApiBackend(
+                base_url="https://api.github.com",
+                limit_parameter_name="per_page",
+                pagination_parameter_name="since",
+                model_casing="TitleCase",
+                api_casing="snake_case",
+            )
+
+            Id = clearskies.columns.Integer()
+            Login = clearskies.columns.String()
+            GravatarId = clearskies.columns.String()
+            AvatarUrl = clearskies.columns.String()
+            HtmlUrl = clearskies.columns.String()
+            ReposUrl = clearskies.columns.String()
+
+        requests = MagicMock()
+        response = MagicMock()
+        response.ok = True
+        response.headers = {"link": ' <https://api.github.com/users?per_page=5&since=5>; rel="next", <https://api.github.com/users{?since}>; rel="first"'}
+        response.json = MagicMock(return_value=[
+            {"id": "4", "login": "eijerei", "avatar_url": "https://avatar.com", "html_url": "https://github.com/eijerei", "repos_url": "https://repos.com"},
+        ])
+        requests.request = MagicMock(return_value=response)
+
+        context = Context(
+            clearskies.endpoints.List(
+                model_class=User,
+                readable_column_names=["Login", "AvatarUrl", "HtmlUrl", "ReposUrl"],
+                sortable_column_names=["Id"],
+                default_sort_column_name=None,
+                default_limit=2,
+                internal_casing="TitleCase",
+                external_casing="TitleCase",
+            ),
+            classes=[User],
+            bindings={"requests": requests},
+        )
+
+        (status_code, response, response_headers) = context()
+        assert status_code == 200
+        assert response["Status"] == "Success"
+        assert response["Data"] == [
+            {"Login": "eijerei", "AvatarUrl": "https://avatar.com", "HtmlUrl": "https://github.com/eijerei", "ReposUrl": "https://repos.com"},
+        ]
+
+    def test_map(self):
+        class User(clearskies.Model):
+            id_column_name = "login"
+            backend = clearskies.backends.ApiBackend(
+                base_url="https://api.github.com",
+                limit_parameter_name="per_page",
+                pagination_parameter_name="since",
+                api_to_model_map={"html_url": "profile_url"},
+            )
+
+            id = clearskies.columns.Integer()
+            login = clearskies.columns.String()
+            profile_url = clearskies.columns.String()
+
+        requests = MagicMock()
+        response = MagicMock()
+        response.ok = True
+        response.headers = {"link": ' <https://api.github.com/users?per_page=5&since=5>; rel="next", <https://api.github.com/users{?since}>; rel="first"'}
+        response.json = MagicMock(return_value=[
+            {"id": "4", "login": "eijerei", "avatar_url": "https://avatar.com", "html_url": "https://github.com/eijerei", "repos_url": "https://repos.com"},
+        ])
+        requests.request = MagicMock(return_value=response)
+
+        context = Context(
+            clearskies.endpoints.List(
+                model_class=User,
+                readable_column_names=["login", "profile_url"],
+                sortable_column_names=["id"],
+                default_sort_column_name=None,
+                default_limit=2,
+            ),
+            classes=[User],
+            bindings={"requests": requests},
+        )
+
+        (status_code, response, response_headers) = context()
+        assert status_code == 200
+        assert response["status"] == "success"
+        assert response["data"] == [
+            {"login": "eijerei", "profile_url": "https://github.com/eijerei"},
+        ]

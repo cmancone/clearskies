@@ -1015,7 +1015,8 @@ $ curl http://localhost:8080 | jq
                 self._auth_injected = True
                 if hasattr(self.authentication, "injectable_properties"):
                     self.authentication.injectable_properties(self.di)
-            headers = {**headers, **self.authentication.headers(retry_auth=is_retry)}
+            if is_retry:
+                self.authentication.clear_credential_cache()
         # the requests library seems to build a slightly different request if you specify the json parameter,
         # even if it is null, and this causes trouble for some picky servers
         if not json:
@@ -1023,6 +1024,7 @@ $ curl http://localhost:8080 | jq
                 method,
                 url,
                 headers=headers,
+                auth=self.authentication if self.authentication else None,
             )
         else:
             response = self.requests.request(
@@ -1030,6 +1032,7 @@ $ curl http://localhost:8080 | jq
                 url,
                 headers=headers,
                 json=json,
+                auth=self.authentication if self.authentication else None,
             )
 
         if not response.ok:
