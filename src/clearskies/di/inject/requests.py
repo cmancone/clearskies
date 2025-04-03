@@ -8,4 +8,4 @@ class Requests(Injectable):
     def __get__(self, instance, parent) -> requests.Session:
         if instance is None:
             return self  # type: ignore
-        return self._di.build_class(requests.Session, cache=self.cache)
+        return self._di.build_from_name("requests", cache=self.cache)

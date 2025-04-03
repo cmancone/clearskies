@@ -8,7 +8,6 @@ import clearskies.parameters_to_properties
 class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     is_public = False
     can_authorize = False
-    has_dynamic_credentials = False
 
     environment = clearskies.di.inject.Environment()
     secrets = clearskies.di.inject.Secrets()
@@ -87,6 +86,10 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
             self._secret = self.secrets.get(self.secret_key) if self.secret_key else self.environment.get(self.environment_key)
         return self._secret
 
+    def refresh_secret(self):
+        if self.secret_key:
+            self._secret = None
+
     @property
     def alternate_secret(self):
         if not self.alternate_secret_key and not self.alternate_environment_key:
@@ -98,6 +101,8 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     def headers(self, retry_auth=False):
         self._configured_guard()
+        if retry_auth:
+            self.refresh_secret()
         return {"Authorization": f"{self.header_prefix}{self.secret}"}
 
     def authenticate(self, input_output):

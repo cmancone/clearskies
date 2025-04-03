@@ -23,7 +23,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
     """
     Fetch and store data from an API endpoint.
 
-    The ApiBackend effectively gives developers a way to quickly build SDKs to connect a clearskies application
+    The ApiBackend gives developers a way to quickly build SDKs to connect a clearskies applications
     to arbitrary API endpoints.  The backend has some built in flexibility to make it easy to connect it to
     **most** APIs, as well as behavioral hooks so that you can override small sections of the logic to accommodate
     APIs that don't work in the expected way.  This allows you to interact with APIs using the standard model
@@ -44,7 +44,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
 
       1. The API backend only supports searching with the equals operator (e.g. `models.where("column=value")`).
       2. To specify routing parameters, use the `{parameter_name}` or `:parameter_name` syntax in either the url
-         or in the destination name of your model.  In order to query the model, you then **mus** provide a value
+         or in the destination name of your model.  In order to query the model, you then **must** provide a value
          for any routing parameters, using a matching search condition: (e.g.
          `models.where("routing_parameter_name=value")`)
       3. Any search clauses that don't correspond to routing parameters will be translated into query parameters.
@@ -62,7 +62,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
       7. The backend will check for a response header called `link` and parse this to find pagination information
          so it can iterate through records.
 
-    NOTE: The API backend doesn't support joins or group_by clauses.  Note that this limitation, as well as the fact that it only
+    NOTE: The API backend doesn't support joins or group_by clauses.  This limitation, as well as the fact that it only
     supports seaching with the equals operator, isn't a limitation in the API backend itself, but simply reflects the behavior
     of most API endoints.  If you want to support an API that has more flexibility (for instance, perhaps it allows for more search
     operations than just `=`), then you can extend the appropritae methods, discussed below, to map a model query to an API request.
@@ -102,7 +102,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
         created_at = clearskies.columns.Datetime()
         updated_at = clearskies.columns.Datetime()
 
-        # The API endpoint won't return login, so it may not seem like a column, but we need to search by a login (e.g. username)
+        # The API endpoint won't return "login" (e.g. username), so it may not seem like a column, but we need to search by it
         # because it's a URL parameter for this API endpoint.  Clearskies uses strict validation and won't let us search by
         # a column that doesn't exist in the model: therefore, we have to add the login column.
         login = clearskies.columns.String(is_searchable=True, is_readable=False)
@@ -125,7 +125,6 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
         id = clearskies.columns.Integer()
         login = clearskies.columns.String()
         gravatar_id = clearskies.columns.String()
-        avatar_url = clearskies.columns.String()
         avatar_url = clearskies.columns.String()
         html_url = clearskies.columns.String()
         repos_url = clearskies.columns.String()
@@ -305,22 +304,235 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
     url_suffix = clearskies.configs.String(default="")
 
     """
-    An instance of clearskies.authentication.Authentication that handles authentication to the API
+    An instance of clearskies.authentication.Authentication that handles authentication to the API.
+
+    The following example is a modification of the Github Backends used above that shows how to setup authentication.
+    Github, like many APIs, uses an API key attached to the request via the authorization header.  The SecretBearer
+    authentication class in clearskies is designed for this common use case, and pulls the secret key out of either
+    an environment variable or the secret manager (I use the former in this case, because it's hard to have a
+    self-contained example with a secret manager).  Of course, any authentication method can be attached to your
+    API backend - SecretBearer authentication is used here simply because it's a common approach.
+
+    Note that, when used in conjunction with a secret manager, the API Backend and the SecretBearer class will work
+    together to check for a new secret in the event of an authentication failure from the API endpoint (specifically,
+    a 401 error).  This allows you to automate credential rotation: create a new API key, put it in the secret manager,
+    and then revoke the old API key.  The next time an API call is made, the SecretBearer will provide the old key from
+    it's cache and the request will fail.  The API backend will detect this and try the request again, but this time
+    will tell the SecretBearer class to refresh it's cache with a fresh copy of the key from the secrets manager.
+    Therefore, as long as you put the new key in your secret manager **before** disabling the old key, this second
+    request will succeed and the service will continue to operate successfully with only a slight delay in response time
+    caused by refreshing the cache.
+
+    ```
+    import clearskies
+
+    class GithubBackend(clearskies.backends.ApiBackend):
+        def __init__(
+            self,
+            pagination_parameter_name: str = "page",
+            authentication: clearskies.authentication.Authentication | None = None,
+        ):
+            self.base_url = "https://api.github.com"
+            self.limit_parameter_name = "per_page"
+            self.pagination_parameter_name = pagination_parameter_name
+            self.authentication = clearskies.authentication.SecretBearer(
+                environment_key="GITHUB_API_KEY",
+                header_prefix="Bearer ", # Because github expects a header of 'Authorization: Bearer API_KEY'
+            )
+            self.finalize_and_validate_configuration()
+
+    class Repo(clearskies.Model):
+        id_column_name = "login"
+        backend = GithubBackend()
+
+        @classmethod
+        def destination_name(cls):
+            return "/user/repos"
+
+        id = clearskies.columns.Integer()
+        name = clearskies.columns.String()
+        full_name = clearskies.columns.String()
+        html_url = clearskies.columns.String()
+        visibility = clearskies.columns.Select(["all", "public", "private"])
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.List(
+            model_class=Repo,
+            readable_column_names=["id", "name", "full_name", "html_url"],
+            sortable_column_names=["full_name"],
+            default_sort_column_name="full_name",
+            default_limit=10,
+            where=["visibility=private"],
+        ),
+        classes=[Repo],
+    )
+
+    if __name__ == "__main__":
+        wsgi()
+
+    ```
     """
     authentication = clearskies.configs.Authentication(default=None)
 
     """
+    A dictionary of headers to attach to all outgoing API requests
+    """
+    headers = clearskies.configs.StringDict(default={})
+
+    """
     The casing used in the model (snake_case, camelCase, TitleCase)
+
+    This is used in conjunction with api_casing to tell the processing layer when you and the API are using
+    different casing standards.  The API backend will then automatically covnert the casing style of the API
+    to match your model.  This can be helpful when you have a standard naming convention in your own code which
+    some external API doesn't follow, that way you can at least standardize things in your code.  In the following
+    example, these parameters are used to convert from the snake_casing native to the Github API into the
+    TitleCasing used in the model class:
+
+    ```
+    import clearskies
+
+    class User(clearskies.Model):
+        id_column_name = "login"
+        backend = clearskies.backends.ApiBackend(
+            base_url="https://api.github.com",
+            limit_parameter_name="per_page",
+            pagination_parameter_name="since",
+            model_casing="TitleCase",
+            api_casing="snake_case",
+        )
+
+        Id = clearskies.columns.Integer()
+        Login = clearskies.columns.String()
+        GravatarId = clearskies.columns.String()
+        AvatarUrl = clearskies.columns.String()
+        HtmlUrl = clearskies.columns.String()
+        ReposUrl = clearskies.columns.String()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.List(
+            model_class=User,
+            readable_column_names=["Login", "AvatarUrl", "HtmlUrl", "ReposUrl"],
+            sortable_column_names=["Id"],
+            default_sort_column_name=None,
+            default_limit=2,
+            internal_casing="TitleCase",
+            external_casing="TitleCase",
+        ),
+        classes=[User],
+    )
+
+    if __name__ == "__main__":
+        wsgi()
+    ```
+
+    and when executed:
+
+    ```
+$ curl http://localhost:8080 | jq
+    {
+        "Status": "Success",
+        "Error": "",
+        "Data": [
+            {
+                "Login": "mojombo",
+                "AvatarUrl": "https://avatars.githubusercontent.com/u/1?v=4",
+                "HtmlUrl": "https://github.com/mojombo",
+                "ReposUrl": "https://api.github.com/users/mojombo/repos"
+            },
+            {
+                "Login": "defunkt",
+                "AvatarUrl": "https://avatars.githubusercontent.com/u/2?v=4",
+                "HtmlUrl": "https://github.com/defunkt",
+                "ReposUrl": "https://api.github.com/users/defunkt/repos"
+            }
+        ],
+        "Pagination": {
+            "NumberResults": null,
+            "Limit": 2,
+            "NextPage": {
+                "Since": "2"
+            }
+        },
+        "InputErrors": {}
+    }
+    ```
     """
     model_casing = clearskies.configs.Select(["snake_case", "camelCase", "TitleCase"], default="snake_case")
 
     """
     The casing used by the API response (snake_case, camelCase, TitleCase)
+
+    See model_casing for details and usage.
     """
     api_casing = clearskies.configs.Select(["snake_case", "camelCase", "TitleCase"], default="snake_case")
 
     """
     A mapping from the data keys returned by the API to the data keys expected in the model
+
+    This comes into play when you want your model columns to use different names than what is returned by the
+    API itself.  Provide a dictionary where the key is the name of a piece of data from the API, and the value
+    is the name of the column in the model.  The API Backend will use this to match the API data to your model.
+    In the example below, `html_url` from the API has been mapped to `profile_url` in the model:
+
+    ```
+    import clearskies
+
+    class User(clearskies.Model):
+        id_column_name = "login"
+        backend = clearskies.backends.ApiBackend(
+            base_url="https://api.github.com",
+            limit_parameter_name="per_page",
+            pagination_parameter_name="since",
+            api_to_model_map={"html_url": "profile_url"},
+        )
+
+        id = clearskies.columns.Integer()
+        login = clearskies.columns.String()
+        profile_url = clearskies.columns.String()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.List(
+            model_class=User,
+            readable_column_names=["login", "profile_url"],
+            sortable_column_names=["id"],
+            default_sort_column_name=None,
+            default_limit=2,
+        ),
+        classes=[User],
+    )
+
+    if __name__ == "__main__":
+        wsgi()
+    ```
+
+    And if you invoke it:
+
+    ```
+$ curl http://localhost:8080 | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {
+                "login": "mojombo",
+                "profile_url": "https://github.com/mojombo"
+            },
+            {
+                "login": "defunkt",
+                "profile_url": "https://github.com/defunkt"
+            }
+        ],
+        "pagination": {
+            "number_results": null,
+            "limit": 2,
+            "next_page": {
+                "since": "2"
+            }
+        },
+        "input_errors": {}
+    }
+    ```
     """
     api_to_model_map = clearskies.configs.StringDict(default={})
 
@@ -346,6 +558,12 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
     """
     requests = inject.Requests()
 
+    """
+    The dependency injection container (so we can pass it along to the Authentication object)
+    """
+    di = inject.Di()
+
+    _auth_injected = False
     _response_to_model_map: dict[str, str] = None # type: ignore
 
     @parameters_to_properties.parameters_to_properties
@@ -538,7 +756,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
         for parameter in used_routing_parameters:
             del data[parameter]
 
-        response = self.execute_request(url, request_method, json=data)
+        response = self.execute_request(url, request_method, json=data, headers=self.headers)
         json_response = response.json() if response.content else {}
         if response.content:
             new_record = {**new_record, **self.map_create_response(response.json(), model)}
@@ -654,6 +872,8 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
         # if our response is actually a list, then presumably the problem is solved.  If the response is a list
         # and the individual items aren't model results though... well, then I'm very confused
         if isinstance(response_data, list):
+            if not response_data:
+                return []
             if not self.check_dict_and_map_to_model(response_data[0], columns, query_data):
                 raise ValueError(f"The response from a records request returned a list, but the records in the list didn't look anything like the model class.  Please check your model class and mapping settings in the API Backend.  If those are correct, then you'll have to override the map_records_response method, because the API you are interacting with is returning data in an unexpected way that I can't automatically figure out.")
             return [self.check_dict_and_map_to_model(record, columns, query_data) for record in response_data]
@@ -791,6 +1011,10 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
             headers = {}
 
         if self.authentication:
+            if not self._auth_injected:
+                self._auth_injected = True
+                if hasattr(self.authentication, "injectable_properties"):
+                    self.authentication.injectable_properties(self.di)
             headers = {**headers, **self.authentication.headers(retry_auth=is_retry)}
         # the requests library seems to build a slightly different request if you specify the json parameter,
         # even if it is null, and this causes trouble for some picky servers
@@ -809,7 +1033,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
             )
 
         if not response.ok:
-            if self.auth.has_dynamic_credentials and not is_retry:
+            if not is_retry and response.status_code == 401:
                 return self.execute_request(url, method, json=json, headers=headers, is_retry=True)
             if not response.ok:
                 raise ValueError(f"Failed request.  Status code: {response.status_code}, message: {response.content}")
