@@ -1,3 +1,6 @@
+from requests.auth import AuthBase
+from requests.models import PreparedRequest
+
 from .. import autodoc
 
 
@@ -78,3 +81,11 @@ class SecretBearer:
 
     def documentation_security_scheme_name(self):
         return self._documentation_security_name if self._documentation_security_name is not None else "ApiKey"
+
+
+class SecretBearerAuth(AuthBase, SecretBearer):
+    """Wrapper around SecretBearer to allow for the use of the SecretBearer class as an AuthBase class"""
+
+    def __call__(self, r: PreparedRequest) -> PreparedRequest:
+        r.headers = {**r.headers, **self.headers()}
+        return super().__call__(r)

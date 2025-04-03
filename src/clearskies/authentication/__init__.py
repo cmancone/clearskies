@@ -1,11 +1,11 @@
 from ..binding_config import BindingConfig
-from .secret_bearer import SecretBearer
-from .public import Public
 from .auth0_jwks import Auth0JWKS
 from .authorization import Authorization
+from .authorization_pass_through import AuthorizationPassThrough
 from .jwks import JWKS
 from .jwks_jwcrypto import JWKSJwCrypto
-from .authorization_pass_through import AuthorizationPassThrough
+from .public import Public, PublicAuth
+from .secret_bearer import SecretBearer, SecretBearerAuth
 
 
 def public():
@@ -34,8 +34,10 @@ __all__ = [
     "BindingConfig",
     "public",
     "Public",
+    "PublicAuth",
     "secret_bearer",
     "SecretBearer",
+    "SecretBearerAuth",
     "auth0_jwks",
     "Auth0JWKS",
     "authorization",
