@@ -178,10 +178,10 @@ class ApiBackend(Backend):
         # the requests library seems to build a slightly different request if you specify the json parameter,
         # even if it is null, and this causes trouble for some picky servers
         if not json:
-            response = self._requests.request(method, url, headers=headers, auth=self._auth if self._auth else NullAuth)
+            response = self._requests.request(method, url, headers=headers, auth=self._auth if self._auth else NullAuth())
         else:
             response = self._requests.request(
-                method, url, headers=headers, json=json, auth=self._auth if self._auth else NullAuth
+                method, url, headers=headers, json=json, auth=self._auth if self._auth else NullAuth()
             )
 
         if not response.ok:
