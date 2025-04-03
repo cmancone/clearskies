@@ -1,7 +1,7 @@
-from clearskies.authentication import JWKSJwCrypto
+from clearskies.authentication import jwks_jwcrypto
 
 
-class AuthorizationPassThrough(JWKSJwCrypto):
+class AuthorizationPassThrough(jwks_jwcrypto.JWKSJwCrypto):
     """
     This authentication class takes the authentication header from the incoming request and reflects
     it on outgoing requests.

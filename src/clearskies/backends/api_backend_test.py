@@ -1,7 +1,8 @@
 import unittest
-from unittest.mock import MagicMock, call
-from .api_backend import ApiBackend
 from types import SimpleNamespace
+from unittest.mock import MagicMock, call
+
+from .api_backend import ApiBackend
 
 
 class ApiBackendTest(unittest.TestCase):
@@ -30,7 +31,8 @@ class ApiBackendTest(unittest.TestCase):
         self.requests.request.assert_called_with(
             "PATCH",
             "https://example.com",
-            headers={"Authorization": "Bearer: asdfer"},
+            headers={},
+            auth=self.auth,
             json={"hey": "sup"},
         )
         self.assertEqual({"id": 5}, response)
@@ -38,10 +40,7 @@ class ApiBackendTest(unittest.TestCase):
     def test_create(self):
         response = self.backend.create({"hey": "sup"}, "model")
         self.requests.request.assert_called_with(
-            "POST",
-            "https://example.com",
-            headers={"Authorization": "Bearer: asdfer"},
-            json={"hey": "sup"},
+            "POST", "https://example.com", headers={}, json={"hey": "sup"}, auth=self.auth
         )
         self.assertEqual({"id": 5}, response)
 
@@ -51,7 +50,8 @@ class ApiBackendTest(unittest.TestCase):
         self.requests.request.assert_called_with(
             "DELETE",
             "https://example.com",
-            headers={"Authorization": "Bearer: asdfer"},
+            headers={},
+            auth=self.auth,
             json={"id": 5},
         )
 
@@ -59,7 +59,7 @@ class ApiBackendTest(unittest.TestCase):
 
     def test_count(self):
         response = type("", (), {"ok": True, "json": lambda: {"total_matches": 10}})
-        self.requests.request = MagicMock(return_value=response)
+        self.requests.request = MagicMock(return_value=response, auth=MagicMock)
         count = self.backend.count(
             {
                 "wheres": [
@@ -76,7 +76,6 @@ class ApiBackendTest(unittest.TestCase):
         self.requests.request.assert_called_with(
             "GET",
             "https://example.com",
-            headers={"Authorization": "Bearer: asdfer"},
             json={
                 "count_only": True,
                 "where": [
@@ -87,6 +86,8 @@ class ApiBackendTest(unittest.TestCase):
                 "start": 200,
                 "limit": 100,
             },
+            headers={},
+            auth=self.auth,
         )
 
     def test_query(self):
@@ -108,7 +109,8 @@ class ApiBackendTest(unittest.TestCase):
         self.requests.request.assert_called_with(
             "GET",
             "https://example.com",
-            headers={"Authorization": "Bearer: asdfer"},
+            headers={},
+            auth=self.auth,
             json={
                 "where": [
                     {"column": "age", "operator": "<=", "values": [10]},
@@ -144,7 +146,8 @@ class ApiBackendTest(unittest.TestCase):
         self.requests.request.assert_called_with(
             "GET",
             "https://example.com/123/asdfer",
-            headers={"Authorization": "Bearer: asdfer"},
+            headers={},
+            auth=self.auth,
             json={
                 "where": [
                     {"column": "age", "operator": "<=", "values": [10]},
@@ -173,7 +176,8 @@ class ApiBackendTest(unittest.TestCase):
         self.requests.request.assert_called_with(
             "GET",
             "https://example.com",
-            headers={"Authorization": "Bearer: asdfer"},
+            headers={},
+            auth=self.auth,
         )
 
         self.assertEqual({"id": 5}, records[0])

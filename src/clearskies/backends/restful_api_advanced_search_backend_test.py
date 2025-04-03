@@ -1,7 +1,8 @@
 import unittest
-from unittest.mock import MagicMock, call
-from .restful_api_advanced_search_backend import RestfulApiAdvancedSearchBackend
 from types import SimpleNamespace
+from unittest.mock import MagicMock, call
+
+from .restful_api_advanced_search_backend import RestfulApiAdvancedSearchBackend
 
 
 class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
@@ -38,30 +39,20 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
     def test_update(self):
         response = self.backend.update("5", {"hey": "sup"}, self.model)
         self.requests.request.assert_called_with(
-            "PATCH",
-            "https://example.com/5",
-            headers={"Authorization": "Bearer: asdfer"},
-            json={"hey": "sup"},
+            "PATCH", "https://example.com/5", json={"hey": "sup"}, headers={}, auth=self.auth
         )
         self.assertEqual({"id": 5}, response)
 
     def test_create(self):
         response = self.backend.create({"hey": "sup"}, self.model)
         self.requests.request.assert_called_with(
-            "POST",
-            "https://example.com",
-            headers={"Authorization": "Bearer: asdfer"},
-            json={"hey": "sup"},
+            "POST", "https://example.com", json={"hey": "sup"}, headers={}, auth=self.auth
         )
         self.assertEqual({"id": 5}, response)
 
     def test_delete(self):
         response = self.backend.delete(5, self.model)
-        self.requests.request.assert_called_with(
-            "DELETE",
-            "https://example.com/5",
-            headers={"Authorization": "Bearer: asdfer"},
-        )
+        self.requests.request.assert_called_with("DELETE", "https://example.com/5", headers={}, auth=self.auth)
 
         self.assertEqual(True, response)
 
@@ -85,7 +76,6 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
         self.requests.request.assert_called_with(
             "POST",
             "https://example.com/search",
-            headers={"Authorization": "Bearer: asdfer"},
             json={
                 "count_only": True,
                 "where": [
@@ -96,6 +86,8 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
                 "start": 200,
                 "limit": 100,
             },
+            headers={},
+            auth=self.auth,
         )
 
     def test_query(self):
@@ -117,7 +109,6 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
         self.requests.request.assert_called_with(
             "POST",
             "https://example.com/search",
-            headers={"Authorization": "Bearer: asdfer"},
             json={
                 "where": [
                     {"column": "age", "operator": "<=", "value": 10},
@@ -127,6 +118,8 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
                 "start": 200,
                 "limit": 100,
             },
+            headers={},
+            auth=self.auth,
         )
 
         self.assertEqual({"id": 5}, records[0])
@@ -145,11 +138,7 @@ class RestfulApiAdvancedSearchBackendTest(unittest.TestCase):
             },
             self.model,
         )
-        self.requests.request.assert_called_with(
-            "POST",
-            "https://example.com/search",
-            headers={"Authorization": "Bearer: asdfer"},
-        )
+        self.requests.request.assert_called_with("POST", "https://example.com/search", headers={}, auth=self.auth)
 
         self.assertEqual({"id": 5}, records[0])
         self.assertEqual({"id": 10}, records[1])
