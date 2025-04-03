@@ -1,3 +1,7 @@
+from requests.auth import AuthBase
+from requests.models import PreparedRequest
+
+
 class Public:
     is_public = True
     can_authorize = False
@@ -26,3 +30,11 @@ class Public:
 
     def documentation_security_scheme_name(self):
         return ""
+
+
+class PublicAuth(AuthBase, Public):
+    """Wrapper around SecretBearer to allow for the use of the SecretBearer class as an AuthBase class"""
+
+    def __call__(self, r: PreparedRequest) -> PreparedRequest:
+        r.headers = {**r.headers, **self.headers()}
+        return super().__call__(r)

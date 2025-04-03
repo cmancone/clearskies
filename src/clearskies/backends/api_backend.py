@@ -1,10 +1,30 @@
-from .backend import Backend
-from typing import Any, Callable, Dict, List, Tuple
-from ..autodoc.schema import Integer as AutoDocInteger
-from .. import model
-from ..column_types import JSON, DateTime
 import re
+from typing import Any, Callable, Dict, List, Tuple
+
 from requests import Session
+from requests.auth import AuthBase
+
+from .. import model
+from ..autodoc.schema import Integer as AutoDocInteger
+from ..column_types import JSON, DateTime
+from .backend import Backend
+
+
+class NullAuth(AuthBase):
+    """force requests to ignore the ``.netrc``
+
+    Some sites do not support regular authentication, but we still
+    want to store credentials in the ``.netrc`` file and submit them
+    as form elements. Without this, requests would otherwise use the
+    .netrc which leads, on some sites, to a 401 error.
+
+    Use with::
+
+        requests.get(url, auth=NullAuth())
+    """
+
+    def __call__(self, r):
+        return r
 
 
 class ApiBackend(Backend):
@@ -152,28 +172,21 @@ class ApiBackend(Backend):
             raise ValueError("Unexpected response from records request")
         return json["data"]
 
-    def _execute_request(self, url: str, method: str, json: dict[str,Any]= {}, headers: dict[str,Any]= {}, is_retry: bool = False):
-        if self._auth:
-            headers = {**headers, **self._auth.headers(retry_auth=is_retry)}
+    def _execute_request(
+        self, url: str, method: str, json: dict[str, Any] = {}, headers: dict[str, Any] = {}, is_retry: bool = False
+    ):
         # the requests library seems to build a slightly different request if you specify the json parameter,
         # even if it is null, and this causes trouble for some picky servers
         if not json:
-            response = self._requests.request(
-                method,
-                url,
-                headers=headers,
-            )
+            response = self._requests.request(method, url, headers=headers, auth=self._auth if self._auth else NullAuth)
         else:
             response = self._requests.request(
-                method,
-                url,
-                headers=headers,
-                json=json,
+                method, url, headers=headers, json=json, auth=self._auth if self._auth else NullAuth
             )
 
         if not response.ok:
             if self._auth and self._auth.has_dynamic_credentials and not is_retry:
-                return self._execute_request(url, method, json=json, headers=headers, is_retry=True)
+                return self._execute_request(url, method, json=json, headers=headers, auth=self._auth, is_retry=True)
             if not response.ok:
                 raise ValueError(f"Failed request.  Status code: {response.status_code}, message: {response.content!r}")
 

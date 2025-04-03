@@ -1,18 +1,18 @@
 import datetime
 import json
 
-from clearskies.authentication import JWKS
+from clearskies.authentication import jwks
 from clearskies.handlers.exceptions import ClientError
 
 
-class JWKSJwCrypto(JWKS):
+class JWKSJwCrypto(jwks.JWKS):
     def __init__(self, environment, requests):
         # the third parameter is supposed to be jose_jwt, but we're going to override all
         # the functions that use it
         super().__init__(environment, requests, {})
 
     def validate_jwt(self, raw_jwt):
-        from jwcrypto import jws, jwk, jwt
+        from jwcrypto import jwk, jws, jwt
         from jwcrypto.common import JWException
 
         keys = jwk.JWKSet()
