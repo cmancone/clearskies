@@ -88,4 +88,4 @@ class SecretBearerAuth(AuthBase, SecretBearer):
 
     def __call__(self, r: PreparedRequest) -> PreparedRequest:
         r.headers = {**r.headers, **self.headers()}
-        return super().__call__(r)
+        return r
