@@ -55,6 +55,7 @@ class UpdateTest(unittest.TestCase):
                     "model_class": User,
                     "columns": ["id", "name", "age"],
                     "authentication": Public(),
+                    "upsert": True,
                 },
             }
         )
@@ -69,6 +70,14 @@ class UpdateTest(unittest.TestCase):
         self.assertEqual(10, response_data["age"])
         self.assertEqual("Conor", response_data["name"])
         self.assertEqual("c@example.com", response_data["email"])
+
+    def test_upsert(self):
+        response = self.update_less_columns(body={"name": "Conor", "age": 10}, routing_data={"id": "10"})
+        response_data = response[0]["data"]
+        self.assertEqual(200, response[1])
+        self.assertEqual("10", response_data["id"])
+        self.assertEqual(10, response_data["age"])
+        self.assertEqual("Conor", response_data["name"])
 
     def test_casing(self):
         update = test(
