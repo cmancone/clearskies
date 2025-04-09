@@ -55,11 +55,8 @@ class Update(Write):
         if authorization and hasattr(authorization, "filter_models"):
             models = authorization.filter_models(models, input_output.get_authorization_data(), input_output)
         model = models.first()
-        if not model.exists:
-            if self._configuration.get("upsert"):
-                input_data[id_column_name] = model_id
-            else:
-                return self.error(input_output, "Not Found", 404)
+        if not model.exists and not self._configuration.get("upsert"):
+            return self.error(input_output, "Not Found", 404)
         if model.exists and "id" in input_data:
             del input_data["id"]
 
@@ -69,6 +66,11 @@ class Update(Write):
         }
         if input_errors:
             raise InputError(input_errors)
+
+        # if we're doing the update part of an upsert, then we have to provide the expected model id
+        if not model.exists:
+            input_data[id_column_name] = model_id
+
         model.save(input_data, columns=self._get_writeable_columns())
 
         return self.success(input_output, self._model_as_json(model, input_output))
