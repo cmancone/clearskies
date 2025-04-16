@@ -138,8 +138,6 @@ class DI:
             return instance
         elif type(thing) == str:
             return self.build_from_name(thing, context=context, cache=cache)
-        elif callable(thing):
-            raise ValueError("build received a callable: you probably want to call di.call_function()")
 
         # if we got here then our thing is already and object of some sort and doesn't need anything further
         return thing
