@@ -13,7 +13,7 @@ def public():
 
 
 def secret_bearer(**kwargs):
-    return BindingConfig(SecretBearer, **kwargs)
+    return BindingConfig(SecretBearerAuth, **kwargs)
 
 
 def auth0_jwks(**kwargs):
