@@ -98,7 +98,7 @@ class ApiBackend(Backend):
         return [url, self.update_method(id, model), data, {}]
 
     def _map_update_response(self, json):
-        if not "data" in json:
+        if "data" not in json:
             raise ValueError("Unexpected API response to update request")
         return json["data"]
 
@@ -112,7 +112,7 @@ class ApiBackend(Backend):
         return [url, self.create_method(data, model), data, {}]
 
     def _map_create_response(self, json):
-        if not "data" in json:
+        if "data" not in json:
             raise ValueError("Unexpected API response to create request")
         return json["data"]
 
@@ -147,7 +147,7 @@ class ApiBackend(Backend):
         ]
 
     def _map_count_response(self, json):
-        if not "total_matches" in json:
+        if "total_matches" not in json:
             raise ValueError("Unexpected API response when executing count request")
         return json["total_matches"]
 
@@ -168,7 +168,7 @@ class ApiBackend(Backend):
         return [url, self.records_method(configuration), self._as_post_data(configuration), {}]
 
     def _map_records_response(self, json):
-        if not "data" in json:
+        if "data" not in json:
             raise ValueError("Unexpected response from records request")
         return json["data"]
 
@@ -186,7 +186,7 @@ class ApiBackend(Backend):
 
         if not response.ok:
             if self._auth and self._auth.has_dynamic_credentials and not is_retry:
-                return self._execute_request(url, method, json=json, headers=headers, auth=self._auth, is_retry=True)
+                return self._execute_request(url, method, json=json, headers=headers, is_retry=True)
             if not response.ok:
                 raise ValueError(f"Failed request.  Status code: {response.status_code}, message: {response.content!r}")
 
@@ -198,7 +198,7 @@ class ApiBackend(Backend):
                 raise KeyError(f"ApiBackend does not support config '{key}'. You may be using the wrong backend")
 
         for key in self._allowed_configs:
-            if not key in configuration:
+            if key not in configuration:
                 configuration[key] = [] if key[-1] == "s" else ""
         return configuration
 
