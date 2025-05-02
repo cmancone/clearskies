@@ -24,14 +24,11 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     """
     The base column.
 
-    This class (well, the children that extend it) are used to define the columns
-    that exist in a given model class.  See the note on the columns module itself for full
-    details of what that looks like.
-
-    These objects themselves don't ever store data that is specifc to a model because
-    of their lifecycle - they are bound to the model *class*, not to an individual model
-    instance.  Thus, any information stored in the column config will be shared by
-    all instances of that model.  Instead, actual model data is always stored in the model.
+    This class (well, the children that extend it) are used to define the columns that exist in a given model class -
+    they help you build your schema.  The column definitions are then used by handlers and other aspects of the
+    clearskies framework to automate things like input validation, front-end/backend-transformations, and more.
+    Many column classes have their own configuration settings, but there are also some common configuration settings
+    defined here.
     """
 
     """
@@ -44,13 +41,105 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     The default is only used when creating a record for the first time, and only if
     a value for this column has not been set.
+
+    ```
+    import clearskies
+
+    class Widget(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String(default="Jane Doe")
+
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
+            lambda widgets: widgets.create(no_data=True),
+            model_class=Widget,
+            readable_column_names=["id", "name"]
+        ),
+        classes=[Widget],
+    )
+
+    if __name__ == "__main__":
+        cli()
+    ```
+
+    Which when invoked returns:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "03806afa-b189-4729-a43c-9da5aa17bf14",
+            "name": "Jane Doe"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
     """
     default = clearskies.configs.string.String(default=None)
 
     """
     A value to set for this column during a save operation.
 
-    Unlike the default value, a setable value is always set during a save.
+    Unlike the default value, a setable value is always set during a save, even on update.  It will
+    even override other values, so it is intended to be used in cases where the value is always controlled
+    programmatically.
+
+    ```
+    import clearskies
+    import datetime
+
+    class Pet(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String(setable="Spot")
+        dob = clearskies.columns.Date(setable=lambda data, model: datetime.date.today() - datetime.timedelta(days=365*model.latest("age", data)))
+        age = clearskies.columns.Integer()
+        created = clearskies.columns.Created()
+
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
+            lambda pets: pets.create({"age": 5}),
+            model_class=Pet,
+            readable_column_names=["id", "name", "dob", "age"]
+        ),
+        classes=[Pet],
+    )
+
+    if __name__ == "__main__":
+        cli()
+    ```
+
+    Note the use of `model.latest()` above.  This function returns either the column information from the data array
+    or, if not present, the latest column value from the model itself.  This makes it more flexible as it works
+    well with both update and create operations.
+
+    If you then execute this it will return something like:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "ec4993f4-124a-44a2-8313-816d2ad51aae",
+            "name": "Spot",
+            "dob": "2020-05-03",
+            "age": 5,
+            "created": "2025-05-02T20:23:32+00:00"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    Note that `dob` is `age` years behind the current time (as recorded in the `created` timestamp).
+
     """
     setable = clearskies.configs.string_or_callable.StringOrCallable(default=None)
 

@@ -10,7 +10,10 @@ class HasManySelf(HasMany):
     This exists because a model can't refer to itself inside it's own class definition.  There are
     workarounds, but having this class is usually quicker for the developer.
 
-    The only difference between this and HasMany is that you don't have to provide the child class.
+    The main difference between this and HasMany is that you don't have to provide the child class.
+    Also, the name of the column that contains the id of the parent becomes `parent_id` by default,
+    rather than basing it on the name of the model.  This is done because, since the model is also
+    the child, using the name of the model in the name of the column id is often ambiguous.
 
     See also BelongsToSelf.
     """
@@ -40,4 +43,13 @@ class HasManySelf(HasMany):
         in is if the parent class checks in (which is what happens here).
         """
         self.child_model_class = model_class
+        has_value = False
+        try:
+            has_value = bool(self.foreign_column_name)
+        except KeyError:
+            pass
+
+        if not has_value:
+            self.foreign_column_name = "parent_id"
+
         super().finalize_configuration(model_class, name)

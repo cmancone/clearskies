@@ -15,6 +15,59 @@ class BelongsToSelf(BelongsToId):
     The only difference between this and BelongsToId is that you don't have to provide the parent class.
 
     See also HasManySelf
+
+    ```
+    from typing import Any
+
+    import clearskies
+
+    class Category(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        parent_id = clearskies.columns.BelongsToSelf()
+        parent = clearskies.columns.BelongsToModel("parent_id")
+        children = clearskies.columns.HasManySelf()
+
+    def test_self_relationship(categories: Category) -> dict[str, Any]:
+        root = categories.create({"name": "Root"})
+        sub = categories.create({"name": "Sub", "parent": root})
+        subsub_1 = categories.create({"name": "Sub Sub 1", "parent": sub})
+        subsub_2 = categories.create({"name": "Sub Sub 2", "parent_id": sub.id})
+
+        return {
+            "root_from_child": subsub_1.parent.parent.name,
+            "subsubs_from_sub": [subsub.name for subsub in sub.children]
+        }
+
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(test_self_relationship),
+        classes=[Category],
+    )
+
+    if __name__ == "__main__":
+        cli()
+    ```
+
+    Which when invoked returns:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "root_from_child": "Root",
+            "subsubs_from_sub": [
+                "Sub Sub 1",
+                "Sub Sub 2"
+            ]
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
     """
 
     _descriptor_config_map = None
