@@ -32,14 +32,17 @@ def is_model_class_reference(to_check: Any) -> bool:
     return is_model_class(to_check.get_model_class())
 
 
-def is_model_class_or_reference(to_check: Any, raise_error_message=False) -> bool:
+def is_model_class_or_reference(to_check: Any, raise_error_message=False, strict=True) -> bool:
     """
     Returns True/False to denote if the given value is a model class or a model reference
+
+    If strict is false, then it won't check that the model reference returns a model class.  This is often necessary during
+    validation by configs as, otherwise, it tends to trigger circular dependency errors.
     """
     if not inspect.isclass(to_check):
         # for references we will accept either instances or classes
         if hasattr(to_check, "get_model_class"):
-            return True
+            return is_model_class(to_check.get_model_class()) if strict else True
 
         if raise_error_message:
             raise TypeError(
@@ -51,6 +54,9 @@ def is_model_class_or_reference(to_check: Any, raise_error_message=False) -> boo
         return True
 
     if hasattr(to_check, "get_model_class"):
+        if not strict:
+            return True
+
         model_class = to_check().get_model_class()
         if is_model_class(model_class):
             return True

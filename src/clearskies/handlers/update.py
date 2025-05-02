@@ -19,6 +19,7 @@ class Update(Write):
         "where": [],
         "input_error_callable": None,
         "include_id_in_path": False,
+        "upsert": False,
     }
 
     def get_model_id(self, input_output, input_data):
@@ -55,7 +56,10 @@ class Update(Write):
             models = authorization.filter_models(models, input_output.get_authorization_data(), input_output)
         model = models.first()
         if not model.exists:
-            return self.error(input_output, "Not Found", 404)
+            if self._configuration.get("upsert"):
+                data[id_column_name] = model_id
+            else:
+                return self.error(input_output, "Not Found", 404)
         if "id" in input_data:
             del input_data["id"]
 

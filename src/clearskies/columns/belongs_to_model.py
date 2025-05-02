@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Type, TYPE_CHECKING, overload, Self
+from typing import Any, Type, TYPE_CHECKING, overload, Self
 from collections import OrderedDict
 
 from clearskies import configs
 from clearskies.column import Column
 from clearskies.columns.belongs_to_id import BelongsToId
+from clearskies.functional import validations
 import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
@@ -12,14 +13,16 @@ if TYPE_CHECKING:
 
 class BelongsToModel(Column):
     """
-    Returns the model object for a belongs to relationship.  See the docs on the BelongsToId column for usage.
+    Returns the model object for a belongs to relationship.
+
+
     """
 
     """ The name of the belongs to column we are connected to. """
     belongs_to_column_name = configs.ModelColumn(required=True)
 
-    is_writeable = configs.Boolean(default=False)
     is_searchable = configs.Boolean(default=False)
+    is_temporary = clearskies.configs.boolean.Boolean(default=True)
     _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -81,6 +84,14 @@ class BelongsToModel(Column):
 
     def __set__(self, model: Model, value: Model) -> None:
         setattr(model, self.belongs_to_column_name, getattr(value, value.id_column_name))
+
+    def pre_save(self, data: dict[str, Any], model: Model) -> dict[str, Any]:
+        # if we have a model coming in then we want to extract the id.  Either way, the model id needs to go to the
+        # belongs_to_id column, which is the only one that is actually saved.
+        if self.name in data:
+            value = data[self.name]
+            data[self.belongs_to_column_name] = getattr(value, value.id_column_name) if validations.is_model(value) else value
+        return super().pre_save(data, model)
 
     def to_json(self, model: Model) -> dict[str, Any]:
         """

@@ -70,6 +70,15 @@ class UpdateTest(unittest.TestCase):
         self.assertEqual("Conor", response_data["name"])
         self.assertEqual("c@example.com", response_data["email"])
 
+    def test_upsert(self):
+        response = self.update(body={"name": "Conor", "email": "c@example.com", "age": 10}, routing_data={"id": 10})
+        response_data = response[0]["data"]
+        self.assertEqual(200, response[1])
+        self.assertEqual("10", response_data["id"])
+        self.assertEqual(10, response_data["age"])
+        self.assertEqual("Conor", response_data["name"])
+        self.assertEqual("c@example.com", response_data["email"])
+
     def test_casing(self):
         update = context(
             {

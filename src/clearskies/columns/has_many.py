@@ -90,7 +90,15 @@ class HasMany(Column):
         # we can't do it until now because it comes from the model class we are connected to, and
         # we only just get it.
         foreign_column_name_config = self._get_config_object("foreign_column_name")
-        foreign_column_name_config.set_model_class(model_class)
+        foreign_column_name_config.set_model_class(self.child_model_class)
+        has_value = False
+        try:
+            has_value = bool(self.foreign_column_name)
+        except KeyError:
+            pass
+
+        if not has_value:
+            self.foreign_column_name = string.camel_case_to_snake_case(model_class.__name__) + "_id"
 
         super().finalize_configuration(model_class, name)
 

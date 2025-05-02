@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from clearskies import Column
     from clearskies.backends import Backend
 
-
 class Model(Schema, InjectableProperties):
     """
     A clearskies model.
@@ -637,3 +636,9 @@ class Model(Schema, InjectableProperties):
     def no_single_model(self):
         if self._data:
             raise ValueError("You have attempted to execute a query against a model that represents an individual record.  This is not allowed, as it is typically a sign of a bug in your application code.  If this is intentional, call model.as_query() before executing your query.")
+
+
+class ModelClassReference:
+    @abstractmethod
+    def get_model_class(self) -> type[Model]:
+        pass
