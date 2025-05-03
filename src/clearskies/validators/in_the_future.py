@@ -1,0 +1,27 @@
+from __future__ import annotations
+from typing import Any, TYPE_CHECKING
+import datetime
+from collections import OrderedDict
+
+import dateparser
+from clearskies.validator import Validator
+import clearskies.configs
+import clearskies.parameters_to_properties
+import clearskies.di
+
+if TYPE_CHECKING:
+    import clearskies.model
+
+class InTheFuture(Validator, clearskies.di.InjectableProperties):
+    utcnow = clearskies.di.inject.Utcnow()
+
+    def check(self, model: clearskies.model.Model, column_name: str, data: dict[str, Any]) -> str:
+        if not data.get(column_name):
+            return ""
+
+        as_date = dateparser.parse(data[column_name]) if isinstance(data[column_name], str) else data[column_name]
+        if not as_date:
+            return f"'{column_name}' was not a valid date"
+        if as_date.tzinfo == None:
+            as_date = as_date.replace(tzinfo=datetime.timezone.utc)
+        return as_date > self.utcnow

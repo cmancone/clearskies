@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 from clearskies import authentication
 from clearskies import autodoc
@@ -15,6 +15,7 @@ import clearskies.exceptions
 
 if TYPE_CHECKING:
     from clearskies.model import Model
+    from clearskies import SecurityHeader
 
 
 class List(Endpoint):
@@ -204,7 +205,7 @@ class List(Endpoint):
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        model_class: Type[clearskies.model.Model],
+        model_class: Type[Model],
         readable_column_names: list[str],
         sortable_column_names: list[str],
         default_sort_column_name: str,
@@ -223,8 +224,8 @@ class List(Endpoint):
         external_casing: str = "snake_case",
         security_headers: list[SecurityHeader] = [],
         description: str = "",
-        authentication: Authentication = authentication.Public(),
-        authorization: Authorization = authentication.Authorization(),
+        authentication: authentication.Authentication = authentication.Public(),
+        authorization: authentication.Authorization = authentication.Authorization(),
     ):
         # we need to call the parent but don't have to pass along any of our kwargs.  They are all optional in our parent, and our parent class
         # just stores them in parameters, which we have already done.  However, the parent does do some extra initialization stuff that we need,

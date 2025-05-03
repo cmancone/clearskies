@@ -585,14 +585,14 @@ class Model(Schema, InjectableProperties):
         model.set_raw_data(data)
         return model
 
-    def create(self: Self, data: dict[str, Any] = {}, no_data=False) -> Self:
+    def create(self: Self, data: dict[str, Any] = {}, columns: dict[str, Column]={}, no_data=False) -> Self:
         """
         Creates a new record in the backend using the information in `data`.
 
         new_model = models.create({"column": "value"})
         """
         empty = self.model()
-        empty.save(data, no_data=no_data)
+        empty.save(data, columns=columns, no_data=no_data)
         return empty
 
     def first(self: Self) -> Self:

@@ -691,6 +691,13 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     """
     description = clearskies.configs.String(default="")
 
+    """
+    Whether or not the routing data should also be persisted to the model.  Defaults to True.
+
+    Note: this is only relevant for handlers that accept request data
+    """
+    include_routing_data_in_request_data = clearskies.configs.Boolean(default=True)
+
     cors_header: SecurityHeader = None  # type: ignore
     has_cors: bool = False
     _model: clearskies.model.Model = None
@@ -753,6 +760,16 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             self._sortable_columns = {name: self._columns[name] for name in self.sortable_column_names}
         return self._sortable_columns
 
+    def get_request_data(self, input_output: InputOutput, required=True) -> dict[str, Any]:
+        if not input_output.request_data:
+            if input_output.has_body():
+                raise exceptions.ClientError("Request body was not valid JSON")
+            raise exceptions.ClientError("Missing required JSON body")
+
+        return {
+            **input_output.request_data,
+            **(input_output.routing_data if self.include_routing_data_in_request_data else {}),
+        }
 
     def top_level_authentication_and_authorization(self, input_output: InputOutput) -> None:
         """

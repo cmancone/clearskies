@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock, call
 import datetime
 
+import dateparser
 import clearskies
 from clearskies.contexts import Context
 
@@ -32,20 +33,49 @@ class ColumnTest(unittest.TestCase):
 
             id = clearskies.columns.Uuid()
             name = clearskies.columns.String(setable="Spot")
-            dob = clearskies.columns.Datetime(setable=lambda data, model, utcnow: utcnow - datetime.timedelta(days=365*model.latest("age", data)))
-            age = clearskies.columns.Integer()
+            date_of_birth = clearskies.columns.Date()
+            age = clearskies.columns.Integer(
+                setable=lambda data, model, now:
+                    (now-dateparser.parse(model.latest("date_of_birth", data))).total_seconds()/(86400*365),
+            )
             created = clearskies.columns.Created()
 
         context = clearskies.contexts.Context(
             clearskies.endpoints.Callable(
-                lambda pets: pets.create({"age": 5}),
+                lambda pets: pets.create({"date_of_birth": "2020-05-03"}),
                 model_class=Pet,
-                readable_column_names=["id", "name", "dob", "age", "created"]
+                readable_column_names=["id", "name", "date_of_birth", "age"]
             ),
             classes=[Pet],
-            utcnow=datetime.datetime(2025, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc),
+            now=datetime.datetime(2025, 5, 3, 0, 0, 0),
         )
         (status_code, response, response_headers) = context()
         assert response["data"]["name"] == "Spot"
         assert response["data"]["age"] == 5
-        assert response["data"]["dob"] == "2020-01-03T00:00:00+00:00"
+        assert response["data"]["date_of_birth"] == "2020-05-03"
+
+    def test_is_temporary_calc(self):
+        class Pet(clearskies.Model):
+            id_column_name = "id"
+            backend = clearskies.backends.MemoryBackend()
+
+            id = clearskies.columns.Uuid()
+            name = clearskies.columns.String()
+            date_of_birth = clearskies.columns.Date(is_temporary=True)
+            age = clearskies.columns.Integer(
+                setable=lambda data, model, now:
+                    (now-dateparser.parse(model.latest("date_of_birth", data))).total_seconds()/(86400*365),
+            )
+            created = clearskies.columns.Created()
+
+        context = clearskies.contexts.Context(
+            clearskies.endpoints.Callable(
+                lambda pets: pets.create({"name": "Spot", "date_of_birth": "2020-05-03"}),
+                model_class=Pet,
+                readable_column_names=["id", "age", "date_of_birth"],
+            ),
+            classes=[Pet],
+        )
+        (status_code, response, response_headers) = context()
+        assert response["data"]["age"] == 5
+        assert response["data"]["date_of_birth"] == None

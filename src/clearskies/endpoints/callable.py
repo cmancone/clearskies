@@ -299,7 +299,6 @@ class Callable(Endpoint):
         # if none of the above, just return the data
         return self.success(input_output, response)
 
-
     def documentation(self) -> list[autodoc.request.Request]:
         output_schema = self.output_schema if self.output_schema else self.model_class
         nice_model = string.camel_case_to_words(output_schema.__name__)

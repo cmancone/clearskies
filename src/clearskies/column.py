@@ -99,15 +99,18 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String(setable="Spot")
-        dob = clearskies.columns.Date(setable=lambda data, model: datetime.date.today() - datetime.timedelta(days=365*model.latest("age", data)))
-        age = clearskies.columns.Integer()
+        date_of_birth = clearskies.columns.Date()
+        age = clearskies.columns.Integer(
+            setable=lambda data, model, now:
+                (now-dateparser.parse(model.latest("date_of_birth", data))).total_seconds()/(86400*365),
+        )
         created = clearskies.columns.Created()
 
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
-            lambda pets: pets.create({"age": 5}),
+            lambda pets: pets.create({"date_of_birth": "2020-05-03"}),
             model_class=Pet,
-            readable_column_names=["id", "name", "dob", "age"]
+            readable_column_names=["id", "name", "date_of_birth", "age"]
         ),
         classes=[Pet],
     )
@@ -129,45 +132,195 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         "data": {
             "id": "ec4993f4-124a-44a2-8313-816d2ad51aae",
             "name": "Spot",
-            "dob": "2020-05-03",
+            "date_of_birth": "2020-05-03",
             "age": 5,
-            "created": "2025-05-02T20:23:32+00:00"
+            "created": "2025-05-03T20:23:32+00:00"
         },
         "pagination": {},
         "input_errors": {}
     }
     ```
 
-    Note that `dob` is `age` years behind the current time (as recorded in the `created` timestamp).
+    e.g., `date_of_birth` is `age` years behind the current time (as recorded in the `created` timestamp).
 
     """
     setable = clearskies.configs.string_or_callable.StringOrCallable(default=None)
 
     """
     Whether or not this column can be converted to JSON and included in an API response.
+
+    If this is set to False for a column and you attempt to set that column as a readable_column in an endpoint,
+    clearskies will throw an exception.
     """
     is_readable = clearskies.configs.boolean.Boolean(default=True)
 
     """
     Whether or not this column can be set via an API call.
+
+    If this is set to False for a column and you attempt to set the column as a writeable column in an endpoint,
+    clearskies will throw an exception.
     """
     is_writeable = clearskies.configs.boolean.Boolean(default=True)
 
     """
     Whether or not it is possible to search by this column
+
+    If this is set to False for a column and you attempt to set the column as a searchable column in an endpoint,
+    clearskies will throw an exception.
     """
     is_searchable = clearskies.configs.boolean.Boolean(default=True)
 
     """
     Whether or not this column is temporary.  A temporary column is not persisted to the backend.
+
+    Temporary columns are useful when you want the developer or end user to set a value, but you use that value to
+    trigger additional behavior, rather than actually recording it.  Temporary columns often team up with actions
+    or are used to calculate other values.  For instance, in our setable example above, we had both an age and
+    a date of birth column, with the date of birth calculated from the age.  This obviously results in two columns
+    with similar data.  One could be marked as temporary and it will be available during the save operation, but
+    it will be skipped when saving data to the backend:
+
+    ```
+    import clearskies
+
+    class Pet(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        date_of_birth = clearskies.columns.Date(is_temporary=True)
+        age = clearskies.columns.Integer(
+            setable=lambda data, model, now:
+                (now-dateparser.parse(model.latest("date_of_birth", data))).total_seconds()/(86400*365),
+        )
+        created = clearskies.columns.Created()
+
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
+            lambda pets: pets.create({"name": "Spot", "date_of_birth": "2020-05-03"}),
+            model_class=Pet,
+            readable_column_names=["id", "age", "date_of_birth"],
+        ),
+        classes=[Pet],
+    )
+
+    if __name__ == "__main__":
+        cli()
+    ```
+
+    Which will return:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "ee532cfa-91cf-4747-b798-3c6dcd79326e",
+            "age": 5,
+            "date_of_birth": null
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    e.g. the date_of_birth column is empty.  To be clear though, it's not just empty - clearskies made no attempt to set it.
+    If you were using an SQL database, you would not have to put a `date_of_birth` column in your table.
+
     """
     is_temporary = clearskies.configs.boolean.Boolean(default=False)
 
     """
     Validators to use when checking the input for this column during write operations from the API.
 
-    Keep in mind that the validators are only checked when the column is exposed via a supporting handler.
+    Keep in mind that the validators are only checked when the column is exposed via a supporting endpoint.
     You can still set whatever values you want when saving the model directly, e.g. `model.save(...)`
+
+    In the below example, we require a name that is at least 5 characters long, and the date of birth must
+    be in the past.  Note that date of birth is not required, so the end-user can create a record without
+    a date of birth.  In general, only the `Required` validator will reject a non-existent input.
+
+    ```
+    import clearskies
+
+    class Pet(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String(validators=[
+            clearskies.validators.Required(),
+            clearskies.validators.MinimumLength(5),
+        ])
+        date_of_birth = clearskies.columns.Date(validators=[
+            clearskies.validators.InThePast()
+        ])
+        created = clearskies.columns.Created()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            model_class=Pet,
+            writeable_column_names=["name", "date_of_birth"],
+            readable_column_names=["id", "name", "date_of_birth", "created"],
+        ),
+        classes=[Pet],
+    )
+    wsgi()
+    ```
+
+    You can then see the result of calling the endpoint with various kinds of invalid data:
+
+    ```
+    $ curl http://localhost:8080 -d '{"date_of_birth": "asdf"}'
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "name": "'name' is required.",
+            "date_of_birth": "given value did not appear to be a valid date"
+        }
+    }
+
+    $ curl http://localhost:8080 -d '{"name":"asdf"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "name": "'name' must be at least 5 characters long."
+        }
+    }
+
+    $ curl http://localhost:8080 -d '{"name":"Longer", "date_of_birth": "2050-01-01"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "date_of_birth": "'date_of_birth' must be in the past"
+        }
+    }
+
+    $ curl http://localhost:8080 -d '{"name":"Long Enough"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "ace16b93-db91-49b3-a8f7-5dc6568d25f6",
+            "name": "Long Enough",
+            "date_of_birth": null,
+            "created": "2025-05-03T19:32:33+00:00"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
     """
     validators = clearskies.configs.validators.Validators(default=[])
 
