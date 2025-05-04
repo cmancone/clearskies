@@ -264,7 +264,6 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             writeable_column_names=["name", "date_of_birth"],
             readable_column_names=["id", "name", "date_of_birth", "created"],
         ),
-        classes=[Pet],
     )
     wsgi()
     ```
@@ -320,16 +319,14 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         "input_errors": {}
     }
     ```
-
     """
     validators = clearskies.configs.validators.Validators(default=[])
 
     """
-    Actions to take during the pre-save step of the save process if the column has changed in the save.
+    Actions to take during the pre-save step of the save process if the column has changed during the active save operation.
 
     Pre-save happens before the data is persisted to the backend.  Actions/callables in
-    this step can return a dictionary of additional data to include in the save operation.
-
+    this step must return a dictionary.  The data in the dictionary will be included in the save operation.
     Since the save hasn't completed, any data in the model itself reflects the model before the save
     operation started.
 
@@ -339,27 +336,187 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
      1. `model` - the model involved in the save operation
      2. `data` - the new data being saved
 
-    The `is_changing` and `latest` methods on the model class are useful here, so give them a read.
+    The key here is that the defined actions will be invoked regardless of how the save happens.  Whether the
+    model.save() function is called directly or the model is creatd/modified via an endpoint, your business logic
+    will always be executed.  This makes for easy reusability and consistency throughout your applicatoin.
+
+    Here's an example where we want to record a timestamp anytime an order status becomes a particular value:
+
+    ```
+    import clearskies
+
+    class Order(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        status = clearskies.columns.Select(
+            ["Open", "On Hold", "Fulfilled"],
+            on_change_pre_save=[
+                lambda data, utcnow: {"fulfilled_at": utcnow} if data["status"] == "Fulfilled" else {},
+            ],
+        )
+        fulfilled_at = clearskies.columns.Datetime()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            model_class=Order,
+            writeable_column_names=["status"],
+            readable_column_names=["id", "status", "fulfilled_at"],
+        ),
+    )
+    wsgi()
+    ```
+
+    You can then see the difference depending on what you set the status to:
+
+    ```
+    $ curl http://localhost:8080 -d '{"status":"Open"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "a732545f-51b3-4fd0-a6cf-576cf1b2872f",
+            "status": "Open",
+            "fulfilled_at": null
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl http://localhost:8080 -d '{"status":"Fulfilled"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "c288bf43-2246-48e4-b168-f40cbf5376df",
+            "status": "Fulfilled",
+            "fulfilled_at": "2025-05-04T02:32:56+00:00"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    ```
+
     """
     on_change_pre_save = clearskies.configs.actions.Actions(default=[])
 
     """
-    Actions to take during the post-save step of the process if the column has changed in the save.
+    Actions to take during the post-save step of the process if the column has changed during the active save.
 
     Post-save happens after the data is persisted to the backend but before the full save process has finished.
-    Since the data has been persisted to the backend,any data returned by the callables/actions will be ignored.
+    Since the data has been persisted to the backend, any data returned by the callables/actions will be ignored.
     If you need to make data changes you'll have to execute a separate save operation.
-
     Since the save hasn't finished, the model is not yet updated with the new data, and
     any data you fetch out of the model will refelect the data in the model before the save started.
 
     Callables and actions can request any dependencies provided by the DI system.  In addition, they can request
-    two named parameters:
+    three named parameters:
 
      1. `model` - the model involved in the save operation
      2. `data` - the new data being saved
+     3. `id` - the id of the record being saved
 
-    The `is_changing` and `latest` methods on the model class are useful here, so give them a read.
+    Here's an example of using a post-save action to record a simple audit trail when the order status changes:
+
+    ```
+    import clearskies
+
+    class Order(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        status = clearskies.columns.Select(
+            ["Open", "On Hold", "Fulfilled"],
+            on_change_post_save=[
+                lambda model, data, order_histories: order_histories.create({
+                    "order_id": model.latest("id", data),
+                    "event": "Order status changed to " + data["status"]
+                }),
+            ],
+        )
+
+    class OrderHistory(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        event = clearskies.columns.String()
+        order_id = clearskies.columns.BelongsToId(Order)
+
+        # include microseconds in the created_at time so that we can sort our example by created_at
+        # and they come out in order (since, for our test program, they will all be created in the same second).
+        created_at = clearskies.columns.Created(date_format="%Y-%m-%d %H:%M:%S.%f")
+
+    def test_post_save(orders: Order, order_histories: OrderHistory):
+        my_order = orders.create({"status": "Open"})
+        my_order.status = "On Hold"
+        my_order.save()
+        my_order.save({"status": "Open"})
+        my_order.save({"status": "Fulfilled"})
+        return order_histories.where(OrderHistory.order_id.equals(my_order.id)).sort_by("created_at", "asc")
+
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
+            test_post_save,
+            model_class=OrderHistory,
+            return_records=True,
+            readable_column_names=["id", "event", "created_at"],
+        ),
+        classes=[Order, OrderHistory],
+    )
+    cli()
+    ```
+
+    Note that in our `on_change_post_save` lambda function, we use `model.latest("id", data)`.  We can't just use
+    `data["id"]` because `data` is a dictionary containing the information present in the save.  During the create
+    operation `data["id"]` will be populated, but during the subsequent edit operations it won't be - only the status
+    column is changing.  `model.latest("id", data)` is basically just short hand for: `data.get("id", model.id)`.
+    On the other hand, we can just use `data["status"]` because the `on_change` hook is attached to the status field,
+    so it will only fire when status is being changed, which means that the `status` key is guaranteed to be in
+    the dictionary when the lambda is executed.
+
+    Finally, the post-save action has a named parameter called `id`, so in this specific case we could use:
+
+    ```
+    lambda data, id, order_histories: order_histories.create("order_id": id, "event": data["status"])
+    ```
+
+    When we execute the above script it will return something like:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {
+            "id": "c550d714-839b-4f25-a9e1-bd7e977185ff",
+            "event": "Order status changed to Open",
+            "created_at": "2025-05-04T14:09:42.960119+00:00"
+            },
+            {
+            "id": "f393d7b0-da21-4117-a7a4-0359fab802bb",
+            "event": "Order status changed to On Hold",
+            "created_at": "2025-05-04T14:09:42.960275+00:00"
+            },
+            {
+            "id": "5b528a10-4a08-47ae-938c-fc7067603f8e",
+            "event": "Order status changed to Open",
+            "created_at": "2025-05-04T14:09:42.960395+00:00"
+            },
+            {
+            "id": "91f77a88-1c38-49f7-aa1e-7f97bd9f962f",
+            "event": "Order status changed to Fulfilled",
+            "created_at": "2025-05-04T14:09:42.960514+00:00"
+            }
+        ],
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
     """
     on_change_post_save = clearskies.configs.actions.Actions(default=[])
 
@@ -376,8 +533,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
      1. `model` - the model involved in the save operation
 
     Unlike pre_save and post_save, `data` is not provided because this data has already been merged into the
-    model.  To understand more about the save operation, use methods like `was_changed` and `previous_value`.
-
+    model.  If you need some context from the completed save operation, use methods like `was_changed` and `previous_value`.
     """
     on_change_save_finished = clearskies.configs.actions.Actions(default=[])
 
@@ -388,10 +544,12 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     will result in the email value from the authorization data being persisted into this column when the
     record is saved.
 
-    NOTE: this is sometimes best set as a column override on an API handler definition, rather than directly
+    NOTE: this is sometimes best set as a column override on an endpoint, rather than directly
     on the model itself.  The reason is because the authorization data and header information is typically
     only available during an HTTP request, so if you set this on the model level, you'll get an error
     if you try to make saves to the model in a context where authorization data and/or headers don't exist.
+
+    See created_by_source_type for usage examples.
     """
     created_by_source_key = clearskies.configs.string.String(default="")
 
@@ -402,10 +560,56 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     will result in the email value from the authorization data being persisted into this column when the
     record is saved.
 
-    NOTE: this is sometimes best set as a column override on an API handler definition, rather than directly
+    NOTE: this is sometimes best set as a column override on an endpoint, rather than directly
     on the model itself.  The reason is because the authorization data and header information is typically
     only available during an HTTP request, so if you set this on the model level, you'll get an error
     if you try to make saves to the model in a context where authorization data and/or headers don't exist.
+
+    Here's an example:
+
+    ```
+    class User(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        account_id = clearskies.columns.String(
+            created_by_source_type="routing_data",
+            created_by_source_key="account_id",
+        )
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            User,
+            readable_column_names=["id", "account_id", "name"],
+            writeable_column_names=["name"],
+            url="/:account_id",
+        ),
+    )
+    wsgi()
+    ```
+
+    Note that `created_by_source_type` is `routing_data` and `created_by_source_key` is `account_id`.
+    This means that the endpoint that creates this record must have a routing parameter named `account_id`.
+    Naturally, our endpoint has a url of `/:account_id`, and so the parameter provided by the uesr gets
+    reflected into the save.
+
+    ```
+    $ curl http://localhost:8080/1-2-3-4 -d '{"name":"Bob"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "250ed725-d940-4823-aa9d-890be800404a",
+            "account_id": "1-2-3-4",
+            "name": "Bob"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
     """
     created_by_source_type = clearskies.configs.select.Select(["authorization_data", "http_header", "routing_data", ""], default="")
 
@@ -719,7 +923,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         have to execute a new save operation.
         """
         if self.on_change_post_save and model.is_changing(self.name, data):
-            self.execute_actions_with_data(self.on_change_post_save, model, data, context="on_change_post_save")
+            self.execute_actions_with_data(self.on_change_post_save, model, data, id=id, context="on_change_post_save", require_dict_return_value=False)
 
     def save_finished(self, model: clearskies.model.Model) -> None:
         """
@@ -751,11 +955,11 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         input_output = self.di.build("input_output", cache=True)
         source_type = self.created_by_source_type
         if source_type == "authorization_data":
-            data = input_output.get_authorization_data()
+            data = input_output.authorization_data
         elif source_type == "http_header":
-            data = input_output.get_request_headers()
+            data = input_output.request_headers
         elif source_type == "routing_data":
-            data = input_output.get_routing_data()
+            data = input_output.routing_data
 
         if self.created_by_source_key not in data and self.created_by_source_strict:
             raise ValueError(
@@ -770,7 +974,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         actions: list[clearskies.typing.action],
         model: clearskies.model.Model,
         data: dict[str, Any],
+        id: int | str | None = None,
         context: str = "on_change_pre_save",
+        require_dict_return_value: bool = True,
     ) -> dict[str, Any]:
         """
         Executes a given set of actions and expects data to be both provided and returned
@@ -781,10 +987,14 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
                 action,
                 model=model,
                 data=data,
+                id=id,
                 **input_output.get_context_for_callables(),
             )
             if not isinstance(new_data, dict):
-                raise ValueError(f"Return error for action #{index+1} in 'on_change_pre_save' for column '{self.name}' in model '{self.model_class.__name__}': this action must return a dictionary but returned an object of type '{new_data.__class__.__name__}' instead")
+                if require_dict_return_value:
+                    raise ValueError(f"Return error for action #{index+1} in 'on_change_pre_save' for column '{self.name}' in model '{self.model_class.__name__}': this action must return a dictionary but returned an object of type '{new_data.__class__.__name__}' instead")
+                else:
+                    return new_data
             data = {
                 **data,
                 **new_data,

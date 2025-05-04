@@ -133,6 +133,7 @@ class Model(Schema, InjectableProperties):
             )
         if not data:
             data = {**self._next_data}
+            self._next_data = {}
 
         save_columns = self.get_columns()
         if columns is not None:

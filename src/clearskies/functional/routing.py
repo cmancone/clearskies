@@ -36,6 +36,8 @@ def match_route(expected_route, incoming_route, allow_partial=False) -> tuple[bo
     routing_parameters_by_index = {value: key for (key,value) in routing_parameters.items()}
     for index in range(len(expected_parts)):
         if index in routing_parameters_by_index:
+            if not incoming_parts[index]:
+                return (False, {})
             routing_data[routing_parameters_by_index[index]] = incoming_parts[index]
         else:
             if expected_parts[index] != incoming_parts[index]:

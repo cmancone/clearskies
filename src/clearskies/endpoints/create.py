@@ -30,7 +30,7 @@ class Create(Endpoint):
         writeable_column_names: list[str],
         readable_column_names: list[str],
         input_validation_callable: callable | None = None,
-        include_routing_data_in_request_data: bool = True,
+        include_routing_data_in_request_data: bool = False,
         url: str = "",
         request_methods: list[str] = ["POST"],
         response_headers: list[str | Callable[..., list[str]]] = [],

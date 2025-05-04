@@ -696,7 +696,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
     Note: this is only relevant for handlers that accept request data
     """
-    include_routing_data_in_request_data = clearskies.configs.Boolean(default=True)
+    include_routing_data_in_request_data = clearskies.configs.Boolean(default=False)
 
     cors_header: SecurityHeader = None  # type: ignore
     has_cors: bool = False

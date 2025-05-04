@@ -22,7 +22,6 @@ class Actions(config.Config):
         if not isinstance(value, list):
             value = [value]
 
-        print(value)
         for index, item in enumerate(value):
             if callable(item) or isinstance(item, action.Action):
                 continue
