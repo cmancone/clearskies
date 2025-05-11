@@ -19,7 +19,49 @@ class CreatedByHeader(String):
     pull header data but it's not just a string type.  An example might be if you wanted to pull the user id out of the
     header data to populate a `BelongsToId` column.  You wouldn't use this column because it can't provide all the functionality
     related to `BelongsToId`, so instead you would use the `BelongsToId` column and set `created_by_source_type` to `http_header` and
-    `created_by_source_key` to `user_id`.
+    `created_by_source_key` to `user_id`.  Example usage:
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        custom_header = clearskies.columns.CreatedByHeader("my_custom_header")
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["name"],
+            readable_column_names=["id", "name", "custom_header"],
+        ),
+        classes=[MyModel]
+    )
+    wsgi()
+    ```
+
+    If you invoked this:
+
+    ```
+    $ curl 'http://localhost:8080' -X POST -d '{"name":"Bob"}' -H 'my_custom_header: some header value' | jq
+
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "10459ee4-a75e-4fd1-9993-2feeea629144",
+            "name": "Bob",
+            "custom_header": "some header value"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    ```
+
     """
 
     """

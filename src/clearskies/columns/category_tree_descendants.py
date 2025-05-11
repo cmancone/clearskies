@@ -6,7 +6,23 @@ from clearskies.columns import CategoryTreeChildren
 if TYPE_CHECKING:
     from clearskies import Model
 
-class CategoryTreeDescendents(CategoryTreeChildren):
+class CategoryTreeDescendants(CategoryTreeChildren):
+    """
+    Returns all descendants from a category tree column.
+
+    See the CategoryTree column for usage examples.
+
+    The descendants are the recursive children of a given category.  So, given the following tree:
+
+    ```
+    Root/
+    ├─ Sub/
+    │  ├─ Sub Sub/
+    │  │  ├─ Sub Sub Sub/
+    ├─ Another Child/
+
+    The descendants of `Root` are `["Sub", "Sub Sub", "Sub Sub Sub", "Another Child"]`.
+    """
     _descriptor_config_map = None
 
     @overload

@@ -21,19 +21,8 @@ class Boolean(Column):
     of backends, so for SQL you can use a `TINYINT(1)` type.
     """
 
-    """
-    A default value to set for this column.
-
-    The default is only used when creating a record for the first time, and only if
-    a value for this column has not been set.
-    """
     default = configs.Boolean() #  type: ignore
 
-    """
-    A value to set for this column during a save operation.
-
-    Unlike the default value, a setable value is always set during a save.
-    """
     setable = configs.BooleanOrCallable() #  type: ignore
 
     """

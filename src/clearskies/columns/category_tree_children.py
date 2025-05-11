@@ -11,7 +11,20 @@ if TYPE_CHECKING:
 
 class CategoryTreeChildren(Column):
     """
-    Returns the child categories in a category tree relationship.
+    Returns the child categories from a category tree column.
+
+    See the CategoryTree column for usage examples.
+
+    The ancestors are all direct descendants of a given category.  So, given the following tree:
+
+    ```
+    Root/
+    ├─ Sub/
+    │  ├─ Sub Sub/
+    │  │  ├─ Sub Sub Sub/
+    ├─ Another Child/
+
+    The children of `Root` are `["Sub", "Another Child"]`.  The children of `Sub Sub` are `["Sub Sub Sub"]`.
     """
 
     """ The name of the category tree column we are connected to. """
@@ -81,13 +94,13 @@ class CategoryTreeChildren(Column):
         # if we can join then use a join.
         if category_tree_column.load_relatives_strategy:
             relatives = category_tree_column.parent_model.join(
-                f"{tree_table_name} as tree on tree.{join_on}={model_table_name}.{id_column_name}"
+                f"JOIN {tree_table_name} as tree on tree.{join_on}={model_table_name}.{id_column_name}"
             )
             relatives = relatives.where(f"tree.{search_on}={model_id}")
             if not include_all:
                 relatives = relatives.where(f"tree.{is_parent_column_name}=1")
             if find_parents:
-                relatives = relatives.sort_by(level_column_name, "asc")
+                relatives = relatives.sort_by(f"tree.{level_column_name}", "asc")
             return relatives
 
         # joins only work for SQL-like backends.  Otherwise, we have to pull out our list of ids

@@ -6,7 +6,7 @@ from .boolean import Boolean
 from .category_tree import CategoryTree
 from .category_tree_ancestors import CategoryTreeAncestors
 from .category_tree_children import CategoryTreeChildren
-from .category_tree_descendents import CategoryTreeDescendents
+from .category_tree_descendants import CategoryTreeDescendants
 from .created import Created
 from .created_by_authorization_data import CreatedByAuthorizationData
 from .created_by_header import CreatedByHeader
@@ -41,7 +41,7 @@ __all__ = [
     "CategoryTree",
     "CategoryTreeAncestors",
     "CategoryTreeChildren",
-    "CategoryTreeDescendents",
+    "CategoryTreeDescendants",
     "Created",
     "CreatedByAuthorizationData",
     "CreatedByHeader",

@@ -15,28 +15,46 @@ class Created(Datetime):
     """
     The created column records the time that a record is created.
 
-    Note that this will always populate the column when the model is first created.
-    You don't have to provide the timestamp yourself and you should never expose it as
-    a writeable column through an API (in fact, you can't).
+    This will always populate the column when the model is first created.  If you attempt to set a value
+    to this column on create then it will be overwritten.
 
     ```
     import clearskies
-    class MyModel(clearskies.model):
+    class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         created = clearskies.columns.Created()
 
-    def my_application(my_models):
-        my_model = my_models.create({"name": "Example"})
-
-        # prints a datetime object with the time (in UTC) that the above save happened.
-        print(my_model.created)
-
-    cli = clearskies.contexts.cli(my_model, binding_classes=[MyModel])
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
+            lambda my_models: my_models.create({"name": "An Example"}),
+            model_class=MyModel,
+            readable_column_names=["id", "name", "created"],
+        ),
+        classes=[MyModel]
+    )
     cli()
     ```
+
+    And if you execute this you'll see that the `created` column was automatically populated:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "c54d74ac-5282-439e-af4f-23efb9ba96d4",
+            "name": "An Example",
+            "created": "2025-05-09T19:58:43+00:00"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    ```
+
     """
 
     """

@@ -16,7 +16,8 @@ class CreatedByAuthorizationData(String):
 
     If authorization data isn't available from the context being executed, then you may end up with an error
     (depending on the context).  This is a good thing if you are trying to consistely provide audit information,
-    but may be a problem if your model creation needs to happen more flexibly.
+    but may be a problem if your model creation needs to happen more flexibly.  Obviously, a pre-requisite for using this
+    class is to have an authentication class attached to your endpoint which populates the authorization data.
 
     NOTE: columns generally also have the `created_by_source_type` and `created_by_source_key` properties that perform
     this exact same function.  Why do we have those properties and this column?  This column works well if we have
@@ -25,6 +26,58 @@ class CreatedByAuthorizationData(String):
     be if you wanted to pull the user id out of the authorziation data to populate a `BelongsToId` column.  You wouldn't
     use this column because it can't provide all the functionality related to `BelongsToId`, so instead you would
     use the `BelongsToId` column and set `created_by_source_type` to `authorization_data` and `created_by_source_key` to `user_id`.
+    Example usage:
+
+    ```
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        organization_id = clearskies.columns.CreatedByAuthorizationData("organization_id")
+
+    class MyAuthentication(clearskies.authentication.Authentication):
+        def authenticate(self, input_output) -> bool:
+            # Authenticate the user!
+            #
+            # This is where you would normally authenticate the user and provide any data about them to the
+            # authorization system.  This might mean validating a JWT and then providing the claims as authorization data,
+            # or looking up a session id and providing the session data to the authorization system.  In this case,
+            # we're just going to return a fixed id for our organization.
+            input_output.authorization_data = {
+                "organization_id": "my-super-awesome-organization",
+            }
+            return True
+
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["name"],
+            readable_column_names=["id", "name", "organization_id"],
+            authentication=MyAuthentication(),
+        ),
+        classes=[MyModel]
+    )
+    cli()
+    ```
+
+    And running this will give you something like:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "49816ea4-0956-461e-abd4-03dbde845ba9",
+            "name": "Bob",
+            "organization_id": "my-super-awesome-organization"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
     """
 
     """

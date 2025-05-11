@@ -46,6 +46,26 @@ def _sort(row_a: Any, row_b: Any, sorts: list[clearskies.query.Sort]) -> int:
     return 0
 
 
+def cheating_equals(column, values, null):
+    """
+    Cheating because this solves a very specific problem that likely is a generic issue.
+
+    The memory backend has some matching failures because boolean columns stay boolean in the
+    memory store, but the incoming search values are not converted to boolean and tend to be
+    str(1) or str(0).  The issue is that save data goes through the `to_backend` flow, but search
+    data doesn't.  This doesn't matter most of the time because, in practice, the backend itself
+    often does its own type conversion, but it causes problems for the memory backend.  I can't
+    decide if fixing this will cause more problems than it solves, so for now I'm just cheating
+    and putting in a hack for this specific use case :shame:.
+    """
+    def inner(row):
+        backend_value = row[column] if column in row else null
+        if isinstance(backend_value, bool):
+            return backend_value == bool(values[0])
+        return str(backend_value) == str(values[0])
+    return inner
+
+
 class MemoryTable:
     _table_name: str = ""
     _column_names: list[str] = []
@@ -69,7 +89,7 @@ class MemoryTable:
         > gentle_float_conversion(values[0]),
         "<": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
         < gentle_float_conversion(values[0]),
-        "=": lambda column, values, null: lambda row: (str(row[column]) if column in row else null) == str(values[0]),
+        "=": cheating_equals,
         "is not null": lambda column, values, null: lambda row: (column in row and row[column] is not None),
         "is null": lambda column, values, null: lambda row: (column not in row or row[column] is None),
         "is not": lambda column, values, null: lambda row: row.get(column, null) != values[0],
@@ -358,9 +378,9 @@ class MemoryBackend(Backend, InjectableProperties):
     _tables: dict[str, MemoryTable] = {}
     _silent_on_missing_tables: bool = False
 
-    def __init__(self):
-        self._tables = {}
-        self._silent_on_missing_tables = True
+    def __init__(self, silent_on_missing_tables=False):
+        self.__class__._tables = {}
+        self._silent_on_missing_tables = silent_on_missing_tables
 
     def load_default_data(self):
         if self.default_data_loaded:
@@ -389,23 +409,23 @@ class MemoryBackend(Backend, InjectableProperties):
     def create_table(self, model_class: Type[clearskies.model.Model]):
         self.load_default_data()
         table_name = model_class.destination_name()
-        if table_name in self._tables:
+        if table_name in self.__class__._tables:
             return
-        self._tables[table_name] = MemoryTable(model_class)
+        self.__class__._tables[table_name] = MemoryTable(model_class)
 
     def has_table(self, model_class: Type[clearskies.model.Model]) -> bool:
         self.load_default_data()
         table_name = model_class.destination_name()
-        return table_name in self._tables
+        return table_name in self.__class__._tables
 
     def get_table(self, model_class: Type[clearskies.model.Model], create_if_missing=False) -> MemoryTable:
         table_name = model_class.destination_name()
-        if table_name not in self._tables:
+        if table_name not in self.__class__._tables:
             if create_if_missing:
                 self.create_table(model_class)
             else:
                 raise ValueError(f"The memory backend was asked to work with the model '{model_class.__name__}' but this model hasn't been explicitly added to the memory backend.  This typically means that you are querying for records in a model but haven't created any yet.")
-        return self._tables[table_name]
+        return self.__class__._tables[table_name]
 
     def create_with_model_class(self, data: dict[str, Any], model_class: Type[clearskies.model.Model]) -> dict[str, Any]:
         self.create_table(model_class)
@@ -454,7 +474,6 @@ class MemoryBackend(Backend, InjectableProperties):
         # this is easy if we have no joins, so just return early so I don't have to think about it
         if not query.joins:
             return self.get_table(query.model_class).rows(query, query.conditions, next_page_data=next_page_data)
-
         rows = self.rows_with_joins(query)
 
         # currently we don't do much with selects, so just limit results down to the data from the original
@@ -481,10 +500,12 @@ class MemoryBackend(Backend, InjectableProperties):
         conditions = [*query.conditions]
         # quick sanity check
         for join in query.joins:
-            if join.unaliased_table_name not in self._tables:
-                raise ValueError(
-                    f"Join '{join._raw_join}' refrences table '{join.unaliased_table_name}' which does not exist in MemoryBackend"
-                )
+            if join.unaliased_table_name not in self.__class__._tables:
+                if not self._silent_on_missing_tables:
+                    raise ValueError(
+                        f"Join '{join._raw_join}' refrences table '{join.unaliased_table_name}' which does not exist in MemoryBackend"
+                    )
+                return []
 
         # start with the matches in the main table
         left_table_name = query.model_class.destination_name()
@@ -512,7 +533,7 @@ class MemoryBackend(Backend, InjectableProperties):
                 if left_table_name not in joined_tables:
                     continue
 
-                join_rows = self._tables[right_table_name].rows(
+                join_rows = self.__class__._tables[join.unaliased_table_name].rows(
                     query, self.conditions_for_table(table_name_for_join, conditions, joined_tables), filter_only=True
                 )
 
@@ -536,12 +557,12 @@ class MemoryBackend(Backend, InjectableProperties):
         return rows
 
     def all_rows(self, table_name: str) -> list[dict[str, Any]]:
-        if table_name not in self._tables:
+        if table_name not in self.__class__._tables:
             if self._silent_on_missing_tables:
                 return []
 
             raise ValueError(f"Cannot return rows for unknown table '{table_name}'")
-        return self._tables[table_name]._rows
+        return self.__class__.tables[table_name]._rows
 
     def check_query(self, query: clearskies.query.Query) -> None:
         if query.group_by:

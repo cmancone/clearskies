@@ -50,6 +50,8 @@ class CategoryTree(BelongsToId):
 
     class Tree(clearskies.Model):
         id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend(silent_on_missing_tables=True)
+
         id = clearskies.columns.Uuid()
         parent_id = clearskies.columns.String()
         child_id = clearskies.columns.String()
@@ -58,13 +60,74 @@ class CategoryTree(BelongsToId):
 
     class Category(clearskies.Model):
         id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend(silent_on_missing_tables=True)
+
         id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
         parent_id = clearskies.columns.CategoryTree(Tree)
         parent = clearskies.columns.BelongsToModel("parent_id")
-        children = clearskies.columns.CategoryTreeChildren("category_tree")
-        descendants = clearskies.columns.CategoryTreeDescendants("category_tree")
-        ancestors = clearskies.columns.CategoryTreeAncestors("category_tree")
+        children = clearskies.columns.CategoryTreeChildren("parent_id")
+        descendants = clearskies.columns.CategoryTreeDescendants("parent_id")
+        ancestors = clearskies.columns.CategoryTreeAncestors("parent_id")
+
+    def test_category_tree(category: Category):
+        root_1 = category.create({"name": "Root 1"})
+        root_2 = category.create({"name": "Root 2"})
+        sub_1_root_1 = category.create({"name": "Sub 1 of Root 1", "parent_id": root_1.id})
+        sub_2_root_1 = category.create({"name": "Sub 2 of Root 1", "parent_id": root_1.id})
+        sub_sub = category.create({"name": "Sub Sub", "parent_id": sub_1_root_1.id})
+        sub_1_root_2 = category.create({"name": "Sub 1 of Root 2", "parent_id": root_2.id})
+
+        return {
+            "descendants_of_root_1": [descendant.name for descendant in root_1.descendants],
+            "children_of_root_1": [child.name for child in root_1.children],
+            "descendants_of_root_2": [descendant.name for descendant in root_2.descendants],
+            "ancestors_of_sub_sub": [ancestor.name for ancestor in sub_sub.ancestors],
+        }
+
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(test_category_tree),
+        classes=[Category, Tree],
+    )
+    cli()
     ```
+
+    And if you invoke the above you will get:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "descendants_of_root_1": [
+                "Sub 1 of Root 1",
+                "Sub 2 of Root 1",
+                "Sub Sub"
+            ],
+            "children_of_root_1": [
+                "Sub 1 of Root 1",
+                "Sub 2 of Root 1"
+            ],
+            "descendants_of_root_2": [
+                "Sub 1 of Root 2"
+            ],
+            "ancestors_of_sub_sub": [
+                "Root 1",
+                "Sub 1 of Root 1"
+            ]
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    In case it's not clear, the definition of these things are:
+
+     1. Descendants: All children under a given category (recursively).
+     2. Children: The direct descendants of a given category.
+     3. Ancestors: The parents of a given category, starting from the root category.
+     4. Parent: the immediate parent of the category.
+
     """
 
     """
