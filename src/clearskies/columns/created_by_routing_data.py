@@ -17,7 +17,47 @@ class CreatedByRoutingData(String):
     pull route data but it's not just a string type.  An example might be if you wanted to pull the user id out of the
     route data to populate a `BelongsToId` column.  You wouldn't use this column because it can't provide all the functionality
     related to `BelongsToId`, so instead you would use the `BelongsToId` column and set `created_by_source_type` to `routing_data` and
-    `created_by_source_key` to `user_id`.
+    `created_by_source_key` to `user_id`.  Example usage:
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        organization_id = clearskies.columns.CreatedByRoutingData("organization_id")
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            url="/{organization_id}",
+            writeable_column_names=["name"],
+            readable_column_names=["id", "name", "organization_id"],
+        ),
+        classes=[MyModel]
+    )
+    wsgi()
+    ```
+
+    And if you invoked this:
+
+    ```
+    $ curl 'http://localhost:8080/my-org-id' -d '{"name":"Bob"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "3643db8c-c9d4-47ee-a747-8922c59d9e7e",
+            "name": "Bob",
+            "organization_id": "my-org-id"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
     """
 
     """

@@ -18,6 +18,72 @@ if TYPE_CHECKING:
 class Datetime(Column):
     """
     Stores date+time data in a column.
+
+    When processing user input, this value is passed through `dateparser.parse()` to decide if it is a proper date string.
+    This makes for relatively flexible input validation.  Example:
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        my_datetime = clearskies.columns.Datetime()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["name", "my_datetime"],
+            readable_column_names=["id", "name", "my_datetime"],
+        ),
+        classes=[MyModel]
+    )
+    wsgi()
+    ```
+
+    And when invoked:
+
+    ```
+    $ curl 'http://localhost:8080' -d '{"name":"Bob", "my_datetime":"2025-05-13 12:35:45+00:00"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "68095d0d-c909-4ab3-8c15-bd2667b7b074",
+            "name": "Bob",
+            "my_datetime": "2025-05-13T12:35:45+00:00"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl 'http://localhost:8080' -d '{"name":"Bob", "my_datetime":"May 13th 2025 2:35:45UTC"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "9fea6933-86ac-4dd1-b9e0-a9fa50608410",
+            "name": "Bob",
+            "my_datetime": "2025-05-13T12:35:45+00:00"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl 'http://localhost:8080' -d '{"name":"Bob", "my_datetime":"not a date"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "my_datetime": "given value did not appear to be a valid date"
+        }
+    }
+    ```
     """
 
     """

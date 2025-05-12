@@ -12,11 +12,50 @@ if TYPE_CHECKING:
 
 class CreatedByUserAgent(String):
     """
-    This column will automatically take user agent from the client and store it in the model upon creation.
+    This column will automatically take the user agent from the client and store it in the model upon creation.
 
     If the user agent isn't available from the context being executed, then you may end up with an error
     (depending on the context).  This is a good thing if you are trying to consistely provide audit information,
-    but may be a problem if your model creation needs to happen more flexibly.
+    but may be a problem if your model creation needs to happen more flexibly.  Example:
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        user_agent = clearskies.columns.CreatedByUserAgent()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["name"],
+            readable_column_names=["id", "name", "user_agent"],
+        ),
+        classes=[MyModel]
+    )
+    wsgi()
+    ```
+
+    And if you invoked this:
+
+    ```
+    $ curl 'http://localhost:8080' -d '{"name":"Bob"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "a66e5fa9-6377-4d3b-9d50-fc7feaed6d1a",
+            "name": "Bob",
+            "user_agent": "curl/8.5.0"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
     """
 
     """
@@ -43,7 +82,7 @@ class CreatedByUserAgent(String):
         if model:
             return data
         input_output = self.di.build("input_output", cache=True)
-        data = {**data, self.name: input_output.get_request_header("user-agent")}
+        data = {**data, self.name: input_output.request_headers.user_agent}
         if self.on_change_pre_save:
             data = self.execute_actions_with_data(self.on_change_pre_save, model, data)
         return data

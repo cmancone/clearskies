@@ -18,42 +18,84 @@ if TYPE_CHECKING:
 class Date(Datetime):
     """
     Stores date data in a column.
-    """
+
+    This is specifically for a column that only stores date information - not time information.  When processing user input,
+    this value is passed through `dateparser.parse()` to decide if it is a proper date string.  This makes for relatively
+    flexible input validation.  Example:
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        my_date = clearskies.columns.Date()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["name", "my_date"],
+            readable_column_names=["id", "name", "my_date"],
+        ),
+        classes=[MyModel]
+    )
+    wsgi()
+    ```
+
+    And when invoked:
+
+    ```
+    $ curl 'http://localhost:8080' -d '{"name":"Bob", "my_date":"May 5th 2025"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "a8c8ac79-bc28-4b24-9728-e85f13fc4104",
+            "name": "Bob",
+            "my_date": "2025-05-05"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl 'http://localhost:8080' -d '{"name":"Bob", "my_date":"2025-05-03"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "21376ae7-4090-4c2b-a50b-8d932ad5dac1",
+            "name": "Bob",
+            "my_date": "2025-05-03"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl 'http://localhost:8080' -d '{"name":"Bob", "my_date":"not a date"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "my_date": "given value did not appear to be a valid date"
+        }
+    }
+    ```
 
     """
-    The format string to use when sending to the backend (default: %Y-%m-%d)
-    """
+
     date_format = configs.String(default="%Y-%m-%d")
-
-    """
-    A default value to set for this column.
-
-    The default is only used when creating a record for the first time, and only if
-    a value for this column has not been set.
-    """
-    default = configs.Datetime()  # type: ignore
-
-    """
-    Sets a default date that the backend is going to provide.
-
-    Some backends, depending on configuration, may provide a default value for the column
-    instead of null.  By setting this equal to that default value, clearskies can detect
-    when a given value is actually a non-value.
-    """
     backend_default = configs.String(default="0000-00-00")
 
-    """
-    A value to set for this column during a save operation.
-
-    Unlike the default value, a setable value is always set during a save.
-    """
+    default = configs.Datetime()  # type: ignore
     setable = configs.DatetimeOrCallable(default=None)  # type: ignore
 
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
 
-    """
-    The class to use when documenting this column
-    """
     auto_doc_class: Type[AutoDocSchema] = AutoDocDatetime
     _descriptor_config_map = None
 

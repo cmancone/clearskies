@@ -46,7 +46,7 @@ class CreatedByHeader(String):
     If you invoked this:
 
     ```
-    $ curl 'http://localhost:8080' -X POST -d '{"name":"Bob"}' -H 'my_custom_header: some header value' | jq
+    $ curl 'http://localhost:8080' -d '{"name":"Bob"}' -H 'my_custom_header: some header value' | jq
 
     {
         "status": "success",

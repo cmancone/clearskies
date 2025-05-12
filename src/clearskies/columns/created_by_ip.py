@@ -11,11 +11,51 @@ if TYPE_CHECKING:
 
 class CreatedByIp(String):
     """
-    Returns the IP of the client when the record is created.
+    Returns the ip address of the client when the record is created.
 
-    If ip isn't available from the context being executed, then you may end up with an error
+    If the ip address isn't available from the context being executed, then you may end up with an error
     (depending on the context).  This is a good thing if you are trying to consistely provide audit information,
-    but may be a problem if your model creation needs to happen more flexibly.
+    but may be a problem if your model creation needs to happen more flexibly.  Example:
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        ip_address = clearskies.columns.CreatedByIp()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["name"],
+            readable_column_names=["id", "name", "ip_address"],
+        ),
+        classes=[MyModel]
+    )
+    wsgi()
+    ```
+
+    And if you invoked this:
+
+    ```
+    $ curl 'http://localhost:8080' -d '{"name":"Bob"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "62e457fe-1680-4fa1-b4e3-0329f304fedb",
+            "name": "Bob",
+            "ip_address": "127.0.0.1"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    ```
     """
 
     """
