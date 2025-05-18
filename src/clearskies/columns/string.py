@@ -8,7 +8,56 @@ if TYPE_CHECKING:
 
 class String(Column):
     """
-    A simple string column
+    A simple string column.
+
+    ```
+    import clearskies
+
+    class Pet(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            Pet,
+            writeable_column_names=["name"],
+            readable_column_names=["id", "name"],
+        ),
+    )
+    wsgi()
+    ```
+
+    And when invoked:
+
+    ```
+    $ curl http://localhost:8080 -d '{"name": "Spot"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "e5b8417f-91bc-4fe5-9b64-04f571a7b10a",
+            "name": "Spot"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl http://localhost:8080 -d '{"name": 10}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "name": "value should be a string"
+        }
+    }
+
+    ```
+
     """
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null", "like"]
     _descriptor_config_map = None

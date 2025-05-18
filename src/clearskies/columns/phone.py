@@ -8,12 +8,88 @@ from clearskies.columns.string import String
 
 class Phone(String):
     """
-    A column that stores a phone number.
+    A string column that stores a phone number.
 
-    This will validate the number and, in the backend, convert it to digits only.
+    The main difference between this and a plain string column is that this will validate that the string contains
+    a phone number (containing only digits, dashes, spaces, plus sign, and parenthesis) of the appropriate length.
+    When persisting the value to the backend, this column removes all non-digit characters.
 
-    If you also set the usa_only flag to true then it will also validate that it is
-    a valid US number - 9 digits and, optionally, a leading `1`.
+    If you also set the usa_only flag to true then it will also validate that it is a valid US number containing
+    9 digits and, optionally, a leading `1`.  Example:
+
+    ```
+    import clearskies
+
+    class User(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        phone = clearskies.columns.Phone(usa_only=True)
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            User,
+            writeable_column_names=["name", "phone"],
+            readable_column_names=["id", "name", "phone"],
+        ),
+    )
+    wsgi()
+    ```
+
+    Which you can invoke:
+
+    ```
+    $ curl http://localhost:8080 -d '{"name":"John Doe", "phone": "+1 (555) 451-1234"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "e2b4bdad-b70f-4d44-a94c-0e265868b4d2",
+            "name": "John Doe",
+            "phone": "15554511234"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl http://localhost:8080 -d '{"name":"John Doe", "phone": "555 451-1234"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "aea34022-4b75-4eed-ac92-65fa4f4511ae",
+            "name": "John Doe",
+            "phone": "5554511234"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+
+    $ curl http://localhost:8080 -d '{"name":"John Doe", "phone": "555 451-12341"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "phone": "Invalid phone number"
+        }
+    }
+
+    $ curl http://localhost:8080 -d '{"name":"John Doe", "phone": "1-2-3-4 asdf"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "phone": "Invalid phone number"
+        }
+    }
+    ```
     """
 
     """ Whether or not to allow non-USA numbers. """
@@ -73,6 +149,8 @@ class Phone(String):
             if len(value) > 11:
                 return "Invalid phone number"
             if value[0] == "1" and len(value) != 11:
+                return "Invalid phone number"
+            if value[0] != "1" and len(value) != 10:
                 return "Invalid phone number"
 
         return ""

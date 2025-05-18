@@ -18,34 +18,62 @@ class Updated(Datetime):
 
     Note that this will always populate the column anytime the model is created or updated.
     You don't have to provide the timestamp yourself and you should never expose it as
-    a writeable column through an API (in fact, you can't).
+    a writeable column through an endpoint (in fact, you can't).
 
     ```
     import clearskies
     import time
 
-    class MyModel(clearskies.model):
+    class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
+
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+        created = clearskies.columns.Created()
         updated = clearskies.columns.Updated()
 
-    def my_application(my_models):
-        my_model = my_models.create({"name": "Example"})
+    def test_updated(my_models: MyModel) -> MyModel:
+        my_model = my_models.create({"name": "Jane"})
+        updated_column_after_create = my_model.updated
 
-        # prints a datetime object with the current time in UTC
-        print(my_model.updated)
+        time.sleep(2)
 
-        time.sleep(1)
-        my_model.save({"name": "Another"})
+        my_model.save({"name": "Susan"})
 
-        # prints a datetime object with the current time in UTC, roughly one second later than before
-        print(my_model.updated)
+        return {
+            "updated_column_after_create": updated_column_after_create.isoformat(),
+            "updated_column_at_end": my_model.updated.isoformat(),
+            "difference_in_seconds": (my_model.updated-updated_column_after_create).total_seconds()
+        }
 
-    cli = clearskies.contexts.cli(my_model, binding_classes=[MyModel])
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(test_updated),
+        classes=[MyModel]
+    )
     cli()
     ```
+
+    And when invoked:
+
+    ```
+    $ ./test.py | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "updated_column_after_create": "2025-05-18T19:28:46+00:00",
+            "updated_column_at_end": "2025-05-18T19:28:48+00:00",
+            "difference_in_seconds": 2.0
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    Note that the `updated` column was set both when the record was first created and when it was updated,
+    so there is a two second difference between them (since we slept for two seconds).
+
     """
 
     """

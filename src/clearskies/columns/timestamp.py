@@ -17,7 +17,57 @@ class Timestamp(Datetime):
     The difference between this and the datetime column is that this stores the datetime
     as a standard unix timestamp - the number of seconds since the unix epoch.
 
-    Also, this ALWAYS assumes the timezone for the timestamp is UTC
+    Also, this **always** assumes the timezone for the timestamp is UTC
+
+    ```
+    import datetime
+    import clearskies
+
+    class Pet(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        last_fed = clearskies.columns.Timestamp()
+
+    def demo_timestamp(utcnow: datetime.datetime, pets: Pet) -> dict[str, str | int]:
+        pet = pets.create({
+            "name": "Spot",
+            "last_fed": utcnow,
+        })
+        return {
+            "last_fed": pet.last_fed.isoformat(),
+            "raw_data": pet.get_raw_data()["last_fed"],
+        }
+
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
+            demo_timestamp,
+        ),
+        classes=[Pet],
+    )
+    cli()
+    ```
+
+    And when invoked it returns:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "last_fed": "2025-05-18T19:14:56+00:00",
+            "raw_data": 1747595696
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    Note that if you pull the column from the model in the usual way (e.g. `pet.last_fed` you get a timestamp,
+    but if you check the raw data straight out of the backend (e.g. `pet.get_raw_data()["last_fed"]`) it's an
+    integer.
     """
 
     # whether or not to include the microseconds in the timestamp
@@ -54,12 +104,12 @@ class Timestamp(Datetime):
                     f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: a string value was found that is not a timestamp.  It was '{value}'"
                 )
             date = datetime.datetime.fromtimestamp(int(value) / mult, datetime.timezone.utc)
-        elif isinstance(value, int):
+        elif isinstance(value, int) or isinstance(value, float):
             date = datetime.datetime.fromtimestamp(value / mult, datetime.timezone.utc)
         else:
             if not isinstance(value, datetime.datetime):
                 raise ValueError(
-                    f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: the value was neither an integer, a string, nor a datetime object"
+                    f"Invalid data was found in the backend for model {self.model_class.__name__} and column {self.name}: the value was neither an integer, float, string, or datetime object"
                 )
             date = value
         return date.replace(tzinfo=datetime.timezone.utc) if date else None
@@ -82,7 +132,7 @@ class Timestamp(Datetime):
                 f"Invalid data was sent to the backend for model {self.model_class.__name__} and column {self.name}: the value was neither an integer, a string, nor a datetime object"
             )
 
-        return {**data, self.name: value}
+        return {**data, self.name: int(value)}
 
     @overload
     def __get__(self, instance: None, cls: type) -> Self:

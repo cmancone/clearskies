@@ -18,20 +18,42 @@ class Uuid(String):
     This column really just has a very specific purpose: ids!
 
     When used, it will automatically populate the column with a random UUID upon record creation.
-    It is not a writeable column, which means that you cannot expose it for write operations via the API.
+    It is not a writeable column, which means that you cannot expose it for write operations via an endpoint.
 
     ```
     import clearskies
 
     class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
+
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
 
-    def my_application(my_models):
-        model = my_models.create({"name": "hey"})
-        print(len(model.id))
-        # prints 36
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["name"],
+            readable_column_names=["id", "name"],
+        ),
+    )
+    wsgi()
+    ```
+
+    and when invoked:
+
+    ```
+    $ curl http://localhost:8080 -d '{"name": "John Doe"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "d4f23106-b48a-4dc5-9bf6-df61f6ca54f7",
+            "name": "John Doe"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
     ```
     """
 

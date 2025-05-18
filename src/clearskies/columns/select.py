@@ -7,7 +7,59 @@ from clearskies.columns.string import String
 
 class Select(String):
     """
-    A string column but, when writeable via an API, only specific values are allowed.
+    A string column but, when writeable via an endpoint, only specific values are allowed.
+
+    Note: the allowed values are case sensitive.
+
+    ```
+    import clearskies
+
+    class Order(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        total = clearskies.columns.Float()
+        status = clearskies.columns.Select(["Open", "Processing", "Shipped", "Complete"])
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            Order,
+            writeable_column_names=["total", "status"],
+            readable_column_names=["id", "total", "status"],
+        ),
+    )
+    wsgi()
+    ```
+
+    And when invoked:
+
+    ```
+    $ curl http://localhost:8080 -d '{"total": 125, "status": "Open"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "22f2c950-6519-4d8e-9084-013455449b07",
+            "total": 125.0,
+            "status": "Open"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl http://localhost:8080 -d '{"total": 125, "status": "huh"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "status": "Invalid value for status"
+        }
+    }
+    ```
+
     """
 
     """ The allowed values. """
