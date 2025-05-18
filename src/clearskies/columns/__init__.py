@@ -23,8 +23,9 @@ from .has_one import HasOne
 from .integer import Integer
 from .json import Json
 from .many_to_many_ids import ManyToManyIds
-from .many_to_many_models import ManyToManyModels
 from .many_to_many_ids_with_data import ManyToManyIdsWithData
+from .many_to_many_models import ManyToManyModels
+from .many_to_many_pivots import ManyToManyPivots
 from .phone import Phone
 from .select import Select
 from .string import String
@@ -58,8 +59,9 @@ __all__ = [
     "Integer",
     "Json",
     "ManyToManyIds",
-    "ManyToManyModels",
     "ManyToManyIdsWithData",
+    "ManyToManyModels",
+    "ManyToManyPivots",
     "Phone",
     "Select",
     "String",

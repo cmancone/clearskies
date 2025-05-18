@@ -118,18 +118,8 @@ class Datetime(Column):
     """
     backend_default = configs.String(default="0000-00-00 00:00:00")
 
-    """
-    A value to set for this column during a save operation.
-
-    Unlike the default value, a setable value is always set during a save.
-    """
     setable = configs.DatetimeOrCallable(default=None)  # type: ignore
-
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
-
-    """
-    The class to use when documenting this column
-    """
     auto_doc_class: Type[AutoDocSchema] = AutoDocDatetime
     _descriptor_config_map = None
 

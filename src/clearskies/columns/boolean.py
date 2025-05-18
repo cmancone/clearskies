@@ -16,14 +16,7 @@ if TYPE_CHECKING:
 class Boolean(Column):
     """
     Represents a column with a true/false type.
-
-    By default, this column converts its value to 1/0 for compatibility with the most number
-    of backends, so for SQL you can use a `TINYINT(1)` type.
     """
-
-    default = configs.Boolean() #  type: ignore
-
-    setable = configs.BooleanOrCallable() #  type: ignore
 
     """
     Actions to trigger when the column changes to True
@@ -35,13 +28,14 @@ class Boolean(Column):
     """
     on_false = clearskies.configs.actions.Actions(default=[])
 
-    _allowed_search_operators = ["="]
-
     """
     The class to use when documenting this column
     """
     auto_doc_class: Type[AutoDocSchema] = AutoDocBoolean
 
+    _allowed_search_operators = ["="]
+    default = configs.Boolean() #  type: ignore
+    setable = configs.BooleanOrCallable() #  type: ignore
     _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties

@@ -11,6 +11,59 @@ if TYPE_CHECKING:
     from clearskies import Model
 
 class Json(Column):
+    """
+    A column to store generic data.
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        my_data = clearskies.columns.Json()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["my_data"],
+            readable_column_names=["id", "my_data"],
+        ),
+        classes=[MyModel]
+    )
+    wsgi()
+    ```
+
+    And when invoked:
+
+    ```
+    $ curl 'http://localhost:8080' -d '{"my_data":{"count":[1,2,3,4,{"thing":true}]}}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "63cbd5e7-a198-4424-bd35-3890075a2a5e",
+            "my_data": {
+                "count": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    {
+                        "thing": true
+                    }
+                ]
+            }
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    Note that there is no attempt to check the shape of the input passed into a JSON column.
+
+    """
     is_searchable = configs.Boolean(default=False)
     _descriptor_config_map = None
 

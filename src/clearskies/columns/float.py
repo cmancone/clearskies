@@ -15,28 +15,60 @@ if TYPE_CHECKING:
 class Float(Column):
     """
     A column that stores a float
-    """
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        score = clearskies.columns.Float()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["score"],
+            readable_column_names=["id", "score"],
+        ),
+        classes=[MyModel]
+    )
+    wsgi()
+    ```
+
+    and when invoked:
+
+    ```
+    $ curl 'http://localhost:8080' -d '{"score":15.2}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "7b5658a9-7573-4676-bf18-64ddc90ad87d",
+            "score": 15.2
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl 'http://localhost:8080' -d '{"score":"15.2"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "score": "value should be an integer or float"
+        }
+    }
+    ```
 
     """
-    A default value to set for this column.
 
-    The default is only used when creating a record for the first time, and only if
-    a value for this column has not been set.
-    """
     default = configs.Float() #  type: ignore
-
-    """
-    A value to set for this column during a save operation.
-
-    Unlike the default value, a setable value is always set during a save.
-    """
     setable = configs.FloatOrCallable(default=None) #  type: ignore
-
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
-
-    """
-    The class to use when documenting this column
-    """
     auto_doc_class: Type[AutoDocSchema] = AutoDocNumber
     _descriptor_config_map = None
 
@@ -68,10 +100,10 @@ class Float(Column):
         pass
 
     def __get__(self, instance, cls):
-        return float(super().__get__(instance, cls))
+        return super().__get__(instance, cls)
 
     def __set__(self, instance, value: float) -> None:
-        instance._next_data[self.name] = value
+        instance._next_data[self.name] = float(value)
 
     def from_backend(self, value) -> float:
         return float(value)

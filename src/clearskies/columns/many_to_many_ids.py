@@ -16,10 +16,10 @@ if TYPE_CHECKING:
 
 class ManyToManyIds(Column):
     """
-    A column to represent a many-to-many relationship.
+    A column that represents a many-to-many relationship.
 
     This is different from belongs to/has many because with those, every child has only one parent.  With a many-to-many
-    relationship, both models can have multiple relatives from the other model.  In order to support this, it's necessary
+    relationship, both models can have multiple relatives from the other model class.  In order to support this, it's necessary
     to have a third model (the pivot model) that records the relationships.  In general this table just needs three
     columns: it's own id, and then one column for each other model to store the id of the related records.
     You can specify the names of these columns but it also follows the standard naming convention by default:
@@ -31,88 +31,99 @@ class ManyToManyIds(Column):
     This column is writeable.  You would set it to a list of ids from the related model that denotes which
     records it is related to.
 
-    The following example shows usage.  It relies on model references to avoid circular imports.  Also note
-    that each model class would have to go in a separate file.  You can't actually dump this all in one file
-    because all the models reference eachother - Python will complain about references to classes that don't
-    exist.
+    The following example shows usage.  Normally the many-to-many column exists for both related models, but in this
+    specific example it only exists for one of the models.  This is done so that the example can fit in a single file
+    and therefore be easy to demonstrate.  In order to have both models reference eachother, you have to use model
+    references to avoid circular imports.  There are examples of doing this in the `BelongsTo` column class.
 
     ```
     import clearskies
 
-    class WidgetReference:
-        def get_model_class(self):
-            return widget.Widget
-
-    class ThingyReference:
-        def get_model_class(self):
-            return thingy.Thingy
-
-    class ThingyToWidgetReference:
-        def get_model_class(self):
-            return thingy_to_widget.ThingyToWidget
-
     class ThingyToWidget(clearskies.Model):
         id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
         id = clearskies.columns.Uuid()
         # these could also be belongs to relationships, but the pivot model
-        # is rarely used directly, so it may not matter
-        thingy_id = clearskies.columns.Uuid()
-        widget_id = clearskies.columns.Uuid()
-
-    class Widget(clearskies.Model):
-        id_column_name = "id"
-        id = clearskies.columns.Uuid()
-        name = clearskies'columns.String()
-        thingy_ids = clearskies.columns.ManyToManyIds(
-            related_model_class=ThingyReference,
-            pivot_model_class=ThingyToWidgetReference,
-        )
-        thingies = clearskies.columns.ManyToManyModels("thingy_ids")
+        # is rarely used directly, so I'm being lazy to avoid having to use
+        # model references.
+        thingy_id = clearskies.columns.String()
+        widget_id = clearskies.columns.String()
 
     class Thingy(clearskies.Model):
         id_column_name = "id"
-        id = clearskies.columns.Uuid()
-        name = clearskies'columns.String()
-        widget_ids = clearskies.columns.ManyToManyIds(
-            related_model_class=WidgetReference,
-            pivot_model_class=ThingyToWidgetReference,
-        )
-        widgets = clearskies.columns.ManyToManyModels("widget_ids")
+        backend = clearskies.backends.MemoryBackend()
 
-    def my_application(widgets, thingies):
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+
+    class Widget(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        thingy_ids = clearskies.columns.ManyToManyIds(
+            related_model_class=Thingy,
+            pivot_model_class=ThingyToWidget,
+        )
+        thingies = clearskies.columns.ManyToManyModels("thingy_ids")
+
+
+    def my_application(widgets: Widget, thingies: Thingy):
         thing_1 = thingies.create({"name": "Thing 1"})
         thing_2 = thingies.create({"name": "Thing 2"})
+        thing_3 = thingies.create({"name": "Thing 3"})
         widget = widgets.create({
             "name": "Widget 1",
             "thingy_ids": [thing_1.id, thing_2.id],
         })
 
-        print([thing.name for thing in widget.thingies])
-        # prints ["Thing 1", "Thing 2"]
-        print(widget.thingy_ids)
-        # The equivalent of [thing.id for thing in widget.thingies]
+        # remove an item by saving without it's id in place
+        widget.save({"thingy_ids": [thing.id for thing in widget.thingies if thing.id != thing_1.id]})
 
-        widget.save({
-            "thingies": [thing_2.id],
-        })
+        # add an item by saving and adding the new id
+        widget.save({"thingy_ids": [*widget.thingy_ids, thing_3.id]})
 
-        print([thing.name for thing in widget.thingies])
-        # prints ["Thing 2"]
+        return widget.thingies
 
-    Whatever list of ids you save to the column will become the new list of related records.
-    You can use the ids reference column to get the current list of ids and add or remove items as needed:
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
+            my_application,
+            model_class=Thingy,
+            return_records=True,
+            readable_column_names=["id", "name"],
+        ),
+        classes=[Widget, Thingy, ThingyToWidget],
+    )
 
-    ```
-    widget.save({
-        "thingy_ids": [...widget.thingy_ids, some_other_id],
-    })
-
-    widget.save({
-        "thingy_ids": [id for id in widget.thingy_ids if id != "some_id_to_remove"]
-    })
+    if __name__ == "__main__":
+        cli()
     ```
 
-    and of course you can also create or remove individual relationships by using the pivot model:
+    And when executed:
+
+    ```
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {
+                "id": "741bc838-c694-4624-9fc2-e9032f6cb962",
+                "name": "Thing 2"
+            },
+            {
+                "id": "1808a8ef-e288-44e6-9fed-46e3b0df057f",
+                "name": "Thing 3"
+            }
+        ],
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    Of course, you can also create or remove individual relationships by using the pivot model directly,
+    as shown in these partial code snippets:
 
     ```
     def add_items(thingy_to_widgets):
@@ -133,33 +144,31 @@ class ManyToManyIds(Column):
     """ The model class for the pivot table - the table used to record connections between ourselves and our related table. """
     pivot_model_class = configs.ModelClass(required=True)
 
-    """ The name of the column in the pivot table (the column that contains the id of records from our table). """
-    own_column_name_in_pivot = configs.ModelToIdColumn()
+    """
+    The name of the column in the pivot table that contains the id of records from the model with this column.
 
-    """ The name of the column in the pivot table that contains the id of records from the related table. """
-    related_column_name_in_pivot = configs.ModelToIdColumn("related_model_class")
+    A default name is created by taking the model class name, converting it to snake case, and then appending `_id`.
+    If you name your columns according to this standard then you don't have to specify this column name.
+    """
+    own_column_name_in_pivot = configs.ModelToIdColumn(model_column_config_name="pivot_model_class")
 
-    """ The name of the pivot table (loaded automatically). """
-    pivot_table = configs.ModelDestinationName("pivot_model_class")
+    """
+    The name of the column in the pivot table that contains the id of records from the related table.
+
+    A default name is created by taking the name of the related model class, converting it to snake case, and then
+    appending `_id`. If you name your columns according to this standard then you don't have to specify this column
+    name.
+    """
+    related_column_name_in_pivot = configs.ModelToIdColumn(model_column_config_name="pivot_model_class", source_model_class_config_name="related_model_class")
+
+    """ The name of the pivot table."""
+    pivot_table_name = configs.ModelDestinationName("pivot_model_class")
 
     """ The list of columns to be loaded from the related models when we are converted to JSON. """
-    readable_related_columns = configs.ReadableModelColumns("related_model_class")
+    readable_related_column_names = configs.ReadableModelColumns("related_model_class")
 
-    """
-    A default value to set for this column.
-
-    The default is only used when creating a record for the first time, and only if
-    a value for this column has not been set.
-    """
     default = configs.StringList(default=None) #  type: ignore
-
-    """
-    A value to set for this column during a save operation.
-
-    Unlike the default value, a setable value is always set during a save.
-    """
     setable = configs.StringListOrCallable(default=None) #  type: ignore
-
     is_searchable = configs.Boolean(default=False)
     _descriptor_config_map = None
 
@@ -170,7 +179,7 @@ class ManyToManyIds(Column):
         pivot_model_class,
         own_column_name_in_pivot: str = "",
         related_column_name_in_pivot: str = "",
-        readable_related_columns: list[str] = [],
+        readable_related_column_names: list[str] = [],
         default: list[str] = [],
         setable: list[str] | Callable[..., list[str]] = [],
         is_readable: bool = True,
@@ -185,6 +194,24 @@ class ManyToManyIds(Column):
         created_by_source_strict: bool = True,
     ):
         pass
+
+    def finalize_configuration(self, model_class: type, name: str) -> None:
+        """
+        Finalize and check the configuration.
+
+        This is an external trigger called by the model class when the model class is ready.
+        The reason it exists here instead of in the constructor is because some columns are tightly
+        connected to the model class, and can't validate configuration until they know what the model is.
+        Therefore, we need the model involved, and the only way for a property to know what class it is
+        in is if the parent class checks in (which is what happens here).
+        """
+        self.model_class = model_class
+        self.name = name
+        getattr(self.__class__, "pivot_table_name").finalize_and_validate_configuration(self)
+        own_column_name_in_pivot_config = getattr(self.__class__, "own_column_name_in_pivot")
+        own_column_name_in_pivot_config.source_model_class = model_class
+        own_column_name_in_pivot_config.finalize_and_validate_configuration(self)
+        self.finalize_and_validate_configuration()
 
     def to_backend(self, data):
         # we can't persist our mapping data to the database directly, so remove anything here
@@ -222,7 +249,7 @@ class ManyToManyIds(Column):
             self.model_class = cls
             return self
         related_id_column_name = self.related_model_class.id_column_name
-        return [getattr(model, related_id_column_name) for model in self.get_related_models(model)]
+        return [getattr(model, related_id_column_name) for model in self.get_related_models(instance)]
 
     def __set__(self, instance, value: list[str | int]) -> None:
         instance._next_data[self.name] = value
@@ -230,12 +257,12 @@ class ManyToManyIds(Column):
     def get_related_models(self, model: Model) -> Model:
         related_column_name_in_pivot = self.related_column_name_in_pivot
         own_column_name_in_pivot = self.own_column_name_in_pivot
-        pivot_table = self.pivot_table
+        pivot_table_name = self.pivot_table_name
         related_id_column_name = self.related_model_class.id_column_name
         model_id = getattr(model, self.model_class.id_column_name)
         model = self.related_model
-        join = f"JOIN {pivot_table} ON {pivot_table}.{related_column_name_in_pivot}={model.destination_name()}.{related_id_column_name}"
-        related_models = model.join(join).where(f"{pivot_table}.{own_column_name_in_pivot}={model_id}")
+        join = f"JOIN {pivot_table_name} ON {pivot_table_name}.{related_column_name_in_pivot}={model.destination_name()}.{related_id_column_name}"
+        related_models = model.join(join).where(f"{pivot_table_name}.{own_column_name_in_pivot}={model_id}")
         return related_models
 
     def get_pivot_models(self, model: Model) -> Model:
@@ -285,16 +312,16 @@ class ManyToManyIds(Column):
         related_column_name_in_pivot = self.related_column_name_in_pivot
         own_column_name_in_pivot = self.own_column_name_in_pivot
         own_id_column_name = self.model_class.id_column_name
-        pivot_table = self.pivot_table
+        pivot_table_name = self.pivot_table_name
         my_table_name = self.model_class.destination_name()
         related_table_name = self.related_model.destination_name()
         join_pivot = (
-            f"JOIN {pivot_table} ON {pivot_table}.{own_column_name_in_pivot}={my_table_name}.{own_id_column_name}"
+            f"JOIN {pivot_table_name} ON {pivot_table_name}.{own_column_name_in_pivot}={my_table_name}.{own_id_column_name}"
         )
         # no reason we can't support searching by both an id or a list of ids
         values = value if type(value) == list else [value]
         search = " IN (" + ", ".join([str(val) for val in value]) + ")"
-        return model.join(join_pivot).where(f"{pivot_table}.{related_column_name_in_pivot}{search}")
+        return model.join(join_pivot).where(f"{pivot_table_name}.{related_column_name_in_pivot}{search}")
 
     def to_json(self, model: Model) -> dict[str, Any]:
         related_id_column_name = self.related_model_class.id_column_name

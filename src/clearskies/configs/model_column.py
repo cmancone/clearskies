@@ -61,7 +61,7 @@ class ModelColumn(select.Select):
             error_prefix = self._error_prefix(instance)
             my_description = self.my_description()
             raise ValueError(
-                f"{error_prefix} attempt to set a value of '{value}' but this is not a {my_description} in the specified model class, '{model_class.__name__}.  Expected values are: '"
+                f"{error_prefix} attempt to set a value of '{value}' but this is not a {my_description} in the specified model class, '{model_class.__name__}'.  Expected values are: '"
                 + "', '".join(allowed_columns)
                 + "'"
             )

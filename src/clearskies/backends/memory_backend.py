@@ -171,7 +171,7 @@ class MemoryTable:
         return len(self.rows(query, query.conditions, filter_only=True))
 
     def rows(self, query: clearskies.query.Query, conditions: list[clearskies.query.Condition], filter_only: bool=False, next_page_data: dict[str, Any] | None=None):
-        rows = [*self._rows]
+        rows = [row for row in self._rows if row is not None]
         for condition in conditions:
             rows = list(filter(self._condition_as_filter(condition), rows))
         rows = [*rows]

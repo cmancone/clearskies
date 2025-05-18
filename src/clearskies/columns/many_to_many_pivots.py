@@ -15,7 +15,10 @@ if TYPE_CHECKING:
 
 class ManyToManyPivots(Column):
     """
-    A companion for the ManyToManyIds column that returns the matching pivot models instead of the ids
+    A companion for the ManyToManyIds column that returns the matching pivot models instead of the ids.
+
+    See ManyToManyIdsWithData for an example of how to use it (but note that it works just the same for the
+    ManyToManyIds column).
     """
 
     """ The name of the many-to-many column we are attached to. """
@@ -96,13 +99,13 @@ class ManyToManyPivots(Column):
         records = []
         many_to_many_column = self.many_to_many_column # type: ignore
         columns = many_to_many_column.pivot_columns
-        readable_columns = many_to_many_column.readable_pivot_columns
+        readable_column_names = many_to_many_column.readable_pivot_column_names
         pivot_id_column_name = many_to_many_column.pivot_model_class.id_column_name
         for pivot in many_to_many_column.get_pivot_models(model):
             json = OrderedDict()
-            if pivot_id_column_name not in readable_columns:
+            if pivot_id_column_name not in readable_column_names:
                 json[pivot_id_column_name] = columns[pivot_id_column_name].to_json(pivot)
-            for column_name in readable_columns:
+            for column_name in readable_column_names:
                 column_data = columns[column_name].to_json(pivot)
                 if type(column_data) == dict:
                     json = {**json, **column_data} # type: ignore
@@ -117,7 +120,7 @@ class ManyToManyPivots(Column):
         pivot_id_column_name = many_to_many_column.pivot_model_class.id_column_name
         pivot_properties = [columns[pivot_id_column_name].documentation()]
 
-        for column_name in many_to_many_column.readable_pivot_columns:
+        for column_name in many_to_many_column.readable_pivot_column_names:
             pivot_docs = columns[column_name].documentation()
             if type(pivot_docs) != list:
                 pivot_docs = [pivot_docs]

@@ -16,7 +16,9 @@ if TYPE_CHECKING:
 
 class ManyToManyModels(Column):
     """
-    A companion for the ManyToManyIds column that returns the matching models instead of the ids
+    A companion for the ManyToManyIds column that returns the matching models instead of the ids.
+
+    See the example in the ManyToManyIds column to understand how to use it.
     """
 
     """ The name of the many-to-many column we are attached to. """
@@ -115,9 +117,9 @@ class ManyToManyModels(Column):
         related_id_column_name = many_to_many_column.related_model_class.id_column_name
         for related in many_to_many_column.get_related_models(model):
             json = OrderedDict()
-            if related_id_column_name not in many_to_many_column.readable_related_columns:
+            if related_id_column_name not in many_to_many_column.readable_related_column_names:
                 json[related_id_column_name] = columns[related_id_column_name].to_json(related)
-            for column_name in many_to_many_column.readable_related_columns:
+            for column_name in many_to_many_column.readable_related_column_names:
                 column_data = columns[column_name].to_json(related)
                 if type(column_data) == dict:
                     json = {**json, **column_data} # type: ignore
@@ -132,7 +134,7 @@ class ManyToManyModels(Column):
         related_id_column_name = many_to_many_column.related_model_class.id_column_name
         related_properties = [columns[related_id_column_name].documentation()]
 
-        for column_name in many_to_many_column.readable_related_columns:
+        for column_name in many_to_many_column.readable_related_column_names:
             related_docs = columns[column_name].documentation()
             if type(related_docs) != list:
                 related_docs = [related_docs]

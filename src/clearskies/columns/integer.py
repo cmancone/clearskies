@@ -15,28 +15,60 @@ if TYPE_CHECKING:
 class Integer(Column):
     """
     A column that stores integer data
+
+    ```
+    import clearskies
+
+    class MyModel(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        age = clearskies.columns.Integer()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyModel,
+            writeable_column_names=["age"],
+            readable_column_names=["id", "age"],
+        ),
+        classes=[MyModel]
+    )
+    wsgi()
+    ```
+
+    And when invoked:
+
+    ```
+    $ curl 'http://localhost:8080' -d '{"age":20}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "6ea74719-a65f-45ae-b6a3-641ce682ed25",
+            "age": 20
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl 'http://localhost:8080' -d '{"age":"20"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "age": "value should be an integer"
+        }
+    }
+    ```
     """
 
-    """
-    A default value to set for this column.
-
-    The default is only used when creating a record for the first time, and only if
-    a value for this column has not been set.
-    """
     default = configs.Integer(default=None) #  type: ignore
-
-    """
-    A value to set for this column during a save operation.
-
-    Unlike the default value, a setable value is always set during a save.
-    """
     setable = configs.IntegerOrCallable(default=None) #  type: ignore
-
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
 
-    """
-    The class to use when documenting this column
-    """
     auto_doc_class: Type[AutoDocSchema] = AutoDocInteger
 
     _descriptor_config_map = None
@@ -86,6 +118,13 @@ class Integer(Column):
             return data
 
         return {**data, self.name: int(data[self.name])}
+
+    def input_error_for_value(self, value, operator=None):
+        return (
+            "value should be an integer"
+            if (type(value) != int and value is not None)
+            else ""
+        )
 
     def equals(self, value: int) -> Condition:
         return super().equals(value)
