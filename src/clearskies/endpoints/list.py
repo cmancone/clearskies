@@ -138,34 +138,19 @@ class List(Endpoint):
         readable_column_names=["id", "name"],
         sortable_column_names=["id", "name"],
         default_sort_column_name="name",
-        where=[lambda models, now: models.where("name=Jane") if now > datetime.datetime(2025, 1, 1) else models],
+        where=[lambda model, now: model.where("name=Jane") if now > datetime.datetime(2025, 1, 1) else model],
     )
     ```
 
     As shown in the above example, a function called in this way can request additional dependencies as needed, per the standard dependency rules.
-    The function needs to return the adjusted models object, which is usually as simple as returning the result of `models.where(?)`.  While the
+    The function needs to return the adjusted model object, which is usually as simple as returning the result of `model.where(?)`.  While the
     above example uses a lambda function, of course you can attach any other kind of callable - a function, a method of a class, etc...
     """
 
     """
-    Columns from the model class that should be returned to the client.
-    """
-    readable_column_names = clearskies.configs.ReadableModelColumns("model_class")
-
-    """
-    Columns from the model class that the client is allowed to sort by.
-    """
-    sortable_column_names = clearskies.configs.ReadableModelColumns("model_class", allow_relationship_references=True)
-
-    """
-    Columns from the model class that the client is allowed to search by
-    """
-    searchable_column_names = clearskies.configs.SearchableModelColumns("model_class", allow_relationship_references=True)
-
-    """
     The default column to sort by.
     """
-    default_sort_column_name = clearskies.configs.ModelColumn("model_class")
+    default_sort_column_name = clearskies.configs.ModelColumn("model_class", required=True)
 
     """
     The default sort direction (ASC or DESC).
@@ -173,32 +158,24 @@ class List(Endpoint):
     default_sort_direction = clearskies.configs.Select(["ASC", "DESC"], default="ASC")
 
     """
-    The default pagination limit
+    The number of records returned if the client doesn't specify a different number of records (default: 50).
     """
     default_limit = clearskies.configs.Integer(default=50)
 
     """
-    The maximum limit the client is allowed to request (0 == no limit)
+    The maximum number of records the client is allowed to request (0 == no limit)
     """
     maximum_limit = clearskies.configs.Integer(default=200)
-
-    """
-    Additional conditions to always added to the results.
-    """
-    where = clearskies.configs.Conditions(default=[])
-
-    """
-    Additional joins to always add to the results.
-    """
-    joins = clearskies.configs.Joins(default=[])
 
     """
     A column to group by.
     """
     group_by_column_name = clearskies.configs.ModelColumn("model_class")
 
-    allowed_request_keys = ["sort", "direction", "limit"]
-    internal_request_keys = ["sort", "direction", "limit"]
+    readable_column_names = clearskies.configs.ReadableModelColumns("model_class")
+    sortable_column_names = clearskies.configs.ReadableModelColumns("model_class", allow_relationship_references=True)
+    searchable_column_names = clearskies.configs.SearchableModelColumns("model_class", allow_relationship_references=True)
+
     _searchable_columns = None
     _sortable_columns = None
 
@@ -235,34 +212,29 @@ class List(Endpoint):
     @property
     def searchable_columns(self) -> dict[str, Column]:
         if self._searchable_columns is None:
-            self._searchable_columns = {name: self._columns[name] for name in self.searchable_column_names}
+            self._searchable_columns = {name: self.columns[name] for name in self.searchable_column_names}
         return self._searchable_columns
 
     @property
     def sortable_columns(self) -> dict[str, Column]:
         if self._sortable_columns is None:
-            self._sortable_columns = {name: self._columns[name] for name in self.sortable_column_names}
+            self._sortable_columns = {name: self.columns[name] for name in self.sortable_column_names}
         return self._sortable_columns
 
+    @property
+    def allowed_request_keys(self) -> list[str]:
+        return [*["sort", "direction", "limit"], *self.searchable_column_names]
+
+    @property
+    def internal_request_keys(self) -> list[str]:
+        return ["sort", "direction", "limit"]
+
     def handle(self, input_output: InputOutput):
-        models = self.model
-        for where in self.where:
-            if callable(where):
-                models = self.di.call_function(where, models=models, **input_output.get_context_for_callables())
-            else:
-                models = models.where(where)
-        models = models.where_for_request(
-            models,
-            input_output.routing_data,
-            input_output.authorization_data,
-            input_output,
-            overrides=self.column_overrides,
-        )
-        models = self.authorization.filter_model(models, input_output.authorization_data, input_output)
+        model = self.fetch_model_with_base_query(input_output)
         request_data = self.map_input_to_internal_names(input_output.request_data)
         query_parameters = self.map_input_to_internal_names(input_output.query_parameters)
         pagination_data = {}
-        for key in models.allowed_pagination_keys():
+        for key in model.allowed_pagination_keys():
             if key in request_data and key in query_parameters:
                 original_name = self.auto_case_internal_column_name(key)
                 raise exceptions.ClientError(f"Ambiguous request: key '{original_name}' is present in both the JSON body and URL data")
@@ -274,39 +246,39 @@ class List(Endpoint):
                 del query_parameters[key]
         if request_data or query_parameters or pagination_data:
             self.check_request_data(request_data, query_parameters, pagination_data)
-            models = self.configure_models_from_request_data(models, request_data, query_parameters, pagination_data)
-        if not models.get_query().limit:
-            models = models.limit(self.default_limit)
-        if not models.get_query().sorts and self.default_sort_column_name:
-            models = models.sort_by(
+            model = self.configure_model_from_request_data(model, request_data, query_parameters, pagination_data)
+        if not model.get_query().limit:
+            model = model.limit(self.default_limit)
+        if not model.get_query().sorts and self.default_sort_column_name:
+            model = model.sort_by(
                 self.default_sort_column_name,
                 self.default_sort_direction,
-                models.destination_name(),
+                model.destination_name(),
             )
         if self.group_by_column_name:
-            models = models.group_by(self.group_by_column_name)
+            model = model.group_by(self.group_by_column_name)
 
         return self.success(
             input_output,
-            [self.model_as_json(model, input_output) for model in models],
-            number_results=len(models) if models.backend.can_count else None,
-            limit=models.get_query().limit,
-            next_page=models.next_page_data(),
+            [self.model_as_json(record, input_output) for record in model],
+            number_results=len(model) if model.backend.can_count else None,
+            limit=model.get_query().limit,
+            next_page=model.next_page_data(),
         )
 
-    def configure_models_from_request_data(self, models: Model, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]) -> Model:
+    def configure_model_from_request_data(self, model: Model, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]) -> Model:
         limit = int(self.from_either(request_data, query_parameters, "limit", default=self.default_limit))
-        models = models.limit(limit)
+        model = model.limit(limit)
         if pagination_data:
-            models = models.pagination(**pagination_data)
+            model = model.pagination(**pagination_data)
         sort = self.from_either(request_data, query_parameters, "sort")
         direction = self.from_either(request_data, query_parameters, "direction")
         if sort and direction:
-            models = self.add_join(sort, models)
+            model = self.add_join(sort, model)
             [sort_column, sort_table] = self.resolve_references_for_query(sort)
-            models = models.sort_by(sort_column, direction, sort_table)
+            model = model.sort_by(sort_column, direction, sort_table)
 
-        return models
+        return model
 
     def map_input_to_internal_names(self, data: dict[str, Any]) -> dict[str, Any]:
         if not data:
@@ -354,32 +326,32 @@ class List(Endpoint):
                 raise clearskies.exceptions.ClientError(f"Invalid request parameter found in request body: '{key}'")
         for key in query_parameters.keys():
             if key not in self.allowed_request_keys:
-                raise clearskies.Exceptions.ClientError(f"Invalid request parameter found in URL data: '{key}'")
+                raise clearskies.exceptions.ClientError(f"Invalid request parameter found in URL data: '{key}'")
             if key in request_data:
-                raise clearskies.Exceptions.ClientError(f"Ambiguous request: '{key}' was found in both the request body and URL data")
+                raise clearskies.exceptions.ClientError(f"Ambiguous request: '{key}' was found in both the request body and URL data")
         limit = self.from_either(request_data, query_parameters, "limit")
         if limit is not None and type(limit) != int and type(limit) != float and type(limit) != str:
-            raise clearskies.Exceptions.ClientError("Invalid request: 'limit' should be an integer")
+            raise clearskies.exceptions.ClientError("Invalid request: 'limit' should be an integer")
         if limit:
             try:
                 limit = int(limit)
             except ValueError:
-                raise clearskies.Exceptions.ClientError("Invalid request: 'limit' should be an integer")
+                raise clearskies.exceptions.ClientError("Invalid request: 'limit' should be an integer")
         if limit and limit > self.maximum_limit:
-            raise clearskies.Exceptions.ClientError(f"Invalid request: 'limit' must be at most {self.max_limit}")
+            raise clearskies.exceptions.ClientError(f"Invalid request: 'limit' must be at most {self.max_limit}")
         sort = self.from_either(request_data, query_parameters, "sort")
         direction = self.from_either(request_data, query_parameters, "direction")
         if sort and type(sort) != str:
-            raise clearskies.Exceptions.ClientError("Invalid request: 'sort' should be a string")
+            raise clearskies.exceptions.ClientError("Invalid request: 'sort' should be a string")
         if direction and type(direction) != str:
-            raise clearskies.Exceptions.ClientError("Invalid request: 'direction' should be a string")
+            raise clearskies.exceptions.ClientError("Invalid request: 'direction' should be a string")
         if sort or direction:
             if (sort and not direction) or (direction and not sort):
-                raise clearskies.Exceptions.ClientError("You must specify 'sort' and 'direction' together in the request - not just one of them")
+                raise clearskies.exceptions.ClientError("You must specify 'sort' and 'direction' together in the request - not just one of them")
             if sort not in self.sortable_column_names:
-                raise clearskies.Exceptions.ClientError(f"Invalid request: invalid sort column")
+                raise clearskies.exceptions.ClientError(f"Invalid request: invalid sort column")
             if direction.lower() not in ["asc", "desc"]:
-                raise clearskies.Exceptions.ClientError("Invalid request: direction must be 'asc' or 'desc'")
+                raise clearskies.exceptions.ClientError("Invalid request: direction must be 'asc' or 'desc'")
         self.check_search_in_request_data(request_data, query_parameters)
 
     def check_search_in_request_data(self, request_data: dict[str, Any], query_parameters: dict[str, Any]):
@@ -406,7 +378,7 @@ class List(Endpoint):
 
         return [relationship_reference, self.columns[column_name].join_table_alias()]
 
-    def add_join(self, column_name: str, models: Model) -> Model:
+    def add_join(self, column_name: str, model: Model) -> Model:
         """
         Adds a join to the query for the given column name in the case where it references a column in a belongs to.
 
@@ -416,11 +388,11 @@ class List(Endpoint):
         If column_name is empty, or doesn't contain a period, then this does nothing.
         """
         if not column_name:
-            return models
+            return model
         [column_name, relationship_reference] = self.unpack_column_name_with_reference(column_name)
         if not relationship_reference:
-            return models
-        return self.columns[column_name].add_join(models)
+            return model
+        return self.columns[column_name].add_join(model)
 
     def from_either(self, request_data, query_parameters, key, default=None, ignore_none=True):
         """
@@ -474,6 +446,8 @@ class List(Endpoint):
         return [
             *self.documentation_url_pagination_parameters(),
             *self.documentation_url_sort_parameters(),
+            *self.documentation_url_search_parameters(),
+            *self.documentation_json_search_parameters(),
         ]
 
     def documentation_models(self) -> dict[str, autodoc.schema.Schema]:
@@ -563,3 +537,9 @@ class List(Endpoint):
                 description=f"Direction to sort",
             ),
         ]
+
+    def documentation_url_search_parameters(self) -> list[autodoc.request.Parameter]:
+        return []
+
+    def documentation_json_search_parameters(self) -> list[autodoc.request.Parameter]:
+        return []

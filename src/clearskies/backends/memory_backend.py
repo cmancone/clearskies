@@ -376,9 +376,9 @@ class MemoryBackend(Backend, InjectableProperties):
     default_data = inject.ByName("memory_backend_default_data")
     default_data_loaded = False
     _tables: dict[str, MemoryTable] = {}
-    _silent_on_missing_tables: bool = False
+    _silent_on_missing_tables: bool = True
 
-    def __init__(self, silent_on_missing_tables=False):
+    def __init__(self, silent_on_missing_tables=True):
         self.__class__._tables = {}
         self._silent_on_missing_tables = silent_on_missing_tables
 
@@ -501,7 +501,7 @@ class MemoryBackend(Backend, InjectableProperties):
         # quick sanity check
         for join in query.joins:
             if join.unaliased_table_name not in self.__class__._tables:
-                if not self._silent_on_missing_tables:
+                if not self._silent_on_missing_tables():
                     raise ValueError(
                         f"Join '{join._raw_join}' refrences table '{join.unaliased_table_name}' which does not exist in MemoryBackend"
                     )

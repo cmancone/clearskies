@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type, Any
 
 from clearskies import authentication
 from clearskies import autodoc
@@ -20,7 +20,86 @@ if TYPE_CHECKING:
 
 class Create(Endpoint):
     """
-    Endpoint to create a record.
+    An endpoint to create a record.
+
+    This endpoint accepts user input and uses it to create a record for the given model class.  You have
+    to provide the model class, which columns the end-user can set, and which columns get returned
+    to the client.  The column definitions in the model class are used to strictly validate the user
+    input.  Here's a basic example of a model class with the create endpoint in use:
+
+    ```
+    import clearskies
+    from clearskies import validators, columns
+
+    class MyAwesomeModel(clearskies.Model):
+        id_column_name = "id"
+        backend = clearskies.backends.MemoryBackend()
+
+        id = columns.Uuid()
+        name = clearskies.columns.String(validators=[
+            validators.Required(),
+            validators.MaximumLength(50),
+        ])
+        email = columns.Email(
+            validators=[validators.Unique()]
+        )
+        some_number = columns.Integer()
+        expires_at = columns.Date()
+        created_at = columns.Created()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.Create(
+            MyAwesomeModel,
+            readable_column_names=["id", "name", "email", "some_number", "expires_at", "created_at"],
+            writeable_column_names=["name", "email", "some_number", "expires_at"],
+        ),
+    )
+    wsgi()
+    ```
+
+    The following shows how to invoke it, and demonstrates the strict input validation that happens as part of the
+    process:
+
+    ```
+    $ curl 'http://localhost:8080/' -d '{"name":"Example", "email":"test@example.com","some_number":5,"expires_at":"2024-12-31"}' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": {
+            "id": "74eda1c6-fe66-44ec-9246-758d16e1a304",
+            "name": "Example",
+            "email": "test@example.com",
+            "some_number": 5,
+            "expires_at": "2024-12-31",
+            "created_at": "2025-05-23T16:36:30+00:00"
+        },
+        "pagination": {},
+        "input_errors": {}
+    }
+
+    $ curl 'http://localhost:8080/' -d '{"name":"", "email":"test@example.com","some_number":"asdf","expires_at":"not-a-date", "not_a_column": "sup"}' | jq
+    {
+        "status": "input_errors",
+        "error": "",
+        "data": [],
+        "pagination": {},
+        "input_errors": {
+            "name": "'name' is required.",
+            "email": "Invalid value for 'email': the given value already exists, and must be unique.",
+            "some_number": "value should be an integer",
+            "expires_at": "given value did not appear to be a valid date",
+            "not_a_column": "Input column not_a_column is not an allowed input column."
+        }
+    }
+    ```
+
+    The first call successfully creates a new record.  The second call fails with a variety of error messages:
+
+     1. A name wasn't provided by the model class marked this as required
+     2. We provided the same email address again, but this column is marked as unique
+     3. The number provided in `some_number` wasn't actually a number
+     4. The provided value for `expires_at` wasn't actually a date.
+     5. We provided an extra column (`not_a_column`) that wasn't in the list of allowed columns.
     """
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -55,7 +134,7 @@ class Create(Endpoint):
         # which is why we have to call the parent.
         super().__init__()
 
-    def handle(self, input_output: InputOutput):
+    def handle(self, input_output: InputOutput) -> Any:
         request_data = self.get_request_data(input_output)
         self.validate_input_against_schema(request_data, input_output, self.model_class)
         new_model = self.model.create(request_data, columns=self.columns)

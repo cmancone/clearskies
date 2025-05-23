@@ -52,7 +52,7 @@ class Integer(Column):
         "input_errors": {}
     }
 
-    $ curl 'http://localhost:8080' -d '{"age":"20"}' | jq
+    $ curl 'http://localhost:8080' -d '{"age":"asdf"}' | jq
     {
         "status": "input_errors",
         "error": "",
@@ -120,11 +120,11 @@ class Integer(Column):
         return {**data, self.name: int(data[self.name])}
 
     def input_error_for_value(self, value, operator=None):
-        return (
-            "value should be an integer"
-            if (type(value) != int and value is not None)
-            else ""
-        )
+        try:
+            int(value)
+        except ValueError:
+            return "value should be an integer"
+        return ""
 
     def equals(self, value: int) -> Condition:
         return super().equals(value)

@@ -692,11 +692,178 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     description = clearskies.configs.String(default="")
 
     """
-    Whether or not the routing data should also be persisted to the model.  Defaults to True.
+    Whether or not the routing data should also be persisted to the model.  Defaults to False.
 
     Note: this is only relevant for handlers that accept request data
     """
     include_routing_data_in_request_data = clearskies.configs.Boolean(default=False)
+
+    """
+    Additional conditions to always add to the results.
+
+    where should be a single item or a list of items containing one of three things:
+
+      1. Conditions expressed as a string (e.g. `"name=example"`, `"age>5"`)
+      2. Queries built with a column (e.g. `SomeModel.name.equals("example")`, `SomeModel.age.greater_than(5)`)
+      3. A callable which accepts and returns the mode (e.g. `lambda model: model.where("name=example")`)
+
+    Here's an example:
+
+    ```
+    import clearskies
+
+    class Student(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        grade = clearskies.columns.Integer()
+        will_graduate = clearskies.columns.Boolean()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.List(
+            Student,
+            readable_column_names=["id", "name", "grade"],
+            sortable_column_names=["name", "grade"],
+            default_sort_column_name="name",
+            where=["grade<10", Student.will_graduate.equals(True)],
+        ),
+        bindings={
+            "memory_backend_default_data": [
+                {
+                    "model_class": Student,
+                    "records": [
+                        {"id": "1-2-3-4", "name": "Bob", "grade": 5, "will_graduate": True},
+                        {"id": "1-2-3-5", "name": "Jane", "grade": 3, "will_graduate": True},
+                        {"id": "1-2-3-6", "name": "Greg", "grade": 3, "will_graduate": False},
+                        {"id": "1-2-3-7", "name": "Bob", "grade": 2, "will_graduate": True},
+                        {"id": "1-2-3-8", "name": "Ann", "grade": 12, "will_graduate": True},
+                    ],
+                },
+            ],
+        },
+    )
+    wsgi()
+    ```
+
+    Which you can invoke:
+
+    ```
+    $ curl 'http://localhost:8080/' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {
+                "id": "1-2-3-4",
+                "name": "Bob",
+                "grade": 5
+            },
+            {
+                "id": "1-2-3-7",
+                "name": "Bob",
+                "grade": 2
+            },
+            {
+                "id": "1-2-3-5",
+                "name": "Jane",
+                "grade": 3
+            }
+        ],
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+    and note that neither Greg nor Ann are returned.  Ann because she doesn't make the grade criteria, and Greg because
+    he won't graduate.
+    """
+    where = clearskies.configs.Conditions(default=[])
+
+    """
+    Additional joins to always add to the query.
+
+    ```
+    import clearskies
+
+    class Student(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        name = clearskies.columns.String()
+        grade = clearskies.columns.Integer()
+        will_graduate = clearskies.columns.Boolean()
+
+    class PastRecord(clearskies.Model):
+        backend = clearskies.backends.MemoryBackend()
+        id_column_name = "id"
+
+        id = clearskies.columns.Uuid()
+        student_id = clearskies.columns.BelongsToId(Student)
+        school_name = clearskies.columns.String()
+
+    wsgi = clearskies.contexts.WsgiRef(
+        clearskies.endpoints.List(
+            Student,
+            readable_column_names=["id", "name", "grade"],
+            sortable_column_names=["name", "grade"],
+            default_sort_column_name="name",
+            joins=["INNER JOIN past_records ON past_records.student_id=students.id"],
+        ),
+        bindings={
+            "memory_backend_default_data": [
+                {
+                    "model_class": Student,
+                    "records": [
+                        {"id": "1-2-3-4", "name": "Bob", "grade": 5, "will_graduate": True},
+                        {"id": "1-2-3-5", "name": "Jane", "grade": 3, "will_graduate": True},
+                        {"id": "1-2-3-6", "name": "Greg", "grade": 3, "will_graduate": False},
+                        {"id": "1-2-3-7", "name": "Bob", "grade": 2, "will_graduate": True},
+                        {"id": "1-2-3-8", "name": "Ann", "grade": 12, "will_graduate": True},
+                    ],
+                },
+                {
+                    "model_class": PastRecord,
+                    "records": [
+                        {"id": "5-2-3-4", "student_id": "1-2-3-4", "school_name": "Best Academy"},
+                        {"id": "5-2-3-5", "student_id": "1-2-3-5", "school_name": "Awesome School"},
+                    ],
+                },
+            ],
+        },
+    )
+    wsgi()
+    ```
+
+    Which when invoked:
+
+    ```
+    $ curl 'http://localhost:8080/' | jq
+    {
+        "status": "success",
+        "error": "",
+        "data": [
+            {
+                "id": "1-2-3-4",
+                "name": "Bob",
+                "grade": 5
+            },
+            {
+                "id": "1-2-3-5",
+                "name": "Jane",
+                "grade": 3
+            }
+        ],
+        "pagination": {},
+        "input_errors": {}
+    }
+    ```
+
+    e.g., the inner join reomves all the students that don't have an entry in the PastRecord model.
+
+    """
+    joins = clearskies.configs.Joins(default=[])
 
     cors_header: SecurityHeader = None  # type: ignore
     has_cors: bool = False
@@ -705,6 +872,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     _readable_columns: dict[str, clearskies.column.Column] = None
     _writeable_columns: dict[str, clearskies.column.Column] = None
     _searchable_columns: dict[str, clearskies.column.Column] = None
+    _sortable_columns: dict[str, clearskies.column.Column] = None
     _as_json_map: dict[str, clearskies.column.Column] = None # type: ignore
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -755,6 +923,12 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         return self._writeable_columns
 
     @property
+    def searchable_columns(self) -> dict[str, Column]:
+        if self._searchable_columns is None:
+            self._searchable_columns = {name: self._columns[name] for name in self.sortable_column_names}
+        return self._searchable_columns
+
+    @property
     def sortable_columns(self) -> dict[str, Column]:
         if self._sortable_columns is None:
             self._sortable_columns = {name: self._columns[name] for name in self.sortable_column_names}
@@ -790,6 +964,30 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
                     raise exceptions.Authorization("Not Authorized")
             except exceptions.ClientError as client_error:
                 raise exception.Authorization(str(client_error))
+
+    def fetch_model_with_base_query(self, input_output: InputOutput) -> Model:
+        model = self.model
+        for join in self.joins:
+            if callable(join):
+                model = self.di.call_function(join, model=model, **input_output.get_context_for_callables())
+            else:
+                model = model.join(join)
+        for where in self.where:
+            if callable(where):
+                model = self.di.call_function(where, model=model, **input_output.get_context_for_callables())
+            else:
+                model = model.where(where)
+        model = model.where_for_request(
+            model,
+            input_output.routing_data,
+            input_output.authorization_data,
+            input_output,
+            overrides=self.column_overrides,
+        )
+        return self.authorization.filter_model(model, input_output.authorization_data, input_output)
+
+    def handle(self, input_output: InputOutput) -> Any:
+        raise NotImplementedError()
 
     def __call__(self, input_output: InputOutput, route_standalone=True) -> Any:
         """
@@ -832,8 +1030,8 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             return self.error(input_output, str(auth_error), 401)
         except exceptions.Authorization as auth_error:
             return self.error(input_output, str(auth_error), 403)
-        except exceptions.NotFound as auth_error:
-            return self.error(input_output, str(auth_error), 404)
+        except exceptions.NotFound as not_found:
+            return self.error(input_output, str(not_found), 404)
         except exceptions.MovedPermanently as redirect:
             return self.redirect(input_output, str(redirect), 302)
         except exceptions.MovedTemporarily as redirect:

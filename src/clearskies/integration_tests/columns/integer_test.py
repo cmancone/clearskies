@@ -25,6 +25,6 @@ class IntegerTest(unittest.TestCase):
         (status_code, response_data, response_headers) = context(request_method="POST", body={"age": 20})
         assert response_data["data"]["age"] == 20
 
-        (status_code, response_data, response_headers) = context(request_method="POST", body={"age": "20"})
+        (status_code, response_data, response_headers) = context(request_method="POST", body={"age": "asdf"})
         assert "age" not in response_data["data"]
         assert "age" in response_data["input_errors"]

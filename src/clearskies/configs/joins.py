@@ -12,7 +12,7 @@ class Joins(config.Config):
         if not isinstance(value, list):
             value = [value]
 
-        for item, index in enumerate(value):
+        for index, item in enumerate(value):
             if callable(item) or isinstance(item, str):
                 continue
 
