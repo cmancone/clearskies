@@ -41,6 +41,22 @@ def _sort(row_a, row_b, sorts):
         return reverse * (1 if value_a > value_b else -1)
     return 0
 
+def like_check(column, values, null):
+    def matches(row):
+        value = row.get(column)
+        search = values[0].lower()
+        if not value or isinstance(value, Null):
+            return bool(search)
+
+        value = value.lower()
+        if search[0] == "%" and search[-1] == "%":
+            return search.strip('%') in value
+        if search[0] == "%":
+            return value[0:len(search)] == search.lstrip('%')
+        if search[-1] == "%":
+            return value[-1*len(search):] == search.rstrip('%')
+        return value == search
+    return matches
 
 class MemoryTable:
     _table_name = None
@@ -69,7 +85,7 @@ class MemoryTable:
         "is null": lambda column, values, null: lambda row: (column not in row or row[column] is None),
         "is not": lambda column, values, null: lambda row: row.get(column, null) != values[0],
         "is": lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
-        "like": lambda column, values, null: lambda row: row.get(column, null) == str(values[0]),
+        "like": like_check,
         "in": lambda column, values, null: lambda row: row.get(column, null) in values,
     }
 

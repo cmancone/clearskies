@@ -72,7 +72,7 @@ class List(Base):
             [models, limit] = self.configure_models_from_request_data(
                 models, request_data, query_parameters, pagination_data
             )
-        if not models.query_sorts:
+        if not models.query_sorts and self.configuration("default_sort_column"):
             models = models.sort_by(
                 self.configuration("default_sort_column"),
                 self.configuration("default_sort_direction"),
@@ -232,8 +232,8 @@ class List(Base):
         if type(self) != List:
             self._check_columns_in_configuration(configuration, "searchable_columns")
 
-        if "default_sort_column" not in configuration:
-            raise ValueError(f"{error_prefix} missing required configuration 'default_sort_column'")
+        # if "default_sort_column" not in configuration:
+            # raise ValueError(f"{error_prefix} missing required configuration 'default_sort_column'")
 
         # sortable_columns, wheres, and joins should all be iterables
         for config_name, contents in {
