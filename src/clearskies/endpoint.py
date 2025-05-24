@@ -1056,6 +1056,9 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
 
         return response
 
+    def failure(self, input_output: InputOutput) -> Any:
+        return self.respond_json(input_output, {"status": "failure"}, 500)
+
     def input_errors(self, input_output: InputOutput, errors: dict[str, str], status_code: int=200) -> Any:
         """
         Return input errors to the client.
