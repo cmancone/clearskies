@@ -4,7 +4,7 @@ import datetime
 import clearskies
 from clearskies.contexts import Context
 
-class ListTest(unittest.TestCase):
+class GetTest(unittest.TestCase):
     def test_overview(self):
         class User(clearskies.Model):
             id_column_name = "id"

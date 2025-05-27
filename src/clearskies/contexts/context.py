@@ -71,3 +71,6 @@ class Context:
             query_parameters=query_parameters,
             request_headers=request_headers,
         ))
+
+    def build(self, thing: Any, cache: bool=False) -> Any:
+        return self.di.build(thing, cache)
