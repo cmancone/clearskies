@@ -179,7 +179,7 @@ class MemoryTable:
             if int(start) >= number_rows:
                 start = number_rows - 1
             end = len(rows)
-            if configuration.get("limit") and start + int(configuration["limit"]) <= number_rows:
+            if configuration.get("limit") and configuration.get("limit") > 0 and start + int(configuration["limit"]) <= number_rows:
                 end = start + int(configuration["limit"])
             if end < number_rows and type(next_page_data) == dict:
                 next_page_data["start"] = start + configuration["limit"]
