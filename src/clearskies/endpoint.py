@@ -1085,8 +1085,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         """
         response_data = {"status": "success", "data": data, "pagination": {}}
 
-
-        if next_page:
+        if next_page or number_results:
             if number_results is not None:
                 for value in [number_results, limit]:
                     if value is not None and type(value) != int:

@@ -125,7 +125,8 @@ class Query:
         new_kwargs = self.as_kwargs()
         new_kwargs["sorts"] = [sort]
         if secondary_sort:
-            new_kwargs["sorts"].append(sort)
+            new_kwargs["sorts"].append(secondary_sort)
+
         return self.__class__(**new_kwargs)
 
     def set_limit(self, limit: int) -> Self:

@@ -31,11 +31,27 @@ def gentle_float_conversion(value):
         return value
 
 
-def _sort(row_a: Any, row_b: Any, sorts: list[clearskies.query.Sort]) -> int:
+def _sort(row_a: Any, row_b: Any, sorts: list[clearskies.query.Sort], default_table_name: str) -> int:
     for sort in sorts:
+        # so, if we've done a join then the rows will have data from all joined tables via a dict of dicts.
+        # if there wasn't a join then we'll just have the data
+        if sort.table_name in row_a and isinstance(row_a[sort.table_name], dict):
+            sort_data_a = row_a[sort.table_name]
+        elif not sort.table_name and default_table_name in row_a and isinstance(row_a[default_table_name], dict):
+            sort_data_a = row_a[default_table_name]
+        else:
+            sort_data_a = row_a
+
+        if sort.table_name in row_b and isinstance(row_b[sort.table_name], dict):
+            sort_data_b = row_b[sort.table_name]
+        elif not sort.table_name and default_table_name in row_b and isinstance(row_b[default_table_name], dict):
+            sort_data_b = row_b[default_table_name]
+        else:
+            sort_data_b = row_b
+
         reverse = 1 if sort.direction.lower() == "asc" else -1
-        value_a = row_a[sort.column_name] if sort.column_name in row_a else None
-        value_b = row_b[sort.column_name] if sort.column_name in row_b else None
+        value_a = sort_data_a[sort.column_name] if sort.column_name in sort_data_a else None
+        value_b = sort_data_b[sort.column_name] if sort.column_name in sort_data_b else None
         if value_a == value_b:
             continue
         if value_a is None:
@@ -178,7 +194,7 @@ class MemoryTable:
         if filter_only:
             return rows
         if query.sorts:
-            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, query.sorts)))
+            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, query.sorts, query.model_class.destination_name())))
         if query.limit or query.pagination.get("start"):
             number_rows = len(rows)
             start = int(query.pagination.get("start", 0))
@@ -194,10 +210,11 @@ class MemoryTable:
             rows = rows[start:end]
         return rows
 
-    def _condition_as_filter(self, condition: clearskies.query.Condition) -> Callable:
+    @classmethod
+    def _condition_as_filter(cls, condition: clearskies.query.Condition) -> Callable:
         column = condition.column_name
         values = condition.values
-        return self._operator_lambda_builders[condition.operator.lower()](column, values, self.null)
+        return cls._operator_lambda_builders[condition.operator.lower()](column, values, cls.null)
 
 
 class MemoryBackend(Backend, InjectableProperties):
@@ -476,12 +493,14 @@ class MemoryBackend(Backend, InjectableProperties):
             return self.get_table(query.model_class).rows(query, query.conditions, next_page_data=next_page_data)
         rows = self.rows_with_joins(query)
 
+        if query.sorts:
+            default_table_name = query.model_class.destination_name()
+            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, query.sorts, default_table_name)))
+
         # currently we don't do much with selects, so just limit results down to the data from the original
         # table.
         rows = [row[query.model_class.destination_name()] for row in rows]
 
-        if query.sorts:
-            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, query.sorts)))
         if "start" in query.pagination or query.limit:
             number_rows = len(rows)
             start = query.pagination.get("start", 0)
@@ -509,9 +528,8 @@ class MemoryBackend(Backend, InjectableProperties):
 
         # start with the matches in the main table
         left_table_name = query.model_class.destination_name()
-        main_rows = self.get_table(query.model_class).rows(
-            query, self.conditions_for_table(left_table_name, conditions, is_left=True), filter_only=True
-        )
+        left_conditions = self.conditions_for_table(left_table_name, conditions, is_left=True)
+        main_rows = self.get_table(query.model_class).rows(query, left_conditions, filter_only=True)
         # and now adjust the way data is stored in our rows list to support the joining process.
         # we're going to go from something like: `[{row_1}, {row_2}]` to something like:
         # [{table_1: table_1_row_1, table_2: table_2_row_1}, {table_1: table_1_row_2, table_2: table_2_row_2}]
@@ -533,9 +551,7 @@ class MemoryBackend(Backend, InjectableProperties):
                 if left_table_name not in joined_tables:
                     continue
 
-                join_rows = self.__class__._tables[join.unaliased_table_name].rows(
-                    query, self.conditions_for_table(table_name_for_join, conditions, joined_tables), filter_only=True
-                )
+                join_rows = self.__class__._tables[join.unaliased_table_name].rows(query, [], filter_only=True)
 
                 rows = self.join_rows(rows, join_rows, join, joined_tables)
 
@@ -553,6 +569,12 @@ class MemoryBackend(Backend, InjectableProperties):
                 + "One way to get this error is if you tried to join on another table which hasn't been "
                 + "joined itself.  e.g.: SELECT * FROM users JOIN type ON type.id=categories.type_id"
             )
+
+        # now apply any remaining conditions.
+        left_condition_ids = [id(condition) for condition in left_conditions]
+        for condition in [condition for condition in conditions if id(condition) not in left_condition_ids]:
+            condition_filter = MemoryTable._condition_as_filter(condition)
+            rows = list(filter(lambda row: condition.table_name in row and condition_filter(row[condition.table_name]), rows))
 
         return rows
 

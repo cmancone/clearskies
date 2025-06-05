@@ -232,6 +232,8 @@ class List(Endpoint):
     def handle(self, input_output: InputOutput):
         model = self.fetch_model_with_base_query(input_output)
         request_data = self.map_input_to_internal_names(input_output.request_data)
+        if not request_data and input_output.has_body():
+            raise clearskies.exceptions.ClientError("Request body was not valid JSON")
         query_parameters = self.map_input_to_internal_names(input_output.query_parameters)
         pagination_data = {}
         for key in model.allowed_pagination_keys():
@@ -258,9 +260,11 @@ class List(Endpoint):
         if self.group_by_column_name:
             model = model.group_by(self.group_by_column_name)
 
+        records = [self.model_as_json(record, input_output) for record in model]
+
         return self.success(
             input_output,
-            [self.model_as_json(record, input_output) for record in model],
+            records,#[self.model_as_json(record, input_output) for record in model],
             number_results=len(model) if model.backend.can_count else None,
             limit=model.get_query().limit,
             next_page=model.next_page_data(),
@@ -308,8 +312,10 @@ class List(Endpoint):
             # sometimes the sort may be a list of directives
             if isinstance(data["sort"], list):
                 for index, sort_entry in enumerate(data["sort"]):
-                    if data["sort"][index]["column"] in sort_column_map:
-                        data["sort"][index]["column"] = sort_column_map[data["sort"][index]["column"]]
+                    if "column" not in sort_entry:
+                        continue
+                    if sort_entry["column"] in sort_column_map:
+                        sort_entry["column"] = sort_column_map[sort_entry["column"]]
             else:
                 if data["sort"] in sort_column_map:
                     data["sort"] = sort_column_map[data["sort"]]
@@ -329,16 +335,7 @@ class List(Endpoint):
                 raise clearskies.exceptions.ClientError(f"Invalid request parameter found in URL data: '{key}'")
             if key in request_data:
                 raise clearskies.exceptions.ClientError(f"Ambiguous request: '{key}' was found in both the request body and URL data")
-        limit = self.from_either(request_data, query_parameters, "limit")
-        if limit is not None and type(limit) != int and type(limit) != float and type(limit) != str:
-            raise clearskies.exceptions.ClientError("Invalid request: 'limit' should be an integer")
-        if limit:
-            try:
-                limit = int(limit)
-            except ValueError:
-                raise clearskies.exceptions.ClientError("Invalid request: 'limit' should be an integer")
-        if limit and limit > self.maximum_limit:
-            raise clearskies.exceptions.ClientError(f"Invalid request: 'limit' must be at most {self.max_limit}")
+        self.validate_limit(request_data, query_parameters)
         sort = self.from_either(request_data, query_parameters, "sort")
         direction = self.from_either(request_data, query_parameters, "direction")
         if sort and type(sort) != str:
@@ -354,12 +351,27 @@ class List(Endpoint):
                 raise clearskies.exceptions.ClientError("Invalid request: direction must be 'asc' or 'desc'")
         self.check_search_in_request_data(request_data, query_parameters)
 
+    def validate_limit(self, request_data: dict[str, Any], query_parameters: dict[str, Any]) -> None:
+        limit = self.from_either(request_data, query_parameters, "limit")
+        if limit is not None and type(limit) != int and type(limit) != float and type(limit) != str:
+            raise clearskies.exceptions.ClientError("Invalid request: 'limit' should be an integer")
+        if limit:
+            try:
+                limit = int(limit)
+            except ValueError:
+                raise clearskies.exceptions.ClientError("Invalid request: 'limit' should be an integer")
+        if limit:
+            if limit > self.maximum_limit:
+                raise clearskies.exceptions.ClientError(f"Invalid request: 'limit' must be at most {self.max_limit}")
+            if limit < 0:
+                raise clearskies.exceptions.ClientError(f"Invalid request: 'limit' must be positive")
+
     def check_search_in_request_data(self, request_data: dict[str, Any], query_parameters: dict[str, Any]):
         return None
 
-    def unpack_column_name_with_reference(self, column_name: str) -> list[str]:
+    def unpack_column_name_with_relationship(self, column_name: str) -> list[str]:
         if "." not in column_name:
-            return [column_name, ""]
+            return ["", column_name]
         return column_name.split(".", 1)
 
     def resolve_references_for_query(self, column_name: str) -> list[str | None]:
@@ -372,11 +384,11 @@ class List(Endpoint):
         """
         if not column_name:
             return [None, None]
-        [column_name, relationship_reference] = self.unpack_column_name_with_reference(column_name)
-        if not relationship_reference:
-            return [column_name, self.model.destination_name()]
+        [relationship_column_name, column_name] = self.unpack_column_name_with_relationship(column_name)
+        if not relationship_column_name:
+            return [self.model.destination_name(), column_name]
 
-        return [relationship_reference, self.columns[column_name].join_table_alias()]
+        return [self.columns[relationship_column_name].join_table_alias(), column_name]
 
     def add_join(self, column_name: str, model: Model) -> Model:
         """
@@ -389,10 +401,10 @@ class List(Endpoint):
         """
         if not column_name:
             return model
-        [column_name, relationship_reference] = self.unpack_column_name_with_reference(column_name)
-        if not relationship_reference:
+        [relationship_column_name, column_name] = self.unpack_column_name_with_relationship(column_name)
+        if not relationship_column_name:
             return model
-        return self.columns[column_name].add_join(model)
+        return self.columns[relationship_column_name].add_join(model)
 
     def from_either(self, request_data, query_parameters, key, default=None, ignore_none=True):
         """

@@ -348,8 +348,8 @@ class BelongsToId(String):
         matching_parents = self.apply_wheres(matching_parents)
         matching_parents = matching_parents.where_for_request(
             matching_parents,
-            self.input_output.routing_data(),
-            self.input_output.get_authorization_data(),
+            self.input_output.routing_data,
+            self.input_output.authorization_data,
             self.input_output,
         )
         if not len(matching_parents):
@@ -412,6 +412,26 @@ class BelongsToId(String):
                 "I was asked to search on a related column that doens't exist.  This shouldn't have happened :("
             )
         return self.parent_columns[relationship_reference].check_search_value(value, operator=operator)
+
+    def is_allowed_search_operator(self, operator: str, relationship_reference: str = "") -> bool:
+        if not relationship_reference:
+            return operator in self._allowed_search_operators
+        parent_columns = self.parent_columns
+        if relationship_reference not in self.parent_columns:
+            raise ValueError(
+                "I was asked to check search operators on a related column that doens't exist.  This shouldn't have happened :("
+            )
+        return self.parent_columns[relationship_reference].is_allowed_search_operator(operator, relationship_reference=relationship_reference)
+
+    def allowed_search_operators(self, relationship_reference: str = ""):
+        if not relationship_reference:
+            return self._allowed_search_operators
+        parent_columns = self.parent_columns
+        if relationship_reference not in self.parent_columns:
+            raise ValueError(
+                "I was asked for allowed search operators on a related column that doens't exist.  This shouldn't have happened :("
+            )
+        return self.parent_columns[relationship_reference].allowed_search_operators()
 
     def add_search(
         self,

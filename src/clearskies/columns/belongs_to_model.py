@@ -21,7 +21,6 @@ class BelongsToModel(Column):
     """ The name of the belongs to column we are connected to. """
     belongs_to_column_name = configs.ModelColumn(required=True)
 
-    is_searchable = configs.Boolean(default=False)
     is_temporary = clearskies.configs.boolean.Boolean(default=True)
     _descriptor_config_map = None
 
@@ -92,6 +91,21 @@ class BelongsToModel(Column):
             value = data[self.name]
             data[self.belongs_to_column_name] = getattr(value, value.id_column_name) if validations.is_model(value) else value
         return super().pre_save(data, model)
+
+    def add_join(self, model: Model) -> Model:
+        return getattr(model.__class__, self.belongs_to_column_name).add_join(model)
+
+    def join_table_alias(self) -> str:
+        return getattr(self.model_class, self.belongs_to_column_name).join_table_alias()
+
+    def add_search(
+        self,
+        model: clearskies.model.Model,
+        value: str,
+        operator: str="",
+        relationship_reference: str=""
+    ) -> clearskies.model.Model:
+        return getattr(self.model_class, self.belongs_to_column_name).add_search(model, value, operator, relationship_reference=relationship_reference)
 
     def to_json(self, model: Model) -> dict[str, Any]:
         """

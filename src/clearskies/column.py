@@ -1032,7 +1032,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         operator: str="",
         relationship_reference: str=""
     ) -> clearskies.model.Model:
-        return model.where(self.build_condition(value, operator=operator))
+        return model.where(self.condition(operator, value))
 
     def build_condition(
         self,
@@ -1049,6 +1049,8 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         safely (and remember, the backend may not be an SQL anyway)
 
         As a result, this is perfectly safe for any user input, assuming normal system flow.
+
+        That being said, this should probably be replaced by self.condition()...
         """
         if not operator:
             operator = "="
@@ -1200,6 +1202,25 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             raise ValueError(f"A 'like' search is not allowed for '{self.model_class.__name__}.{name}'.")
         value = self.to_backend({name: value}).get(name)
         return ParsedCondition(name, 'like', [value])
+
+    def condition(self, operator: str, value) -> Condition:
+        name = self.name_for_building_condition()
+        operator = operator.lower()
+        if operator not in self._allowed_search_operators:
+            raise ValueError(f"The operator '{operator}' is not allowed for '{self.model_class.__name__}.{name}'.")
+
+        # the search methods are more or less identical except:
+        if operator == "in":
+            return self.is_in(value)
+
+        value = self.to_backend({name: value}).get(name)
+        return ParsedCondition(name, operator, [value])
+
+    def is_allowed_search_operator(self, operator: str, relationship_reference: str = "") -> bool:
+        return operator in self._allowed_search_operators
+
+    def allowed_search_operators(self, relationship_reference: str = ""):
+        return self._allowed_search_operators
 
     def documentation(self, name=None, example=None, value=None) -> list[AutoDocSchema]:
         return [self.auto_doc_class(name if name is not None else self.name, example=example, value=value)]

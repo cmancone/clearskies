@@ -136,6 +136,8 @@ class Create(Endpoint):
 
     def handle(self, input_output: InputOutput) -> Any:
         request_data = self.get_request_data(input_output)
+        if not request_data and input_output.has_body():
+            raise clearskies.exceptions.ClientError("Request body was not valid JSON")
         self.validate_input_against_schema(request_data, input_output, self.model_class)
         new_model = self.model.create(request_data, columns=self.columns)
         return self.success(input_output, self.model_as_json(new_model, input_output))

@@ -219,6 +219,8 @@ class SimpleSearch(List):
         authentication: authentication.Authentication = authentication.Public(),
         authorization: authentication.Authorization = authentication.Authorization(),
     ):
+        self.request_methods = request_methods
+
         # we need to call the parent but don't have to pass along any of our kwargs.  They are all optional in our parent, and our parent class
         # just stores them in parameters, which we have already done.  However, the parent does do some extra initialization stuff that we need,
         # which is why we have to call the parent.
@@ -232,8 +234,9 @@ class SimpleSearch(List):
                     continue
                 if column_name not in self.searchable_column_names:
                     raise clearskies.exceptions.ClientError(f"Invalid request parameter found in {input_source_label}: '{column_name}'")
-                [column_name, relationship_reference] = self.unpack_column_name_with_reference(column_name)
-                value_error = self.searchable_columns[column_name].check_search_value(
+                [relationship_column_name, final_column_name] = self.unpack_column_name_with_relationship(column_name)
+                column_to_check = relationship_column_name if relationship_column_name else final_column_name
+                value_error = self.searchable_columns[column_to_check].check_search_value(
                     value, relationship_reference=relationship_reference
                 )
                 if value_error:
@@ -259,9 +262,11 @@ class SimpleSearch(List):
                     continue
 
                 model = self.add_join(column_name, model)
-                [column_name, relationship_reference] = self.unpack_column_name_with_reference(column_name)
-                column = self.columns[column_name]
-                model = column.add_search(model, value, relationship_reference=relationship_reference)
+                [relationship_column_name, column_name] = self.unpack_column_name_with_relationship(column_name)
+                if relationship_column_name:
+                    self.columns[relationship_column_name].add_search(model, value, relationship_reference=column_name)
+                else:
+                    model = self.columns[column_name].add_search(model, value)
 
         return model
 
