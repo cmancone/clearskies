@@ -105,13 +105,14 @@ class Integer(Column):
             self.model_class = cls
             return self
 
-        return int(super().__get__(instance, cls))
+        value = super().__get__(instance, cls)
+        return None if value is None else int(value)
 
     def __set__(self, instance, value: int) -> None:
         instance._next_data[self.name] = value
 
     def from_backend(self, value) -> int:
-        return int(value)
+        return None if value is None else int(value)
 
     def to_backend(self, data):
         if self.name not in data or data[self.name] is None:

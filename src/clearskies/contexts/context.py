@@ -3,6 +3,8 @@ import datetime
 from typing import Any, Callable, TYPE_CHECKING
 from types import ModuleType
 import clearskies.endpoint
+import clearskies.endpoint_group
+import clearskies.end
 from clearskies.di.additional_config import AdditionalConfig
 from clearskies.di import Di
 from clearskies.input_outputs import Programmatic
@@ -15,7 +17,7 @@ class Context:
 
     def __init__(
         self,
-        application: Callable | clearskies.endpoint.Endpoint,
+        application: Callable | clearskies.endpoint.Endpoint | clearskies.endpoint_group.EndpointGroup,
         classes: type | list[type]=[],
         modules: ModuleType | list[ModuleType]=[],
         bindings: dict[str, Any]={},
@@ -37,7 +39,7 @@ class Context:
         self.application = application
 
     def execute_application(self, input_output: InputOutput):
-        if isinstance(self.application, clearskies.endpoint.Endpoint):
+        if isinstance(self.application, clearskies.end.End):
             self.application.injectable_properties(self.di)
             return self.application(input_output)
         elif callable(self.application):

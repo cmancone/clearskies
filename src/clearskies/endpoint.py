@@ -15,13 +15,14 @@ import clearskies.typing
 from clearskies import exceptions
 from clearskies.authentication import Authentication, Authorization, Public
 from clearskies.functional import string, routing
+import clearskies.end
 
 if TYPE_CHECKING:
     from clearskies import Column, Model, SecurityHeader
     from clearskies.input_output import InputOutput
     from clearskies.schema import Schema
 
-class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
+class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
     """
     Endpoints - the clearskies workhorse.
 
@@ -866,7 +867,6 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     joins = clearskies.configs.Joins(default=[])
 
     cors_header: SecurityHeader = None  # type: ignore
-    has_cors: bool = False
     _model: clearskies.model.Model = None
     _columns: dict[str, clearskies.column.Column] = None
     _readable_columns: dict[str, clearskies.column.Column] = None
@@ -945,26 +945,6 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
             **(input_output.routing_data if self.include_routing_data_in_request_data else {}),
         }
 
-    def top_level_authentication_and_authorization(self, input_output: InputOutput) -> None:
-        """
-        Handle authentication and authorization for this endpoint.
-
-        In the event of an AuthN/AuthZ issue, raise an exception.  Otherwise, return None
-        """
-        if not self.authentication:
-            return
-        try:
-            if not self.authentication.authenticate(input_output):
-                raise exceptions.Authentication("Not Authenticated")
-        except exceptions.ClientError as client_error:
-            raise exceptions.Authentication(str(client_error))
-        if self.authorization:
-            try:
-                if not self.authorization.gate(input_output.authorization_data, input_output):
-                    raise exceptions.Authorization("Not Authorized")
-            except exceptions.ClientError as client_error:
-                raise exception.Authorization(str(client_error))
-
     def fetch_model_with_base_query(self, input_output: InputOutput) -> Model:
         model = self.model
         for join in self.joins:
@@ -989,72 +969,40 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
     def handle(self, input_output: InputOutput) -> Any:
         raise NotImplementedError()
 
-    def __call__(self, input_output: InputOutput, route_standalone=True) -> Any:
-        """
-        Execute the endpoint!
+    def matches_request(self, input_output: InputOutput, allow_partial=False) -> bool:
+        """ Whether or not we can handle an incoming request based on URL and request method. """
 
-        This function mostly just checks AuthN/AuthZ and then passes along control to the handle method.
-        It also checks for all the appropriate exceptions from clearskies.exceptions and turns those into the
-        expected response.  As a result, when building a new endpoint, you normally modify the handle method
-        rather than this one.
-        """
+        # soo..... this excessively duplicates the logic in __call__, but I'm being lazy right now
+        # and not fixing it.
+        request_method = input_output.get_request_method().upper()
+        if request_method == "OPTIONS":
+            return True
+        if request_method not in self.request_methods:
+            return False
+        expected_url = self.url.strip('/')
+        incoming_url = input_output.get_full_path().strip('/')
+        if not expected_url and not incoming_url:
+            return True
 
-        # these two configs can have arbitrary classes attached, which may use injectable properties.  Because they are
-        # hiding in configs, the system for automatically discovering these won't work, so we have to manually check them.
-        # We can't do this in the constructor because self.di hasn't been populated yet, and we can't do this in
-        # our own injectable_properties class method because we need to operate at the instance level
-        for config_name in ["authentication", "authorization"]:
-            config = getattr(self, config_name)
-            if config and hasattr(config, "injectable_properties"):
-                config.injectable_properties(self.di)
+        matches, routing_data = routing.match_route(expected_url, incoming_url, allow_partial=allow_partial)
+        return matches
 
-        # If we have been attached directly to a context then we get to do some routing ourselves.
-        if route_standalone:
-            request_method = input_output.get_request_method().upper()
-            if request_method == "OPTIONS":
-                return self.cors(input_output)
-            if request_method not in self.request_methods:
+    def populate_routing_data(self, input_output: InputOutput) -> Any:
+        # matches_request is only checked by the endpoint group, not by the context.  As a result, we need to check our
+        # route.  However we always have to check our route anyway because the full routing data can only be figured
+        # out at the endpoint level, so calling out to routing.mattch_route is unavoidable.
+        request_method = input_output.get_request_method().upper()
+        if request_method == "OPTIONS":
+            return self.cors(input_output)
+        if request_method not in self.request_methods:
+            return self.error(input_output, "Not Found", 404)
+        expected_url = self.url.strip('/')
+        incoming_url = input_output.get_full_path().strip('/')
+        if expected_url or incoming_url:
+            matches, routing_data = routing.match_route(expected_url, incoming_url, allow_partial=False)
+            if not matches:
                 return self.error(input_output, "Not Found", 404)
-            expected_url = self.url.strip('/')
-            incoming_url = input_output.get_full_path().strip('/')
-            if expected_url or incoming_url:
-                matches, routing_data = routing.match_route(expected_url, incoming_url, allow_partial=False)
-                if not matches:
-                    return self.error(input_output, "Not Found", 404)
-                input_output.routing_data = routing_data
-
-        self.di.add_binding("input_output", input_output)
-        try:
-            self.top_level_authentication_and_authorization(input_output)
-        except exceptions.Authentication as auth_error:
-            return self.error(input_output, str(auth_error), 401)
-        except exceptions.Authorization as auth_error:
-            return self.error(input_output, str(auth_error), 403)
-        except exceptions.NotFound as not_found:
-            return self.error(input_output, str(not_found), 404)
-        except exceptions.MovedPermanently as redirect:
-            return self.redirect(input_output, str(redirect), 302)
-        except exceptions.MovedTemporarily as redirect:
-            return self.redirect(input_output, str(redirect), 307)
-
-        try:
-            response = self.handle(input_output)
-        except exceptions.ClientError as client_error:
-            return self.error(input_output, str(client_error), 400)
-        except exceptions.InputErrors as input_errors:
-            return self.input_errors(input_output, input_errors.errors)
-        except exceptions.Authentication as auth_error:
-            return self.error(input_output, str(auth_error), 401)
-        except exceptions.Authorization as auth_error:
-            return self.error(input_output, str(auth_error), 403)
-        except exceptions.NotFound as auth_error:
-            return self.error(input_output, str(auth_error), 404)
-        except exceptions.MovedPermanently as redirect:
-            return self.redirect(input_output, str(redirect), 302)
-        except exceptions.MovedTemporarily as redirect:
-            return self.redirect(input_output, str(redirect), 307)
-
-        return response
+            input_output.routing_data = routing_data
 
     def failure(self, input_output: InputOutput) -> Any:
         return self.respond_json(input_output, {"status": "failure"}, 500)
@@ -1105,21 +1053,7 @@ class Endpoint(clearskies.configurable.Configurable, clearskies.di.InjectablePro
         return self.respond(input_output, self.normalize_response(response_data), status_code)
 
     def respond(self, input_output: InputOutput, response: clearskies.typing.response, status_code: int) -> Any:
-        if self.response_headers:
-            if callable(self.response_headers):
-                response_headers = self.di.call_function(self.response_headers, **input_output.get_context_for_callables())
-            else:
-                response_headers = self.response_headers
-
-            for (index, response_header) in enumerate(response_headers):
-                if not isinstance(response_header, str):
-                    raise TypeError(f"Invalid response header in entry #{index+1}: the header should be a string, but I was given a type of '{header.__class__.__name__}' instead.")
-                parts = response_header.split(":", 1)
-                if len(parts) != 2:
-                    raise ValueError(f"Invalid response header in entry #{index+1}: the header should be a string in the form of 'key: value' but the given header did not have a colon to separate key and value.")
-                input_output.response_headers.add(parts[0], parts[1])
-        for security_header in self.security_headers:
-            security_header.set_headers_for_input_output(input_output)
+        self.add_response_headers(input_output)
         return input_output.respond(response, status_code)
 
     def normalize_response(self, response_data: dict[str, Any]) -> dict[str, Any]:
