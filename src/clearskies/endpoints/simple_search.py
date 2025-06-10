@@ -207,7 +207,7 @@ class SimpleSearch(List):
         where: typing.condition | list[typing.condition] = [],
         joins: typing.join | list[typing.join] = [],
         url: str = "",
-        request_methods: list[str] = ["GET", "POST"],
+        request_methods: list[str] = ["GET", "POST", "QUERY"],
         response_headers: list[str | Callable[..., list[str]]] = [],
         output_map: Callable[..., dict[str, Any]] | None = None,
         output_schema: Schema | None = None,

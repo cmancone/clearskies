@@ -225,6 +225,8 @@ class EndpointGroup(clearskies.end.End, clearskies.configurable.Configurable, cl
             self.has_cors = True
             break
 
+        if not endpoints:
+            raise ValueError("An endpoint group must receive a list of endpoints/endpoint groups, but my list of endpoints is empty.")
         if not isinstance(endpoints, list):
             raise ValueError(f"An endpoint group must receive a list of endpoints/endpoint groups, but instead of a list I found an object of type '{endpoints.__class__.__name__}'")
         for (index, endpoint) in enumerate(endpoints):
@@ -265,3 +267,9 @@ class EndpointGroup(clearskies.end.End, clearskies.configurable.Configurable, cl
 
         self.add_response_headers(input_output)
         return endpoint(input_output)
+
+    def error(self, input_output: InputOutput, message: str, status_code: int) -> Any:
+        """
+        Return a client-side error (e.g. 400)
+        """
+        return self.respond_json(input_output, {"status": "client_error", "error": message}, status_code)

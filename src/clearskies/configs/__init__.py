@@ -76,6 +76,7 @@ from .conditions import Conditions
 from .config import Config
 from .datetime import Datetime
 from .datetime_or_callable import DatetimeOrCallable
+from .endpoint import Endpoint
 from .float import Float
 from .float_or_callable import FloatOrCallable
 from .integer import Integer

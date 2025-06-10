@@ -5,8 +5,9 @@ from clearskies.endpoints.delete import Delete
 from clearskies.endpoints.get import Get
 from clearskies.endpoints.health_check import HealthCheck
 from clearskies.endpoints.list import List
-from clearskies.endpoints.update import Update
+from clearskies.endpoints.restful_api import RestfulApi
 from clearskies.endpoints.simple_search import SimpleSearch
+from clearskies.endpoints.update import Update
 
 __all__ = [
     "AdvancedSearch",
@@ -16,6 +17,7 @@ __all__ = [
     "Get",
     "HealthCheck",
     "List",
-    "Update",
+    "RestfulApi",
     "SimpleSearch",
+    "Update",
 ]

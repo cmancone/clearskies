@@ -197,6 +197,7 @@ class List(Endpoint):
         output_map: Callable[..., dict[str, Any]] | None = None,
         output_schema: Schema | None = None,
         column_overrides: dict[str, Column] = {},
+        group_by_column_name: str = "",
         internal_casing: str = "snake_case",
         external_casing: str = "snake_case",
         security_headers: list[SecurityHeader] = [],

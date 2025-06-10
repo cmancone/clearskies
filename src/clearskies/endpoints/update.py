@@ -127,8 +127,8 @@ class Update(Get):
         request_data = self.get_request_data(input_output)
         if not request_data and input_output.has_body():
             raise clearskies.exceptions.ClientError("Request body was not valid JSON")
-        self.validate_input_against_schema(request_data, input_output, self.model_class)
         model = self.fetch_model(input_output)
+        self.validate_input_against_schema(request_data, input_output, model)
         model.save(request_data)
         return self.success(input_output, self.model_as_json(model, input_output))
 

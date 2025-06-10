@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, Callable, TYPE_CHECKING, Type
 import urllib.parse
 from collections import OrderedDict
+import inspect
 
 from clearskies.autodoc.request import Request, Parameter
 from clearskies.autodoc.response import Response
@@ -14,7 +15,7 @@ import clearskies.parameters_to_properties
 import clearskies.typing
 from clearskies import exceptions
 from clearskies.authentication import Authentication, Authorization, Public
-from clearskies.functional import string, routing
+from clearskies.functional import string, routing, validations
 import clearskies.end
 
 if TYPE_CHECKING:
@@ -202,7 +203,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
     }
     ```
     """
-    request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["GET"])
+    request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH", "QUERY"], default=["GET"])
 
     """
     The authentication for this endpoint (default is public)
@@ -1047,59 +1048,6 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
 
         return self.respond_json(input_output, response_data, 200)
 
-    def respond_json(self, input_output: InputOutput, response_data: dict[str, Any], status_code: int) -> Any:
-        if "content-type" not in input_output.response_headers:
-            input_output.response_headers.add("content-type", "application/json")
-        return self.respond(input_output, self.normalize_response(response_data), status_code)
-
-    def respond(self, input_output: InputOutput, response: clearskies.typing.response, status_code: int) -> Any:
-        self.add_response_headers(input_output)
-        return input_output.respond(response, status_code)
-
-    def normalize_response(self, response_data: dict[str, Any]) -> dict[str, Any]:
-        if "status" not in response_data:
-            raise ValueError("Huh, status got left out somehow")
-        return {
-            self.auto_case_internal_column_name("status"): self.auto_case_internal_column_name(response_data["status"]),
-            self.auto_case_internal_column_name("error"): response_data.get("error", ""),
-            self.auto_case_internal_column_name("data"): response_data.get("data", []),
-            self.auto_case_internal_column_name("pagination"): self.normalize_pagination(response_data.get("pagination", {})),
-            self.auto_case_internal_column_name("input_errors"): response_data.get("input_errors", {}),
-        }
-
-    def normalize_pagination(self, pagination: dict[str, Any]) -> dict[str, Any]:
-        # pagination isn't always relevant so if it is completely empty then leave it that way
-        if not pagination:
-            return pagination
-        return {
-            self.auto_case_internal_column_name("number_results"): pagination.get("number_results", 0),
-            self.auto_case_internal_column_name("limit"): pagination.get("limit", 0),
-            self.auto_case_internal_column_name("next_page"): {
-                self.auto_case_internal_column_name(key): value
-                for (key, value) in pagination.get("next_page", {}).items()
-            },
-        }
-
-    def auto_case_internal_column_name(self, column_name: str) -> str:
-        if self.external_casing:
-            return string.swap_casing(column_name, "snake_case", self.external_casing)
-        return column_name
-
-    def auto_case_column_name(self, column_name: str, internal_to_external: bool) -> str:
-        if not self.internal_casing:
-            return column_name
-        if internal_to_external:
-            return string.swap_casing(
-                column_name,
-                self.internal_casing,
-                self.external_casing,
-            )
-        return string.swap_casing(
-            column_name,
-            self.external_casing,
-            self.internal_casing,
-        )
-
     def cors(self, input_output: InputOutput):
         """
         Handles a CORS request
@@ -1134,7 +1082,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
             conversion_map[self.auto_case_column_name(column.name, True)] = column
         return conversion_map
 
-    def validate_input_against_schema(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema) -> None:
+    def validate_input_against_schema(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | Type[Schema]) -> None:
         if not self.writeable_column_names:
             raise ValueError(f"I was asked to validate input against a schema, but no writeable columns are defined, so I can't :(  This is probably a bug in the endpoint class - {self.__class__.__name__}.")
         request_data = self.map_request_data_external_to_internal(request_data)
@@ -1150,10 +1098,10 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
         # needs to return an error for unexpected data.
         return {key_map.get(key, key): value for (key, value) in request_data.items()}
 
-    def find_input_errors(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema) -> None:
+    def find_input_errors(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | Type[Schema]) -> None:
         input_errors = {}
         columns = schema.get_columns()
-        model = self.di.build(schema)
+        model = self.di.build(schema) if inspect.isclass(schema) else schema
         for column_name in self.writeable_column_names:
             column = columns[column_name]
             input_errors = {

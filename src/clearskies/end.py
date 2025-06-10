@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from clearskies.input_output import InputOutput
 
 from clearskies import exceptions
+from clearskies.functional import string
 
 class End(ABC):
     """
@@ -117,3 +118,56 @@ class End(ABC):
                 input_output.response_headers.add(parts[0], parts[1])
         for security_header in self.security_headers:
             security_header.set_headers_for_input_output(input_output)
+
+    def respond(self, input_output: InputOutput, response: clearskies.typing.response, status_code: int) -> Any:
+        self.add_response_headers(input_output)
+        return input_output.respond(response, status_code)
+
+    def respond_json(self, input_output: InputOutput, response_data: dict[str, Any], status_code: int) -> Any:
+        if "content-type" not in input_output.response_headers:
+            input_output.response_headers.add("content-type", "application/json")
+        return self.respond(input_output, self.normalize_response(response_data), status_code)
+
+    def normalize_response(self, response_data: dict[str, Any]) -> dict[str, Any]:
+        if "status" not in response_data:
+            raise ValueError("Huh, status got left out somehow")
+        return {
+            self.auto_case_internal_column_name("status"): self.auto_case_internal_column_name(response_data["status"]),
+            self.auto_case_internal_column_name("error"): response_data.get("error", ""),
+            self.auto_case_internal_column_name("data"): response_data.get("data", []),
+            self.auto_case_internal_column_name("pagination"): self.normalize_pagination(response_data.get("pagination", {})),
+            self.auto_case_internal_column_name("input_errors"): response_data.get("input_errors", {}),
+        }
+
+    def normalize_pagination(self, pagination: dict[str, Any]) -> dict[str, Any]:
+        # pagination isn't always relevant so if it is completely empty then leave it that way
+        if not pagination:
+            return pagination
+        return {
+            self.auto_case_internal_column_name("number_results"): pagination.get("number_results", 0),
+            self.auto_case_internal_column_name("limit"): pagination.get("limit", 0),
+            self.auto_case_internal_column_name("next_page"): {
+                self.auto_case_internal_column_name(key): value
+                for (key, value) in pagination.get("next_page", {}).items()
+            },
+        }
+
+    def auto_case_internal_column_name(self, column_name: str) -> str:
+        if self.external_casing:
+            return string.swap_casing(column_name, "snake_case", self.external_casing)
+        return column_name
+
+    def auto_case_column_name(self, column_name: str, internal_to_external: bool) -> str:
+        if not self.internal_casing:
+            return column_name
+        if internal_to_external:
+            return string.swap_casing(
+                column_name,
+                self.internal_casing,
+                self.external_casing,
+            )
+        return string.swap_casing(
+            column_name,
+            self.external_casing,
+            self.internal_casing,
+        )
