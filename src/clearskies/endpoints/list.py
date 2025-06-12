@@ -150,7 +150,7 @@ class List(Endpoint):
     """
     The default column to sort by.
     """
-    default_sort_column_name = clearskies.configs.ModelColumn("model_class", required=True)
+    default_sort_column_name = clearskies.configs.ModelColumn("model_class")
 
     """
     The default sort direction (ASC or DESC).
@@ -185,7 +185,7 @@ class List(Endpoint):
         model_class: Type[Model],
         readable_column_names: list[str],
         sortable_column_names: list[str],
-        default_sort_column_name: str,
+        default_sort_column_name: str | None,
         default_sort_direction: str = "ASC",
         default_limit: int = 50,
         maximum_limit: int = 200,

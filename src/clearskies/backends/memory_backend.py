@@ -627,12 +627,22 @@ class MemoryBackend(Backend, InjectableProperties):
         join_table_name = join.alias if join.alias else join.right_table_name
         join_type = join.join_type
 
+        #######
+        ########
+        ## our problem is here.  When we join rows we can end up with multiple copies of the records from the left table because
+        # there can be more than one matching record in the right table.  This isn't happening, and so we're not getting the
+        # proper results because the one record that is chosen to match with the left table doesn't meet the where condition
+        # that is applied at the very end.  If we have multiple records that match, they all need to get retunred in the
+        # final list of rows here, so we can properly search everything.
+
         # loop through each entry in rows, find a matching table in join_rows, and take action depending on join type
         rows = [*rows]
-        matched_right_row_indexes = []
+        matched_right_row_indexes = set()
         left_table_name = join.left_table_name
         left_column_name = join.left_column_name
-        for row_index, row in enumerate(rows):
+        # we're
+        for row_index in range(len(rows)):
+            row = rows[row_index]
             matching_row = None
             if left_table_name not in row:
                 raise ValueError("Attempted to check join data from unjoined table, which should not happen...")
@@ -641,26 +651,27 @@ class MemoryBackend(Backend, InjectableProperties):
                 if (row[left_table_name] is not None and left_column_name in row[left_table_name])
                 else None
             )
+            matching_rows = []
             for join_index, join_row in enumerate(join_rows):
                 right_value = join_row[join.right_column_name] if join.right_column_name in join_row else None
                 # for now we are assuming the operator for the matching is `=`.  This is mainly because
                 # our join parsing doesn't bother checking for the matching operator, because it is `=` in
                 # 99% of cases.  We can always adjust down the line.
                 if (right_value is None and left_value is None) or (right_value == left_value):
-                    matching_row = join_row
-                    matched_right_row_indexes.append(right_value)
-                    break
+                    matching_rows.append(join_row)
+                    matched_right_row_indexes.add(right_value)
 
-            # next action depends on the join type and match success
-            # for left and outer joins we always preserve records in the main table, so just plop in our match
-            # (even if it is None)
-            if join_type == "LEFT" or join_type == "OUTER":
-                rows[row_index][join_table_name] = matching_row
-
-            # for inner and right joins we delete the row if we don't have a match
-            elif join_type == "INNER" or join_type == "RIGHT":
-                if matching_row is not None:
+            # if we have matching rows then join them in.
+            for (index, matching_row) in enumerate(matching_rows):
+                if not index:
                     rows[row_index][join_table_name] = matching_row
+                else:
+                    rows.append({**row, **{join_table_name: matching_row}})
+
+            # if we don't have matching rows then remove them for an inner or right join
+            if not matching_rows:
+                if join_type == "LEFT" or join_type == "OUTER":
+                    rows[row_index][join_table_name] = matching_row = None
                 else:
                     # we can't immediately delete the row because we're looping over the array it is in,
                     # so just mark it as None and remove it later
@@ -670,7 +681,7 @@ class MemoryBackend(Backend, InjectableProperties):
 
         # now for outer/right rows we add on any unmatched rows
         if (join_type == "OUTER" or join_type == "RIGHT") and len(matched_right_row_indexes) < len(join_rows):
-            for join_index in set(range(len(join_rows))) - set(matched_right_row_indexes):
+            for join_index in set(range(len(join_rows))) - matched_right_row_indexes:
                 rows.append(
                     {
                         join_table_name: join_rows[join_index],

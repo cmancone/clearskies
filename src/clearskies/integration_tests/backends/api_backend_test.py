@@ -49,7 +49,7 @@ class ApiBackendTest(unittest.TestCase):
             repos = clearskies.columns.HasMany(
                 UserRepo,
                 foreign_column_name="login",
-                readable_child_columns=["id", "full_name", "html_url"]
+                readable_child_column_names=["id", "full_name", "html_url"]
             )
 
         def fetch_user(users: User, user_repos: UserRepo):

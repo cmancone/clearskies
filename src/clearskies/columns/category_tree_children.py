@@ -100,7 +100,7 @@ class CategoryTreeChildren(Column):
             if not include_all:
                 relatives = relatives.where(f"tree.{is_parent_column_name}=1")
             if find_parents:
-                relatives = relatives.sort_by(f"tree.{level_column_name}", "asc")
+                relatives = relatives.sort_by(level_column_name, "asc", "tree")
             return relatives
 
         # joins only work for SQL-like backends.  Otherwise, we have to pull out our list of ids
