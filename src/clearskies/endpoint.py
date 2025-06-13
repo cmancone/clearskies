@@ -1078,6 +1078,8 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
 
     def _build_as_json_map(self, model: clearskies.model.Model) -> dict[str, clearskies.column.Column]:
         conversion_map = {}
+        if not self.readable_column_names:
+            raise ValueError("I was asked to convert a model to JSON but I wasn't provided with `readable_column_names'")
         for column in self.readable_columns.values():
             conversion_map[self.auto_case_column_name(column.name, True)] = column
         return conversion_map

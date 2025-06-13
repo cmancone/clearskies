@@ -279,6 +279,7 @@ class RestfulApi(EndpointGroup):
     security_headers = clearskies.configs.SecurityHeaders(default=[])
     description = clearskies.configs.String(default="")
     where = clearskies.configs.Conditions(default=[])
+    _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(

@@ -280,17 +280,17 @@ class Callable(Endpoint):
         # did the developer return a model?
         if self.model_class and isinstance(response, self.model_class):
             # and is it a query or a single model?
-            if response.has_query():
+            if response._data:
+                return self.success(input_output, self.model_as_json(response, input_output))
+            else:
                 # with a query we can also get pagination data, maybe?
                 converted_models = [self.model_as_json(model, input_output) for model in response]
                 return self.success(
                     input_output,
                     converted_models,
-                    number_results=len(response),
+                    number_results=len(response) if response.backend.can_count else None,
                     next_page=response.next_page_data(),
                 )
-            else:
-                return self.success(input_output, self.model_as_json(response, input_output))
 
         # or did they return a list of models?
         if isinstance(response, list) and all(isinstance(item, self.model_class) for item in response):

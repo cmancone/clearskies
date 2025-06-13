@@ -237,7 +237,7 @@ class SimpleSearch(List):
                 [relationship_column_name, final_column_name] = self.unpack_column_name_with_relationship(column_name)
                 column_to_check = relationship_column_name if relationship_column_name else final_column_name
                 value_error = self.searchable_columns[column_to_check].check_search_value(
-                    value, relationship_reference=relationship_reference
+                    value, relationship_reference=final_column_name
                 )
                 if value_error:
                     raise clearskies.exceptions.InputErrors({column_name: value_error})
@@ -266,7 +266,7 @@ class SimpleSearch(List):
                 if relationship_column_name:
                     self.columns[relationship_column_name].add_search(model, value, relationship_reference=column_name)
                 else:
-                    model = self.columns[column_name].add_search(model, value)
+                    model = self.columns[column_name].add_search(model, value, operator="=")
 
         return model
 

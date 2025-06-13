@@ -3,7 +3,7 @@ from clearskies.di.injectable import Injectable
 from clearskies.secrets import Secrets as SecretsHelper
 
 class Secrets(Injectable):
-    def __init__(self, cache: bool=False):
+    def __init__(self, cache: bool=True):
         self.cache = cache
 
     def __get__(self, instance, parent) -> SecretsHelper:

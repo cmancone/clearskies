@@ -14,6 +14,8 @@ from clearskies.autodoc.schema import Integer as AutoDocInteger
 from clearskies.autodoc.schema import String as AutoDocString
 from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.functional import routing, string
+import clearskies.columns.json
+import clearskies.columns.datetime
 
 if TYPE_CHECKING:
     import clearskies.column
@@ -630,7 +632,7 @@ $ curl http://localhost:8080 | jq
             used_routing_parameters.append(parameter_name)
         return ("/".join(parts), used_routing_parameters)
 
-    def finalize_url_from_data(url: str, data: dict[str, Any], operation: str) -> tuple[str, list[str]]:
+    def finalize_url_from_data(self, url: str, data: dict[str, Any], operation: str) -> tuple[str, list[str]]:
         """
         Create the final URL using a data dictionary to fill in any URL parameters
 
@@ -744,7 +746,7 @@ $ curl http://localhost:8080 | jq
 
         See self.map_record_response for goals/motiviation
         """
-        return map_record_response(response_data, model.get_columns(), "update")
+        return self.map_record_response(response_data, model.get_columns(), "update")
 
     def create(self, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         """
@@ -759,11 +761,11 @@ $ curl http://localhost:8080 | jq
         response = self.execute_request(url, request_method, json=data, headers=self.headers)
         json_response = response.json() if response.content else {}
         if response.content:
-            new_record = {**new_record, **self.map_create_response(response.json(), model)}
-        return new_record
+            return self.map_create_response(response.json(), model)
+        return {}
 
     def map_create_response(self, response_data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
-        return map_record_response(response_data, model.get_columns(), "create")
+        return self.map_record_response(response_data, model.get_columns(), "create")
 
     def delete(self, id: int | str, model: clearskies.model.Model) -> bool:
         (url, used_routing_parameters) = self.delete_url(id, model)
@@ -930,6 +932,8 @@ $ curl http://localhost:8080 | jq
         # if nothing matches then clearly this isn't what we're looking for: repeat on all the children
         if not matching:
             for (key, value) in response_data.items():
+                if not isinstance(value, dict):
+                    continue
                 mapped = self.check_dict_and_map_to_model(value, columns)
                 if mapped:
                     return {**query_data, **mapped}
@@ -1094,7 +1098,7 @@ $ curl http://localhost:8080 | jq
         We have a couple columns we want to override transformations for
         """
         # most importantly, there's no need to transform a JSON column in either direction
-        if isinstance(column, JSON):
+        if isinstance(column, clearskies.columns.json.Json):
             return value
         return super().column_from_backend(column, value)
 
@@ -1103,10 +1107,10 @@ $ curl http://localhost:8080 | jq
         We have a couple columns we want to override transformations for
         """
         # most importantly, there's no need to transform a JSON column in either direction
-        if isinstance(column, JSON):
+        if isinstance(column, clearskies.columns.json.Json):
             return backend_data
         # also, APIs tend to have a different format for dates than SQL
-        if isinstance(column, DateTime):
+        if isinstance(column, clearskies.columns.datetime.Datetime) and column.name in backend_data:
             as_date = (
                 backend_data[column.name].isoformat()
                 if type(backend_data[column.name]) != str
