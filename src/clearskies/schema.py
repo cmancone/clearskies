@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Self, TYPE_CHECKING
+from typing import Self, TYPE_CHECKING, Self
 from collections import OrderedDict
 
 if TYPE_CHECKING:
@@ -22,7 +22,12 @@ class Schema:
     ```
     """
 
+    id_column_name: str = ""
     _columns: dict[str, Column] = {}
+
+    @classmethod
+    def destination_name(cls: type[Self]) -> str:
+        raise NotImplementedError()
 
     def __init__(self):
         self._data = {}

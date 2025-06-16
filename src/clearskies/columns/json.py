@@ -1,6 +1,6 @@
 from __future__ import annotations
 import json
-from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
+from typing import Any, Callable, overload, Self, TYPE_CHECKING
 
 import clearskies.typing
 import clearskies.parameters_to_properties
@@ -86,11 +86,11 @@ class Json(Column):
         pass
 
     @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> dict[str, Any]:
+    def __get__(self, instance: Model, cls: type[Model]) -> dict[str, Any]:
         pass
 
     def __get__(self, instance, cls):

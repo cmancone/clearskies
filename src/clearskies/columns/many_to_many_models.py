@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
+from typing import Any, Callable, overload, Self, TYPE_CHECKING
 from collections import OrderedDict
 
 import clearskies.typing
@@ -66,11 +66,11 @@ class ManyToManyModels(Column):
         return getattr(self.model_class, self.many_to_many_column_name)
 
     @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> Model:
+    def __get__(self, instance: Model, cls: type[Model]) -> Model:
         pass
 
     def __get__(self, instance, cls):

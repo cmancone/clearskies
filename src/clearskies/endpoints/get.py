@@ -1,9 +1,8 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Type, Any
+from typing import TYPE_CHECKING, Type, Any, Callable
 
 from clearskies import authentication
-from clearskies import autodoc
 from clearskies import typing
 from clearskies.endpoint import Endpoint
 from collections import OrderedDict
@@ -12,10 +11,11 @@ from clearskies.functional import string, routing
 from clearskies.input_outputs import InputOutput
 import clearskies.configs
 import clearskies.exceptions
+from clearskies.authentication import Authentication, Authorization
 
 if TYPE_CHECKING:
     from clearskies.model import Model
-    from clearskies import SecurityHeader
+    from clearskies import SecurityHeader, Column, Schema
 
 
 class Get(Endpoint):
@@ -231,7 +231,7 @@ class Get(Endpoint):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc,
+                        output_autodoc, # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,
@@ -249,7 +249,7 @@ class Get(Endpoint):
             ),
         ]
 
-    def documentation_routing_parameters(self) -> list[Parameter]:
+    def documentation_routing_parameters(self) -> list[autodoc.request.Parameter]:
         return self.standard_url_request_parameters()
 
     def documentation_models(self) -> dict[str, autodoc.schema.Schema]:

@@ -52,5 +52,5 @@ class Timedelta(Validator, clearskies.di.InjectableProperties):
             as_date = as_date.replace(tzinfo=datetime.timezone.utc)
         return self.check_timedelta(as_date, column_name)
 
-    def check_timedelta(self, as_date: datetime.timedelta) -> str:
+    def check_timedelta(self, as_date: datetime.datetime, column_name: str) -> str:
         return ""

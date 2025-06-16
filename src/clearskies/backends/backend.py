@@ -42,7 +42,7 @@ class Backend(ABC):
 
     @abstractmethod
     def records(
-        self, query: clearskies.query.Query, next_page_data: dict[str, str] = None
+        self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None = None
     ) -> list[dict[str, Any]]:
         """
         Returns a list of records that match the given query configuration

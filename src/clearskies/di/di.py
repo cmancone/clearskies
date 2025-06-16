@@ -3,7 +3,7 @@ from typing import Any, Callable
 from types import ModuleType
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from requests.packages.urllib3.util.retry import Retry # type: ignore
 import inspect
 import re
 import sys
@@ -718,7 +718,7 @@ class Di:
         # a small handful of predefined classes
         if class_to_build in self._predefined_classes_name_map:
             dependency_name = self._predefined_classes_name_map[class_to_build]
-            built_value = call_function(self, f"provide_{dependency_name}")
+            built_value = self.call_function(getattr(self, f"provide_{dependency_name}"))
             can_cache = self.can_cache(dependency_name, context if context else "")
 
         # finally, if we found something, cache and/or return it

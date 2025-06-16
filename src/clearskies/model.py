@@ -371,7 +371,7 @@ class Model(Schema, InjectableProperties):
         """
         return self._query if self._query else Query(self.__class__)
 
-    def as_query(self) -> Query:
+    def as_query(self) -> Self:
         """
         Make the model queryable!
 
@@ -627,7 +627,7 @@ class Model(Schema, InjectableProperties):
     def documentation_pagination_next_page_example(self: Self, case_mapping: Callable) -> dict[str, Any]:
         return self.backend.documentation_pagination_next_page_example(case_mapping)
 
-    def documentation_pagination_parameters(self: Self, case_mapping: Callable) -> list[tuple[AutoDocSchmea, str]]:
+    def documentation_pagination_parameters(self: Self, case_mapping: Callable) -> list[tuple[AutoDocSchema, str]]:
         return self.backend.documentation_pagination_parameters(case_mapping)
 
     def no_queries(self) -> None:

@@ -31,7 +31,7 @@ class Headers:
         return list(self._headers.keys())
 
     def items(self) -> list[tuple[str]]:
-        return list(self._headers.items())
+        return list(self._headers.items()) # type: ignore
 
     def add(self, key: str, value: str) -> None:
         """

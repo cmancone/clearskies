@@ -18,7 +18,7 @@ from clearskies.validator import Validator
 import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
-    from clearskies import Model
+    from clearskies import Schema, Model
 
 class Column(clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
     """
@@ -662,7 +662,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     """
     The class to use when documenting this column
     """
-    auto_doc_class: Type[AutoDocSchema] = AutoDocString
+    auto_doc_class: type[AutoDocSchema] = AutoDocString
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -687,7 +687,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         """ Return the columns or the model this column is attached to. """
         return self.model_class.get_columns()
 
-    def finalize_configuration(self, model_class: type, name: str) -> None:
+    def finalize_configuration(self, model_class: type[Schema], name: str) -> None:
         """
         Finalize and check the configuration.
 
@@ -729,7 +729,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     def __get__(self, instance: Model, cls: type):
         pass
 
-    def __get__(self, instance: Model, cls: type):
+    def __get__(self, instance, cls):
         if instance is None:
             # Normally this gets filled in when the model is initialized.  However, the condition builders (self.equals, etc...)
             # can be called from the class directly, before the model is initialized and everything is populated.  This
@@ -797,7 +797,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
                 continue
             additional_write_columns = {
                 **additional_write_columns,
-                **validator.additional_write_columns(is_create=is_create),
+                **validator.additional_write_columns(is_create=is_create), # type: ignore
             }
         return additional_write_columns
 
@@ -1182,7 +1182,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         final_values = []
         for value in values:
             final_values.append(self.to_backend({name: value}).get(name))
-        return ParsedCondition(name, 'in', final_values)
+        return ParsedCondition(name, 'in', final_values) # type: ignore
 
     def is_not_null(self) -> Condition:
         name = self.name_for_building_condition()
@@ -1221,6 +1221,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     def allowed_search_operators(self, relationship_reference: str = ""):
         return self._allowed_search_operators
+
+    def join_table_alias(self) -> str:
+        raise NotImplementedError("Ooops, I don't support joins")
 
     def documentation(self, name=None, example=None, value=None) -> list[AutoDocSchema]:
         return [self.auto_doc_class(name if name is not None else self.name, example=example, value=value)]

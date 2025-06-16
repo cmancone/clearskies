@@ -1,9 +1,8 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Callable, Any
 
 from clearskies import authentication
-from clearskies import autodoc
 from clearskies import typing
 from clearskies.endpoints.list import List
 from collections import OrderedDict
@@ -15,7 +14,7 @@ import clearskies.exceptions
 
 if TYPE_CHECKING:
     from clearskies.model import Model
-    from clearskies import SecurityHeader
+    from clearskies import SecurityHeader, Column, Schema
 
 class SimpleSearch(List):
     """
@@ -196,7 +195,7 @@ class SimpleSearch(List):
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        model_class: Type[Model],
+        model_class: type[Model],
         readable_column_names: list[str],
         sortable_column_names: list[str],
         searchable_column_names: list[str],

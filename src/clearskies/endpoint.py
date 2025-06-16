@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Callable, TYPE_CHECKING, Type
+from typing import Any, Callable, TYPE_CHECKING
 import urllib.parse
 from collections import OrderedDict
 import inspect
@@ -7,6 +7,7 @@ import inspect
 from clearskies.autodoc.request import Request, Parameter
 from clearskies.autodoc.response import Response
 from clearskies.autodoc import schema
+from clearskies import autodoc
 import clearskies.column
 import clearskies.configurable
 import clearskies.configs
@@ -20,10 +21,15 @@ import clearskies.end
 
 if TYPE_CHECKING:
     from clearskies import Column, Model, SecurityHeader
-    from clearskies.input_output import InputOutput
+    from clearskies.security_headers import Cors
+    from clearskies.input_outputs import InputOutput
     from clearskies.schema import Schema
 
-class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
+class Endpoint(
+    clearskies.end.End, # type: ignore
+    clearskies.configurable.Configurable,
+    clearskies.di.InjectableProperties
+):
     """
     Endpoints - the clearskies workhorse.
 
@@ -56,7 +62,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
     """
     The actual CORS header
     """
-    cors_header: SecurityHeader | None = None
+    cors_header: Cors | None = None
 
     """
     Set some response headers that should be returned for this endpoint.
@@ -867,13 +873,13 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
     """
     joins = clearskies.configs.Joins(default=[])
 
-    cors_header: SecurityHeader = None  # type: ignore
-    _model: clearskies.model.Model = None
-    _columns: dict[str, clearskies.column.Column] = None
-    _readable_columns: dict[str, clearskies.column.Column] = None
-    _writeable_columns: dict[str, clearskies.column.Column] = None
-    _searchable_columns: dict[str, clearskies.column.Column] = None
-    _sortable_columns: dict[str, clearskies.column.Column] = None
+    cors_header: Cors = None  # type: ignore
+    _model: clearskies.model.Model = None  # type: ignore
+    _columns: dict[str, clearskies.column.Column] = None  # type: ignore
+    _readable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
+    _writeable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
+    _searchable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
+    _sortable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
     _as_json_map: dict[str, clearskies.column.Column] = None # type: ignore
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -895,7 +901,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
         for security_header in self.security_headers:
             if not security_header.is_cors:
                 continue
-            self.cors_header = security_header
+            self.cors_header = security_header # type: ignore
             self.has_cors = True
             break
 
@@ -940,9 +946,11 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
             if input_output.has_body():
                 raise exceptions.ClientError("Request body was not valid JSON")
             raise exceptions.ClientError("Missing required JSON body")
+        if not isinstance(input_output.request_data, dict):
+            raise exceptions.ClientError("Request body was not a JSON dictionary.")
 
         return {
-            **input_output.request_data,
+            **input_output.request_data, # type: ignore
             **(input_output.routing_data if self.include_routing_data_in_request_data else {}),
         }
 
@@ -1028,7 +1036,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
         input_output.response_headers.add("location", location)
         return self.respond('<meta http-equiv="refresh" content="0; url=' + urllib.parse.quote(location) + '">Redirecting', status_code)
 
-    def success(self, input_output: InputOutput, data: dict[str, Any], number_results: int | None=None, limit: int | None=None, next_page: Any=None) -> Any:
+    def success(self, input_output: InputOutput, data: dict[str, Any] | list[Any], number_results: int | None=None, limit: int | None=None, next_page: Any=None) -> Any:
         """
         Return a successful response.
         """
@@ -1048,18 +1056,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
 
         return self.respond_json(input_output, response_data, 200)
 
-    def cors(self, input_output: InputOutput):
-        """
-        Handles a CORS request
-        """
-        if not self.cors_header:
-            return self.respond(input_output, "not found", 404)
-        if self.authentication:
-            self.authentication.set_headers_for_cors(self.cors)
-        cors.set_headers_for_input_output(input_output)
-        return self.respond(input_output, "", 200)
-
-    def model_as_json(self, model: clearskies.model.Model, input_output: clearskies.input_output.InputOutput) -> dict[str, Any]:
+    def model_as_json(self, model: clearskies.model.Model, input_output: InputOutput) -> dict[str, Any]:
         if self.output_map:
             return self.di.call_function(self.output_map, model=model, **input_output.get_context_for_callables())
 
@@ -1084,7 +1081,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
             conversion_map[self.auto_case_column_name(column.name, True)] = column
         return conversion_map
 
-    def validate_input_against_schema(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | Type[Schema]) -> None:
+    def validate_input_against_schema(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]) -> None:
         if not self.writeable_column_names:
             raise ValueError(f"I was asked to validate input against a schema, but no writeable columns are defined, so I can't :(  This is probably a bug in the endpoint class - {self.__class__.__name__}.")
         request_data = self.map_request_data_external_to_internal(request_data)
@@ -1100,15 +1097,15 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
         # needs to return an error for unexpected data.
         return {key_map.get(key, key): value for (key, value) in request_data.items()}
 
-    def find_input_errors(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | Type[Schema]) -> None:
-        input_errors = {}
+    def find_input_errors(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]) -> None:
+        input_errors: dict[str, str] = {}
         columns = schema.get_columns()
         model = self.di.build(schema) if inspect.isclass(schema) else schema
         for column_name in self.writeable_column_names:
             column = columns[column_name]
             input_errors = {
                 **input_errors,
-                **column.input_errors(model, request_data),
+                **column.input_errors(model, request_data), # type: ignore
             }
         input_errors = {
             **input_errors,
@@ -1135,8 +1132,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
         return more_input_errors
 
     def cors(self, input_output: InputOutput):
-        from clearskies.security_headers.cors import Cors
-        cors_header = self.cors_header if self.has_cors else Cors()
+        cors_header = self.cors_header if self.cors_header else Cors()
         for method in self.request_methods:
             cors_header.add_method(method)
         if self.authentication:
@@ -1162,7 +1158,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
             return {}
 
         return {
-            authentication.documentation_security_scheme_name(): authentication.documentation_security_scheme(),
+            self.authentication.documentation_security_scheme_name(): self.authentication.documentation_security_scheme(),
         }
 
     def documentation_models(self) -> dict[str, schema.Schema]:
@@ -1185,7 +1181,7 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
             ],
         )
 
-    def documentation_success_response(self, data_schema: schema.Object, description: str="", include_pagination: bool=False) -> Response:
+    def documentation_success_response(self, data_schema: schema.Object | schema.Array, description: str="", include_pagination: bool=False) -> Response:
         return Response(
             200,
             schema.Object(
@@ -1252,26 +1248,23 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
         name = authentication.documentation_security_scheme_name()
         return [{name: []}] if name else []
 
-    def documentation_data_schema(self, schema: Schema=None, column_names: list[str] = []) -> list[Schema]:
+    def documentation_data_schema(self, schema: type[Schema] | None=None, column_names: list[str] = []) -> list[schema.Schema]:
         if schema is None:
             schema = self.model_class
         if column_names is None and self.readable_column_names:
-            readable_column_names = self.readable_column_names
+            readable_column_names: list[str] = self.readable_column_names
         properties = []
 
         columns = schema.get_columns()
         for column_name in readable_column_names:
-            column = columns[readable_column_names]
-            column_doc = column.documentation()
-            if type(column_doc) != list:
-                column_doc = [column_doc]
-            for doc in column_doc:
+            column = columns[column_name]
+            for doc in column.documentation():
                 doc.name = self.auto_case_internal_column_name(doc.name)
                 properties.append(doc)
 
         return properties
 
-    def standard_json_request_parameters(self, schema: Schema=None, column_names: list[str] = []) -> list[Parameter]:
+    def standard_json_request_parameters(self, schema: type[Schema] | None=None, column_names: list[str] = []) -> list[Parameter]:
         if not column_names:
             if not self.writeable_column_names:
                 return []
@@ -1287,10 +1280,10 @@ class Endpoint(clearskies.end.End, clearskies.configurable.Configurable, clearsk
         return [
             autodoc.request.JSONBody(
                 columns[column_name].documentation(name=self.auto_case_column_name(column_name, True)),
-                description=f"Set '{column.name}' for the {model_name}",
+                description=f"Set '{column_name}' for the {model_name}",
                 required=columns[column_name].is_required,
             )
-            for column_name in writeable_column_names
+            for column_name in column_names
         ]
 
     def standard_url_request_parameters(self) -> list[Parameter]:

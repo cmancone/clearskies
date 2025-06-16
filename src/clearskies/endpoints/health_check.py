@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-from typing import Type, Callable
+from typing import Type, Callable, Any
 
 from clearskies import autodoc
 from clearskies import typing
@@ -170,7 +170,7 @@ class HealthCheck(Endpoint):
                 description,
                 [
                     self.documentation_success_response(
-                        output_autodoc,
+                        output_autodoc, # type: ignore
                         description=description,
                     ),
                 ],

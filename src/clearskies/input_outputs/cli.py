@@ -10,7 +10,7 @@ class Cli(InputOutput):
     _has_body: bool = False
     _body: str = ""
     _request_method: str = ""
-    _request_headers = {}
+    _request_headers: dict[str, str] = {}
 
     def __init__(self):
         self._request_headers = {}

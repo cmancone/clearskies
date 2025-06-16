@@ -72,18 +72,18 @@ def extract_url_parameter_name_map(url: str) -> dict[str, int]:
                 continue
             if part[-1] != "}":
                 raise ValueError(
-                    f"Invalid route configuration for URL '{path}': section '{part}'"
+                    f"Invalid route configuration for URL '{url}': section '{part}'"
                     + " starts with a '{' but does not end with one"
                 )
             match = re.match("^{(\\w[\\w\\d_]{0,})\\}$", part)
         if not match:
             raise ValueError(
-                f"Invalid route configuration for URL '{path}', section '{part}': resource identifiers must start with a letter and contain only letters, numbers, and underscores"
+                f"Invalid route configuration for URL '{url}', section '{part}': resource identifiers must start with a letter and contain only letters, numbers, and underscores"
             )
         parameter_name = match.group(1)
         if parameter_name in parameter_name_map:
             raise ValueError(
-                f"Invalid route configuration for URL '{path}', a URL path named '{parameter_name}' appeared more than once."
+                f"Invalid route configuration for URL '{url}', a URL path named '{parameter_name}' appeared more than once."
             )
         parameter_name_map[parameter_name] = index
     return parameter_name_map

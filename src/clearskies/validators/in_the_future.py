@@ -24,4 +24,6 @@ class InTheFuture(Validator, clearskies.di.InjectableProperties):
             return f"'{column_name}' was not a valid date"
         if as_date.tzinfo == None:
             as_date = as_date.replace(tzinfo=datetime.timezone.utc)
-        return as_date > self.utcnow
+        if as_date <= self.utcnow:
+            return f"'{column_name}' must be in the future"
+        return ""

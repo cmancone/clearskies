@@ -20,6 +20,7 @@ from . import (
 from . import parameters_to_properties as parameters_to_properties_module
 from .configurable import Configurable
 from .column import Column
+from .end import End
 from .endpoint import Endpoint
 from .endpoint_group import EndpointGroup
 from .schema import Schema
@@ -44,6 +45,7 @@ __all__ = [
     "Configurable",
     "contexts",
     "di",
+    "End",
     "Endpoint",
     "EndpointGroup",
     "endpoints",

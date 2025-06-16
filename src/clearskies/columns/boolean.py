@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, overload, Self, Type
+from typing import Callable, TYPE_CHECKING, overload, Self
 
 import clearskies.typing
 from clearskies import configs
@@ -31,7 +31,7 @@ class Boolean(Column):
     """
     The class to use when documenting this column
     """
-    auto_doc_class: Type[AutoDocSchema] = AutoDocBoolean
+    auto_doc_class: type[AutoDocSchema] = AutoDocBoolean
 
     _allowed_search_operators = ["="]
     default = configs.Boolean() #  type: ignore

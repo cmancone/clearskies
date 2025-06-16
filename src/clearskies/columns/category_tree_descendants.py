@@ -26,11 +26,11 @@ class CategoryTreeDescendants(CategoryTreeChildren):
     _descriptor_config_map = None
 
     @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> Model:
+    def __get__(self, instance: Model, cls: type[Model]) -> Model:
         pass
 
     def __get__(self, model, cls):

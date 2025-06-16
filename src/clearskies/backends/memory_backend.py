@@ -1,6 +1,6 @@
 from functools import cmp_to_key
 import inspect
-from typing import Any, Callable, Type
+from typing import Any, Callable
 
 from clearskies import functional
 from clearskies.autodoc.schema import Integer as AutoDocInteger
@@ -114,7 +114,7 @@ class MemoryTable:
         "in": lambda column, values, null: lambda row: row.get(column, null) in values,
     }
 
-    def __init__(self, model_class: Type[clearskies.model.Model]) -> None:
+    def __init__(self, model_class: type[clearskies.model.Model]) -> None:
         self._rows = []
         self._id_index = {}
         self.id_column_name = model_class.id_column_name
@@ -423,19 +423,19 @@ class MemoryBackend(Backend, InjectableProperties):
     def silent_on_missing_tables(self, silent=True):
         self._silent_on_missing_tables = silent
 
-    def create_table(self, model_class: Type[clearskies.model.Model]):
+    def create_table(self, model_class: type[clearskies.model.Model]):
         self.load_default_data()
         table_name = model_class.destination_name()
         if table_name in self.__class__._tables:
             return
         self.__class__._tables[table_name] = MemoryTable(model_class)
 
-    def has_table(self, model_class: Type[clearskies.model.Model]) -> bool:
+    def has_table(self, model_class: type[clearskies.model.Model]) -> bool:
         self.load_default_data()
         table_name = model_class.destination_name()
         return table_name in self.__class__._tables
 
-    def get_table(self, model_class: Type[clearskies.model.Model], create_if_missing=False) -> MemoryTable:
+    def get_table(self, model_class: type[clearskies.model.Model], create_if_missing=False) -> MemoryTable:
         table_name = model_class.destination_name()
         if table_name not in self.__class__._tables:
             if create_if_missing:
@@ -444,7 +444,7 @@ class MemoryBackend(Backend, InjectableProperties):
                 raise ValueError(f"The memory backend was asked to work with the model '{model_class.__name__}' but this model hasn't been explicitly added to the memory backend.  This typically means that you are querying for records in a model but haven't created any yet.")
         return self.__class__._tables[table_name]
 
-    def create_with_model_class(self, data: dict[str, Any], model_class: Type[clearskies.model.Model]) -> dict[str, Any]:
+    def create_with_model_class(self, data: dict[str, Any], model_class: type[clearskies.model.Model]) -> dict[str, Any]:
         self.create_table(model_class)
         return self.get_table(model_class).create(data)
 
@@ -478,7 +478,7 @@ class MemoryBackend(Backend, InjectableProperties):
         query.joins = [join for join in query.joins if join.join_type != "LEFT"]
         return len(self.rows_with_joins(query))
 
-    def records(self, query: clearskies.query.Query, next_page_data: dict[str, str]=None) -> list[dict[str, Any]]:
+    def records(self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None=None) -> list[dict[str, Any]]:
         self.check_query(query)
         if not self.has_table(query.model_class):
             if self._silent_on_missing_tables:
@@ -520,7 +520,7 @@ class MemoryBackend(Backend, InjectableProperties):
         # quick sanity check
         for join in query.joins:
             if join.unaliased_table_name not in self.__class__._tables:
-                if not self._silent_on_missing_tables():
+                if not self._silent_on_missing_tables:
                     raise ValueError(
                         f"Join '{join._raw_join}' refrences table '{join.unaliased_table_name}' which does not exist in MemoryBackend"
                     )
@@ -584,7 +584,7 @@ class MemoryBackend(Backend, InjectableProperties):
                 return []
 
             raise ValueError(f"Cannot return rows for unknown table '{table_name}'")
-        return self.__class__.tables[table_name]._rows
+        return self.__class__._tables[table_name]._rows
 
     def check_query(self, query: clearskies.query.Query) -> None:
         if query.group_by:

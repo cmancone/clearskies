@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, Type, overload, Self
+from typing import Any, TYPE_CHECKING, overload, Self
 
 import clearskies.typing
 import clearskies.parameters_to_properties
@@ -437,11 +437,11 @@ class HasMany(Column):
         return self.di.build(self.child_model_class, cache=True)
 
     @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> Model:
+    def __get__(self, instance: Model, cls: type[Model]) -> Model:
         pass
 
     def __get__(self, model, cls):
@@ -476,7 +476,7 @@ class HasMany(Column):
         child_id_column_name = self.child_model_class.id_column_name
         json: dict[str, Any] = {}
         for child in getattr(model, self.name):
-            json: dict[str, Any] = {
+            json = {
                 **json,
                 **columns[child_id_column_name].to_json(child),
             }

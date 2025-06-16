@@ -1,13 +1,12 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Type, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from clearskies import authentication
 from clearskies import autodoc
 from clearskies import typing
 from clearskies.endpoint import Endpoint
 from collections import OrderedDict
-from clearskies import autodoc
 from clearskies.functional import string
 from clearskies.input_outputs import InputOutput
 import clearskies.configs
@@ -15,7 +14,7 @@ import clearskies.exceptions
 
 if TYPE_CHECKING:
     from clearskies.model import Model
-    from clearskies import SecurityHeader
+    from clearskies import SecurityHeader, Column
 
 
 class Create(Endpoint):
@@ -105,16 +104,16 @@ class Create(Endpoint):
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        model_class: Type[Model],
+        model_class: type[Model],
         writeable_column_names: list[str],
         readable_column_names: list[str],
-        input_validation_callable: callable | None = None,
+        input_validation_callable: Callable | None = None,
         include_routing_data_in_request_data: bool = False,
         url: str = "",
         request_methods: list[str] = ["POST"],
         response_headers: list[str | Callable[..., list[str]]] = [],
         output_map: Callable[..., dict[str, Any]] | None = None,
-        output_schema: Schema | None = None,
+        output_schema: clearskies.Schema | None = None,
         column_overrides: dict[str, Column] = {},
         internal_casing: str = "snake_case",
         external_casing: str = "snake_case",
@@ -162,7 +161,7 @@ class Create(Endpoint):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc,
+                        output_autodoc, # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,
@@ -180,7 +179,7 @@ class Create(Endpoint):
             ),
         ]
 
-    def documentation_request_parameters(self) -> list[Parameter]:
+    def documentation_request_parameters(self) -> list[autodoc.request.Parameter]:
         return [
             *self.standard_json_request_parameters(self.model_class),
             *(self.standard_url_request_parameters() if self.include_routing_data_in_request_data else []),

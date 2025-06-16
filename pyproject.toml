@@ -46,6 +46,10 @@ pre-commit = "^3.2.2"
 black = "^23.3.0"
 pytest = "^8.3.1"
 mypy = "^1.13.0"
+types-requests = "^2.32.4.20250611"
+types-pymysql = "^1.1.0.20250516"
+types-dateparser = "^1.2.0.20250601"
+types-jwcrypto = "^1.5.0.20250516"
 
 [tool.poetry.extras]
 secrets = ["akeyless", "akeyless-cloud-id"]

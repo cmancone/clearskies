@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Type, TYPE_CHECKING, overload, Self
+from typing import Any, TYPE_CHECKING, overload, Self
 from collections import OrderedDict
 
 from clearskies import configs
@@ -47,11 +47,11 @@ class BelongsToModel(Column):
         belongs_to_column.model_column_name = name
 
     @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> Model:
+    def __get__(self, instance: Model, cls: type[Model]) -> Model:
         pass
 
     def __get__(self, model, cls):
@@ -118,7 +118,7 @@ class BelongsToModel(Column):
         # otherwise return an object with the readable parent columns
         columns = belongs_to_column.parent_columns
         parent = getattr(model, self.name)
-        json = OrderedDict()
+        json: dict[str, Any] = OrderedDict()
         for column_name in belongs_to_column.readable_parent_columns:
             json = {**json, **columns[column_name].to_json(parent)} # type: ignore
         return {

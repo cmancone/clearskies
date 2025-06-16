@@ -4,7 +4,6 @@ from typing import Any, Callable, TYPE_CHECKING
 from types import ModuleType
 import clearskies.endpoint
 import clearskies.endpoint_group
-import clearskies.end
 from clearskies.di.additional_config import AdditionalConfig
 from clearskies.di import Di
 from clearskies.input_outputs import Programmatic
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
     from clearskies.input_outputs import InputOutput
 
 class Context:
-    di = None
+    di: Di = None # type: ignore
 
     def __init__(
         self,
@@ -39,7 +38,7 @@ class Context:
         self.application = application
 
     def execute_application(self, input_output: InputOutput):
-        if isinstance(self.application, clearskies.end.End):
+        if hasattr(self.application, "add_url_prefix"): # duck typing check for endpoint/endpoint group
             self.application.injectable_properties(self.di)
             return self.application(input_output)
         elif callable(self.application):

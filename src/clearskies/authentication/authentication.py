@@ -6,12 +6,15 @@ from clearskies.authentication.authorization import Authorization
 import clearskies.configurable
 
 if TYPE_CHECKING:
-    from clearskies.security_header import SecurityHeader
+    from clearskies.security_headers.cors import Cors
 
 class Authentication(clearskies.configurable.Configurable, requests.auth.AuthBase):
     is_public = True
     can_authorize = False
     has_dynamic_credentials = False
+
+    def clear_credential_cache(self) -> None:
+        pass
 
     def headers(self, retry_auth: bool=False) -> dict[str, str]:
         return {}
@@ -22,7 +25,7 @@ class Authentication(clearskies.configurable.Configurable, requests.auth.AuthBas
     def authorize(self, authorization: Authorization):
         raise ValueError("Public endpoints do not support authorization")
 
-    def set_headers_for_cors(self, cors: SecurityHeader):
+    def set_headers_for_cors(self, cors: Cors):
         pass
 
     def documentation_security_scheme(self) -> dict[str, Any]:
@@ -32,5 +35,5 @@ class Authentication(clearskies.configurable.Configurable, requests.auth.AuthBas
         return ""
 
     def __call__(self, request: requests.models.PreparedRequest) -> requests.models.PreparedRequest:
-        request.headers = {**request.headers, **self.headers()}
+        request.headers = {**request.headers, **self.headers()} # type: ignore
         return request

@@ -171,16 +171,16 @@ class CursorBackend(Backend, InjectableProperties):
         return True
 
     def count(self, query: clearskies.query.Query) -> int:
-        [sql, parameters] = self.as_count_sql(query)
+        (sql, parameters) = self.as_count_sql(query)
         self.cursor.execute(sql, parameters)
         for row in self.cursor:
             return row[0] if type(row) == tuple else row["count"]
         return 0
 
-    def records(self, query: clearskies.query.Query, next_page_data: dict[str, str]=None) -> list[dict[str, Any]]:
+    def records(self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None=None) -> list[dict[str, Any]]:
         # I was going to get fancy and have this return an iterator, but since I'm going to load up
         # everything into a list anyway, I may as well just return the list, right?
-        [sql, parameters] = self.as_sql(query)
+        (sql, parameters) = self.as_sql(query)
         self.cursor.execute(sql, parameters)
         records = [row for row in self.cursor]
         if type(next_page_data) == dict:
@@ -193,7 +193,7 @@ class CursorBackend(Backend, InjectableProperties):
     def as_sql(self, query: clearskies.query.Query) -> tuple[str, tuple[Any]]:
         escape = self.column_escape_character
         table_name = query.model_class.destination_name()
-        [wheres, parameters] = self.conditions_as_wheres_and_parameters(
+        (wheres, parameters) = self.conditions_as_wheres_and_parameters(
             query.conditions, query.model_class.destination_name()
         )
         select_parts = []
@@ -221,43 +221,43 @@ class CursorBackend(Backend, InjectableProperties):
         limit = ""
         if query.limit:
             start = 0
-            limit = int(query.limit)
+            limit_size = int(query.limit)
             if "start" in query.pagination:
                 start = int(query.pagination["start"])
-            limit = f' LIMIT {start}, {limit}'
+            limit = f' LIMIT {start}, {limit_size}'
 
         table_name = self._finalize_table_name(table_name)
-        return [
+        return (
             f"SELECT {select} FROM {table_name}{joins}{wheres}{group_by}{order_by}{limit}".strip(),
             parameters,
-        ]
+        )
 
     def as_count_sql(self, query: clearskies.query.Query) -> tuple[str, tuple[Any]]:
         escape = self.column_escape_character
         # note that this won't work if we start including a HAVING clause
-        [wheres, parameters] = self.conditions_as_wheres_and_parameters(
-            query.wheres, query.model_class.destination_name()
+        (wheres, parameters) = self.conditions_as_wheres_and_parameters(
+            query.conditions, query.model_class.destination_name()
         )
         # we also don't currently support parameters in the join clause - I'll probably need that though
         if query.joins:
             # We can ignore left joins because they don't change the count
-            join_sections = filter(lambda join: join.type != "LEFT", query.joins)
+            join_sections = filter(lambda join: join.type != "LEFT", query.joins) # type: ignore
             joins = " " + " ".join([join._raw_join for join in join_sections])
         else:
             joins = ""
         table_name = self._finalize_table_name(query.model_class.destination_name())
         if not query.group_by:
-            query = f"SELECT COUNT(*) AS count FROM {table_name}{joins}{wheres}"
+            query_string = f"SELECT COUNT(*) AS count FROM {table_name}{joins}{wheres}"
         else:
             group_by = self.group_by_clause(query.group_by)
-            query = (
+            query_string = (
                 f"SELECT COUNT(*) AS count FROM (SELECT 1 FROM {table_name}{joins}{wheres}{group_by}) AS count_inner"
             )
-        return [query, parameters]
+        return (query_string, parameters)
 
-    def conditions_as_wheres_and_parameters(self, conditions: list[clearskies.query.Condition], default_table_name: str) -> list[str | tuple]:
+    def conditions_as_wheres_and_parameters(self, conditions: list[clearskies.query.Condition], default_table_name: str) -> tuple[str, tuple[Any]]:
         if not conditions:
-            return ["", ()]
+            return ("", ()) # type: ignore
 
         parameters = []
         where_parts = []
@@ -273,7 +273,7 @@ class CursorBackend(Backend, InjectableProperties):
                     escape=False,
                 )
             )
-        return [" WHERE " + " AND ".join(where_parts), tuple(parameters)]
+        return (" WHERE " + " AND ".join(where_parts), tuple(parameters)) # type: ignore
 
     def group_by_clause(self, group_by: str) -> str:
         if not group_by:

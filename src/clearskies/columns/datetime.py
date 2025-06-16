@@ -1,6 +1,6 @@
 from __future__ import annotations
 import datetime
-from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
+from typing import Any, Callable, overload, Self, TYPE_CHECKING
 
 import dateparser # type: ignore
 
@@ -120,7 +120,7 @@ class Datetime(Column):
 
     setable = configs.DatetimeOrCallable(default=None)  # type: ignore
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
-    auto_doc_class: Type[AutoDocSchema] = AutoDocDatetime
+    auto_doc_class: type[AutoDocSchema] = AutoDocDatetime
     _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -187,11 +187,11 @@ class Datetime(Column):
         return {self.name: value}
 
     @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> datetime.datetime:
+    def __get__(self, instance: Model, cls: type[Model]) -> datetime.datetime:
         pass
 
     def __get__(self, instance, cls):

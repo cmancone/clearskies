@@ -1,9 +1,9 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any
+from typing import Callable as CallableType
 
 from clearskies import authentication
-from clearskies import autodoc
 from clearskies import typing
 from clearskies.endpoint import Endpoint
 from collections import OrderedDict
@@ -16,6 +16,8 @@ import clearskies.exceptions
 if TYPE_CHECKING:
     from clearskies.model import Model
     from clearskies.schema import Schema
+    from clearskies.authentication import Authentication, Authorization
+    from clearskies import SecurityHeader, Column
 
 
 class Callable(Endpoint):
@@ -236,19 +238,19 @@ class Callable(Endpoint):
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        to_call: Callable,
+        to_call: CallableType,
         url: str = "",
         request_methods: list[str] = ["GET"],
-        model_class: Type[clearskies.model.Model] | None = None,
+        model_class: type[clearskies.model.Model] | None = None,
         readable_column_names: list[str] = [],
         writeable_column_names: list[str] = [],
         input_schema: Schema | None = None,
         output_schema: Schema | None = None,
-        input_validation_callable: Callable = None,
+        input_validation_callable: CallableType | None = None,
         return_standard_response: bool=True,
         return_records: bool=False,
-        response_headers: list[str | Callable[..., list[str]]] = [],
-        output_map: Callable[..., dict[str, Any]] | None = None,
+        response_headers: list[str | CallableType[..., list[str]]] = [],
+        output_map: CallableType[..., dict[str, Any]] | None = None,
         column_overrides: dict[str, Column] = {},
         internal_casing: str = "snake_case",
         external_casing: str = "snake_case",
@@ -267,8 +269,11 @@ class Callable(Endpoint):
 
     def handle(self, input_output: InputOutput):
         if self.writeable_column_names or self.input_schema:
-            self.validate_input_against_schema(input_output.request_data, input_output, self.input_schema if self.input_schema else self.model_class)
+            self.validate_input_against_schema(self.get_request_data(input_output), input_output, self.input_schema if self.input_schema else self.model_class)
         else:
+            if not isinstance(input_output.request_data, dict):
+                raise clearskies.exceptions.ClientError("Request body was not a JSON dictionary.")
+
             input_errors = self.find_input_errors_from_callable(input_output.request_data, input_output)
             if input_errors:
                 raise clearskies.exceptions.InputErrors(input_errors)
@@ -346,7 +351,7 @@ class Callable(Endpoint):
             ),
         ]
 
-    def documentation_request_parameters(self) -> list[Parameter]:
+    def documentation_request_parameters(self) -> list[autodoc.request.Parameter]:
         if not self.writeable_column_names:
             return []
 

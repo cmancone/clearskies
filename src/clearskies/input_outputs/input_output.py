@@ -20,7 +20,7 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
     routing_data = clearskies.configs.StringDict(default={})
     authorization_data = clearskies.configs.AnyDict(default={})
 
-    _body_as_json: dict[str, Any] = {}
+    _body_as_json: dict[str, Any] | list[Any] | None = {}
     _body_loaded_as_json = False
 
     def __init__(self):
@@ -56,7 +56,7 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
         pass
 
     @property
-    def request_data(self) -> dict[str, Any] | None:
+    def request_data(self) -> dict[str, Any] | list[Any] | None:
         """
         Returns the data from the request body, assuming it is JSON
         """

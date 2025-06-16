@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import overload, Self, TYPE_CHECKING, Type
+from typing import overload, Self, TYPE_CHECKING
 
 from clearskies.column import Column
 
@@ -63,11 +63,11 @@ class String(Column):
     _descriptor_config_map = None
 
     @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> str:
+    def __get__(self, instance: Model, cls: type[Model]) -> str:
         pass
 
     def __get__(self, instance, cls):

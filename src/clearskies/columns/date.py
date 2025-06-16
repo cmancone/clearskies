@@ -1,6 +1,6 @@
 from __future__ import annotations
 import datetime
-from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
+from typing import Any, Callable, overload, Self, TYPE_CHECKING
 
 import dateparser # type: ignore
 
@@ -96,7 +96,7 @@ class Date(Datetime):
 
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
 
-    auto_doc_class: Type[AutoDocSchema] = AutoDocDatetime
+    auto_doc_class: type[AutoDocSchema] = AutoDocDatetime
     _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -120,7 +120,7 @@ class Date(Datetime):
     ):
         pass
 
-    def from_backend(self, value) -> datetime.date | None:
+    def from_backend(self, value) -> datetime.date | None: # type: ignore
         if not value or value == self.backend_default:
             return None
         if isinstance(value, str):
@@ -143,12 +143,12 @@ class Date(Datetime):
             self.name: value.strftime(self.date_format),
         }
 
-    @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    @overload # type: ignore
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> datetime.date:
+    def __get__(self, instance: Model, cls: type[Model]) -> datetime.date:
         pass
 
     def __get__(self, instance, cls):
@@ -158,28 +158,28 @@ class Date(Datetime):
         instance._next_data[self.name] = value
 
     def equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().equals(value)
+        return super().equals(value) # type: ignore
 
     def spaceship(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().spaceship(value)
+        return super().spaceship(value) # type: ignore
 
     def not_equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().not_equals(value)
+        return super().not_equals(value) # type: ignore
 
     def less_than_equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().less_than_equals(value)
+        return super().less_than_equals(value) # type: ignore
 
     def greater_than_equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().greater_than_equals(value)
+        return super().greater_than_equals(value) # type: ignore
 
     def less_than(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().less_than(value)
+        return super().less_than(value) # type: ignore
 
     def greater_than(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().greater_than(value)
+        return super().greater_than(value) # type: ignore
 
-    def is_in(self, values: list[str | datetime.datetime | datetime.date]) -> Condition:
-        return super().is_in(values)
+    def is_in(self, values: list[str | datetime.datetime | datetime.date]) -> Condition: # type: ignore
+        return super().is_in(values) # type: ignore
 
     def input_error_for_value(self, value, operator=None):
         value = dateparser.parse(value)

@@ -4,7 +4,7 @@ from clearskies.authentication.authentication import Authentication
 from clearskies.exceptions import ClientError
 import clearskies.configs
 import clearskies.parameters_to_properties
-from clearskies.security_header import SecurityHeader
+from clearskies.security_headers.cors import Cors
 
 
 class Jwks(Authentication, clearskies.di.InjectableProperties):
@@ -152,5 +152,5 @@ class Jwks(Authentication, clearskies.di.InjectableProperties):
     def documentation_security_scheme_name(self) -> str:
         return self.documentation_security_name
 
-    def set_headers_for_cors(self, cors: SecurityHeader):
+    def set_headers_for_cors(self, cors: Cors):
         cors.add_header("Authorization")

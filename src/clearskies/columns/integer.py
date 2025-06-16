@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, overload, Self, TYPE_CHECKING, Type
+from typing import Callable, overload, Self, TYPE_CHECKING
 
 import clearskies.typing
 from clearskies import configs
@@ -69,7 +69,7 @@ class Integer(Column):
     setable = configs.IntegerOrCallable(default=None) #  type: ignore
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
 
-    auto_doc_class: Type[AutoDocSchema] = AutoDocInteger
+    auto_doc_class: type[AutoDocSchema] = AutoDocInteger
 
     _descriptor_config_map = None
 
@@ -93,11 +93,11 @@ class Integer(Column):
         pass
 
     @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> int:
+    def __get__(self, instance: Model, cls: type[Model]) -> int:
         pass
 
     def __get__(self, instance, cls):
@@ -111,7 +111,7 @@ class Integer(Column):
     def __set__(self, instance, value: int) -> None:
         instance._next_data[self.name] = value
 
-    def from_backend(self, value) -> int:
+    def from_backend(self, value) -> int | None:
         return None if value is None else int(value)
 
     def to_backend(self, data):

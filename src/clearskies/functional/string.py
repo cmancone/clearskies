@@ -93,7 +93,7 @@ def swap_casing(string: str, from_casing: str, to_casing: str) -> str:
         raise ValueError(f"Invalid casing '{from_casing}'.  Must be one of '" + "', ".join(casings) + "'")
     if to_casing not in casings:
         raise ValueError(f"Invalid casing '{to_casing}'.  Must be one of '" + "', ".join(casings) + "'")
-    return casing_swap_map[from_casing][to_casing](string)
+    return casing_swap_map[from_casing][to_casing](string) # type: ignore
 
 
 def make_plural(singular: str):

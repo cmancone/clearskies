@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Type, Any
+from typing import TYPE_CHECKING, Any
 
 from clearskies import authentication
 from clearskies import autodoc
@@ -284,7 +284,7 @@ class RestfulApi(EndpointGroup):
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        model_class: Type[Model],
+        model_class: type[Model],
         writeable_column_names: list[str],
         readable_column_names: list[str],
         searchable_column_names: list[str],

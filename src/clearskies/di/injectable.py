@@ -1,7 +1,8 @@
+from typing import Any
 from abc import ABC, abstractmethod
 
 class Injectable(ABC):
-    _di = None
+    _di: Any = None
 
     def initiated_guard(self, instance):
         if self._di:

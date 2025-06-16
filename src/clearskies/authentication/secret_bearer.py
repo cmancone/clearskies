@@ -478,7 +478,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
             self._secret = self.secrets.get(self.secret_key) if self.secret_key else self.environment.get(self.environment_key)
         return self._secret
 
-    def refresh_secret(self):
+    def clear_credential_cache(self):
         if self.secret_key:
             self._secret = None
 
@@ -494,7 +494,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     def headers(self, retry_auth=False):
         self._configured_guard()
         if retry_auth:
-            self.refresh_secret()
+            self.clear_credential_cache()
         return {"Authorization": f"{self.header_prefix}{self.secret}"}
 
     def authenticate(self, input_output):

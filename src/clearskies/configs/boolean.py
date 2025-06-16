@@ -1,10 +1,8 @@
-from typing import Callable
-
 from clearskies.configs import config
 
 
 class Boolean(config.Config):
-    def __set__(self, instance, value: Callable):
+    def __set__(self, instance, value: bool):
         if not isinstance(value, bool):
             error_prefix = self._error_prefix(instance)
             raise TypeError(
@@ -12,7 +10,7 @@ class Boolean(config.Config):
             )
         instance._set_config(self, value)
 
-    def __get__(self, instance, parent) -> Callable:
+    def __get__(self, instance, parent) -> bool:
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)

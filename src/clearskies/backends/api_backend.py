@@ -775,7 +775,7 @@ $ curl http://localhost:8080 | jq
         return True
 
     def records(
-        self, query: clearskies.query.Query, next_page_data: dict[str, str] | None = None
+        self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None = None
     ) -> list[dict[str, Any]]:
         self.check_query(query)
         (url, method, body, headers) = self.build_records_request(query)
@@ -816,7 +816,7 @@ $ curl http://localhost:8080 | jq
             {},
         )
 
-    def conditions_to_request_parameters(self, query: clearskies.query.Query, used_routing_parameters: list[str]) -> tuple[dict[str, str], dict[str, str], dict[str, Any]]:
+    def conditions_to_request_parameters(self, query: clearskies.query.Query, used_routing_parameters: list[str]) -> tuple[str, dict[str, str], dict[str, Any]]:
         route_id = ""
 
         url_parameters = {}
@@ -837,10 +837,10 @@ $ curl http://localhost:8080 | jq
         if query.limit:
             if not self.limit_parameter_name:
                 raise ValueError("The records query attempted to change the limit (the number of results per page) but the backend does not support it.  If it actually does support this, then set an appropriate value for backend.limit_parameter_name")
-            url_parameters[self.limit_parameter_name] = query.limit
+            url_parameters[self.limit_parameter_name] = str(query.limit)
 
         if query.pagination.get(self.pagination_parameter_name):
-            url_parameters[self.pagination_parameter_name] = query.pagination.get(self.pagination_parameter_name)
+            url_parameters[self.pagination_parameter_name] = str(query.pagination.get(self.pagination_parameter_name))
 
         return (url_parameters, {})
 
@@ -878,7 +878,7 @@ $ curl http://localhost:8080 | jq
                 return []
             if not self.check_dict_and_map_to_model(response_data[0], columns, query_data):
                 raise ValueError(f"The response from a records request returned a list, but the records in the list didn't look anything like the model class.  Please check your model class and mapping settings in the API Backend.  If those are correct, then you'll have to override the map_records_response method, because the API you are interacting with is returning data in an unexpected way that I can't automatically figure out.")
-            return [self.check_dict_and_map_to_model(record, columns, query_data) for record in response_data]
+            return [self.check_dict_and_map_to_model(record, columns, query_data) for record in response_data] # type: ignore
 
         if not isinstance(response_data, dict):
             raise ValueError(f"The response from a records request returned a variable of type {response_data.__class__.__name__}, which is just confusing.  To do automatic introspection, I need a list or a dictionary.  I'm afraid you'll have to extend the API backend and override the map_record_response method to deal with this.")
@@ -952,7 +952,7 @@ $ curl http://localhost:8080 | jq
 
         return {**query_data, **mapped}
 
-    def build_response_to_model_map(self, columns: dict[str, clearskies.columns.Column]) -> dict[str, str]:
+    def build_response_to_model_map(self, columns: dict[str, clearskies.column.Column]) -> dict[str, str]:
         if self._response_to_model_map is not None:
             return self._response_to_model_map
 
@@ -963,7 +963,7 @@ $ curl http://localhost:8080 | jq
 
         return self._response_to_model_map
 
-    def set_next_page_data_from_response(self, next_page_data: dict[str, Any], query: clearskies.query.Query, response: requests.Response) -> None:
+    def set_next_page_data_from_response(self, next_page_data: dict[str, Any], query: clearskies.query.Query, response: requests.models.Response) -> None: # type: ignore
         """
         Update the next_page_data dictionary with the appropriate data needed to fetch the next page of records
 
@@ -1000,7 +1000,7 @@ $ curl http://localhost:8080 | jq
     def count(self, query: clearskies.query.Query) -> int:
         raise NotImplementedError(f"The {self.__class__.__name__} backend does not support count operations, so you can't use the `len` or `bool` function for any models using it.")
 
-    def execute_request(self, url: str, method: str, json: dict[str, Any] | None =None, headers: dict[str, str] | None=None, is_retry=False) -> requests.Response:
+    def execute_request(self, url: str, method: str, json: dict[str, Any] | None =None, headers: dict[str, str] | None=None, is_retry=False) -> requests.models.Response: # type: ignore
         """
         Executes the actual API request and returns the response object.
 
@@ -1043,7 +1043,7 @@ $ curl http://localhost:8080 | jq
             if not is_retry and response.status_code == 401:
                 return self.execute_request(url, method, json=json, headers=headers, is_retry=True)
             if not response.ok:
-                raise ValueError(f"Failed request.  Status code: {response.status_code}, message: {response.content}")
+                raise ValueError(f"Failed request.  Status code: {response.status_code}, message: " + response.content.decode("utf-8"))
 
         return response
 
@@ -1067,7 +1067,7 @@ $ curl http://localhost:8080 | jq
         value = data[self.pagination_parameter_name]
         try:
             if self.pagination_parameter_type == "int":
-                start = int(start)
+                converted = int(value)
         except:
             key_name = case_mapping(self.pagination_parameter_name)
             return f"Invalid pagination data: '{key_name}' must be a number"
@@ -1085,7 +1085,7 @@ $ curl http://localhost:8080 | jq
     def documentation_pagination_next_page_example(self, case_mapping: Callable) -> dict[str, Any]:
         return {case_mapping(self.pagination_parameter_name): 0 if self.pagination_parameter_type == "int" else ""}
 
-    def documentation_pagination_parameters(self, case_mapping: Callable) -> list[tuple[Any]]:
+    def documentation_pagination_parameters(self, case_mapping: Callable) -> list[tuple[AutoDocSchema, str]]:
         return [
             (
                 AutoDocInteger(case_mapping(self.pagination_parameter_name), example=0 if self.pagination_parameter_type == "int" else ""),

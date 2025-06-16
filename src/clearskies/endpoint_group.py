@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Self, Any, TYPE_CHECKING
+from typing import Self, Any, TYPE_CHECKING, Callable
 
 from clearskies.input_outputs import InputOutput
 from clearskies.endpoint import Endpoint
@@ -13,7 +13,11 @@ from clearskies.functional import routing
 if TYPE_CHECKING:
     from clearskies import SecurityHeader
 
-class EndpointGroup(clearskies.end.End, clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
+class EndpointGroup(
+    clearskies.end.End, # type: ignore
+    clearskies.configurable.Configurable,
+    clearskies.di.InjectableProperties
+):
     """
     An endpoint group brings endpoints together: it basically handles routing.
 

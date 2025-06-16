@@ -1,10 +1,10 @@
-from typing import Callable
+from typing import Callable as CallableType
 
 from clearskies.configs import config
 
 
 class Callable(config.Config):
-    def __set__(self, instance, value: Callable):
+    def __set__(self, instance, value: CallableType):
         if not callable(value):
             error_prefix = self._error_prefix(instance)
             raise TypeError(
@@ -12,7 +12,7 @@ class Callable(config.Config):
             )
         instance._set_config(self, value)
 
-    def __get__(self, instance, parent) -> Callable:
+    def __get__(self, instance, parent) -> CallableType | None:
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)

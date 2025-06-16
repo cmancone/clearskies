@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, overload, Self, TYPE_CHECKING, Type
+from typing import Callable, overload, Self, TYPE_CHECKING
 
 import clearskies.typing
 import clearskies.parameters_to_properties
@@ -69,7 +69,7 @@ class Float(Column):
     default = configs.Float() #  type: ignore
     setable = configs.FloatOrCallable(default=None) #  type: ignore
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
-    auto_doc_class: Type[AutoDocSchema] = AutoDocNumber
+    auto_doc_class: type[AutoDocSchema] = AutoDocNumber
     _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -92,11 +92,11 @@ class Float(Column):
         pass
 
     @overload
-    def __get__(self, instance: None, cls: Type[Model]) -> Self:
+    def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
     @overload
-    def __get__(self, instance: Model, cls: Type[Model]) -> float:
+    def __get__(self, instance: Model, cls: type[Model]) -> float:
         pass
 
     def __get__(self, instance, cls):

@@ -6,7 +6,7 @@ import clearskies.di
 import clearskies.typing
 import clearskies.parameters_to_properties
 from clearskies.columns.datetime import Datetime
-from clearskies import configs, parameters_to_properties
+from clearskies import configs
 
 if TYPE_CHECKING:
     from clearskies import Model

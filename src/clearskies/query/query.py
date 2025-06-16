@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Type, Self, TYPE_CHECKING
+from typing import Any, Self, TYPE_CHECKING
 
 from .condition import Condition
 from .join import Join
@@ -18,12 +18,12 @@ class Query:
     """
     The model class
     """
-    model_class: Type[Model] = None  # type: ignore
+    model_class: type[Model] = None  # type: ignore
 
     """
     The list of where conditions for the query.
     """
-    conditions: list[Condition] = None
+    conditions: list[Condition] = []
 
     """
     The conditions, but organized by column.
@@ -67,7 +67,7 @@ class Query:
 
     def __init__(
         self,
-        model_class: Type[Model],
+        model_class: type[Model],
         conditions: list[Condition] = [],
         joins: list[Join] = [],
         sorts: list[Sort] = [],

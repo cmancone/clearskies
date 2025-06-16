@@ -18,5 +18,6 @@ class Url(string.String):
             try:
                 routing.extract_url_parameter_name_map(value)
             except ValueError as e:
+                error_prefix = self._error_prefix(instance)
                 raise ValueError(f"{error_prefix} {e}")
         instance._set_config(self, value)

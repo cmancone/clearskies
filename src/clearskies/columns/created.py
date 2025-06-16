@@ -5,7 +5,7 @@ from typing import Any, TYPE_CHECKING
 import clearskies.di
 import clearskies.typing
 from clearskies.columns.datetime import Datetime
-from clearskies import configs, parameters_to_properties
+from clearskies import configs, parameters_to_properties # type: ignore
 
 if TYPE_CHECKING:
     from clearskies import Model

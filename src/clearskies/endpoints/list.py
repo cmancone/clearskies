@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Callable, Any
 
 from clearskies import authentication
 from clearskies import autodoc
@@ -15,7 +15,9 @@ import clearskies.exceptions
 
 if TYPE_CHECKING:
     from clearskies.model import Model
+    from clearskies import Schema
     from clearskies import SecurityHeader
+    from clearskies.column import Column
 
 
 class List(Endpoint):
@@ -176,13 +178,10 @@ class List(Endpoint):
     sortable_column_names = clearskies.configs.ReadableModelColumns("model_class", allow_relationship_references=True)
     searchable_column_names = clearskies.configs.SearchableModelColumns("model_class", allow_relationship_references=True)
 
-    _searchable_columns = None
-    _sortable_columns = None
-
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        model_class: Type[Model],
+        model_class: type[Model],
         readable_column_names: list[str],
         sortable_column_names: list[str],
         default_sort_column_name: str | None,
@@ -232,15 +231,17 @@ class List(Endpoint):
 
     def handle(self, input_output: InputOutput):
         model = self.fetch_model_with_base_query(input_output)
-        request_data = self.map_input_to_internal_names(input_output.request_data)
-        if not request_data and input_output.has_body():
+        if not input_output.request_data and input_output.has_body():
             raise clearskies.exceptions.ClientError("Request body was not valid JSON")
+        if input_output.request_data and not isinstance(input_output.request_data, dict):
+            raise clearskies.exceptions.ClientError("When present, request body must be a JSON dictionary")
+        request_data = self.map_input_to_internal_names(input_output.request_data) # type: ignore
         query_parameters = self.map_input_to_internal_names(input_output.query_parameters)
         pagination_data = {}
         for key in model.allowed_pagination_keys():
             if key in request_data and key in query_parameters:
                 original_name = self.auto_case_internal_column_name(key)
-                raise exceptions.ClientError(f"Ambiguous request: key '{original_name}' is present in both the JSON body and URL data")
+                raise clearskies.exceptions.ClientError(f"Ambiguous request: key '{original_name}' is present in both the JSON body and URL data")
             if key in request_data:
                 pagination_data[key] = request_data[key]
                 del request_data[key]
@@ -261,11 +262,9 @@ class List(Endpoint):
         if self.group_by_column_name:
             model = model.group_by(self.group_by_column_name)
 
-        records = [self.model_as_json(record, input_output) for record in model]
-
         return self.success(
             input_output,
-            records,#[self.model_as_json(record, input_output) for record in model],
+            [self.model_as_json(record, input_output) for record in model],
             number_results=len(model) if model.backend.can_count else None,
             limit=model.get_query().limit,
             next_page=model.next_page_data(),
@@ -281,7 +280,7 @@ class List(Endpoint):
         if sort and direction:
             model = self.add_join(sort, model)
             [sort_column, sort_table] = self.resolve_references_for_query(sort)
-            model = model.sort_by(sort_column, direction, sort_table)
+            model = model.sort_by(sort_column, direction, sort_table) # type: ignore
 
         return model
 
@@ -485,7 +484,7 @@ class List(Endpoint):
             (schema, description) = parameter
             url_parameters.append(autodoc.request.URLParameter(schema, description=description))
 
-        return url_parameters
+        return url_parameters # type: ignore
 
     def documentation_url_sort_parameters(self) -> list[autodoc.request.Parameter]:
         sort_columns = [self.auto_case_column_name(internal_name, True) for internal_name in self.sortable_column_names]
@@ -524,7 +523,7 @@ class List(Endpoint):
             (schema, description) = parameter
             json_parameters.append(autodoc.request.JSONBody(schema, description=description))
 
-        return json_parameters
+        return json_parameters # type: ignore
 
     def documentation_json_sort_parameters(self) -> list[autodoc.request.Parameter]:
         sort_columns = [self.auto_case_column_name(internal_name, True) for internal_name in self.sortable_column_names]
