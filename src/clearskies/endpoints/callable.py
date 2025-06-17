@@ -312,11 +312,11 @@ class Callable(Endpoint):
         output_data_schema = self.documentation_data_schema(output_schema, self.readable_column_names) if self.readable_column_names else []
         output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name if self.readable_column_names else ""),
         if self.return_records:
-            output_autodoc.name = nice_model
+            output_autodoc.name = nice_model # type: ignore
             output_autodoc = autodoc.schema.Array(
                 self.auto_case_internal_column_name("data"),
                 output_autodoc,
-            )
+            ) # type: ignore
 
         authentication = self.authentication
         standard_error_responses = []
@@ -332,7 +332,7 @@ class Callable(Endpoint):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc,
+                        output_autodoc, # type: ignore
                         description=self.description,
                         include_pagination=self.return_records,
                     ),

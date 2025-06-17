@@ -38,7 +38,7 @@ class Context:
         self.application = application
 
     def execute_application(self, input_output: InputOutput):
-        if hasattr(self.application, "add_url_prefix"): # duck typing check for endpoint/endpoint group
+        if hasattr(self.application, "injectable_properties"):
             self.application.injectable_properties(self.di)
             return self.application(input_output)
         elif callable(self.application):
@@ -74,4 +74,4 @@ class Context:
         ))
 
     def build(self, thing: Any, cache: bool=False) -> Any:
-        return self.di.build(thing, cache)
+        return self.di.build(thing, cache=cache)

@@ -1,20 +1,19 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Type, Any
+from typing import TYPE_CHECKING, Type, Any, Callable
 
 from clearskies import authentication
 from clearskies import autodoc
 from clearskies import typing
 from clearskies.endpoints.get import Get
 from collections import OrderedDict
-from clearskies import autodoc
 from clearskies.functional import string, routing
 from clearskies.input_outputs import InputOutput
 import clearskies.configs
 import clearskies.exceptions
 
 if TYPE_CHECKING:
-    from clearskies.model import Model
+    from clearskies.model import Model, Schema, Column
     from clearskies import SecurityHeader
 
 
@@ -100,7 +99,7 @@ class Update(Get):
         writeable_column_names: list[str],
         readable_column_names: list[str],
         record_lookup_column_name: str | None = None,
-        input_validation_callable: callable | None = None,
+        input_validation_callable: Callable | None = None,
         request_methods: list[str] = ["PATCH"],
         response_headers: list[str | Callable[..., list[str]]] = [],
         output_map: Callable[..., dict[str, Any]] | None = None,
@@ -112,8 +111,8 @@ class Update(Get):
         description: str = "",
         where: typing.condition | list[typing.condition] = [],
         joins: typing.join | list[typing.join] = [],
-        authentication: Authentication = authentication.Public(),
-        authorization: Authorization = authentication.Authorization(),
+        authentication: authentication.Authentication = authentication.Public(),
+        authorization: authentication.Authorization = authentication.Authorization(),
     ):
         # see comment in clearskies.endpoints.Create.__init__
         self.request_methods = request_methods
@@ -152,7 +151,7 @@ class Update(Get):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc,
+                        output_autodoc, # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,
@@ -170,7 +169,7 @@ class Update(Get):
             ),
         ]
 
-    def documentation_request_parameters(self) -> list[Parameter]:
+    def documentation_request_parameters(self) -> list[autodoc.request.Parameter]:
         return [
             *self.standard_json_request_parameters(self.model_class),
             *self.standard_url_request_parameters(),

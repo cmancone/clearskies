@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 from clearskies import authentication
 from clearskies import autodoc
@@ -22,7 +22,7 @@ from clearskies.endpoints.simple_search import SimpleSearch
 from clearskies.authentication import Authentication, Authorization, Public
 
 if TYPE_CHECKING:
-    from clearskies.model import Model
+    from clearskies.model import Model, Schema, Column
     from clearskies import SecurityHeader
 
 
@@ -303,7 +303,7 @@ class RestfulApi(EndpointGroup):
         list_request_methods: list[str] = ["GET"],
         id_column_name: str = "",
         group_by_column_name: str = "",
-        input_validation_callable: callable | None = None,
+        input_validation_callable: Callable | None = None,
         include_routing_data_in_request_data: bool = False,
         url: str = "",
         default_sort_direction: str = "ASC",
@@ -366,7 +366,7 @@ class RestfulApi(EndpointGroup):
         # these lines take all of the arguments we were initialized with and dumps it into a dict.  It's the
         # equivalent of combining both *args and **kwargs without using either
         my_args = inspect.getfullargspec(self.__class__)
-        local_variables = inspect.currentframe().f_locals
+        local_variables = inspect.currentframe().f_locals # type: ignore
         available_args = {arg: local_variables[arg] for arg in my_args.args[1:]}
 
         # we handle this one manually
@@ -382,9 +382,9 @@ class RestfulApi(EndpointGroup):
             # now get the allowed args out of the init and fill them out with our own.
             endpoint_args = inspect.getfullargspec(endpoint_class)
             nendpoint_args = len(endpoint_args.args)
-            nendpoint_kwargs = len(endpoint_args.defaults)
-            final_args = []
-            final_kwargs = {}
+            nendpoint_kwargs = len(endpoint_args.defaults) if endpoint_args.defaults else 0
+            final_args: list[str] = []
+            final_kwargs: dict[str, Any] = {}
             for arg in endpoint_args.args[1:]:
                 if not available_args.get(arg):
                     continue
@@ -393,7 +393,7 @@ class RestfulApi(EndpointGroup):
             if url_suffix:
                 final_kwargs["url"] = url_suffix
             final_kwargs["request_methods"] = endpoint_to_build["request_methods"]
-            endpoints.append(endpoint_class(*final_args, **final_kwargs))
+            endpoints.append(endpoint_class(*final_args, **final_kwargs)) # type: ignore
 
         super().__init__(
             endpoints,

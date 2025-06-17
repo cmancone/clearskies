@@ -5,6 +5,7 @@ from wsgiref.util import setup_testing_defaults
 from wsgiref.simple_server import make_server
 
 import clearskies.endpoint
+import clearskies.endpoint_group
 from clearskies.di import AdditionalConfig
 from clearskies.input_outputs import Wsgi as WsgiInputOutput
 from clearskies.contexts.context import Context
@@ -14,7 +15,7 @@ class WsgiRef(Context):
 
     def __init__(
         self,
-        application: Callable | clearskies.endpoint.Endpoint,
+        application: Callable | clearskies.endpoint.Endpoint | clearskies.endpoint_group.EndpointGroup,
         port: int = 8080,
         classes: type | list[type]=[],
         modules: ModuleType | list[ModuleType]=[],

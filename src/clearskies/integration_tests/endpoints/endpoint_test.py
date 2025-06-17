@@ -1,6 +1,6 @@
 import unittest
 import datetime
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta # type: ignore
 
 import clearskies
 from clearskies.contexts import Context

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type, Any
 
 from clearskies import authentication
 from clearskies import autodoc
@@ -414,12 +414,12 @@ class AdvancedSearch(SimpleSearch):
                 secondary_direction = ""
                 secondary_table_name = ""
             model = model.sort_by(
-                primary_column_name,
-                primary_direction,
-                primary_table_name=primary_table_name,
-                secondary_column_name=secondary_column_name,
-                secondary_direction=secondary_direction,
-                secondary_table_name=secondary_table_name,
+                primary_column_name if primary_column_name else "",
+                primary_direction if primary_direction else "",
+                primary_table_name=primary_table_name if primary_table_name else "",
+                secondary_column_name=secondary_column_name if secondary_column_name else "",
+                secondary_direction=secondary_direction if secondary_direction else "",
+                secondary_table_name=secondary_table_name if secondary_table_name else "",
             )
         if request_data.get("limit"):
             model = model.limit(request_data["limit"])

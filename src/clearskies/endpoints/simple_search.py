@@ -280,4 +280,4 @@ class SimpleSearch(List):
                     description=f"Search by {column_doc.name} (via exact match)",
                 )
             )
-        return docs
+        return docs # type: ignore
