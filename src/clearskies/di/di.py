@@ -919,3 +919,7 @@ class Di:
 
     def provide_global_table_prefix(self):
         return ""
+
+    def provide_akeyless(self):
+        import akeyless # type: ignore
+        return akeyless

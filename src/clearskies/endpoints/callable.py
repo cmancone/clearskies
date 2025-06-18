@@ -271,9 +271,6 @@ class Callable(Endpoint):
         if self.writeable_column_names or self.input_schema:
             self.validate_input_against_schema(self.get_request_data(input_output), input_output, self.input_schema if self.input_schema else self.model_class)
         else:
-            if not isinstance(input_output.request_data, dict):
-                raise clearskies.exceptions.ClientError("Request body was not a JSON dictionary.")
-
             input_errors = self.find_input_errors_from_callable(input_output.request_data, input_output)
             if input_errors:
                 raise clearskies.exceptions.InputErrors(input_errors)

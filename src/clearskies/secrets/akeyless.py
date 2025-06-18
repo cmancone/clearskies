@@ -1,170 +1,112 @@
+from typing import Any
 import datetime
-from clearskies.di import AdditionalConfig
-from .exceptions import NotFound
+from clearskies.di import InjectableProperties, inject
+import clearskies.configs
 
 
-class AKeylessAdditionalConfig(AdditionalConfig):
-    _allowed_auth_methods = ["aws_iam", "saml", "jwt", "access_key"]
-    _auth_method = None
-    _kwargs = None
+class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
+    requests = clearskies.di.inject.Requests()
+    environment = clearskies.di.inject.Environment()
+    akeyless = clearskies.di.inject.ByName("akeyless")
 
-    _auth_method_allowed_kwargs = {
-        "aws_iam": [],
-        "saml": ["profile"],
-        "access_key": [],
-        "jwt": ["jwt_env_key"],
-    }
+    access_id = clearskies.configs.String(
+        required=True,
+        regexp=r"^p-[\d\w]+$"
+    )
+    access_type = clearskies.configs.Select(["aws_iam", "saml", "jwt"], required=True)
+    api_host = clearskies.configs.String(default="https://api.akeyless.io")
+    profile = clearskies.configs.String(regexp=r"^[\d\w\-]+$")
 
-    _validate_kwargs = {
-        "aws_iam": lambda kwargs: "",
-        "saml": lambda kwargs: "",
-        "access_key": lambda kwargs: "",
-        "jwt": lambda kwargs: ""
-        if "jwt_env_key" in kwargs
-        else "Must provide 'jwt_env_key' with the name of the environment variable that contains the JWT when using akeyless_jwt_auth()",
-    }
+    _token_refresh: datetime.datetime = None # type: ignore
+    _token: str = ""
+    _api: Any = None
 
-    def __init__(self, auth_method, **kwargs):
-        if auth_method not in self._allowed_auth_methods:
-            raise ValueError(
-                f"Internal clearskies error: attempt to use unsupported akeyless auth method, {auth_method}"
-            )
-        self._auth_method = auth_method
-        allowed_kwargs = set(["access_id", "api_host", *self._auth_method_allowed_kwargs[auth_method]])
-        error = self._validate_kwargs[auth_method](kwargs)
-        if error:
-            raise ValueError(error)
-        extra_keys = set(kwargs.keys()) - allowed_kwargs
-        if len(extra_keys):
-            raise ValueError(
-                f"Unexpected keys were passed into akeyless_{auth_method}: "
-                + ", ".join(extra_keys)
-                + ". The expected keys are: "
-                + ", ".join(allowed_kwargs)
-            )
-        self._kwargs = kwargs
+    def __init__(self, access_id: str, access_type: str, jwt_env_key: str="", api_host: str="", profile: str=""):
+        self.access_id = access_id
+        self.access_type = access_type
+        self.jwt_env_key = jwt_env_key
+        self.api_host = api_host
+        self.profile = profile
+        if self.access_type == "jwt" and not self.jwt_env_key:
+            raise ValueError("When using the JWT access type for Akeyless you must provide jwt_env_key")
 
-    def provide_secrets(self, requests, environment):
-        secrets = AKeyless(requests, environment)
-        secrets.configure(access_type=self._auth_method, **self._kwargs)
-        return secrets
+        self.finalize_and_validate_configuration()
 
+    @property
+    def api(self) -> Any:
+        if self._api is None:
+            configuration = self.akeyless.Configuration(host=self.api_host)
+            self._api = self.akeyless.V2Api(self.akeyless.ApiClient(configuration))
+        return self._api
 
-class AKeyless:
-    _akeyless = None
-    _access_id = None
-    _access_type = None
-    _api_host = None
-    _token_refresh = None
-    _token = None
-    _environment = None
-    _jwt_env_key = None
-    _requests = None
-    _api = None
-
-    def __init__(self, requests, environment):
-        self._requests = requests
-        self._environment = environment
-        import akeyless
-
-        self._akeyless = akeyless
-
-    def configure(self, access_id=None, access_type=None, jwt_env_key=None, api_host=None, profile=None):
-        self._access_id = access_id if access_id is not None else self._environment.get("akeyless_access_id")
-        self._access_type = access_type if access_type is not None else self._environment.get("akeyless_access_type")
-        self._jwt_env_key = jwt_env_key
-        self._api_host = api_host if api_host is not None else self._environment.get("akeyless_api_host", silent=True)
-        self._profile = profile if profile is not None else "default"
-
-        if not self._api_host:
-            self._api_host = "https://api.akeyless.io"
-
-        configuration = self._akeyless.Configuration(host=self._api_host)
-        api_client = self._akeyless.ApiClient(configuration)
-        self._api = self._akeyless.V2Api(api_client)
-
-    def create(self, path, value):
-        self._configure_guard()
-        res = self._api.create_secret(self._akeyless.CreateSecret(name=path, value=str(value), token=self._get_token()))
+    def create(self, path: str, value: Any) -> bool:
+        res = self.api.create_secret(self.akeyless.CreateSecret(name=path, value=str(value), token=self._get_token()))
         return True
 
-    def get(self, path, silent_if_not_found=False):
-        self._configure_guard()
-
+    def get(self, path: str, silent_if_not_found: bool=False) -> str:
         try:
-            res = self._api.get_secret_value(self._akeyless.GetSecretValue(names=[path], token=self._get_token()))
+            res = self._api.get_secret_value(self.akeyless.GetSecretValue(names=[path], token=self._get_token()))
         except Exception as e:
-            if e.status == 404:
+            if e.status == 404: # type: ignore
                 if silent_if_not_found:
-                    return None
-                raise NotFound(f"Secret '{path}' not found")
+                    return ""
+                raise KeyError(f"Secret '{path}' not found")
             raise e
         return res[path]
 
-    def get_dynamic_secret(self, path, args=None):
-        self._configure_guard()
-
+    def get_dynamic_secret(self, path: str, args: dict[str, Any] | None=None) -> Any:
         kwargs = {
             "name": path,
             "token": self._get_token(),
         }
         if args:
-            kwargs["args"] = args
+            kwargs["args"] = args # type: ignore
 
-        res = self._api.get_dynamic_secret_value(self._akeyless.GetDynamicSecretValue(**kwargs))
-        return res
+        return self._api.get_dynamic_secret_value(self.akeyless.GetDynamicSecretValue(**kwargs))
 
-    def get_rotated_secret(self, path, args=None):
-        self._configure_guard()
-
+    def get_rotated_secret(self, path: str, args: dict[str, Any] | None=None) -> Any:
         kwargs = {
             "names": path,
             "token": self._get_token(),
         }
         if args:
-            kwargs["args"] = args
+            kwargs["args"] = args # type: ignore
 
-        res = self._api.get_rotated_secret_value(self._akeyless.GetRotatedSecretValue(**kwargs))
+        res = self._api.get_rotated_secret_value(self.akeyless.GetRotatedSecretValue(**kwargs))
         return res
 
-    def list_secrets(self, path):
-        self._configure_guard()
-        res = self._api.list_items(self._akeyless.ListItems(path=path, token=self._get_token()))
+    def list_secrets(self, path: str) -> list[Any]:
+        res = self._api.list_items(self.akeyless.ListItems(path=path, token=self._get_token()))
         if not res.items:
             return []
 
         return [item.item_name for item in res.items]
 
-    def update(self, path, value):
-        self._configure_guard()
+    def update(self, path: str, value: Any) -> None:
         res = self._api.update_secret_val(
-            self._akeyless.UpdateSecretVal(name=path, value=str(value), token=self._get_token())
+            self.akeyless.UpdateSecretVal(name=path, value=str(value), token=self._get_token())
         )
-        return True
 
-    def upsert(self, path, value):
+    def upsert(self, path: str, value: Any) -> None:
         try:
-            if self.update(path, value):
-                return True
+            self.update(path, value)
         except Exception as e:
-            return self.create(path, value)
+            self.create(path, value)
 
     def list_sub_folders(self, main_folder: str) -> list[str]:
         """Return the list of secrets/sub folders in the given folder."""
-        items = self._api.list_items(self._akeyless.ListItems(path=main_folder, token=self._get_token()))
+        items = self._api.list_items(self.akeyless.ListItems(path=main_folder, token=self._get_token()))
 
         # akeyless will return the absolute path and end in a slash but we only want the folder name
         main_folder_string_len = len(main_folder)
         return [sub_folder[main_folder_string_len:-1] for sub_folder in items.folders]
 
-    def get_ssh_certificate(self, cert_issuer, cert_username, path_to_public_file):
-        self._configure_guard()
-
+    def get_ssh_certificate(self, cert_issuer: str, cert_username: str, path_to_public_file: str) -> Any:
         with open(path_to_public_file, "r") as fp:
             public_key = fp.read()
 
         res = self._api.get_ssh_certificate(
-            self._akeyless.GetSSHCertificate(
+            self.akeyless.GetSSHCertificate(
                 cert_username=cert_username,
                 cert_issuer_name=cert_issuer,
                 public_key_data=public_key,
@@ -174,28 +116,24 @@ class AKeyless:
 
         return res.data
 
-    def _configure_guard(self):
-        if not self._access_id:
-            raise ValueError("Must call configure method before using secrets.AKeyless")
-
-    def _get_token(self):
+    def _get_token(self) -> str:
         # AKeyless tokens live for an hour
         if self._token is not None and (self._token_refresh - datetime.datetime.now()).total_seconds() > 10:
             return self._token
 
-        auth_method_name = f"auth_{self._access_type}"
+        auth_method_name = f"auth_{self.access_type}"
         if not hasattr(self, auth_method_name):
-            raise ValueError(f"Requested AKeyless authentication with unsupported auth method: '{self._access_type}'")
+            raise ValueError(f"Requested Akeyless authentication with unsupported auth method: '{self.access_type}'")
 
         self._token_refresh = datetime.datetime.now() + datetime.timedelta(hours=0.5)
         self._token = getattr(self, auth_method_name)()
         return self._token
 
     def auth_aws_iam(self):
-        from akeyless_cloud_id import CloudId
+        from akeyless_cloud_id import CloudId # type: ignore
 
         res = self._api.auth(
-            self._akeyless.Auth(access_id=self._access_id, access_type="aws_iam", cloud_id=CloudId().generate())
+            self.akeyless.Auth(access_id=self._access_id, access_type="aws_iam", cloud_id=CloudId().generate())
         )
         return res.token
 
@@ -203,17 +141,17 @@ class AKeyless:
         import os
         from pathlib import Path
 
-        os.system(f"akeyless list-items --profile {self._profile} --path /not/a/real/path > /dev/null 2>&1")
+        os.system(f"akeyless list-items --profile {self.profile} --path /not/a/real/path > /dev/null 2>&1")
         home = str(Path.home())
-        with open(f"{home}/.akeyless/.tmp_creds/{self._profile}-{self._access_id}", "r") as creds_file:
+        with open(f"{home}/.akeyless/.tmp_creds/{self.profile}-{self.access_id}", "r") as creds_file:
             credentials = creds_file.read()
 
         # and now we can turn that into a token
-        response = self._requests.post(
+        response = self.requests.post(
             "https://rest.akeyless.io/",
             data={
                 "cmd": "static-creds-auth",
-                "access-id": self._access_id,
+                "access-id": self.access_id,
                 "creds": credentials.strip(),
             },
         )
@@ -225,17 +163,20 @@ class AKeyless:
                 "To use AKeyless JWT Auth, you must specify the name of the ENV key to load the JWT from when configuring AKeyless"
             )
         res = self._api.auth(
-            self._akeyless.Auth(
-                access_id=self._access_id, access_type="jwt", jwt=self._environment.get(self._jwt_env_key)
+            self.akeyless.Auth(
+                access_id=self.access_id, access_type="jwt", jwt=self.environment.get(self._jwt_env_key)
             )
         )
         return res.token
 
-    def auth_access_key(self):
-        access_key = self._environment.get("akeyless_access_key", silent=True)
-        if not access_key:
-            print(
-                "To use AKeyless access key auth, you must specify your AKeyless access key in the 'akeyless_access_key' environment variable"
-            )
-        res = self._api.auth(self._akeyless.Auth(access_id=self._access_id, access_key=access_key))
-        return res.token
+class AkeylessSaml(Akeyless):
+    def __init__(self, access_id: str, api_host: str="", profile: str=""):
+        return super().__init__(access_id, 'saml', api_host=api_host, profile=profile)
+
+class AkeylessJwt(Akeyless):
+    def __init__(self, access_id: str, jwt_env_key: str="", api_host: str="", profile: str=""):
+        return super().__init__(access_id, 'jwt', jwt_env_key=jwt_env_key, api_host=api_host, profile=profile)
+
+class AkeylessAwsIam(Akeyless):
+    def __init__(self, access_id: str, api_host: str=""):
+        return super().__init__(access_id, 'aws_iam', api_host=api_host)

@@ -22,6 +22,7 @@ class SecretBearerTest(unittest.TestCase):
             }
         )
         (status_code, response_data, response_headers) = context(request_headers={"Authorization": "SUPERSECRET"})
+        print(response_data)
         assert status_code == 200
 
         (status_code, response_data, response_headers) = context(request_headers={"Authorization": "supersecret"})

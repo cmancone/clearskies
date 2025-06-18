@@ -1117,7 +1117,7 @@ class Endpoint(
         if input_errors:
             raise exceptions.InputErrors(input_errors)
 
-    def find_input_errors_from_callable(self, request_data: dict[str, Any], input_output: InputOutput) -> dict[str, str]:
+    def find_input_errors_from_callable(self, request_data: dict[str, Any] | list[Any] | None, input_output: InputOutput) -> dict[str, str]:
         if not self.input_validation_callable:
             return {}
 
