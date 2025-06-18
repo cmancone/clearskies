@@ -1,8 +1,8 @@
 from typing import Callable
 
 import clearskies.typing
-from clearskies.columns.belongs_to_id import BelongsToId
 from clearskies import parameters_to_properties
+from clearskies.columns.belongs_to_id import BelongsToId
 
 
 class BelongsToSelf(BelongsToId):

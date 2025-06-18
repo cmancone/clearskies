@@ -1,5 +1,6 @@
-from clearskies.columns.string import String
 import re
+
+from clearskies.columns.string import String
 
 
 class Email(String):

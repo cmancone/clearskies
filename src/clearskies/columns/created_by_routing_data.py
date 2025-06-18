@@ -1,6 +1,6 @@
 import clearskies.typing
-from clearskies.columns.string import String
 from clearskies import configs, parameters_to_properties
+from clearskies.columns.string import String
 
 
 class CreatedByRoutingData(String):

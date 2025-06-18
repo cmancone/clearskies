@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
+
 from .minimum_length import MinimumLength
 
 

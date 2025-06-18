@@ -1,11 +1,13 @@
 from __future__ import annotations
+
 import datetime
-from typing import Any, Callable, TYPE_CHECKING
 from types import ModuleType
+from typing import TYPE_CHECKING, Any, Callable
+
 import clearskies.endpoint
 import clearskies.endpoint_group
-from clearskies.di.additional_config import AdditionalConfig
 from clearskies.di import Di
+from clearskies.di.additional_config import AdditionalConfig
 from clearskies.input_outputs import Programmatic
 
 if TYPE_CHECKING:

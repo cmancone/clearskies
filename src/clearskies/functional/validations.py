@@ -1,5 +1,5 @@
-from typing import Any
 import inspect
+from typing import Any
 
 
 def is_model(to_check: Any) -> bool:

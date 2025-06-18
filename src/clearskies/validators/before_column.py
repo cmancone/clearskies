@@ -1,5 +1,7 @@
-from clearskies.validators.after_column import AfterColumn
 import datetime
+
+from clearskies.validators.after_column import AfterColumn
+
 
 class BeforeColumn(AfterColumn):
     def date_comparison(self, incoming_date: datetime.datetime, comparison_date: datetime.datetime, column_name) -> str:

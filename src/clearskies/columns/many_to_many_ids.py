@@ -1,18 +1,18 @@
 from __future__ import annotations
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
-from collections import OrderedDict
 
-import clearskies.typing
+from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Callable, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
-from clearskies.column import Column
-from clearskies.functional import string
 from clearskies.autodoc.schema import Array as AutoDocArray
 from clearskies.autodoc.schema import String as AutoDocString
+from clearskies.column import Column
+from clearskies.functional import string
 
 if TYPE_CHECKING:
-    from clearskies import Column
-    from clearskies import Model
+    from clearskies import Column, Model
 
 class ManyToManyIds(Column):
     """

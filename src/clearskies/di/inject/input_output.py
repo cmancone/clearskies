@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import requests
+
 from clearskies.di.injectable import Injectable
 
 if TYPE_CHECKING:

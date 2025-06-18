@@ -1,10 +1,12 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock, call
-import datetime
 
 import dateparser
+
 import clearskies
 from clearskies.contexts import Context
+
 
 class ColumnTest(unittest.TestCase):
     def test_default(self):

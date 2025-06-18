@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
-import datetime
 
-from clearskies.validator import Validator
+import datetime
+from typing import TYPE_CHECKING, Any
+
 import clearskies.configs
+from clearskies.validator import Validator
 
 if TYPE_CHECKING:
     import clearskies.model

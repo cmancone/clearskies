@@ -1,13 +1,15 @@
 # type: ignore
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
+
 from abc import ABC
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from clearskies.input_output import InputOutput
 
 from clearskies import exceptions
 from clearskies.functional import string
+
 
 class End(ABC):
     """
@@ -50,7 +52,6 @@ class End(ABC):
         expected response.  As a result, when building a new endpoint, you normally modify the handle method
         rather than this one.
         """
-
         # these two configs can have arbitrary classes attached, which may use injectable properties.  Because they are
         # hiding in configs, the system for automatically discovering these won't work, so we have to manually check them.
         # We can't do this in the constructor because self.di hasn't been populated yet, and we can't do this in

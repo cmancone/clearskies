@@ -1,7 +1,10 @@
-from types import SimpleNamespace
 import unittest
-from . import validations
+from types import SimpleNamespace
+
 from clearskies import Model
+
+from . import validations
+
 
 class ValidationsTest(unittest.TestCase):
     def test_is_model(self):

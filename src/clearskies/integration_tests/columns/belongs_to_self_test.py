@@ -1,9 +1,10 @@
-from typing import Any
 import unittest
+from typing import Any
 from unittest.mock import MagicMock, call
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class BelongsToSelfTest(unittest.TestCase):
     def test_basics(self):

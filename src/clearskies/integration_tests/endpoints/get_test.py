@@ -1,8 +1,9 @@
-import unittest
 import datetime
+import unittest
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class GetTest(unittest.TestCase):
     def test_overview(self):

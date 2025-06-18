@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import MagicMock
 
-from clearskies import configs, Configurable
 import clearskies.parameters_to_properties
+from clearskies import Configurable, configs
 
 
 class HasConfigs(Configurable):

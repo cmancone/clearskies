@@ -1,8 +1,9 @@
-import unittest
 import datetime
+import unittest
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class UpdateTest(unittest.TestCase):
     def test_overview(self):
@@ -54,4 +55,3 @@ class UpdateTest(unittest.TestCase):
         )
         assert "name" in response_data["input_errors"]
         assert "username" in response_data["input_errors"]
-

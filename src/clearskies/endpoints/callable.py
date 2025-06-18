@@ -1,23 +1,22 @@
 from __future__ import annotations
+
 import inspect
+from collections import OrderedDict
 from typing import TYPE_CHECKING, Any
 from typing import Callable as CallableType
 
-from clearskies import authentication
-from clearskies import typing
-from clearskies.endpoint import Endpoint
-from collections import OrderedDict
-from clearskies import autodoc
-from clearskies.functional import string
-from clearskies.input_outputs import InputOutput
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import authentication, autodoc, typing
+from clearskies.endpoint import Endpoint
+from clearskies.functional import string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
+    from clearskies import Column, SecurityHeader
+    from clearskies.authentication import Authentication, Authorization
     from clearskies.model import Model
     from clearskies.schema import Schema
-    from clearskies.authentication import Authentication, Authorization
-    from clearskies import SecurityHeader, Column
 
 
 class Callable(Endpoint):

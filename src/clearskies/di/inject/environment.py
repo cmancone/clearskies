@@ -1,6 +1,8 @@
 import requests
+
 from clearskies.di.injectable import Injectable
 from clearskies.environment import Environment as EnvironmentDependency
+
 
 class Environment(Injectable):
     def __init__(self, cache: bool=True):

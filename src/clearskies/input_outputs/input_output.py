@@ -1,13 +1,14 @@
-from typing import Any
 import json
 from abc import ABC, abstractmethod
+from typing import Any
 from urllib.parse import parse_qs
 
 import clearskies.configurable
-from clearskies.exceptions import ClientError
-from .headers import Headers
 import clearskies.typing
 from clearskies.configs import AnyDict, StringDict
+from clearskies.exceptions import ClientError
+
+from .headers import Headers
 
 
 class InputOutput(ABC, clearskies.configurable.Configurable):

@@ -1,9 +1,11 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Any
 
 import requests
-from clearskies.authentication.authorization import Authorization
+
 import clearskies.configurable
+from clearskies.authentication.authorization import Authorization
 
 if TYPE_CHECKING:
     from clearskies.security_headers.cors import Cors

@@ -1,10 +1,11 @@
-import unittest
 import datetime
+import unittest
 
 import clearskies
+from clearskies import columns
 from clearskies.contexts import Context
 from clearskies.validators import Required, Unique
-from clearskies import columns
+
 
 class RestfulApiTest(unittest.TestCase):
     def test_overview(self):

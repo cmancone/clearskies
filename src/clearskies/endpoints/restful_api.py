@@ -1,29 +1,27 @@
 from __future__ import annotations
+
 import inspect
+from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, Callable
 
-from clearskies import authentication
-from clearskies import autodoc
-from clearskies import typing
-from clearskies.endpoint_group import EndpointGroup
-from clearskies.endpoint import Endpoint
-from collections import OrderedDict
-from clearskies import autodoc
-from clearskies.functional import string
-from clearskies.input_outputs import InputOutput
 import clearskies.configs
 import clearskies.exceptions
 import clearskies.parameters_to_properties
+from clearskies import authentication, autodoc, typing
+from clearskies.authentication import Authentication, Authorization, Public
+from clearskies.endpoint import Endpoint
+from clearskies.endpoint_group import EndpointGroup
 from clearskies.endpoints.create import Create
-from clearskies.endpoints.update import Update
 from clearskies.endpoints.delete import Delete
 from clearskies.endpoints.get import Get
 from clearskies.endpoints.simple_search import SimpleSearch
-from clearskies.authentication import Authentication, Authorization, Public
+from clearskies.endpoints.update import Update
+from clearskies.functional import string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
-    from clearskies.model import Model, Schema, Column
     from clearskies import SecurityHeader
+    from clearskies.model import Column, Model, Schema
 
 
 class RestfulApi(EndpointGroup):
@@ -403,4 +401,3 @@ class RestfulApi(EndpointGroup):
             authentication=authentication,
             authorization=authorization,
         )
-

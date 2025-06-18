@@ -1,7 +1,9 @@
 from typing import Any
 
 from clearskies.input_outputs.input_output import InputOutput
+
 from .headers import Headers
+
 
 class Programmatic(InputOutput):
     _body: str | dict[str, Any] | list[Any] = ""

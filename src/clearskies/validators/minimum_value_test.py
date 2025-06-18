@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
+
 from .minimum_value import MinimumValue
 
 

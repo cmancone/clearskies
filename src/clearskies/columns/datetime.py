@@ -1,14 +1,15 @@
 from __future__ import annotations
+
 import datetime
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Self, overload
 
-import dateparser # type: ignore
+import dateparser  # type: ignore
 
-import clearskies.typing
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
-from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.autodoc.schema import Datetime as AutoDocDatetime
+from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.column import Column
 from clearskies.query import Condition
 

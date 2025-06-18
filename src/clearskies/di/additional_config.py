@@ -1,5 +1,6 @@
 from typing import Any
 
+
 class AdditionalConfig:
     """
     This class allows you to add additional names to the Di container.
@@ -24,7 +25,6 @@ class AdditionalConfig:
     extend the `can_cache` method and have it return True/False depending on the name and context.
 
     Example:
-
     ```
     from clearskies.di import Di, AdditionalConfig
 

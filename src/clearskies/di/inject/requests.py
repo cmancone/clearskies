@@ -1,5 +1,7 @@
 import requests
+
 from clearskies.di.injectable import Injectable
+
 
 class Requests(Injectable):
     def __init__(self, cache: bool=True):

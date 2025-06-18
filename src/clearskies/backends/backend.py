@@ -1,9 +1,9 @@
+import inspect
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Type
 
-import inspect
-import clearskies.model
 import clearskies.column
+import clearskies.model
 import clearskies.query
 from clearskies.autodoc.schema import Schema as AutoDocSchema
 

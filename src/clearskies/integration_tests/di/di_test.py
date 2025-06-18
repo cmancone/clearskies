@@ -1,9 +1,12 @@
-import unittest
-from clearskies.di import Di, AdditionalConfig, inject, InjectableProperties
-from clearskies import parameters_to_properties, Configurable
-import clearskies.configs
 import datetime
+import unittest
+
 import requests
+
+import clearskies.configs
+from clearskies import Configurable, parameters_to_properties
+from clearskies.di import AdditionalConfig, Di, InjectableProperties, inject
+
 
 class SomeClass:
     def __init__(self, my_value: int):

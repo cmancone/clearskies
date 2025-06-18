@@ -1,5 +1,6 @@
 import re
 
+
 class Headers:
     _headers: dict[str, str] = {}
 

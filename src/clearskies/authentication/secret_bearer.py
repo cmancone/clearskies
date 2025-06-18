@@ -1,8 +1,8 @@
+import clearskies.configs
+import clearskies.di
+import clearskies.parameters_to_properties
 from clearskies import autodoc
 from clearskies.authentication.authentication import Authentication
-import clearskies.di
-import clearskies.configs
-import clearskies.parameters_to_properties
 
 
 class SecretBearer(Authentication, clearskies.di.InjectableProperties):

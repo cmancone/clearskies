@@ -1,5 +1,5 @@
-import re
 import datetime
+import re
 
 
 def camel_case_to_snake_case(string: str) -> str:

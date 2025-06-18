@@ -1,5 +1,6 @@
 from .schema import Schema
 
+
 class Object(Schema):
     children = None
     model_name = None

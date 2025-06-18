@@ -1,10 +1,10 @@
 from typing import Any, Callable
 
-from clearskies.backends.backend import Backend
-from clearskies.autodoc.schema import Integer as AutoDocInteger
-from clearskies.autodoc.schema import Schema as AutoDocSchema
 import clearskies.model
 import clearskies.query
+from clearskies.autodoc.schema import Integer as AutoDocInteger
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.backends.backend import Backend
 from clearskies.di import InjectableProperties, inject
 
 

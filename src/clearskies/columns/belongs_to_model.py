@@ -1,12 +1,13 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, overload, Self
-from collections import OrderedDict
 
+from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Self, overload
+
+import clearskies.parameters_to_properties
 from clearskies import configs
 from clearskies.column import Column
 from clearskies.columns.belongs_to_id import BelongsToId
 from clearskies.functional import validations
-import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
     from clearskies import Model

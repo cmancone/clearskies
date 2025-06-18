@@ -1,12 +1,12 @@
-from functools import cmp_to_key
 import inspect
+from functools import cmp_to_key
 from typing import Any, Callable
 
+import clearskies.model
+import clearskies.query
 from clearskies import functional
 from clearskies.autodoc.schema import Integer as AutoDocInteger
 from clearskies.autodoc.schema import Schema as AutoDocSchema
-import clearskies.model
-import clearskies.query
 from clearskies.backends.backend import Backend
 from clearskies.di import InjectableProperties, inject
 

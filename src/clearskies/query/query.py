@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Any, Self, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Any, Self
 
 from .condition import Condition
 from .join import Join
@@ -94,9 +95,7 @@ class Query:
                 self.conditions_by_column[condition.column_name].append(condition)
 
     def as_kwargs(self):
-        """
-        Returns the properties of this query as a dictionary so it can be used as kwargs when creating another one.
-        """
+        """Return the properties of this query as a dictionary so it can be used as kwargs when creating another one."""
         return {
             "model_class": self.model_class,
             "conditions": self.conditions,

@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 import datetime
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import clearskies.di
-import clearskies.typing
 import clearskies.parameters_to_properties
-from clearskies.columns.datetime import Datetime
+import clearskies.typing
 from clearskies import configs
+from clearskies.columns.datetime import Datetime
 
 if TYPE_CHECKING:
     from clearskies import Model

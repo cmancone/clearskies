@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, overload, Self
+
+from typing import TYPE_CHECKING, Self, overload
 
 import clearskies.parameters_to_properties
 from clearskies import configs

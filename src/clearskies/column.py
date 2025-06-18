@@ -1,24 +1,25 @@
 from __future__ import annotations
-from typing import Any, overload, Callable, Self, TYPE_CHECKING, Type
 
-import clearskies.di
-import clearskies.model
-import clearskies.typing
-import clearskies.configurable
+from typing import TYPE_CHECKING, Any, Callable, Self, Type, overload
+
 import clearskies.configs.actions
 import clearskies.configs.boolean
 import clearskies.configs.select
 import clearskies.configs.string
 import clearskies.configs.string_or_callable
 import clearskies.configs.validators
+import clearskies.configurable
+import clearskies.di
+import clearskies.model
+import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.autodoc.schema import String as AutoDocString
 from clearskies.query.condition import Condition, ParsedCondition
 from clearskies.validator import Validator
-import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
-    from clearskies import Schema, Model
+    from clearskies import Model, Schema
 
 class Column(clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
     """
@@ -684,7 +685,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         pass
 
     def get_model_columns(self):
-        """ Return the columns or the model this column is attached to. """
+        """Return the columns or the model this column is attached to."""
         return self.model_class.get_columns()
 
     def finalize_configuration(self, model_class: type[Schema], name: str) -> None:

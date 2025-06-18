@@ -1,14 +1,15 @@
 from __future__ import annotations
-from typing import Self, Any, TYPE_CHECKING, Callable
 
-from clearskies.input_outputs import InputOutput
-from clearskies.endpoint import Endpoint
-import clearskies.di
+from typing import TYPE_CHECKING, Any, Callable, Self
+
 import clearskies.configurable
+import clearskies.di
+import clearskies.end
 from clearskies import exceptions
 from clearskies.authentication import Authentication, Authorization, Public
-import clearskies.end
+from clearskies.endpoint import Endpoint
 from clearskies.functional import routing
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
     from clearskies import SecurityHeader
@@ -240,8 +241,7 @@ class EndpointGroup(
                 endpoint.add_url_prefix(self.url)
 
     def matches_request(self, input_output: InputOutput, allow_partial=True) -> bool:
-        """ Whether or not we can handle an incoming request based on URL and request method. """
-
+        """Whether or not we can handle an incoming request based on URL and request method."""
         expected_url = self.url.strip('/')
         incoming_url = input_output.get_full_path().strip('/')
         if not expected_url and not incoming_url:

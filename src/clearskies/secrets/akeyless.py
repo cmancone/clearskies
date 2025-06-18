@@ -1,7 +1,8 @@
-from typing import Any
 import datetime
-from clearskies.di import InjectableProperties, inject
+from typing import Any
+
 import clearskies.configs
+from clearskies.di import InjectableProperties, inject
 
 
 class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
@@ -130,7 +131,7 @@ class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
         return self._token
 
     def auth_aws_iam(self):
-        from akeyless_cloud_id import CloudId # type: ignore
+        from akeyless_cloud_id import CloudId  # type: ignore
 
         res = self._api.auth(
             self.akeyless.Auth(access_id=self._access_id, access_type="aws_iam", cloud_id=CloudId().generate())

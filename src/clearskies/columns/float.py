@@ -1,13 +1,14 @@
 from __future__ import annotations
-from typing import Callable, overload, Self, TYPE_CHECKING
 
-import clearskies.typing
+from typing import TYPE_CHECKING, Callable, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
+from clearskies.autodoc.schema import Number as AutoDocNumber
+from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.column import Column
 from clearskies.query import Condition
-from clearskies.autodoc.schema import Schema as AutoDocSchema
-from clearskies.autodoc.schema import Number as AutoDocNumber
 
 if TYPE_CHECKING:
     from clearskies import Model

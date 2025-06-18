@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, Self
+
+from typing import TYPE_CHECKING, Any, Self
+
 from clearskies.di.injectable import Injectable
 
 if TYPE_CHECKING:

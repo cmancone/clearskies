@@ -1,7 +1,10 @@
 import unittest
 from unittest.mock import MagicMock
-from .unique import Unique
+
 import clearskies
+
+from .unique import Unique
+
 
 class MyModel(clearskies.Model):
     id_column_name = "id"

@@ -1,9 +1,11 @@
-import unittest
 import datetime
-from dateutil.relativedelta import relativedelta # type: ignore
+import unittest
+
+from dateutil.relativedelta import relativedelta  # type: ignore
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class EndpointTest(unittest.TestCase):
     def test_response_headers(self):

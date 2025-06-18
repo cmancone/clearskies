@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Self, TYPE_CHECKING, Self
+
 from collections import OrderedDict
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     from clearskies import Column

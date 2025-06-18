@@ -1,8 +1,8 @@
-import clearskies.typing
 import clearskies.parameters_to_properties
-from clearskies.query import Condition
-from clearskies.columns.string import String
+import clearskies.typing
 from clearskies import configs
+from clearskies.columns.string import String
+from clearskies.query import Condition
 
 
 class CreatedByHeader(String):

@@ -1,5 +1,6 @@
 from clearskies.configurable import Configurable
 
+
 class SecurityHeader(Configurable):
     is_cors = False
 

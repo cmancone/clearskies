@@ -1,5 +1,6 @@
 from typing import Any
 
+
 class Secrets:
     def create(self, path: str, value: str) -> None:
         raise NotImplementedError(

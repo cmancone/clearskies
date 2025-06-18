@@ -1,5 +1,6 @@
 import inspect
-import wrapt # type: ignore
+
+import wrapt  # type: ignore
 
 
 @wrapt.decorator

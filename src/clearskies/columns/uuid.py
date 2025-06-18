@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
 
-from clearskies import configs
-import clearskies.parameters_to_properties
+from typing import TYPE_CHECKING, Any
+
 import clearskies.di
+import clearskies.parameters_to_properties
 import clearskies.typing
+from clearskies import configs
 from clearskies.columns.string import String
 
 if TYPE_CHECKING:

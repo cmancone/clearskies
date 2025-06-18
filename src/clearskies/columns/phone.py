@@ -1,5 +1,5 @@
-from typing import Any, Callable
 import re
+from typing import Any, Callable
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties

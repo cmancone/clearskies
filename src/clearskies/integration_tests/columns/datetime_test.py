@@ -1,9 +1,10 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock, call
-import datetime
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class DateTest(unittest.TestCase):
     def test_default(self):

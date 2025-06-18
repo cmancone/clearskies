@@ -1,5 +1,7 @@
 import datetime
+
 from clearskies.di.injectable import Injectable
+
 
 class Now(Injectable):
     def __init__(self, cache: bool=False):

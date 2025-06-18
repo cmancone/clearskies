@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import MagicMock
 from types import SimpleNamespace
+from unittest.mock import MagicMock
+
 from .before_column import BeforeColumn
 
 

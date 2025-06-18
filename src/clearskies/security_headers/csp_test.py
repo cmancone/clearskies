@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, call
+
 from .csp import Csp
 
 

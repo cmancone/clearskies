@@ -1,5 +1,6 @@
-from typing import Any
 from abc import ABC, abstractmethod
+from typing import Any
+
 
 class Injectable(ABC):
     _di: Any = None

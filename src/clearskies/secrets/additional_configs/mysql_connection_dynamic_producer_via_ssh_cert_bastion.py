@@ -1,9 +1,10 @@
-import clearskies.di
-from pathlib import Path
+import os
 import socket
 import subprocess
-import os
 import time
+from pathlib import Path
+
+import clearskies.di
 
 
 class MySQLConnectionDynamicProducerViaSSHCertBastion(clearskies.di.additional_config.AdditionalConfig):

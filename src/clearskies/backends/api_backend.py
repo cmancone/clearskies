@@ -1,21 +1,23 @@
 from __future__ import annotations
-from typing import Any, Callable, TYPE_CHECKING
+
 import urllib.parse
+from typing import TYPE_CHECKING, Any, Callable
 
 import requests
+
+import clearskies.columns.datetime
+import clearskies.columns.json
+import clearskies.configs
+import clearskies.configurable
 import clearskies.model
 import clearskies.query
-import clearskies.configurable
-import clearskies.configs
 from clearskies import parameters_to_properties
+from clearskies.autodoc.schema import Integer as AutoDocInteger
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.autodoc.schema import String as AutoDocString
 from clearskies.backends.backend import Backend
 from clearskies.di import InjectableProperties, inject
-from clearskies.autodoc.schema import Integer as AutoDocInteger
-from clearskies.autodoc.schema import String as AutoDocString
-from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.functional import routing, string
-import clearskies.columns.json
-import clearskies.columns.datetime
 
 if TYPE_CHECKING:
     import clearskies.column
@@ -662,7 +664,7 @@ $ curl http://localhost:8080 | jq
         return self.finalize_url_from_data(model.destination_name(), data, "create")
 
     def create_method(self, data: dict[str, Any], model: clearskies.model.Model) -> str:
-        """ Return the request method to use with a create request. """
+        """Return the request method to use with a create request."""
         return "POST"
 
     def records_url(self, query: clearskies.query.Query) -> tuple[str, list[str]]:

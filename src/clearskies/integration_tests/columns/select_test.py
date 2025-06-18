@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import clearskies
 from clearskies.contexts import Context
 
+
 class SelectTest(unittest.TestCase):
     def test_default(self):
         class Order(clearskies.Model):

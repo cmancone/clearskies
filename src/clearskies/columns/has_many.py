@@ -1,19 +1,19 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, overload, Self
 
-import clearskies.typing
+from typing import TYPE_CHECKING, Any, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
-from clearskies.functional import string, validations
-from clearskies.di.inject import InputOutput
-from clearskies.column import Column
 from clearskies.autodoc.schema import Array as AutoDocArray
 from clearskies.autodoc.schema import Object as AutoDocObject
 from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.column import Column
+from clearskies.di.inject import InputOutput
+from clearskies.functional import string, validations
 
 if TYPE_CHECKING:
-    from clearskies import Column
-    from clearskies import Model
+    from clearskies import Column, Model
 
 class HasMany(Column):
     """
@@ -411,7 +411,6 @@ class HasMany(Column):
         Therefore, we need the model involved, and the only way for a property to know what class it is
         in is if the parent class checks in (which is what happens here).
         """
-
         # this is where we auto-calculate the expected name of our id column in the child model.
         # we can't do it until now because it comes from the model class we are connected to, and
         # we only just get it.

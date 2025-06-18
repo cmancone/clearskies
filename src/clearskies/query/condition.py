@@ -167,7 +167,9 @@ class Condition:
             self.values = []
 
         self.operator = self.operator.upper()
-        self.parsed = self._with_placeholders(column_for_parsed, self.operator, self.values, escape=False if self.table_name else True)
+        self.parsed = self._with_placeholders(
+            column_for_parsed, self.operator, self.values, escape=False if self.table_name else True
+        )
 
     def _parse_condition_list(self, value):
         if value[0] != "(" and value[-1] != ")":
@@ -200,5 +202,7 @@ class ParsedCondition(Condition):
         self.values = values
         self.table_name = table_name
         column_for_parsed = f"{self.table_name}.{self.column_name}" if self.table_name else self.column_name
-        self.parsed = self._with_placeholders(column_for_parsed, self.operator, self.values, escape=False if self.table_name else True)
+        self.parsed = self._with_placeholders(
+            column_for_parsed, self.operator, self.values, escape=False if self.table_name else True
+        )
         self._raw_condition = self.parsed

@@ -1,20 +1,21 @@
 import datetime
-from typing import Any, Callable
-from types import ModuleType
-import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry # type: ignore
 import inspect
+import os
 import re
 import sys
-import os
+from types import ModuleType
+from typing import Any, Callable
 
-from clearskies.di.additional_config import AdditionalConfig
-from clearskies.di.additional_config_auto_import import AdditionalConfigAutoImport
-from clearskies.functional import string
-from clearskies.environment import Environment
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry  # type: ignore
+
 import clearskies.input_outputs.input_output
 import clearskies.secrets
+from clearskies.di.additional_config import AdditionalConfig
+from clearskies.di.additional_config_auto_import import AdditionalConfigAutoImport
+from clearskies.environment import Environment
+from clearskies.functional import string
 
 
 class Di:
@@ -472,7 +473,6 @@ class Di:
         this only overrides that specific class - not classes that extend it.
 
         Example:
-
         ```
         from clearskies.import Di
 
@@ -690,7 +690,6 @@ class Di:
 
         This follows the resolution order defined in the docblock of the Di class.
         """
-
         # these first checks just verify that it is something that we can actually build
         if not class_to_build:
             return None
@@ -921,5 +920,5 @@ class Di:
         return ""
 
     def provide_akeyless(self):
-        import akeyless # type: ignore
+        import akeyless  # type: ignore
         return akeyless

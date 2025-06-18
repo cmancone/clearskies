@@ -1,14 +1,15 @@
 from __future__ import annotations
-from typing import Any, Callable, Iterator, Self, TYPE_CHECKING
-from abc import abstractmethod
+
 import re
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Self
 
-
-from clearskies.functional import string
-from clearskies.di import InjectableProperties, inject
-from clearskies.query import Query, Sort, Condition, Join
 from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.di import InjectableProperties, inject
+from clearskies.functional import string
+from clearskies.query import Condition, Join, Query, Sort
 from clearskies.schema import Schema
+
 if TYPE_CHECKING:
     from clearskies import Column
     from clearskies.backends import Backend
@@ -459,7 +460,6 @@ class Model(Schema, InjectableProperties):
         IN condition.
 
         Examples:
-
         ```
         for record in models.where("order_id=5").where("status IN ('ACTIVE','PENDING')").where("other_table.id=asdf"):
             print(record.id)

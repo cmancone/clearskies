@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import clearskies
 from clearskies.contexts import Context
 
+
 class CursorBackendTest(unittest.TestCase):
     def test_overview(self):
         class UserPreference(clearskies.Model):

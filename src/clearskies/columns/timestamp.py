@@ -1,9 +1,10 @@
 from __future__ import annotations
-import datetime
-from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
 
-import clearskies.typing
+import datetime
+from typing import TYPE_CHECKING, Any, Callable, Self, Type, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
 from clearskies.columns.datetime import Datetime
 

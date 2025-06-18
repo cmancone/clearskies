@@ -1,9 +1,10 @@
 from __future__ import annotations
-import json
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
 
-import clearskies.typing
+import json
+from typing import TYPE_CHECKING, Any, Callable, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
 from clearskies.column import Column
 

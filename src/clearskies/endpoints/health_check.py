@@ -1,14 +1,15 @@
 from __future__ import annotations
-import inspect
-from typing import Type, Callable, Any
 
-from clearskies import autodoc
-from clearskies import typing
-from clearskies.endpoint import Endpoint
-from clearskies.functional import string, routing
-from clearskies.input_outputs import InputOutput
+import inspect
+from typing import Any, Callable, Type
+
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import autodoc, typing
+from clearskies.endpoint import Endpoint
+from clearskies.functional import routing, string
+from clearskies.input_outputs import InputOutput
+
 
 class HealthCheck(Endpoint):
     """

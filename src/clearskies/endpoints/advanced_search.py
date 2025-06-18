@@ -1,21 +1,19 @@
 from __future__ import annotations
-import inspect
-from typing import TYPE_CHECKING, Type, Any
 
-from clearskies import authentication
-from clearskies import autodoc
-from clearskies import typing
-from clearskies.endpoints.simple_search import SimpleSearch
+import inspect
 from collections import OrderedDict
-from clearskies import autodoc
-from clearskies.functional import string
-from clearskies.input_outputs import InputOutput
+from typing import TYPE_CHECKING, Any, Type
+
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import authentication, autodoc, typing
+from clearskies.endpoints.simple_search import SimpleSearch
+from clearskies.functional import string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
-    from clearskies.model import Model
     from clearskies import SecurityHeader
+    from clearskies.model import Model
 
 class AdvancedSearch(SimpleSearch):
     """

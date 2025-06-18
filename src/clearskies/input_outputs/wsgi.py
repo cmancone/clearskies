@@ -1,6 +1,8 @@
-from .input_output import InputOutput
-import urllib, urllib.parse
 import json
+import urllib
+import urllib.parse
+
+from .input_output import InputOutput
 
 
 class Wsgi(InputOutput):

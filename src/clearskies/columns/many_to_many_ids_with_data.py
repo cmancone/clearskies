@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
 
-import clearskies.typing
+from typing import TYPE_CHECKING, Any, Callable, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
 from clearskies.columns.many_to_many_ids import ManyToManyIds
 

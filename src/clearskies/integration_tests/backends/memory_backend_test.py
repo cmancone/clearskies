@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import clearskies
 from clearskies.contexts import Context
 
+
 class MemoryBackendTest(unittest.TestCase):
     def test_swap(self):
         class UserPreference(clearskies.Model):

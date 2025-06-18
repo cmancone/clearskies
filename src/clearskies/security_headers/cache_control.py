@@ -1,6 +1,6 @@
-from clearskies.security_header import SecurityHeader
 import clearskies.configs
 import clearskies.parameters_to_properties
+from clearskies.security_header import SecurityHeader
 
 
 class CacheControl(SecurityHeader):

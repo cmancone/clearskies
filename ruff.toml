@@ -1,6 +1,6 @@
 target-version = "py311"
 indent-width = 4
-extend-exclude = [".vscode", ".idea", "__pycache__", ".python-version", ".ruff.toml", "ruff.toml", "setup.cfg", "pyproject.toml"]
+extend-exclude = [".vscode", ".idea", "__pycache__", ".python-version", ".ruff.toml", "ruff.toml", "setup.cfg", "pyproject.toml", "*_test.py"]
 line-length = 120
 
 [format]
@@ -11,7 +11,7 @@ docstring-code-format = true
 [lint]
 # D - Enable all `pydocstyle` rules, limiting to those that adhere to the Pep257 convention enabled via `convention = "pep257"` below
 select = ["E501", "I", "D"]
-ignore = ["D203","D204","D211","D212","D400","D406","D407","E266","C901"]
+ignore = ["D203","D204","D211","D212","D400","D406","D407","E266","C901", "D107"]
 
 [lint.pylint]
 # Maximum number of arguments for function / method

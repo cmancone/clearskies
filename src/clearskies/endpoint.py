@@ -1,29 +1,29 @@
 from __future__ import annotations
-from typing import Any, Callable, TYPE_CHECKING
+
+import inspect
 import urllib.parse
 from collections import OrderedDict
-import inspect
+from typing import TYPE_CHECKING, Any, Callable
 
-from clearskies.autodoc.request import Request, Parameter
-from clearskies.autodoc.response import Response
-from clearskies.autodoc import schema
-from clearskies import autodoc
 import clearskies.column
-import clearskies.configurable
 import clearskies.configs
+import clearskies.configurable
 import clearskies.di
+import clearskies.end
 import clearskies.parameters_to_properties
 import clearskies.typing
-from clearskies import exceptions
+from clearskies import autodoc, exceptions
 from clearskies.authentication import Authentication, Authorization, Public
-from clearskies.functional import string, routing, validations
-import clearskies.end
+from clearskies.autodoc import schema
+from clearskies.autodoc.request import Parameter, Request
+from clearskies.autodoc.response import Response
+from clearskies.functional import routing, string, validations
 
 if TYPE_CHECKING:
     from clearskies import Column, Model, SecurityHeader
-    from clearskies.security_headers import Cors
     from clearskies.input_outputs import InputOutput
     from clearskies.schema import Schema
+    from clearskies.security_headers import Cors
 
 class Endpoint(
     clearskies.end.End, # type: ignore
@@ -979,8 +979,7 @@ class Endpoint(
         raise NotImplementedError()
 
     def matches_request(self, input_output: InputOutput, allow_partial=False) -> bool:
-        """ Whether or not we can handle an incoming request based on URL and request method. """
-
+        """Whether or not we can handle an incoming request based on URL and request method."""
         # soo..... this excessively duplicates the logic in __call__, but I'm being lazy right now
         # and not fixing it.
         request_method = input_output.get_request_method().upper()
@@ -1296,4 +1295,3 @@ class Endpoint(
             )
             for parameter_name in parameter_names.keys()
         ]
-

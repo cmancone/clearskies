@@ -1,20 +1,20 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, Any
-from collections import OrderedDict
 
-import clearskies.typing
+from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Callable
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
-from clearskies.columns.string import String
-from clearskies.functional import validations
-from clearskies.di.inject import InputOutput
-from clearskies.autodoc.schema import String as AutoDocString
-from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.autodoc.schema import Object as AutoDocObject
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.autodoc.schema import String as AutoDocString
+from clearskies.columns.string import String
+from clearskies.di.inject import InputOutput
+from clearskies.functional import validations
 
 if TYPE_CHECKING:
-    from clearskies import Column
-    from clearskies import Model
+    from clearskies import Column, Model
 
 class BelongsToId(String):
     """

@@ -1,5 +1,6 @@
 from .schema import Schema
 
+
 class Array(Schema):
     item_definition = None
     _type = "array"

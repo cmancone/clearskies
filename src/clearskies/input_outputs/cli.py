@@ -1,9 +1,10 @@
 import json
 import sys
-from sys import stdin
 from os import isatty
+from sys import stdin
 
 from clearskies.input_outputs.input_output import InputOutput
+
 
 class Cli(InputOutput):
     _args: list[str] = []

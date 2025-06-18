@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import clearskies
 from clearskies.contexts import Context
 
+
 class BelongsToTest(unittest.TestCase):
     def test_basics(self):
         class Category(clearskies.Model):
