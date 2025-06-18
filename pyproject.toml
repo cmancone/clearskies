@@ -1,15 +1,23 @@
+[project]
+name = "clear-skies"
+description = "A framework for building backends in the cloud"
+license = "MIT"
+version = "1.22.10"
+dynamic = ["classifiers"]
+readme = "./README.md"
+authors = [{name = "Conor Mancone", email = "cmancone@gmail.com"}]
+requires-python = '>=3.11,<4.0'
+dependencies = ['dateparser (>=1.1.8,<2.0.0)', 'requests (>=2.31.0,<3.0.0)', 'typing-extensions (>=4.12.0,<5.0.0) ; python_version >= "3.10" and python_version < "3.11"', 'wrapt (>=1.16.0,<2.0.0)']
 
+[project.urls]
+repository = "https://github.com/cmancone/clearskies"
+
+[project.optional-dependencies]
+secrets = ['akeyless (>=4.0.0,<5.0.0)', 'akeyless-cloud-id (>=0.2.3,<0.3.0)']
+mysql = ['pymysql (>=1.1.0,<2.0.0)']
+jwcrypto = ['jwcrypto (>=1.5.6,<2.0.0)']
 
 [tool.poetry]
-name = "clear-skies"
-version = "1.22.10"
-description = "A framework for building backends in the cloud"
-authors = [
-    "Conor Mancone <cmancone@gmail.com>",
-]
-repository = "https://github.com/cmancone/clearskies"
-license = "MIT"
-readme = "./README.md"
 packages = [
     { include = "clearskies", from = "src" }
 ]
@@ -25,43 +33,26 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Application Frameworks"
 ]
-
-[tool.poetry.dependencies]
-python = "^3.11"
-dateparser = "^1.1.8"
-requests = "^2.31.0"
-akeyless = {version = "^4.0.0", optional = true}
-akeyless-cloud-id = {version = "^0.2.3", optional = true}
-pymysql = {version = "^1.1.0", optional = true}
-jwcrypto = {version = "^1.5.6", optional = true}
-typing-extensions = {version = "^4.12.0", python = ">=3.10,<3.11"}
-wrapt = "^1.16.0"
+requires-poetry = '>=2.0,<3.0'
 
 [[tool.poetry.source]]
 name = "PyPI"
 priority = "primary"
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^3.2.2"
-black = "^23.3.0"
-pytest = "^8.3.1"
 mypy = "^1.13.0"
-types-requests = "^2.32.4.20250611"
-types-pymysql = "^1.1.0.20250516"
+pre-commit = "^3.2.2"
+pytest = "^8.3.1"
+ruff = "^0.12.0"
 types-dateparser = "^1.2.0.20250601"
 types-jwcrypto = "^1.5.0.20250516"
-
-[tool.poetry.extras]
-secrets = ["akeyless", "akeyless-cloud-id"]
-mysql = ["pymysql"]
-jwcrypto = ["jwcrypto"]
-
-[tool.black]
-line-length = 120
+types-pymysql = "^1.1.0.20250516"
+types-requests = "^2.32.4.20250611"
 
 [tool.pytest]
 addopts = "--ignore=src/clearskies/contexts/test.py"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ['poetry-core (>=2.0,<3.0)']
 build-backend = "poetry.core.masonry.api"
+
