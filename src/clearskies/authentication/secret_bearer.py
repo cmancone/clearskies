@@ -80,6 +80,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     os.environ["MY_SECRET"] = "SUPERSECRET"
 
+
     class Widget(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -91,15 +92,16 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
         created_at = columns.Created()
         updated_at = columns.Updated()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.RestfulApi(
             url="widgets",
             model_class=Widget,
             authentication=clearskies.authentication.SecretBearer(environment_key="MY_SECRET"),
-            readable_column_names=['id', 'name', 'category', 'cost', 'created_at', 'updated_at'],
-            writeable_column_names=['name', 'category', 'cost'],
-            sortable_column_names=['name', 'category', 'cost'],
-            searchable_column_names=['id', 'name', 'category', 'cost'],
+            readable_column_names=["id", "name", "category", "cost", "created_at", "updated_at"],
+            writeable_column_names=["name", "category", "cost"],
+            sortable_column_names=["name", "category", "cost"],
+            searchable_column_names=["id", "name", "category", "cost"],
             default_sort_column_name="name",
         )
     )
@@ -116,6 +118,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     os.environ["MY_SECRET"] = "SUPERSECRET"
 
+
     class Widget(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.ApiBackend(
@@ -130,10 +133,12 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
         created_at = columns.Datetime()
         updated_at = columns.Datetime()
 
+
     def api_demo(widgets: Widget) -> Widget:
         thinga = widgets.create({"name": "Thinga", "category": "Doohickey", "cost": 125})
         mabob = widgets.create({"name": "Mabob", "category": "Doohicky", "cost": 150})
         return widgets
+
 
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
@@ -142,7 +147,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
             return_records=True,
             readable_column_names=["id", "name", "category", "cost", "created_at", "updated_at"],
         ),
-        classes=[Widget]
+        classes=[Widget],
     )
     cli()
     ```
@@ -166,7 +171,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
                 "category": "Doohicky",
                 "cost": 150.0,
                 "created_at": "2025-06-13T15:19:27+00:00",
-                "updated_at": "2025-06-13T15:19:27+00:00"
+                "updated_at": "2025-06-13T15:19:27+00:00",
             },
             {
                 "id": "ed1421b8-88ad-49d2-a130-c34b4ac4dfcf",
@@ -174,15 +179,15 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
                 "category": "Doohickey",
                 "cost": 125.0,
                 "created_at": "2025-06-13T15:19:27+00:00",
-                "updated_at": "2025-06-13T15:19:27+00:00"
-            }
+                "updated_at": "2025-06-13T15:19:27+00:00",
+            },
         ],
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
-
     ```
     """
+
     is_public = False
     can_authorize = False
 
@@ -452,30 +457,30 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     """
     documentation_security_name = clearskies.configs.String(default="ApiKey")
 
-    _secret: str = None #  type: ignore
-    _alternate_secret: str = None # type: ignore
+    _secret: str = None  #  type: ignore
+    _alternate_secret: str = None  # type: ignore
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        secret_key: str="",
-        alternate_secret_key: str="",
-        environment_key: str="",
-        alternate_environment_key: str="",
-        header_prefix: str="",
-        documentation_security_name: str="",
+        secret_key: str = "",
+        alternate_secret_key: str = "",
+        environment_key: str = "",
+        alternate_environment_key: str = "",
+        header_prefix: str = "",
+        documentation_security_name: str = "",
     ):
         if not secret_key and not environment_key:
-            raise ValueError(
-                "Must set either 'secret_key' or 'environment_key' when configuring the SecretBearer"
-            )
+            raise ValueError("Must set either 'secret_key' or 'environment_key' when configuring the SecretBearer")
         self.header_prefix_length = len(header_prefix)
         self.finalize_and_validate_configuration()
 
     @property
     def secret(self):
         if not self._secret:
-            self._secret = self.secrets.get(self.secret_key) if self.secret_key else self.environment.get(self.environment_key)
+            self._secret = (
+                self.secrets.get(self.secret_key) if self.secret_key else self.environment.get(self.environment_key)
+            )
         return self._secret
 
     def clear_credential_cache(self):
@@ -488,7 +493,11 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
             return ""
 
         if not self._alternate_secret:
-            self._alternate_secret = self.secrets.get(self.alternate_secret_key) if self.secret_key else self.environment.get(self.alternate_environment_key)
+            self._alternate_secret = (
+                self.secrets.get(self.alternate_secret_key)
+                if self.secret_key
+                else self.environment.get(self.alternate_environment_key)
+            )
         return self._alternate_secret
 
     def headers(self, retry_auth=False):

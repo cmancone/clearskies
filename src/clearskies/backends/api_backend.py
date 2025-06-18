@@ -76,6 +76,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
     ```
     import clearskies
 
+
     class GithubPublicBackend(clearskies.backends.ApiBackend):
         def __init__(
             self,
@@ -88,6 +89,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
             self.limit_parameter_name = "per_page"
             self.pagination_parameter_name = pagination_parameter_name
             self.finalize_and_validate_configuration()
+
 
     class UserRepo(clearskies.Model):
         # Corresponding API Docs: https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-repositories-for-a-user
@@ -117,6 +119,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
         updated = clearskies.columns.Datetime(is_searchable=False, is_readable=False, is_writeable=False)
         created = clearskies.columns.Datetime(is_searchable=False, is_readable=False, is_writeable=False)
 
+
     class User(clearskies.Model):
         # Corresponding API docs: https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#list-users
 
@@ -138,14 +141,19 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
         # backend, so clearskies can issue API calls to fetch related records just like it would be able
         # to fetch children from a related database table.
         repos = clearskies.columns.HasMany(
-            UserRepo,
-            foreign_column_name="login",
-            readable_child_columns=["id", "full_name", "html_url"]
+            UserRepo, foreign_column_name="login", readable_child_columns=["id", "full_name", "html_url"]
         )
+
 
     def fetch_user(users: User, user_repos: UserRepo):
         # If we execute this models query:
-        some_repos = user_repos.where("login=cmancone").sort_by("created", "desc").where("type=owner").pagination(page=2).limit(5)
+        some_repos = (
+            user_repos.where("login=cmancone")
+            .sort_by("created", "desc")
+            .where("type=owner")
+            .pagination(page=2)
+            .limit(5)
+        )
         # the API backend will fetch this url:
         # https://api.github.com/users/cmancone/repos?type=owner&sort=created&direction=desc&per_page=5&page=2
         # and we can use the results like always
@@ -158,6 +166,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
         # To do that, it will fetch this URL:
         # https://api.github.com/users/cmancone/repos
         return users.find("login=cmancone")
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Callable(
@@ -291,6 +300,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
     method to pull the returned records out of the response from the API endpoint.
 
     """
+
     can_count = False
 
     """
@@ -568,7 +578,7 @@ $ curl http://localhost:8080 | jq
     di = inject.Di()
 
     _auth_injected = False
-    _response_to_model_map: dict[str, str] = None # type: ignore
+    _response_to_model_map: dict[str, str] = None  # type: ignore
 
     @parameters_to_properties.parameters_to_properties
     def __init__(
@@ -597,7 +607,7 @@ $ curl http://localhost:8080 | jq
                 "record_id": "1-2-3-4",
                 "other_id": "a-s-d-f",
                 "more_things": "qwerty",
-            }
+            },
         )
         ```
 
@@ -614,7 +624,7 @@ $ curl http://localhost:8080 | jq
 
         parts = url.split("/")
         used_routing_parameters = []
-        for (parameter_name, index) in routing_parameters.items():
+        for parameter_name, index in routing_parameters.items():
             if parameter_name not in available_routing_data:
                 a = "an" if operation == "update" else "a"
                 raise ValueError(
@@ -790,7 +800,9 @@ $ curl http://localhost:8080 | jq
     def build_records_request(self, query: clearskies.query.Query) -> tuple[str, str, dict[str, Any], dict[str, str]]:
         (url, used_routing_parameters) = self.records_url(query)
 
-        (condition_route_id, condition_url_parameters, condition_body_parameters) = self.conditions_to_request_parameters(query, used_routing_parameters)
+        (condition_route_id, condition_url_parameters, condition_body_parameters) = (
+            self.conditions_to_request_parameters(query, used_routing_parameters)
+        )
         (pagination_url_parameters, pagination_body_parameters) = self.pagination_to_request_parameters(query)
         (sort_url_parameters, sort_body_parameters) = self.sorts_to_request_parameters(query)
 
@@ -807,7 +819,7 @@ $ curl http://localhost:8080 | jq
         }
 
         if condition_route_id:
-            url = url.rstrip('/') + '/' + condition_route_id
+            url = url.rstrip("/") + "/" + condition_route_id
         if url_parameters:
             url = url + "?" + urllib.parse.urlencode(url_parameters)
 
@@ -818,7 +830,9 @@ $ curl http://localhost:8080 | jq
             {},
         )
 
-    def conditions_to_request_parameters(self, query: clearskies.query.Query, used_routing_parameters: list[str]) -> tuple[str, dict[str, str], dict[str, Any]]:
+    def conditions_to_request_parameters(
+        self, query: clearskies.query.Query, used_routing_parameters: list[str]
+    ) -> tuple[str, dict[str, str], dict[str, Any]]:
         route_id = ""
 
         url_parameters = {}
@@ -826,7 +840,9 @@ $ curl http://localhost:8080 | jq
             if condition.column_name in used_routing_parameters:
                 continue
             if condition.operator != "=":
-                raise ValueError(f"I'm not very smart and only know how to search with the equals operator, but I received a condition of {condition.parsed}.  If you need to support this, you'll have to extend the ApiBackend and overwrite the build_records_request method.")
+                raise ValueError(
+                    f"I'm not very smart and only know how to search with the equals operator, but I received a condition of {condition.parsed}.  If you need to support this, you'll have to extend the ApiBackend and overwrite the build_records_request method."
+                )
             if condition.column_name == query.model_class.id_column_name:
                 route_id = condition.values[0]
                 continue
@@ -838,7 +854,9 @@ $ curl http://localhost:8080 | jq
         url_parameters = {}
         if query.limit:
             if not self.limit_parameter_name:
-                raise ValueError("The records query attempted to change the limit (the number of results per page) but the backend does not support it.  If it actually does support this, then set an appropriate value for backend.limit_parameter_name")
+                raise ValueError(
+                    "The records query attempted to change the limit (the number of results per page) but the backend does not support it.  If it actually does support this, then set an appropriate value for backend.limit_parameter_name"
+                )
             url_parameters[self.limit_parameter_name] = str(query.limit)
 
         if query.pagination.get(self.pagination_parameter_name):
@@ -851,14 +869,18 @@ $ curl http://localhost:8080 | jq
             return ({}, {})
 
         if len(query.sorts) > 1:
-            raise ValueError("I received a query with two sort directives, but I can only handle one.  Sorry!  If you need o support two sort directions, you'll have to extend the ApiBackend and overwrite the build_records_request method.")
+            raise ValueError(
+                "I received a query with two sort directives, but I can only handle one.  Sorry!  If you need o support two sort directions, you'll have to extend the ApiBackend and overwrite the build_records_request method."
+            )
 
         return (
             {"sort": query.sorts[0].column_name, "direction": query.sorts[0].direction.lower()},
             {},
         )
 
-    def map_records_response(self, response_data: Any, query: clearskies.query.Query, query_data: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    def map_records_response(
+        self, response_data: Any, query: clearskies.query.Query, query_data: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """
         Take the response from an API endpoint that returns a list of records and find the actual list of records
         """
@@ -869,7 +891,7 @@ $ curl http://localhost:8080 | jq
         if query_data is None:
             query_data = {}
             for condition in query.conditions:
-                if condition.operator != '=':
+                if condition.operator != "=":
                     continue
                 query_data[condition.column_name] = condition.values[0]
 
@@ -879,13 +901,17 @@ $ curl http://localhost:8080 | jq
             if not response_data:
                 return []
             if not self.check_dict_and_map_to_model(response_data[0], columns, query_data):
-                raise ValueError(f"The response from a records request returned a list, but the records in the list didn't look anything like the model class.  Please check your model class and mapping settings in the API Backend.  If those are correct, then you'll have to override the map_records_response method, because the API you are interacting with is returning data in an unexpected way that I can't automatically figure out.")
-            return [self.check_dict_and_map_to_model(record, columns, query_data) for record in response_data] # type: ignore
+                raise ValueError(
+                    f"The response from a records request returned a list, but the records in the list didn't look anything like the model class.  Please check your model class and mapping settings in the API Backend.  If those are correct, then you'll have to override the map_records_response method, because the API you are interacting with is returning data in an unexpected way that I can't automatically figure out."
+                )
+            return [self.check_dict_and_map_to_model(record, columns, query_data) for record in response_data]  # type: ignore
 
         if not isinstance(response_data, dict):
-            raise ValueError(f"The response from a records request returned a variable of type {response_data.__class__.__name__}, which is just confusing.  To do automatic introspection, I need a list or a dictionary.  I'm afraid you'll have to extend the API backend and override the map_record_response method to deal with this.")
+            raise ValueError(
+                f"The response from a records request returned a variable of type {response_data.__class__.__name__}, which is just confusing.  To do automatic introspection, I need a list or a dictionary.  I'm afraid you'll have to extend the API backend and override the map_record_response method to deal with this."
+            )
 
-        for (key, value) in response_data.items():
+        for key, value in response_data.items():
             if not isinstance(value, list):
                 continue
             return self.map_records_response(value, query, query_data)
@@ -895,9 +921,13 @@ $ curl http://localhost:8080 | jq
         if record is not None:
             return [record]
 
-        raise ValueError("The response from a records request returned a dictionary, but none of the items in the dictionary was a list, so I don't know where to find the records.  I only ever check one level deep in dictionaries.  I'm afraid you'll have to extend the API backend and override the map_records_response method to deal with this.")
+        raise ValueError(
+            "The response from a records request returned a dictionary, but none of the items in the dictionary was a list, so I don't know where to find the records.  I only ever check one level deep in dictionaries.  I'm afraid you'll have to extend the API backend and override the map_records_response method to deal with this."
+        )
 
-    def map_record_response(self, response_data: dict[str, Any], columns: dict[str, clearskies.column.Column], operation: str) -> dict[str, Any]:
+    def map_record_response(
+        self, response_data: dict[str, Any], columns: dict[str, clearskies.column.Column], operation: str
+    ) -> dict[str, Any]:
         """
         Take the response from an API endpoint that returns a single record (typically update and create requests) and return the data for a new model
 
@@ -911,15 +941,24 @@ $ curl http://localhost:8080 | jq
         """
         an = "a" if operation == "create" else "an"
         if not isinstance(response_data, dict):
-            raise ValueError(f"The response from {an} {operation} request returned a variable of type {response_data.__class__.__name__}, which is just confusing.  To do automatic introspection, I need a dictionary.  I'm afraid you'll have to build your own API backend and override the map_record_response method to deal with this.")
+            raise ValueError(
+                f"The response from {an} {operation} request returned a variable of type {response_data.__class__.__name__}, which is just confusing.  To do automatic introspection, I need a dictionary.  I'm afraid you'll have to build your own API backend and override the map_record_response method to deal with this."
+            )
 
         response = self.check_dict_and_map_to_model(response_data, columns)
         if response is None:
-            raise ValueError(f"I was not able to automatically interpret the response from {an} {operation} request.  This could be a sign of a response that is structured in a very unusual way, or may be a sign that the casing settings and/or columns on your model to properly reflect the API response.  For the former, you will hvae to build your own API backend and override the map_record_response to deal with this.")
+            raise ValueError(
+                f"I was not able to automatically interpret the response from {an} {operation} request.  This could be a sign of a response that is structured in a very unusual way, or may be a sign that the casing settings and/or columns on your model to properly reflect the API response.  For the former, you will hvae to build your own API backend and override the map_record_response to deal with this."
+            )
 
         return response
 
-    def check_dict_and_map_to_model(self, response_data: dict[str, Any], columns: dict[str, clearskies.column.Column], query_data: dict[str, Any] = {}) -> dict[str, Any] | None:
+    def check_dict_and_map_to_model(
+        self,
+        response_data: dict[str, Any],
+        columns: dict[str, clearskies.column.Column],
+        query_data: dict[str, Any] = {},
+    ) -> dict[str, Any] | None:
         """
         This checks a dictionary in the response to decide if it contains the data for a record.  If not, it will search the keys for something that looks like a record.
         """
@@ -933,7 +972,7 @@ $ curl http://localhost:8080 | jq
 
         # if nothing matches then clearly this isn't what we're looking for: repeat on all the children
         if not matching:
-            for (key, value) in response_data.items():
+            for key, value in response_data.items():
                 if not isinstance(value, dict):
                     continue
                 mapped = self.check_dict_and_map_to_model(value, columns)
@@ -960,12 +999,16 @@ $ curl http://localhost:8080 | jq
 
         self._response_to_model_map = {}
         for column_name in columns:
-            self._response_to_model_map[string.swap_casing(column_name, self.model_casing, self.api_casing)] = column_name
+            self._response_to_model_map[string.swap_casing(column_name, self.model_casing, self.api_casing)] = (
+                column_name
+            )
         self._response_to_model_map = {**self._response_to_model_map, **self.api_to_model_map}
 
         return self._response_to_model_map
 
-    def set_next_page_data_from_response(self, next_page_data: dict[str, Any], query: clearskies.query.Query, response: requests.models.Response) -> None: # type: ignore
+    def set_next_page_data_from_response(
+        self, next_page_data: dict[str, Any], query: clearskies.query.Query, response: requests.models.Response
+    ) -> None:  # type: ignore
         """
         Update the next_page_data dictionary with the appropriate data needed to fetch the next page of records
 
@@ -990,19 +1033,31 @@ $ curl http://localhost:8080 | jq
         # approach is to use a link header, so let's support that in the base class.
         if "link" not in response.headers:
             return
-        next_link = [rel for rel in response.headers["link"].split(',') if 'rel="next"' in rel]
+        next_link = [rel for rel in response.headers["link"].split(",") if 'rel="next"' in rel]
         if not next_link:
             return
-        parsed_next_link = urllib.parse.urlparse(next_link[0].split(';')[0].strip(' <>'))
+        parsed_next_link = urllib.parse.urlparse(next_link[0].split(";")[0].strip(" <>"))
         query_parameters = urllib.parse.parse_qs(parsed_next_link.query)
         if self.pagination_parameter_name not in query_parameters:
-            raise ValueError(f"Configuration error with {self.__class__.__name__}!  I am configured to expect a pagination key of '{self.pagination_parameter_name}.  However, when I was parsing the next link from a response to get the next pagination details, I could not find the designated pagination key.  This likely means that backend.pagination_parameter_name is set to the wrong value.  The link in question was " + parsed_next_link.geturl())
+            raise ValueError(
+                f"Configuration error with {self.__class__.__name__}!  I am configured to expect a pagination key of '{self.pagination_parameter_name}.  However, when I was parsing the next link from a response to get the next pagination details, I could not find the designated pagination key.  This likely means that backend.pagination_parameter_name is set to the wrong value.  The link in question was "
+                + parsed_next_link.geturl()
+            )
         next_page_data[self.pagination_parameter_name] = query_parameters[self.pagination_parameter_name][0]
 
     def count(self, query: clearskies.query.Query) -> int:
-        raise NotImplementedError(f"The {self.__class__.__name__} backend does not support count operations, so you can't use the `len` or `bool` function for any models using it.")
+        raise NotImplementedError(
+            f"The {self.__class__.__name__} backend does not support count operations, so you can't use the `len` or `bool` function for any models using it."
+        )
 
-    def execute_request(self, url: str, method: str, json: dict[str, Any] | None =None, headers: dict[str, str] | None=None, is_retry=False) -> requests.models.Response: # type: ignore
+    def execute_request(
+        self,
+        url: str,
+        method: str,
+        json: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        is_retry=False,
+    ) -> requests.models.Response:  # type: ignore
         """
         Executes the actual API request and returns the response object.
 
@@ -1045,7 +1100,10 @@ $ curl http://localhost:8080 | jq
             if not is_retry and response.status_code == 401:
                 return self.execute_request(url, method, json=json, headers=headers, is_retry=True)
             if not response.ok:
-                raise ValueError(f"Failed request.  Status code: {response.status_code}, message: " + response.content.decode("utf-8"))
+                raise ValueError(
+                    f"Failed request.  Status code: {response.status_code}, message: "
+                    + response.content.decode("utf-8")
+                )
 
         return response
 
@@ -1056,7 +1114,9 @@ $ curl http://localhost:8080 | jq
 
         for condition in query.conditions:
             if condition.operator != "=":
-                raise ValueError(f"{self.__class__.__name__} only supports searching with the '=' operator, but I found a search with the {condition.operator} operator")
+                raise ValueError(
+                    f"{self.__class__.__name__} only supports searching with the '=' operator, but I found a search with the {condition.operator} operator"
+                )
 
     def validate_pagination_data(self, data: dict[str, Any], case_mapping: Callable) -> str:
         extra_keys = set(data.keys()) - set(self.allowed_pagination_keys())
@@ -1090,7 +1150,10 @@ $ curl http://localhost:8080 | jq
     def documentation_pagination_parameters(self, case_mapping: Callable) -> list[tuple[AutoDocSchema, str]]:
         return [
             (
-                AutoDocInteger(case_mapping(self.pagination_parameter_name), example=0 if self.pagination_parameter_type == "int" else ""),
+                AutoDocInteger(
+                    case_mapping(self.pagination_parameter_name),
+                    example=0 if self.pagination_parameter_type == "int" else "",
+                ),
                 "The next record",
             )
         ]

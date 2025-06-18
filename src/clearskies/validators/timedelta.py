@@ -14,6 +14,7 @@ from clearskies.validator import Validator
 if TYPE_CHECKING:
     import clearskies.model
 
+
 class Timedelta(Validator, clearskies.di.InjectableProperties):
     timedelta = clearskies.configs.Timedelta(default=None)
 

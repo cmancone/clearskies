@@ -13,11 +13,11 @@ class Programmatic(InputOutput):
 
     def __init__(
         self,
-        url: str="",
-        request_method: str="GET",
-        body: str | dict[str, Any] | list[Any]="",
-        query_parameters: dict[str, Any]={},
-        request_headers: dict[str, str]={},
+        url: str = "",
+        request_method: str = "GET",
+        body: str | dict[str, Any] | list[Any] = "",
+        query_parameters: dict[str, Any] = {},
+        request_headers: dict[str, str] = {},
     ):
         self.url = url
         self._request_headers = {**request_headers}

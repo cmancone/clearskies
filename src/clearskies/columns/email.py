@@ -10,6 +10,7 @@ class Email(String):
     ```
     import clearskies
 
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -17,13 +18,14 @@ class Email(String):
         id = clearskies.columns.Uuid()
         email = clearskies.columns.Email()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["email"],
             readable_column_names=["id", "email"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
@@ -55,12 +57,14 @@ class Email(String):
     }
     ```
     """
+
     _descriptor_config_map = None
 
     """
     A column that always requires an email address.
     """
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         if type(value) != str:
             return f"Value must be a string for {self.name}"
         if operator and operator.lower() == "like":

@@ -38,6 +38,7 @@ class CreatedByAuthorizationData(String):
         name = clearskies.columns.String()
         organization_id = clearskies.columns.CreatedByAuthorizationData("organization_id")
 
+
     class MyAuthentication(clearskies.authentication.Authentication):
         def authenticate(self, input_output) -> bool:
             # Authenticate the user!
@@ -51,6 +52,7 @@ class CreatedByAuthorizationData(String):
             }
             return True
 
+
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Create(
             MyModel,
@@ -58,7 +60,7 @@ class CreatedByAuthorizationData(String):
             readable_column_names=["id", "name", "organization_id"],
             authentication=MyAuthentication(),
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     cli()
     ```
@@ -72,10 +74,10 @@ class CreatedByAuthorizationData(String):
         "data": {
             "id": "49816ea4-0956-461e-abd4-03dbde845ba9",
             "name": "Bob",
-            "organization_id": "my-super-awesome-organization"
+            "organization_id": "my-super-awesome-organization",
         },
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
 

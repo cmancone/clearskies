@@ -9,6 +9,7 @@ from .sort import Sort
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Query:
     """
     Track the various aspects of a query.
@@ -130,24 +131,32 @@ class Query:
 
     def set_limit(self, limit: int) -> Self:
         if not isinstance(limit, int):
-            raise TypeError(f"The limit in a query must be of type int but I received a value of type '{limit.__class__.__name__}'")
-        return self.__class__(**{
-            **self.as_kwargs(),
-            "limit": limit,
-        })
+            raise TypeError(
+                f"The limit in a query must be of type int but I received a value of type '{limit.__class__.__name__}'"
+            )
+        return self.__class__(
+            **{
+                **self.as_kwargs(),
+                "limit": limit,
+            }
+        )
 
     def set_group_by(self, column_name) -> Self:
         self.validate_column(column_name, "group")
-        return self.__class__(**{
-            **self.as_kwargs(),
-            "group_by": column_name,
-        })
+        return self.__class__(
+            **{
+                **self.as_kwargs(),
+                "group_by": column_name,
+            }
+        )
 
     def set_pagination(self, pagination: dict[str, Any]) -> Self:
-        return self.__class__(**{
-            **self.as_kwargs(),
-            "pagination": pagination,
-        })
+        return self.__class__(
+            **{
+                **self.as_kwargs(),
+                "pagination": pagination,
+            }
+        )
 
     def add_select(self, select: str) -> Self:
         new_kwargs = self.as_kwargs()
@@ -155,12 +164,14 @@ class Query:
         return self.__class__(**new_kwargs)
 
     def set_select_all(self, select_all: bool) -> Self:
-        return self.__class__(**{
-            **self.as_kwargs(),
-            "select_all": select_all,
-        })
+        return self.__class__(
+            **{
+                **self.as_kwargs(),
+                "select_all": select_all,
+            }
+        )
 
-    def validate_column(self: Self, column_name: str, action: str, table: str | None=None) -> None:
+    def validate_column(self: Self, column_name: str, action: str, table: str | None = None) -> None:
         # for now, only validate columns that belong to *our* table.
         # in some cases we are explicitly told the column name
         if table is not None:

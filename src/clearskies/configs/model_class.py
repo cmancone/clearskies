@@ -9,6 +9,7 @@ from clearskies.functional import validations
 if TYPE_CHECKING:
     from clearskies.model import Model, ModelClassReference
 
+
 class ModelClass(config.Config):
     """
     A config that accepts a model class.

@@ -15,6 +15,7 @@ from clearskies.functional import string, validations
 if TYPE_CHECKING:
     from clearskies import Column, Model
 
+
 class HasMany(Column):
     """
     A column to manage a "has many" relationship.
@@ -35,6 +36,7 @@ class HasMany(Column):
     ```
     import clearskies
 
+
     class Product(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -43,6 +45,7 @@ class HasMany(Column):
         name = clearskies.columns.String()
         category_id = clearskies.columns.String()
 
+
     class Category(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -50,6 +53,7 @@ class HasMany(Column):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         products = clearskies.columns.HasMany(Product)
+
 
     def test_has_many(products: Product, categories: Category):
         toys = categories.create({"name": "Toys"})
@@ -65,6 +69,7 @@ class HasMany(Column):
 
         # it specifically returns a models object so you can do more filtering/transformations
         return toys.products.sort_by("name", "asc")
+
 
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
@@ -86,21 +91,12 @@ class HasMany(Column):
         "status": "success",
         "error": "",
         "data": [
-            {
-            "id": "edc68e8d-7fc8-45ce-98f0-9c6f883e4e7f",
-            "name": "Ball"
-            },
-            {
-            "id": "b51a0de5-c784-4e0c-880c-56e5bf731dfd",
-            "name": "Crayon"
-            },
-            {
-            "id": "06cec3af-d042-4d6b-a99c-b4a0072f188d",
-            "name": "Fidget Spinner"
-            }
+            {"id": "edc68e8d-7fc8-45ce-98f0-9c6f883e4e7f", "name": "Ball"},
+            {"id": "b51a0de5-c784-4e0c-880c-56e5bf731dfd", "name": "Crayon"},
+            {"id": "06cec3af-d042-4d6b-a99c-b4a0072f188d", "name": "Fidget Spinner"},
         ],
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
 
@@ -446,7 +442,7 @@ class HasMany(Column):
     def __get__(self, model, cls):
         if model is None:
             self.model_class = cls
-            return self # type:  ignore
+            return self  # type:  ignore
 
         foreign_column_name = self.foreign_column_name
         model_id = getattr(model, model.id_column_name)
@@ -455,19 +451,21 @@ class HasMany(Column):
         if not self.where:
             return children
 
-        for (index, where) in enumerate(self.where):
+        for index, where in enumerate(self.where):
             if callable(where):
                 children = self.di.call_function(where, model=children, **self.input_output.get_context_for_callables())
                 if not validations.is_model(children):
                     raise ValueError(
-                        f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index+1} was called, it did not return the models class"
+                        f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index + 1} was called, it did not return the models class"
                     )
             else:
                 children = children.where(where)
         return children
 
     def __set__(self, model: Model, value: Model) -> None:
-        raise ValueError(f"Attempt to set a value to {model.__class__.__name__}.{self.name}: this is not allowed because it is a HasMany column, which is not writeable.")
+        raise ValueError(
+            f"Attempt to set a value to {model.__class__.__name__}.{self.name}: this is not allowed because it is a HasMany column, which is not writeable."
+        )
 
     def to_json(self, model: Model) -> dict[str, Any]:
         children = []
@@ -487,13 +485,15 @@ class HasMany(Column):
             children.append(json)
         return {self.name: children}
 
-    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None) -> list[AutoDocSchema]:
+    def documentation(
+        self, name: str | None = None, example: str | None = None, value: str | None = None
+    ) -> list[AutoDocSchema]:
         columns = self.child_columns
         child_id_column_name = self.child_model.id_column_name
         child_properties = [columns[child_id_column_name].documentation()]
 
         for column_name in self.readable_child_column_names:
-            child_properties.extend(columns[column_name].documentation()) # type: ignore
+            child_properties.extend(columns[column_name].documentation())  # type: ignore
 
         child_object = AutoDocObject(
             string.title_case_to_nice(self.child_model_class.__name__),

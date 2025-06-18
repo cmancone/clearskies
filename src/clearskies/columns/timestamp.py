@@ -11,6 +11,7 @@ from clearskies.columns.datetime import Datetime
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Timestamp(Datetime):
     """
     A timestamp column.
@@ -24,6 +25,7 @@ class Timestamp(Datetime):
     import datetime
     import clearskies
 
+
     class Pet(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -32,15 +34,19 @@ class Timestamp(Datetime):
         name = clearskies.columns.String()
         last_fed = clearskies.columns.Timestamp()
 
+
     def demo_timestamp(utcnow: datetime.datetime, pets: Pet) -> dict[str, str | int]:
-        pet = pets.create({
-            "name": "Spot",
-            "last_fed": utcnow,
-        })
+        pet = pets.create(
+            {
+                "name": "Spot",
+                "last_fed": utcnow,
+            }
+        )
         return {
             "last_fed": pet.last_fed.isoformat(),
             "raw_data": pet.get_raw_data()["last_fed"],
         }
+
 
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
@@ -57,12 +63,9 @@ class Timestamp(Datetime):
     {
         "status": "success",
         "error": "",
-        "data": {
-            "last_fed": "2025-05-18T19:14:56+00:00",
-            "raw_data": 1747595696
-        },
+        "data": {"last_fed": "2025-05-18T19:14:56+00:00", "raw_data": 1747595696},
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
 
@@ -149,7 +152,7 @@ class Timestamp(Datetime):
     def __set__(self, instance, value: datetime.datetime) -> None:
         instance._next_data[self.name] = value
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         if not isinstance(value, int):
             return f"'{self.name}' must be an integer"
         return ""

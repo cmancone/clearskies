@@ -24,6 +24,7 @@ class CreatedByHeader(String):
     ```
     import clearskies
 
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -32,13 +33,14 @@ class CreatedByHeader(String):
         name = clearskies.columns.String()
         custom_header = clearskies.columns.CreatedByHeader("my_custom_header")
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["name"],
             readable_column_names=["id", "name", "custom_header"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```

@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from clearskies import Column, Schema, SecurityHeader
     from clearskies.model import Model
 
+
 class SimpleSearch(List):
     """
     Create an endpoint that supports searching by exact values via url/JSON parameters.
@@ -29,6 +30,7 @@ class SimpleSearch(List):
     ```
     import clearskies
 
+
     class Student(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -36,6 +38,7 @@ class SimpleSearch(List):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         grade = clearskies.columns.Integer()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.SimpleSearch(
@@ -224,14 +227,15 @@ class SimpleSearch(List):
         # which is why we have to call the parent.
         super().__init__(model_class, readable_column_names, sortable_column_names, default_sort_column_name)
 
-
     def check_search_in_request_data(self, request_data: dict[str, Any], query_parameters: dict[str, Any]) -> None:
         for input_source_label, input_data in [("request body", request_data), ("URL data", query_parameters)]:
             for column_name, value in input_data.items():
                 if column_name in self.allowed_request_keys and column_name not in self.searchable_column_names:
                     continue
                 if column_name not in self.searchable_column_names:
-                    raise clearskies.exceptions.ClientError(f"Invalid request parameter found in {input_source_label}: '{column_name}'")
+                    raise clearskies.exceptions.ClientError(
+                        f"Invalid request parameter found in {input_source_label}: '{column_name}'"
+                    )
                 [relationship_column_name, final_column_name] = self.unpack_column_name_with_relationship(column_name)
                 column_to_check = relationship_column_name if relationship_column_name else final_column_name
                 value_error = self.searchable_columns[column_to_check].check_search_value(
@@ -245,7 +249,7 @@ class SimpleSearch(List):
         model: Model,
         request_data: dict[str, Any],
         query_parameters: dict[str, Any],
-        pagination_data: dict[str, Any]
+        pagination_data: dict[str, Any],
     ) -> Model:
         model = super().configure_model_from_request_data(
             model,
@@ -279,4 +283,4 @@ class SimpleSearch(List):
                     description=f"Search by {column_doc.name} (via exact match)",
                 )
             )
-        return docs # type: ignore
+        return docs  # type: ignore

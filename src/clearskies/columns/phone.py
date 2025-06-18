@@ -20,6 +20,7 @@ class Phone(String):
     ```
     import clearskies
 
+
     class User(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -27,6 +28,7 @@ class Phone(String):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         phone = clearskies.columns.Phone(usa_only=True)
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
@@ -123,7 +125,7 @@ class Phone(String):
         # phone numbers are stored as only digits.
         return {**data, **{self.name: re.sub(r"\D", "", data[self.name])}}
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         if type(value) != str:
             return f"Value must be a string for {self.name}"
 

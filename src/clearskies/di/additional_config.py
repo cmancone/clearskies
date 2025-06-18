@@ -28,26 +28,31 @@ class AdditionalConfig:
     ```
     from clearskies.di import Di, AdditionalConfig
 
+
     class MyAdditionalConfig(AdditionalConfig):
         def provide_inner_dependency(self):
             return 5
 
         def provide_important_thing(self, inner_dependency):
-            return inner_dependency*10
+            return inner_dependency * 10
+
 
     class AnotherAdditionalConfig(AdditionalConfig):
         def provide_inner_dependency(self):
             return 10
+
 
     di = Di(additional_configs=[MyAdditionalConfig(), AnotherAdditionalConfig()])
     # Equivalent:
     # di = Di()
     # di.add_addtional_configs([MyAdditionalConfig(), AnotherAdditionalConfig()])
 
+
     def my_function(important_thing):
-        print(important_thing) # prints 100
+        print(important_thing)  # prints 100
     ```
     """
+
     def can_cache(self, name: str, di, context: str) -> bool:
         """
         Cache control!
@@ -65,8 +70,8 @@ class AdditionalConfig:
         from clearskies.di import Di, AdditionalConfig
         import secrets
 
-        class MyAdditionalConfig(AdditionalConfig):
 
+        class MyAdditionalConfig(AdditionalConfig):
             def provide_random_number_not_cached(self):
                 return secrets.randbelow(100)
 
@@ -76,11 +81,14 @@ class AdditionalConfig:
             def can_cache(self, name, context=None):
                 return name == "random_number_not_cached"
 
+
         di = Di(additional_configs=MyAdditionalConfig())
+
 
         def my_function(random_number_cached, random_number_not_cached):
             print(random_number_cached)
             print(random_number_not_cached)
+
 
         di.call_function(my_function)
         di.call_function(my_function)

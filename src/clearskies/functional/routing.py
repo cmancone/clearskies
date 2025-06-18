@@ -17,11 +17,11 @@ def match_route(expected_route, incoming_route, allow_partial=False) -> tuple[bo
     Expected route: `/user`
     Incoming route: `/users/orders/5`
     """
-    expected_route = expected_route.strip('/')
-    incoming_route = incoming_route.strip('/')
+    expected_route = expected_route.strip("/")
+    incoming_route = incoming_route.strip("/")
 
-    expected_parts = expected_route.split('/')
-    incoming_parts = incoming_route.split('/')
+    expected_parts = expected_route.split("/")
+    incoming_parts = incoming_route.split("/")
 
     # quick check: if there are less parts in the incoming route than the expected route, then we can't possibly match
     if len(incoming_parts) < len(expected_parts):
@@ -34,7 +34,7 @@ def match_route(expected_route, incoming_route, allow_partial=False) -> tuple[bo
     routing_data = {}
     routing_parameters = extract_url_parameter_name_map(expected_route)
     # we want it backwards
-    routing_parameters_by_index = {value: key for (key,value) in routing_parameters.items()}
+    routing_parameters_by_index = {value: key for (key, value) in routing_parameters.items()}
     for index in range(len(expected_parts)):
         if index in routing_parameters_by_index:
             if not incoming_parts[index]:
@@ -66,7 +66,7 @@ def extract_url_parameter_name_map(url: str) -> dict[str, int]:
     for index, part in enumerate(path_parts):
         if not part:
             continue
-        if part[0] == ':':
+        if part[0] == ":":
             match = re.match("^:(\\w[\\w\\d_]{0,})$", part)
         else:
             if part[0] != "{":

@@ -7,6 +7,7 @@ from clearskies.configs import config
 if TYPE_CHECKING:
     from clearskies.endpoint import Endpoint as EndpointBase
 
+
 class Endpoint(config.Config):
     def __set__(self, instance, value: EndpointBase):
         if not hasattr(value, "success"):

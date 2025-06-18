@@ -21,6 +21,8 @@ class Created(Datetime):
 
     ```
     import clearskies
+
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -28,13 +30,14 @@ class Created(Datetime):
         name = clearskies.columns.String()
         created = clearskies.columns.Created()
 
+
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
             lambda my_models: my_models.create({"name": "An Example"}),
             model_class=MyModel,
             readable_column_names=["id", "name", "created"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     cli()
     ```
@@ -48,12 +51,11 @@ class Created(Datetime):
         "data": {
             "id": "c54d74ac-5282-439e-af4f-23efb9ba96d4",
             "name": "An Example",
-            "created": "2025-05-09T19:58:43+00:00"
+            "created": "2025-05-09T19:58:43+00:00",
         },
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
-
     ```
 
     """

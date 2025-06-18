@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     import clearskies.column
     import clearskies.model
 
+
 class Validator(ABC, configurable.Configurable):
     is_unique = False
     is_required = False

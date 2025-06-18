@@ -7,6 +7,7 @@ from clearskies.columns.category_tree_children import CategoryTreeChildren
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class CategoryTreeAncestors(CategoryTreeChildren):
     """
     A column to fetch the ancestors from a category tree column.
@@ -41,6 +42,6 @@ class CategoryTreeAncestors(CategoryTreeChildren):
     def __get__(self, model, cls):
         if model is None:
             self.model_class = cls
-            return self # type:  ignore
+            return self  # type:  ignore
 
         return self.relatives(model, find_parents=True, include_all=True)

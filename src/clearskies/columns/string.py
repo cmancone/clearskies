@@ -7,6 +7,7 @@ from clearskies.column import Column
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class String(Column):
     """
     A simple string column.
@@ -14,12 +15,14 @@ class String(Column):
     ```
     import clearskies
 
+
     class Pet(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
@@ -60,6 +63,7 @@ class String(Column):
     ```
 
     """
+
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null", "like"]
     _descriptor_config_map = None
 
@@ -77,7 +81,7 @@ class String(Column):
             return self
 
         if self.name not in instance._data:
-            return None # type: ignore
+            return None  # type: ignore
 
         if self.name not in instance._transformed_data:
             instance._transformed_data[self.name] = self.from_backend(instance._data[self.name])
@@ -87,5 +91,5 @@ class String(Column):
     def __set__(self, instance: Model, value: str) -> None:
         instance._next_data[self.name] = value
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         return "value should be a string" if type(value) != str else ""

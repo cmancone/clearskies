@@ -16,10 +16,11 @@ Usage:
 ```
 from clearskies import configs
 
+
 class MyConfigurableClass(configs.Configurable):
     name = configs.String()
     age = configs.Integer(required=True)
-    property_with_default = configs.String(default='some value')
+    property_with_default = configs.String(default="some value")
 
     def __init__(self, name, age, optional=None):
         self.name = name
@@ -32,13 +33,13 @@ class MyConfigurableClass(configs.Configurable):
         self.finalize_and_validate_configuration()
 
 
-configured_thingie = MyConfigurableClass('Bob', 18)
-print(configured_thingie.age) # prints: 18
-print(configured_thingie.property_with_default) # prints: some value
+configured_thingie = MyConfigurableClass("Bob", 18)
+print(configured_thingie.age)  # prints: 18
+print(configured_thingie.property_with_default)  # prints: some value
 
-invalid_thingie = MyConfigurableClass(18, 20) # raises a TypeError
+invalid_thingie = MyConfigurableClass(18, 20)  # raises a TypeError
 
-also_invalid = MyConfigurableClass('', 18) # raises a ValueError
+also_invalid = MyConfigurableClass("", 18)  # raises a ValueError
 ```
 
 Finally, parameters_to_properties is a decorator that will take any parameters passed into the
@@ -49,17 +50,19 @@ it as:
 ```
 from clearskies import configs
 
+
 class MyConfigurableClass(configs.Configurable):
     name = configs.String()
     age = configs.Integer(required=True)
-    property_with_default = configs.String(default='some value')
+    property_with_default = configs.String(default="some value")
 
     @clearskies.parameters_to_properties()
-    def __init__(self, name: str, age: int, optional: string=None):
+    def __init__(self, name: str, age: int, optional: string = None):
         self.finalize_and_validate_configuration()
 ```
 
 """
+
 import inspect
 
 from .actions import Actions

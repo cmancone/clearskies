@@ -11,12 +11,14 @@ from clearskies.column import Column
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Json(Column):
     """
     A column to store generic data.
 
     ```
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -25,13 +27,14 @@ class Json(Column):
         id = clearskies.columns.Uuid()
         my_data = clearskies.columns.Json()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["my_data"],
             readable_column_names=["id", "my_data"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
@@ -65,6 +68,7 @@ class Json(Column):
     Note that there is no attempt to check the shape of the input passed into a JSON column.
 
     """
+
     is_searchable = configs.Boolean(default=False)
     _descriptor_config_map = None
 

@@ -13,12 +13,14 @@ from clearskies.query import Condition
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Float(Column):
     """
     A column that stores a float
 
     ```
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -27,13 +29,14 @@ class Float(Column):
         id = clearskies.columns.Uuid()
         score = clearskies.columns.Float()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["score"],
             readable_column_names=["id", "score"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
@@ -67,8 +70,8 @@ class Float(Column):
 
     """
 
-    default = configs.Float() #  type: ignore
-    setable = configs.FloatOrCallable(default=None) #  type: ignore
+    default = configs.Float()  #  type: ignore
+    setable = configs.FloatOrCallable(default=None)  #  type: ignore
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
     auto_doc_class: type[AutoDocSchema] = AutoDocNumber
     _descriptor_config_map = None

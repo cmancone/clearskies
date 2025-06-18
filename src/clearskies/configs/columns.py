@@ -22,11 +22,11 @@ class Columns(config.Config):
             raise TypeError(
                 f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' to a dictionary with columns"
             )
-        for (index, item) in enumerate(value.values()):
-            if not hasattr(item, 'on_change_pre_save'):
+        for index, item in enumerate(value.values()):
+            if not hasattr(item, "on_change_pre_save"):
                 error_prefix = self._error_prefix(instance)
                 raise TypeError(
-                    f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index+1}.  A column was expected."
+                    f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index + 1}.  A column was expected."
                 )
         instance._set_config(self, value)
 

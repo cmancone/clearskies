@@ -25,6 +25,7 @@ class Updated(Datetime):
     import clearskies
     import time
 
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -33,6 +34,7 @@ class Updated(Datetime):
         name = clearskies.columns.String()
         created = clearskies.columns.Created()
         updated = clearskies.columns.Updated()
+
 
     def test_updated(my_models: MyModel) -> MyModel:
         my_model = my_models.create({"name": "Jane"})
@@ -45,13 +47,11 @@ class Updated(Datetime):
         return {
             "updated_column_after_create": updated_column_after_create.isoformat(),
             "updated_column_at_end": my_model.updated.isoformat(),
-            "difference_in_seconds": (my_model.updated-updated_column_after_create).total_seconds()
+            "difference_in_seconds": (my_model.updated - updated_column_after_create).total_seconds(),
         }
 
-    cli = clearskies.contexts.Cli(
-        clearskies.endpoints.Callable(test_updated),
-        classes=[MyModel]
-    )
+
+    cli = clearskies.contexts.Cli(clearskies.endpoints.Callable(test_updated), classes=[MyModel])
     cli()
     ```
 

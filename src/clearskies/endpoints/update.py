@@ -29,14 +29,14 @@ class Update(Get):
     ```
     import clearskies
 
+
     class User(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
-        username = clearskies.columns.String(
-            validators=[clearskies.validators.Required()]
-        )
+        username = clearskies.columns.String(validators=[clearskies.validators.Required()])
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Update(
@@ -136,7 +136,11 @@ class Update(Get):
 
         schema_model_name = string.camel_case_to_snake_case(output_schema.__name__)
         output_data_schema = self.documentation_data_schema(output_schema, self.readable_column_names)
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name),
+        output_autodoc = (
+            autodoc.schema.Object(
+                self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name
+            ),
+        )
 
         authentication = self.authentication
         standard_error_responses = [self.documentation_input_error_response()]
@@ -150,7 +154,7 @@ class Update(Get):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,

@@ -10,6 +10,7 @@ from clearskies.columns.belongs_to_id import BelongsToId
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class CategoryTree(BelongsToId):
     """
     The category tree helps you do quick lookups on a typical category tree.

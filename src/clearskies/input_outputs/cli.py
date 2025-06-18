@@ -43,7 +43,7 @@ class Cli(InputOutput):
         # If things start with a dash then they are assumed to be a kwarg.  If not, then a positional argument.
         # we don't allow for simple flags: everything is a positional argument or a key/value pair
         # For kwargs, we'll allow for using an equal sign or not, e.g.: '--key=value' or '--key value' or '-d thing'.
-        while index < len(argv)-1:
+        while index < len(argv) - 1:
             index += 1
 
             # if we don't start with a dash then we are a positional argument
@@ -62,15 +62,19 @@ class Cli(InputOutput):
             # otherwise we have to grab the next argument to get the value
             else:
                 key = arg
-                value = argv[index+1]
+                value = argv[index + 1]
                 if "-" in value:
-                    raise ValueError(f"Invalid clearskies cli calling sequence: found two key names next to eachother without any values: '-{arg} {value}'")
+                    raise ValueError(
+                        f"Invalid clearskies cli calling sequence: found two key names next to eachother without any values: '-{arg} {value}'"
+                    )
                 index += 1
 
             if key.lower() == "h":
                 parts = value.split(":", 1)
                 if len(parts) != 2:
-                    raise ValueError(f"Invalid clearskies cli calling sequence: a parameter named '-H' was found, which is treated as a request header, but it didn't have the proper 'key: value' format.")
+                    raise ValueError(
+                        f"Invalid clearskies cli calling sequence: a parameter named '-H' was found, which is treated as a request header, but it didn't have the proper 'key: value' format."
+                    )
                 request_headers[parts[0]] = parts[1]
                 continue
 
@@ -84,7 +88,9 @@ class Cli(InputOutput):
                 continue
 
             if request_method_source:
-                raise ValueError(f"Invalid clearskies cli calling sequence: the request method was specified via both the -{key} parameter and the -{request_method_source} parameter. To avoid ambiguity, it should only be set once.")
+                raise ValueError(
+                    f"Invalid clearskies cli calling sequence: the request method was specified via both the -{key} parameter and the -{request_method_source} parameter. To avoid ambiguity, it should only be set once."
+                )
             self._request_method = kwargs[key]
             del kwargs[key]
             request_method_source = key
@@ -96,18 +102,24 @@ class Cli(InputOutput):
             data_source = "piped input"
         if kwargs.get("d"):
             if final_data:
-                raise ValueError(f"Invalid clearskies cli calling sequence: request data was sent by both the -d parameter and {data_source}.  To avoid ambiguity, it should only be sent one way.")
+                raise ValueError(
+                    f"Invalid clearskies cli calling sequence: request data was sent by both the -d parameter and {data_source}.  To avoid ambiguity, it should only be sent one way."
+                )
             final_data = kwargs.get("d")
             data_source = "the -d parameter"
             del kwargs["d"]
         if kwargs.get("data"):
             if final_data:
-                raise ValueError(f"Invalid calling sequence: request data was sent by both the -data parameter and {data_source}.  To avoid ambiguity, it should only be sent one way.")
+                raise ValueError(
+                    f"Invalid calling sequence: request data was sent by both the -data parameter and {data_source}.  To avoid ambiguity, it should only be sent one way."
+                )
             final_data = kwargs.get("data")
             data_source = "the -data parameter"
             del kwargs["data"]
         if final_data and len(kwargs):
-            raise ValueError(f"Invalid calling sequence: extra parameters were specified after sending a body via {data_source}.  To avoid ambiguity, send all data via {data_source}.")
+            raise ValueError(
+                f"Invalid calling sequence: extra parameters were specified after sending a body via {data_source}.  To avoid ambiguity, send all data via {data_source}."
+            )
         if not final_data and len(kwargs):
             final_data = kwargs
             data_source = "kwargs"

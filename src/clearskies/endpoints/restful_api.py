@@ -51,28 +51,32 @@ class RestfulApi(EndpointGroup):
     from clearskies.validators import Required, Unique
     from clearskies import columns
 
+
     class User(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
         id = columns.Uuid()
         name = columns.String(validators=[Required()])
-        username = columns.String(validators=[
-            Required(),
-            Unique(),
-        ])
+        username = columns.String(
+            validators=[
+                Required(),
+                Unique(),
+            ]
+        )
         age = columns.Integer(validators=[Required()])
         created_at = columns.Created()
         updated_at = columns.Updated()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.RestfulApi(
             url="users",
             model_class=User,
-            readable_column_names=['id', 'name', 'username', 'age', 'created_at', 'updated_at'],
-            writeable_column_names=['name', 'username', 'age'],
-            sortable_column_names=['id', 'name', 'username', 'age', 'created_at', 'updated_at'],
-            searchable_column_names=['id', 'name', 'username', 'age', 'created_at', 'updated_at'],
+            readable_column_names=["id", "name", "username", "age", "created_at", "updated_at"],
+            writeable_column_names=["name", "username", "age"],
+            sortable_column_names=["id", "name", "username", "age", "created_at", "updated_at"],
+            searchable_column_names=["id", "name", "username", "age", "created_at", "updated_at"],
             default_sort_column_name="name",
         )
     )
@@ -223,27 +227,37 @@ class RestfulApi(EndpointGroup):
     """
     The request method(s) to use to route to the create operation.  Default is ["POST"].
     """
-    create_request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["POST"])
+    create_request_methods = clearskies.configs.SelectList(
+        allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["POST"]
+    )
 
     """
     The request method(s) to use to route to the update operation.  Default is ["PATCH"].
     """
-    update_request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["PATCH"])
+    update_request_methods = clearskies.configs.SelectList(
+        allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["PATCH"]
+    )
 
     """
     The request method(s) to use to route to the delete operation.  Default is ["DELETE"].
     """
-    delete_request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["DELETE"])
+    delete_request_methods = clearskies.configs.SelectList(
+        allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["DELETE"]
+    )
 
     """
     The request method(s) to use to route to the get operation.  Default is ["GET"].
     """
-    get_request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["GET"])
+    get_request_methods = clearskies.configs.SelectList(
+        allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH"], default=["GET"]
+    )
 
     """
     The request method(s) to use to route to the create operation.  Default is ["GET"].
     """
-    list_request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH", "QUERY"], default=["GET", "POST", "QUERY"])
+    list_request_methods = clearskies.configs.SelectList(
+        allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH", "QUERY"], default=["GET", "POST", "QUERY"]
+    )
 
     """
     The request method(s) to use to route to the create operation.  Default is ["POST"].
@@ -272,8 +286,8 @@ class RestfulApi(EndpointGroup):
     input_validation_callable = clearskies.configs.Callable(default=None)
     include_routing_data_in_request_data = clearskies.configs.Boolean(default=False)
     column_overrides = clearskies.configs.Columns(default={})
-    internal_casing = clearskies.configs.Select(['snake_case', 'camelCase', 'TitleCase'], default='snake_case')
-    external_casing = clearskies.configs.Select(['snake_case', 'camelCase', 'TitleCase'], default='snake_case')
+    internal_casing = clearskies.configs.Select(["snake_case", "camelCase", "TitleCase"], default="snake_case")
+    external_casing = clearskies.configs.Select(["snake_case", "camelCase", "TitleCase"], default="snake_case")
     security_headers = clearskies.configs.SecurityHeaders(default=[])
     description = clearskies.configs.String(default="")
     where = clearskies.configs.Conditions(default=[])
@@ -327,33 +341,43 @@ class RestfulApi(EndpointGroup):
         endpoints_to_build = []
         if not read_only:
             if create_endpoint:
-                endpoints_to_build.append({
-                    "class": create_endpoint,
-                    "request_methods": create_request_methods,
-                })
+                endpoints_to_build.append(
+                    {
+                        "class": create_endpoint,
+                        "request_methods": create_request_methods,
+                    }
+                )
             if delete_endpoint:
-                endpoints_to_build.append({
-                    "class": delete_endpoint,
-                    "request_methods": delete_request_methods,
-                    "url_suffix": f"/:{id_column_name}",
-                })
+                endpoints_to_build.append(
+                    {
+                        "class": delete_endpoint,
+                        "request_methods": delete_request_methods,
+                        "url_suffix": f"/:{id_column_name}",
+                    }
+                )
             if update_endpoint:
-                endpoints_to_build.append({
-                    "class": update_endpoint,
-                    "request_methods": update_request_methods,
-                    "url_suffix": f"/:{id_column_name}",
-                })
+                endpoints_to_build.append(
+                    {
+                        "class": update_endpoint,
+                        "request_methods": update_request_methods,
+                        "url_suffix": f"/:{id_column_name}",
+                    }
+                )
         if get_endpoint:
-            endpoints_to_build.append({
-                "class": get_endpoint,
-                "request_methods": get_request_methods,
-                "url_suffix": f"/:{id_column_name}",
-            })
+            endpoints_to_build.append(
+                {
+                    "class": get_endpoint,
+                    "request_methods": get_request_methods,
+                    "url_suffix": f"/:{id_column_name}",
+                }
+            )
         if list_endpoint:
-            endpoints_to_build.append({
-                "class": list_endpoint,
-                "request_methods": list_request_methods,
-            })
+            endpoints_to_build.append(
+                {
+                    "class": list_endpoint,
+                    "request_methods": list_request_methods,
+                }
+            )
 
         # and now build them!  Pass along our own kwargs to the endoints when we build them.  Now, technically, I
         # know what the kwargs are for each endpoint.  However, it would be a lot of duplication to manually
@@ -364,7 +388,7 @@ class RestfulApi(EndpointGroup):
         # these lines take all of the arguments we were initialized with and dumps it into a dict.  It's the
         # equivalent of combining both *args and **kwargs without using either
         my_args = inspect.getfullargspec(self.__class__)
-        local_variables = inspect.currentframe().f_locals # type: ignore
+        local_variables = inspect.currentframe().f_locals  # type: ignore
         available_args = {arg: local_variables[arg] for arg in my_args.args[1:]}
 
         # we handle this one manually
@@ -391,7 +415,7 @@ class RestfulApi(EndpointGroup):
             if url_suffix:
                 final_kwargs["url"] = url_suffix
             final_kwargs["request_methods"] = endpoint_to_build["request_methods"]
-            endpoints.append(endpoint_class(*final_args, **final_kwargs)) # type: ignore
+            endpoints.append(endpoint_class(*final_args, **final_kwargs))  # type: ignore
 
         super().__init__(
             endpoints,

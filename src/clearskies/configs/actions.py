@@ -8,6 +8,7 @@ from clearskies.configs import config
 if TYPE_CHECKING:
     from clearskies import typing
 
+
 class Actions(config.Config):
     """
     A config that accepts various things that are accepted as actions in model lifecycle hooks:
@@ -29,7 +30,7 @@ class Actions(config.Config):
 
             error_prefix = self._error_prefix(instance)
             raise TypeError(
-                f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index+1} when a callable or Action is required"
+                f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index + 1} when a callable or Action is required"
             )
 
         instance._set_config(self, [*value])

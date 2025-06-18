@@ -7,6 +7,7 @@ from clearskies.configs import config
 if TYPE_CHECKING:
     from clearskies import SecurityHeader
 
+
 class SecurityHeaders(config.Config):
     """
     This is for a configuration that should be a list of strings.
@@ -28,7 +29,7 @@ class SecurityHeaders(config.Config):
             if not hasattr(item, "set_headers_for_input_output"):
                 error_prefix = self._error_prefix(instance)
                 raise TypeError(
-                    f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index+1}.  A clearskies.SecurityHeader was expected."
+                    f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index + 1}.  A clearskies.SecurityHeader was expected."
                 )
         instance._set_config(self, value)
 

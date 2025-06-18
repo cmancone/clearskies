@@ -22,6 +22,7 @@ class CreatedByRoutingData(String):
     ```
     import clearskies
 
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -30,6 +31,7 @@ class CreatedByRoutingData(String):
         name = clearskies.columns.String()
         organization_id = clearskies.columns.CreatedByRoutingData("organization_id")
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
@@ -37,7 +39,7 @@ class CreatedByRoutingData(String):
             writeable_column_names=["name"],
             readable_column_names=["id", "name", "organization_id"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```

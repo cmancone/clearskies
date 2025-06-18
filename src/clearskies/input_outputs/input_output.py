@@ -15,8 +15,9 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
     """
     Manage the request and response to the client
     """
-    response_headers: Headers = None # type: ignore
-    request_headers: Headers = None # type: ignore
+
+    response_headers: Headers = None  # type: ignore
+    request_headers: Headers = None  # type: ignore
     query_parameters = clearskies.configs.AnyDict(default={})
     routing_data = clearskies.configs.StringDict(default={})
     authorization_data = clearskies.configs.AnyDict(default={})
@@ -33,7 +34,7 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
         self.finalize_and_validate_configuration()
 
     @abstractmethod
-    def respond(self, body: clearskies.typing.response, status_code: int=200) -> Any:
+    def respond(self, body: clearskies.typing.response, status_code: int = 200) -> Any:
         """
         Pass along a response to the client.
 
@@ -71,7 +72,6 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
                 except json.JSONDecodeError:
                     self._body_as_json = None
         return self._body_as_json
-
 
     @abstractmethod
     def get_request_method(self) -> str:

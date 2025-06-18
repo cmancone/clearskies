@@ -15,13 +15,13 @@ class ListAnyDictOrCallable(config.Config):
                 if not isinstance(list_item, dict):
                     error_prefix = self._error_prefix(instance)
                     raise TypeError(
-                        f"{error_prefix} I was expecting a list of dictionaries, but item # {index+1} has type '{list_item.__class__.__name__}."
+                        f"{error_prefix} I was expecting a list of dictionaries, but item # {index + 1} has type '{list_item.__class__.__name__}."
                     )
                 for key, val in list_item.items():
                     if not isinstance(key, str):
                         error_prefix = self._error_prefix(instance)
                         raise TypeError(
-                            f"{error_prefix} attempt to set a dictionary with a non-string key for item #{index+1}."
+                            f"{error_prefix} attempt to set a dictionary with a non-string key for item #{index + 1}."
                         )
         instance._set_config(self, value)
 

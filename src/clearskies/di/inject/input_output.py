@@ -9,6 +9,7 @@ from clearskies.di.injectable import Injectable
 if TYPE_CHECKING:
     from clearskies.input_outputs.input_output import InputOutput as InputOuputDependency
 
+
 class InputOutput(Injectable):
     def __init__(self):
         pass

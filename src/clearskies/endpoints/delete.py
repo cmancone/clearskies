@@ -29,12 +29,14 @@ class Delete(Get):
     ```
     import clearskies
 
+
     class User(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         username = clearskies.columns.String()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Delete(
@@ -102,7 +104,7 @@ class Delete(Get):
         return self.success(input_output, {})
 
     def documentation(self) -> list[autodoc.request.Request]:
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children={}),
+        output_autodoc = (autodoc.schema.Object(self.auto_case_internal_column_name("data"), children={}),)
 
         authentication = self.authentication
         standard_error_responses = [self.documentation_input_error_response()]
@@ -116,7 +118,7 @@ class Delete(Get):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,

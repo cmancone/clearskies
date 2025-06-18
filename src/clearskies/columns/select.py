@@ -14,6 +14,7 @@ class Select(String):
     ```
     import clearskies
 
+
     class Order(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -21,6 +22,7 @@ class Select(String):
         id = clearskies.columns.Uuid()
         total = clearskies.columns.Float()
         status = clearskies.columns.Select(["Open", "Processing", "Shipped", "Complete"])
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
@@ -86,5 +88,5 @@ class Select(String):
     ):
         pass
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         return f"Invalid value for {self.name}" if value not in self.allowed_values else ""

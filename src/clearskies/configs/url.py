@@ -12,7 +12,7 @@ class Url(string.String):
             raise TypeError(
                 f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' to a url parameter"
             )
-        value = value.strip('/')
+        value = value.strip("/")
 
         if value:
             try:

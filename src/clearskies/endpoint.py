@@ -25,10 +25,11 @@ if TYPE_CHECKING:
     from clearskies.schema import Schema
     from clearskies.security_headers import Cors
 
+
 class Endpoint(
-    clearskies.end.End, # type: ignore
+    clearskies.end.End,  # type: ignore
     clearskies.configurable.Configurable,
-    clearskies.di.InjectableProperties
+    clearskies.di.InjectableProperties,
 ):
     """
     Endpoints - the clearskies workhorse.
@@ -209,7 +210,9 @@ class Endpoint(
     }
     ```
     """
-    request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH", "QUERY"], default=["GET"])
+    request_methods = clearskies.configs.SelectList(
+        allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH", "QUERY"], default=["GET"]
+    )
 
     """
     The authentication for this endpoint (default is public)
@@ -641,14 +644,14 @@ class Endpoint(
     }
     ```
     """
-    internal_casing = clearskies.configs.Select(['snake_case', 'camelCase', 'TitleCase'], default='snake_case')
+    internal_casing = clearskies.configs.Select(["snake_case", "camelCase", "TitleCase"], default="snake_case")
 
     """
     Used in conjunction with internal_casing to change the casing of the key names in the outputted JSON of the endpoint.
 
     See the docs for `internal_casing` for more details and usage examples.
     """
-    external_casing = clearskies.configs.Select(['snake_case', 'camelCase', 'TitleCase'], default='snake_case')
+    external_casing = clearskies.configs.Select(["snake_case", "camelCase", "TitleCase"], default="snake_case")
 
     """
     Configure standard security headers to be sent along in the response from this endpoint.
@@ -880,7 +883,7 @@ class Endpoint(
     _writeable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
     _searchable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
     _sortable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
-    _as_json_map: dict[str, clearskies.column.Column] = None # type: ignore
+    _as_json_map: dict[str, clearskies.column.Column] = None  # type: ignore
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -901,7 +904,7 @@ class Endpoint(
         for security_header in self.security_headers:
             if not security_header.is_cors:
                 continue
-            self.cors_header = security_header # type: ignore
+            self.cors_header = security_header  # type: ignore
             self.has_cors = True
             break
 
@@ -950,7 +953,7 @@ class Endpoint(
             raise exceptions.ClientError("Request body was not a JSON dictionary.")
 
         return {
-            **input_output.request_data, # type: ignore
+            **input_output.request_data,  # type: ignore
             **(input_output.routing_data if self.include_routing_data_in_request_data else {}),
         }
 
@@ -987,8 +990,8 @@ class Endpoint(
             return True
         if request_method not in self.request_methods:
             return False
-        expected_url = self.url.strip('/')
-        incoming_url = input_output.get_full_path().strip('/')
+        expected_url = self.url.strip("/")
+        incoming_url = input_output.get_full_path().strip("/")
         if not expected_url and not incoming_url:
             return True
 
@@ -1004,8 +1007,8 @@ class Endpoint(
             return self.cors(input_output)
         if request_method not in self.request_methods:
             return self.error(input_output, "Not Found", 404)
-        expected_url = self.url.strip('/')
-        incoming_url = input_output.get_full_path().strip('/')
+        expected_url = self.url.strip("/")
+        incoming_url = input_output.get_full_path().strip("/")
         if expected_url or incoming_url:
             matches, routing_data = routing.match_route(expected_url, incoming_url, allow_partial=False)
             if not matches:
@@ -1015,7 +1018,7 @@ class Endpoint(
     def failure(self, input_output: InputOutput) -> Any:
         return self.respond_json(input_output, {"status": "failure"}, 500)
 
-    def input_errors(self, input_output: InputOutput, errors: dict[str, str], status_code: int=200) -> Any:
+    def input_errors(self, input_output: InputOutput, errors: dict[str, str], status_code: int = 200) -> Any:
         """
         Return input errors to the client.
         """
@@ -1033,9 +1036,18 @@ class Endpoint(
         """
         input_output.response_headers.add("content-type", "text/html")
         input_output.response_headers.add("location", location)
-        return self.respond('<meta http-equiv="refresh" content="0; url=' + urllib.parse.quote(location) + '">Redirecting', status_code)
+        return self.respond(
+            '<meta http-equiv="refresh" content="0; url=' + urllib.parse.quote(location) + '">Redirecting', status_code
+        )
 
-    def success(self, input_output: InputOutput, data: dict[str, Any] | list[Any], number_results: int | None=None, limit: int | None=None, next_page: Any=None) -> Any:
+    def success(
+        self,
+        input_output: InputOutput,
+        data: dict[str, Any] | list[Any],
+        number_results: int | None = None,
+        limit: int | None = None,
+        next_page: Any = None,
+    ) -> Any:
         """
         Return a successful response.
         """
@@ -1075,14 +1087,20 @@ class Endpoint(
     def _build_as_json_map(self, model: clearskies.model.Model) -> dict[str, clearskies.column.Column]:
         conversion_map = {}
         if not self.readable_column_names:
-            raise ValueError("I was asked to convert a model to JSON but I wasn't provided with `readable_column_names'")
+            raise ValueError(
+                "I was asked to convert a model to JSON but I wasn't provided with `readable_column_names'"
+            )
         for column in self.readable_columns.values():
             conversion_map[self.auto_case_column_name(column.name, True)] = column
         return conversion_map
 
-    def validate_input_against_schema(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]) -> None:
+    def validate_input_against_schema(
+        self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]
+    ) -> None:
         if not self.writeable_column_names:
-            raise ValueError(f"I was asked to validate input against a schema, but no writeable columns are defined, so I can't :(  This is probably a bug in the endpoint class - {self.__class__.__name__}.")
+            raise ValueError(
+                f"I was asked to validate input against a schema, but no writeable columns are defined, so I can't :(  This is probably a bug in the endpoint class - {self.__class__.__name__}."
+            )
         request_data = self.map_request_data_external_to_internal(request_data)
         self.find_input_errors(request_data, input_output, schema)
 
@@ -1096,7 +1114,9 @@ class Endpoint(
         # needs to return an error for unexpected data.
         return {key_map.get(key, key): value for (key, value) in request_data.items()}
 
-    def find_input_errors(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]) -> None:
+    def find_input_errors(
+        self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]
+    ) -> None:
         input_errors: dict[str, str] = {}
         columns = schema.get_columns()
         model = self.di.build(schema) if inspect.isclass(schema) else schema
@@ -1104,7 +1124,7 @@ class Endpoint(
             column = columns[column_name]
             input_errors = {
                 **input_errors,
-                **column.input_errors(model, request_data), # type: ignore
+                **column.input_errors(model, request_data),  # type: ignore
             }
         input_errors = {
             **input_errors,
@@ -1116,18 +1136,17 @@ class Endpoint(
         if input_errors:
             raise exceptions.InputErrors(input_errors)
 
-    def find_input_errors_from_callable(self, request_data: dict[str, Any] | list[Any] | None, input_output: InputOutput) -> dict[str, str]:
+    def find_input_errors_from_callable(
+        self, request_data: dict[str, Any] | list[Any] | None, input_output: InputOutput
+    ) -> dict[str, str]:
         if not self.input_validation_callable:
             return {}
 
         more_input_errors = self.di.call_function(
-            self.input_validation_callable,
-            **input_output.get_context_for_callables()
+            self.input_validation_callable, **input_output.get_context_for_callables()
         )
         if not isinstance(more_input_errors, dict):
-            raise ValueError(
-                "The input error callable did not return a dictionary as required"
-            )
+            raise ValueError("The input error callable did not return a dictionary as required")
         return more_input_errors
 
     def cors(self, input_output: InputOutput):
@@ -1180,7 +1199,9 @@ class Endpoint(
             ],
         )
 
-    def documentation_success_response(self, data_schema: schema.Object | schema.Array, description: str="", include_pagination: bool=False) -> Response:
+    def documentation_success_response(
+        self, data_schema: schema.Object | schema.Array, description: str = "", include_pagination: bool = False
+    ) -> Response:
         return Response(
             200,
             schema.Object(
@@ -1247,7 +1268,9 @@ class Endpoint(
         name = authentication.documentation_security_scheme_name()
         return [{name: []}] if name else []
 
-    def documentation_data_schema(self, schema: type[Schema] | None=None, column_names: list[str] = []) -> list[schema.Schema]:
+    def documentation_data_schema(
+        self, schema: type[Schema] | None = None, column_names: list[str] = []
+    ) -> list[schema.Schema]:
         if schema is None:
             schema = self.model_class
         if column_names is None and self.readable_column_names:
@@ -1263,7 +1286,9 @@ class Endpoint(
 
         return properties
 
-    def standard_json_request_parameters(self, schema: type[Schema] | None=None, column_names: list[str] = []) -> list[Parameter]:
+    def standard_json_request_parameters(
+        self, schema: type[Schema] | None = None, column_names: list[str] = []
+    ) -> list[Parameter]:
         if not column_names:
             if not self.writeable_column_names:
                 return []
@@ -1286,7 +1311,7 @@ class Endpoint(
         ]
 
     def standard_url_request_parameters(self) -> list[Parameter]:
-        parameter_names = routing.extract_url_parameter_name_map(self.url.strip('/'))
+        parameter_names = routing.extract_url_parameter_name_map(self.url.strip("/"))
         return [
             autodoc.request.URLPath(
                 autodoc.schema.String(parameter_name),

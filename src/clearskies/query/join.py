@@ -18,18 +18,18 @@ class Join:
     Examples:
     ```
     join = Join("INNER JOIN orders ON users.id=orders.user_id")
-    print(f"{join.left_table_name}.{join.left_column_name}") # prints 'users.id'
-    print(f"{join.right_table_name}.{join.right_column_name}") # prints 'orders.user_id'
-    print(join.type) # prints 'INNER'
-    print(join.alias) # prints ''
-    print(join.unaliased_table_name) # prints 'orders'
+    print(f"{join.left_table_name}.{join.left_column_name}")  # prints 'users.id'
+    print(f"{join.right_table_name}.{join.right_column_name}")  # prints 'orders.user_id'
+    print(join.type)  # prints 'INNER'
+    print(join.alias)  # prints ''
+    print(join.unaliased_table_name)  # prints 'orders'
 
     join = Join("JOIN some_long_table_name AS new_table ON old_table.id=new_table.old_id")
-    print(f"{join.left_table_name}.{join.left_column_name}") # prints 'old_table.id'
-    print(f"{join.right_table_name}.{join.right_column_name}") # prints 'new_table.old_id'
-    print(join.type) # prints 'LEFT'
-    print(join.alias) # prints 'new_table'
-    print(join.unaliased_table_name) # prints 'some_long_table_name'
+    print(f"{join.left_table_name}.{join.left_column_name}")  # prints 'old_table.id'
+    print(f"{join.right_table_name}.{join.right_column_name}")  # prints 'new_table.old_id'
+    print(join.type)  # prints 'LEFT'
+    print(join.alias)  # prints 'new_table'
+    print(join.unaliased_table_name)  # prints 'some_long_table_name'
     ```
     """
 
@@ -77,7 +77,6 @@ class Join:
     The allowed join types
     """
     _allowed_types = ["INNER", "OUTER", "LEFT", "RIGHT"]
-
 
     def __init__(self, join: str):
         self._raw_join = join

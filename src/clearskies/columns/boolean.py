@@ -14,6 +14,7 @@ from clearskies.query import Condition
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Boolean(Column):
     """
     Represents a column with a true/false type.
@@ -35,8 +36,8 @@ class Boolean(Column):
     auto_doc_class: type[AutoDocSchema] = AutoDocBoolean
 
     _allowed_search_operators = ["="]
-    default = configs.Boolean() #  type: ignore
-    setable = configs.BooleanOrCallable() #  type: ignore
+    default = configs.Boolean()  #  type: ignore
+    setable = configs.BooleanOrCallable()  #  type: ignore
     _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -85,10 +86,10 @@ class Boolean(Column):
     def __set__(self, instance, value: bool) -> None:
         instance._next_data[self.name] = value
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         return f"{self.name} must be a boolean" if type(value) != bool else ""
 
-    def build_condition(self, value: str, operator: str | None=None, column_prefix: str=""):
+    def build_condition(self, value: str, operator: str | None = None, column_prefix: str = ""):
         condition_value = "1" if value else "0"
         if not operator:
             operator = "="

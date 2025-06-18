@@ -7,6 +7,7 @@ from clearskies.configs import config
 if TYPE_CHECKING:
     from clearskies.authentication import Authorization as AuthorizationType
 
+
 class Authorization(config.Config):
     def __set__(self, instance, value: AuthorizationType):
         if not hasattr(value, "gate"):

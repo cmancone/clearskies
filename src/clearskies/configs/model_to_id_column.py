@@ -3,7 +3,14 @@ from clearskies.functional import string
 
 
 class ModelToIdColumn(model_column.ModelColumn):
-    def __init__(self, model_column_config_name="", source_model_class=None, source_model_class_config_name="", required=False, default=None):
+    def __init__(
+        self,
+        model_column_config_name="",
+        source_model_class=None,
+        source_model_class_config_name="",
+        required=False,
+        default=None,
+    ):
         self.required = required
         self.default = default
         self.model_column_config_name = model_column_config_name
@@ -26,12 +33,11 @@ class ModelToIdColumn(model_column.ModelColumn):
         has_config = False
         try:
             if instance._get_config(self):
-               has_config = True
+                has_config = True
         except KeyError:
             pass
 
         if not has_config:
             instance._set_config(self, string.camel_case_to_snake_case(model_class.__name__) + "_id")
-
 
         super().finalize_and_validate_configuration(instance)

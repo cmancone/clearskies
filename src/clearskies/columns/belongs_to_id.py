@@ -16,6 +16,7 @@ from clearskies.functional import validations
 if TYPE_CHECKING:
     from clearskies import Column, Model
 
+
 class BelongsToId(String):
     """
     Declares that this model belongs to another - that it has a parent.
@@ -32,12 +33,14 @@ class BelongsToId(String):
     ```
     import clearskies
 
+
     class Category(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     class Product(clearskies.Model):
         id_column_name = "id"
@@ -47,6 +50,7 @@ class BelongsToId(String):
         name = clearskies.columns.String()
         category_id = clearskies.columns.BelongsToId(Category)
         category = clearskies.columns.BelongsToModel("category_id")
+
 
     def test_belongs_to(products: Product, categories: Category):
         toys = categories.create({"name": "Toys"})
@@ -65,6 +69,7 @@ class BelongsToId(String):
             "ball_fidget_id_check": fidget_spinner.category_id == ball.category.id,
         }
 
+
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(test_belongs_to),
         classes=[Category, Product],
@@ -72,7 +77,6 @@ class BelongsToId(String):
 
     if __name__ == "__main__":
         cli()
-
     ```
 
     ## Circular Dependency Trees
@@ -85,6 +89,7 @@ class BelongsToId(String):
 
     ```
     import some_model
+
 
     class SomeModelReference:
         def get_model_class(self):
@@ -111,6 +116,7 @@ class BelongsToId(String):
     import clearskies
     import models.product_reference
 
+
     class Category(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -125,6 +131,7 @@ class BelongsToId(String):
     from clearskies.model import ModelClassReference
     import models.cateogry
 
+
     class CategoryReference(ModelClassReference):
         def get_model_class(self):
             return models.category.Category
@@ -134,6 +141,7 @@ class BelongsToId(String):
     ```
     import clearskies
     import models.category_reference
+
 
     class Product(clearskies.model.Model):
         id_column_name = "id"
@@ -149,6 +157,7 @@ class BelongsToId(String):
     ```
     from clearskies.model import ModelClassReference
     import models.product
+
 
     class ProductReference(ModelClassReference):
         def get_model_class(self):
@@ -324,12 +333,12 @@ class BelongsToId(String):
         if not self.where:
             return parents
 
-        for (index, where) in enumerate(self.where):
+        for index, where in enumerate(self.where):
             if callable(where):
                 parents = self.di.call_function(where, model=parents, **self.input_output.get_context_for_callables())
                 if not validations.is_model(parents):
                     raise ValueError(
-                        f"Configuration error for {self.model_class.__name__}.{self.name}: when 'where' is a callable, it must return a model class, but when the callable in where entry #{index+1} was called, it returned something else."
+                        f"Configuration error for {self.model_class.__name__}.{self.name}: when 'where' is a callable, it must return a model class, but when the callable in where entry #{index + 1} was called, it returned something else."
                     )
             else:
                 parents = parents.where(where)
@@ -339,7 +348,7 @@ class BelongsToId(String):
     def parent_columns(self) -> dict[str, Any]:
         return self.parent_model_class.get_columns()
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         parent_check = super().input_error_for_value(value)
         if parent_check:
             return parent_check
@@ -421,7 +430,9 @@ class BelongsToId(String):
             raise ValueError(
                 "I was asked to check search operators on a related column that doens't exist.  This shouldn't have happened :("
             )
-        return self.parent_columns[relationship_reference].is_allowed_search_operator(operator, relationship_reference=relationship_reference)
+        return self.parent_columns[relationship_reference].is_allowed_search_operator(
+            operator, relationship_reference=relationship_reference
+        )
 
     def allowed_search_operators(self, relationship_reference: str = ""):
         if not relationship_reference:
@@ -434,11 +445,7 @@ class BelongsToId(String):
         return self.parent_columns[relationship_reference].allowed_search_operators()
 
     def add_search(
-        self,
-        model: clearskies.model.Model,
-        value: str,
-        operator: str="",
-        relationship_reference: str=""
+        self, model: clearskies.model.Model, value: str, operator: str = "", relationship_reference: str = ""
     ) -> clearskies.model.Model:
         if not relationship_reference:
             return super().add_search(model, value, operator=operator)
@@ -453,7 +460,9 @@ class BelongsToId(String):
         alias = self.join_table_alias()
         return model.where(related_column.build_condition(value, operator=operator, column_prefix=f"{alias}."))
 
-    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None) -> list[AutoDocSchema]:
+    def documentation(
+        self, name: str | None = None, example: str | None = None, value: str | None = None
+    ) -> list[AutoDocSchema]:
         columns = self.parent_columns
         parent_id_column_name = self.parent_model.id_column_name
         parent_properties = [columns[parent_id_column_name].documentation()]

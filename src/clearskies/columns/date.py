@@ -16,6 +16,7 @@ from clearskies.query import Condition
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Date(Datetime):
     """
     Stores date data in a column.
@@ -27,6 +28,7 @@ class Date(Datetime):
     ```
     import clearskies
 
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -35,13 +37,14 @@ class Date(Datetime):
         name = clearskies.columns.String()
         my_date = clearskies.columns.Date()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["name", "my_date"],
             readable_column_names=["id", "name", "my_date"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
@@ -121,13 +124,15 @@ class Date(Datetime):
     ):
         pass
 
-    def from_backend(self, value) -> datetime.date | None: # type: ignore
+    def from_backend(self, value) -> datetime.date | None:  # type: ignore
         if not value or value == self.backend_default:
             return None
         if isinstance(value, str):
             value = dateparser.parse(value)
         if not isinstance(value, datetime.datetime):
-            raise TypeError(f"I was expecting to get a datetime from the backend but I didn't get anything recognizable.  I have a value of type '{value.__class__.__name__}'.  I need either a datetime object or a datetime serialized as a string.")
+            raise TypeError(
+                f"I was expecting to get a datetime from the backend but I didn't get anything recognizable.  I have a value of type '{value.__class__.__name__}'.  I need either a datetime object or a datetime serialized as a string."
+            )
 
         return datetime.date(value.year, value.month, value.day)
 
@@ -137,14 +142,16 @@ class Date(Datetime):
 
         value = data[self.name]
         if not isinstance(data[self.name], datetime.datetime) and not isinstance(data[self.name], datetime.date):
-            raise TypeError(f"I was expecting a stringified-date or a datetime object to send to the backend, but instead I found a value of {value.__class__.__name__}")
+            raise TypeError(
+                f"I was expecting a stringified-date or a datetime object to send to the backend, but instead I found a value of {value.__class__.__name__}"
+            )
 
         return {
             **data,
             self.name: value.strftime(self.date_format),
         }
 
-    @overload # type: ignore
+    @overload  # type: ignore
     def __get__(self, instance: None, cls: type[Model]) -> Self:
         pass
 
@@ -159,28 +166,28 @@ class Date(Datetime):
         instance._next_data[self.name] = value
 
     def equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().equals(value) # type: ignore
+        return super().equals(value)  # type: ignore
 
     def spaceship(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().spaceship(value) # type: ignore
+        return super().spaceship(value)  # type: ignore
 
     def not_equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().not_equals(value) # type: ignore
+        return super().not_equals(value)  # type: ignore
 
     def less_than_equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().less_than_equals(value) # type: ignore
+        return super().less_than_equals(value)  # type: ignore
 
     def greater_than_equals(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().greater_than_equals(value) # type: ignore
+        return super().greater_than_equals(value)  # type: ignore
 
     def less_than(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().less_than(value) # type: ignore
+        return super().less_than(value)  # type: ignore
 
     def greater_than(self, value: str | datetime.datetime | datetime.date) -> Condition:
-        return super().greater_than(value) # type: ignore
+        return super().greater_than(value)  # type: ignore
 
-    def is_in(self, values: list[str | datetime.datetime | datetime.date]) -> Condition: # type: ignore
-        return super().is_in(values) # type: ignore
+    def is_in(self, values: list[str | datetime.datetime | datetime.date]) -> Condition:  # type: ignore
+        return super().is_in(values)  # type: ignore
 
     def input_error_for_value(self, value, operator=None):
         value = dateparser.parse(value)

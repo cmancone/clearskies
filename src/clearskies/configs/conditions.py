@@ -19,7 +19,7 @@ class Conditions(config.Config):
 
             error_prefix = self._error_prefix(instance)
             raise TypeError(
-                f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index+1} when a string, condition, callable is required"  # type: ignore
+                f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index + 1} when a string, condition, callable is required"  # type: ignore
             )
 
         instance._set_config(self, [*value])

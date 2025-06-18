@@ -8,6 +8,7 @@ class HasOne(HasMany):
     The only real difference between this and HasMany is that the HasMany column type will return a list
     of models, while this returns the first model.
     """
+
     _descriptor_config_map = None
 
     pass

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from clearskies import Column
     from clearskies.backends import Backend
 
+
 class Model(Schema, InjectableProperties):
     """
     A clearskies model.
@@ -38,19 +39,27 @@ class Model(Schema, InjectableProperties):
     _next_page_data: dict[str, Any] | None = None
 
     id_column_name: str = ""
-    backend: Backend = None # type: ignore
+    backend: Backend = None  # type: ignore
 
     _di = inject.Di()
 
     def __init__(self):
         if not self.id_column_name:
-            raise ValueError(f"You must define the 'id_column_name' property for every model class, but this is missing for model '{self.__class__.__name__}'")
+            raise ValueError(
+                f"You must define the 'id_column_name' property for every model class, but this is missing for model '{self.__class__.__name__}'"
+            )
         if not isinstance(self.id_column_name, str):
-            raise TypeError(f"The 'id_column_name' property of a model must be a string that specifies the name of the id column, but that is not the case for model '{self.__class__.__name__}'.")
+            raise TypeError(
+                f"The 'id_column_name' property of a model must be a string that specifies the name of the id column, but that is not the case for model '{self.__class__.__name__}'."
+            )
         if not self.backend:
-            raise ValueError(f"You must define the 'backend' property for every model class, but this is missing for model '{self.__class__.__name__}'")
+            raise ValueError(
+                f"You must define the 'backend' property for every model class, but this is missing for model '{self.__class__.__name__}'"
+            )
         if not hasattr(self.backend, "documentation_pagination_parameters"):
-            raise TypeError(f"The 'backend' property of a model must be an object that extends the clearskies.Backend class, but that is not the case for model '{self.__class__.__name__}'.")
+            raise TypeError(
+                f"The 'backend' property of a model must be an object that extends the clearskies.Backend class, but that is not the case for model '{self.__class__.__name__}'."
+            )
         self._previous_data = {}
         self._data = {}
         self._next_data = {}
@@ -82,7 +91,7 @@ class Model(Schema, InjectableProperties):
         return f"{singular}s"
 
     def supports_n_plus_one(self: Self):
-        return self.backend.supports_n_plus_one #  type: ignore
+        return self.backend.supports_n_plus_one  #  type: ignore
 
     def __bool__(self: Self) -> bool:
         if self._query:
@@ -99,7 +108,7 @@ class Model(Schema, InjectableProperties):
         self._data = {} if data is None else data
         self._transformed_data = {}
 
-    def save(self: Self, data: dict[str, Any] | None = None, columns: dict[str, Column]={}, no_data=False) -> bool:
+    def save(self: Self, data: dict[str, Any] | None = None, columns: dict[str, Column] = {}, no_data=False) -> bool:
         """
         Save data to the database and update the model!
 
@@ -108,10 +117,12 @@ class Model(Schema, InjectableProperties):
         There are two supported flows.  One is to pass in a dictionary of data to save:
 
         ```
-        model.save({
-            "some_column": "New Value",
-            "another_column": 5,
-        })
+        model.save(
+            {
+                "some_column": "New Value",
+                "another_column": 5,
+            }
+        )
         ```
 
         And the other is to set new values on the columns attributes and then call save without data:
@@ -348,7 +359,7 @@ class Model(Schema, InjectableProperties):
         routing_data: dict[str, str],
         authorization_data: dict[str, Any],
         input_output: Any,
-        overrides: dict[str, Column]={},
+        overrides: dict[str, Column] = {},
     ) -> Self:
         """
         A hook to automatically apply filtering whenever the model makes an appearance in a get/update/list/search handler.
@@ -385,7 +396,7 @@ class Model(Schema, InjectableProperties):
         def some_function(models):
             model = models.find("id=5")
             if model:
-                models.save({"test":"example"})
+                models.save({"test": "example"})
             other_record = model.find("id=6")
         ```
 
@@ -402,11 +413,11 @@ class Model(Schema, InjectableProperties):
         ```
         def some_function(models):
             model = models.find("id=5")
-            more_models = model.where("test=example") # throws an exception.
-            more_models = model.as_query().where("test=example") # works as expected.
+            more_models = model.where("test=example")  # throws an exception.
+            more_models = model.as_query().where("test=example")  # works as expected.
         ```
         """
-        new_model= self._di.build(self.__class__, cache=False)
+        new_model = self._di.build(self.__class__, cache=False)
         new_model.set_query(Query(self.__class__))
         return new_model
 
@@ -475,7 +486,7 @@ class Model(Schema, InjectableProperties):
         self.no_single_model()
         return self.with_query(self.get_query().add_join(Join(join)))
 
-    def is_joined(self: Self, table_name: str, alias: str="") -> bool:
+    def is_joined(self: Self, table_name: str, alias: str = "") -> bool:
         """
         Check if a given table was already joined.
 
@@ -499,10 +510,10 @@ class Model(Schema, InjectableProperties):
         self: Self,
         primary_column_name: str,
         primary_direction: str,
-        primary_table_name: str="",
-        secondary_column_name: str="",
-        secondary_direction: str="",
-        secondary_table_name: str="",
+        primary_table_name: str = "",
+        secondary_column_name: str = "",
+        secondary_direction: str = "",
+        secondary_table_name: str = "",
     ) -> Self:
         self.no_single_model()
         sort = Sort(primary_table_name, primary_column_name, primary_direction)
@@ -563,8 +574,7 @@ class Model(Schema, InjectableProperties):
 
         ```
         for model in models.where("column=value").paginate_all():
-            print(model.id)
-        """
+            print(model.id)"""
         self.no_single_model()
         next_models = self.with_query(self.get_query())
         results = list(next_models.__iter__())
@@ -586,7 +596,7 @@ class Model(Schema, InjectableProperties):
         model.set_raw_data(data)
         return model
 
-    def create(self: Self, data: dict[str, Any] = {}, columns: dict[str, Column]={}, no_data=False) -> Self:
+    def create(self: Self, data: dict[str, Any] = {}, columns: dict[str, Column] = {}, no_data=False) -> Self:
         """
         Creates a new record in the backend using the information in `data`.
 
@@ -632,11 +642,15 @@ class Model(Schema, InjectableProperties):
 
     def no_queries(self) -> None:
         if self._query:
-            raise ValueError("You attempted to save/read record data for a model being used to make a query.  This is not allowed, as it is typically a sign of a bug in your application code.")
+            raise ValueError(
+                "You attempted to save/read record data for a model being used to make a query.  This is not allowed, as it is typically a sign of a bug in your application code."
+            )
 
     def no_single_model(self):
         if self._data:
-            raise ValueError("You have attempted to execute a query against a model that represents an individual record.  This is not allowed, as it is typically a sign of a bug in your application code.  If this is intentional, call model.as_query() before executing your query.")
+            raise ValueError(
+                "You have attempted to execute a query against a model that represents an individual record.  This is not allowed, as it is typically a sign of a bug in your application code.  If this is intentional, call model.as_query() before executing your query."
+            )
 
 
 class ModelClassReference:

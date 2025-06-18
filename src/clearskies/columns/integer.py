@@ -13,12 +13,14 @@ from clearskies.query import Condition
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Integer(Column):
     """
     A column that stores integer data
 
     ```
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -27,13 +29,14 @@ class Integer(Column):
         id = clearskies.columns.Uuid()
         age = clearskies.columns.Integer()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["age"],
             readable_column_names=["id", "age"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
@@ -66,8 +69,8 @@ class Integer(Column):
     ```
     """
 
-    default = configs.Integer(default=None) #  type: ignore
-    setable = configs.IntegerOrCallable(default=None) #  type: ignore
+    default = configs.Integer(default=None)  #  type: ignore
+    setable = configs.IntegerOrCallable(default=None)  #  type: ignore
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
 
     auto_doc_class: type[AutoDocSchema] = AutoDocInteger

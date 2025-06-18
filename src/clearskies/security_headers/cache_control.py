@@ -33,7 +33,8 @@ class CacheControl(SecurityHeader):
     ]
 
     @clearskies.parameters_to_properties.parameters_to_properties
-    def __init__(self,
+    def __init__(
+        self,
         max_age: int | None = None,
         s_maxage: int | None = None,
         stale_while_revalidate: int | None = None,

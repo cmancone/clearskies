@@ -87,6 +87,7 @@ class CursorBackend(Backend, InjectableProperties):
     ```
     import clearskies
 
+
     class UserPreference(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.CursorBackend(table_prefix="configuration_")
@@ -96,6 +97,7 @@ class CursorBackend(Backend, InjectableProperties):
         def destination_name(cls):
             return "preferences"
 
+
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
             lambda user_preferences: user_preferences.create(no_data=True).id,
@@ -103,11 +105,12 @@ class CursorBackend(Backend, InjectableProperties):
         classes=[UserPreference],
         bindings={
             "global_table_prefix": "user_",
-        }
+        },
     )
     ```
 
     """
+
     supports_n_plus_one = True
     cursor = inject.ByName("cursor")
     global_table_prefix = inject.ByName("global_table_prefix")
@@ -124,7 +127,11 @@ class CursorBackend(Backend, InjectableProperties):
         table_name = f"{self.global_table_prefix}{self.table_prefix}{table_name}"
         if "." not in table_name:
             return f"{self.table_escape_character}{table_name}{self.table_escape_character}"
-        return self.table_escape_character + f"{self.table_escape_character}.{self.table_escape_character}".join(table_name.split(".")) + self.table_escape_character
+        return (
+            self.table_escape_character
+            + f"{self.table_escape_character}.{self.table_escape_character}".join(table_name.split("."))
+            + self.table_escape_character
+        )
 
     def update(self, id: int | str, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         query_parts = []
@@ -142,10 +149,11 @@ class CursorBackend(Backend, InjectableProperties):
         )
 
         # and now query again to fetch the updated record.
-        return self.records(clearskies.query.Query(
-            model.__class__,
-            conditions=[clearskies.query.Condition(f"{model.id_column_name}={id}")]
-        ))[0]
+        return self.records(
+            clearskies.query.Query(
+                model.__class__, conditions=[clearskies.query.Condition(f"{model.id_column_name}={id}")]
+            )
+        )[0]
 
     def create(self, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         escape = self.column_escape_character
@@ -160,10 +168,11 @@ class CursorBackend(Backend, InjectableProperties):
         if not new_id:
             raise ValueError("I can't figure out what the id is for a newly created record :(")
 
-        return self.records(clearskies.query.Query(
-            model.__class__,
-            conditions=[clearskies.query.Condition(f"{model.id_column_name}={new_id}")]
-        ))[0]
+        return self.records(
+            clearskies.query.Query(
+                model.__class__, conditions=[clearskies.query.Condition(f"{model.id_column_name}={new_id}")]
+            )
+        )[0]
 
     def delete(self, id: int | str, model: clearskies.model.Model) -> bool:
         table_name = self._finalize_table_name(model.destination_name())
@@ -177,7 +186,9 @@ class CursorBackend(Backend, InjectableProperties):
             return row[0] if type(row) == tuple else row["count"]
         return 0
 
-    def records(self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None=None) -> list[dict[str, Any]]:
+    def records(
+        self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None = None
+    ) -> list[dict[str, Any]]:
         # I was going to get fancy and have this return an iterator, but since I'm going to load up
         # everything into a list anyway, I may as well just return the list, right?
         (sql, parameters) = self.as_sql(query)
@@ -224,7 +235,7 @@ class CursorBackend(Backend, InjectableProperties):
             limit_size = int(query.limit)
             if "start" in query.pagination:
                 start = int(query.pagination["start"])
-            limit = f' LIMIT {start}, {limit_size}'
+            limit = f" LIMIT {start}, {limit_size}"
 
         table_name = self._finalize_table_name(table_name)
         return (
@@ -241,7 +252,7 @@ class CursorBackend(Backend, InjectableProperties):
         # we also don't currently support parameters in the join clause - I'll probably need that though
         if query.joins:
             # We can ignore left joins because they don't change the count
-            join_sections = filter(lambda join: join.type != "LEFT", query.joins) # type: ignore
+            join_sections = filter(lambda join: join.type != "LEFT", query.joins)  # type: ignore
             joins = " " + " ".join([join._raw_join for join in join_sections])
         else:
             joins = ""
@@ -255,9 +266,11 @@ class CursorBackend(Backend, InjectableProperties):
             )
         return (query_string, parameters)
 
-    def conditions_as_wheres_and_parameters(self, conditions: list[clearskies.query.Condition], default_table_name: str) -> tuple[str, tuple[Any]]:
+    def conditions_as_wheres_and_parameters(
+        self, conditions: list[clearskies.query.Condition], default_table_name: str
+    ) -> tuple[str, tuple[Any]]:
         if not conditions:
-            return ("", ()) # type: ignore
+            return ("", ())  # type: ignore
 
         parameters = []
         where_parts = []
@@ -273,7 +286,7 @@ class CursorBackend(Backend, InjectableProperties):
                     escape=False,
                 )
             )
-        return (" WHERE " + " AND ".join(where_parts), tuple(parameters)) # type: ignore
+        return (" WHERE " + " AND ".join(where_parts), tuple(parameters))  # type: ignore
 
     def group_by_clause(self, group_by: str) -> str:
         if not group_by:
@@ -311,7 +324,9 @@ class CursorBackend(Backend, InjectableProperties):
     def documentation_pagination_next_page_example(self, case_mapping: Callable[[str], str]) -> dict[str, Any]:
         return {case_mapping("start"): 0}
 
-    def documentation_pagination_parameters(self, case_mapping: Callable[[str], str]) -> list[tuple[AutoDocSchema, str]]:
+    def documentation_pagination_parameters(
+        self, case_mapping: Callable[[str], str]
+    ) -> list[tuple[AutoDocSchema, str]]:
         return [
             (
                 AutoDocInteger(case_mapping("start"), example=0),

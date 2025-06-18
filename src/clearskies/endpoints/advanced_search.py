@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from clearskies import SecurityHeader
     from clearskies.model import Model
 
+
 class AdvancedSearch(SimpleSearch):
     """
     An endpoint that grants the client extensive control over searching and filtering.
@@ -37,12 +38,14 @@ class AdvancedSearch(SimpleSearch):
     ```
     import clearskies
 
+
     class Company(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     class User(clearskies.Model):
         id_column_name = "id"
@@ -54,6 +57,7 @@ class AdvancedSearch(SimpleSearch):
         age = clearskies.columns.Integer()
         company_id = clearskies.columns.BelongsToId(Company, readable_parent_columns=["id", "name"])
         company = clearskies.columns.BelongsToModel("company_id")
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.AdvancedSearch(
@@ -76,10 +80,28 @@ class AdvancedSearch(SimpleSearch):
                 {
                     "model_class": User,
                     "records": [
-                        {"id": "1-2-3-4", "name": "Bob Brown", "username": "bobbrown", "age": 18, "company_id": "5-5-5-5"},
-                        {"id": "1-2-3-5", "name": "Jane Doe", "username": "janedoe", "age": 52, "company_id": "7-7-7-7"},
+                        {
+                            "id": "1-2-3-4",
+                            "name": "Bob Brown",
+                            "username": "bobbrown",
+                            "age": 18,
+                            "company_id": "5-5-5-5",
+                        },
+                        {
+                            "id": "1-2-3-5",
+                            "name": "Jane Doe",
+                            "username": "janedoe",
+                            "age": 52,
+                            "company_id": "7-7-7-7",
+                        },
                         {"id": "1-2-3-6", "name": "Greg", "username": "greg", "age": 37, "company_id": "7-7-7-7"},
-                        {"id": "1-2-3-7", "name": "Curious George", "username": "curious", "age": 7, "company_id": "3-3-3-3"},
+                        {
+                            "id": "1-2-3-7",
+                            "name": "Curious George",
+                            "username": "curious",
+                            "age": 7,
+                            "company_id": "3-3-3-3",
+                        },
                     ],
                 },
             ],
@@ -316,7 +338,9 @@ class AdvancedSearch(SimpleSearch):
     def internal_request_keys(self) -> list[str]:
         return ["sort", "limit", "where"]
 
-    def check_request_data(self, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]) -> None:
+    def check_request_data(
+        self, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]
+    ) -> None:
         if pagination_data:
             error = self.model.validate_pagination_data(pagination_data, self.auto_case_internal_column_name)
             if error:
@@ -325,45 +349,86 @@ class AdvancedSearch(SimpleSearch):
             raise clearskies.exceptions.ClientError("Query parameters were found but are not supported.")
         for key in request_data.keys():
             if key not in self.allowed_request_keys:
-                raise clearskies.exceptions.ClientError(f"Invalid request parameter found in request body: '{key}'.  Expected parameters: " + ", ".join([self.auto_case_internal_column_name(key) for key in self.allowed_request_keys]))
+                raise clearskies.exceptions.ClientError(
+                    f"Invalid request parameter found in request body: '{key}'.  Expected parameters: "
+                    + ", ".join([self.auto_case_internal_column_name(key) for key in self.allowed_request_keys])
+                )
         self.validate_limit(request_data, {})
         sort_key_name = self.auto_case_internal_column_name("sort")
         sort = request_data.get(sort_key_name, [])
         if not isinstance(sort, list):
-            raise clearskies.exceptions.ClientError(f"'{sort_key_name}' property in request body should be a list, but I found a value of type " + sort.__class__.__name)
+            raise clearskies.exceptions.ClientError(
+                f"'{sort_key_name}' property in request body should be a list, but I found a value of type "
+                + sort.__class__.__name
+            )
         if sort:
             column_key_name = self.auto_case_internal_column_name("column")
             direction_key_name = self.auto_case_internal_column_name("direction")
-            for (index, sort_entry) in enumerate(sort):
+            for index, sort_entry in enumerate(sort):
                 if not isinstance(sort_entry, dict):
-                    raise clearskies.exceptions.ClientError(f"'{sort_key_name}' should be a list of dictionaries, but entry #{index+1} is a value of type '{sort_entry.__class__.__name}', not a dict")
+                    raise clearskies.exceptions.ClientError(
+                        f"'{sort_key_name}' should be a list of dictionaries, but entry #{index + 1} is a value of type '{sort_entry.__class__.__name}', not a dict"
+                    )
                 for key_name in [column_key_name, direction_key_name]:
                     if not sort_entry.get(key_name):
-                        raise clearskies.exceptions.ClientError(f"Each entry in the sort list should contain both '{column_key_name}' and '{direction_key_name}' but entry #{index+1} is missing '{key_name}'")
+                        raise clearskies.exceptions.ClientError(
+                            f"Each entry in the sort list should contain both '{column_key_name}' and '{direction_key_name}' but entry #{index + 1} is missing '{key_name}'"
+                        )
                     if not isinstance(sort_entry[key_name], str):
-                        raise clearskies.exceptions.ClientError(f"{key_name}' must be a string, but for entry #{index+1} it is a value of type " + sort_entry[key_name].__class__.__name__)
-                if sort_entry[direction_key_name].lower() not in ['asc', 'desc']:
-                    raise clearskies.exceptions.ClientError(f"{direction_key_name}' must be either 'ASC' or 'DESC', but a different value was found for entry #{index+1}")
+                        raise clearskies.exceptions.ClientError(
+                            f"{key_name}' must be a string, but for entry #{index + 1} it is a value of type "
+                            + sort_entry[key_name].__class__.__name__
+                        )
+                if sort_entry[direction_key_name].lower() not in ["asc", "desc"]:
+                    raise clearskies.exceptions.ClientError(
+                        f"{direction_key_name}' must be either 'ASC' or 'DESC', but a different value was found for entry #{index + 1}"
+                    )
                 if self.auto_case_column_name(sort_entry[column_key_name], False) not in self.sortable_column_names:
-                    raise clearskies.exceptions.ClientError(f"Invalid sort column for entry #{index+1}.  Allowed values are: " + ", ".join([self.auto_case_column_name(column_name, False) for column_name in self.sortable_column_names]))
+                    raise clearskies.exceptions.ClientError(
+                        f"Invalid sort column for entry #{index + 1}.  Allowed values are: "
+                        + ", ".join(
+                            [
+                                self.auto_case_column_name(column_name, False)
+                                for column_name in self.sortable_column_names
+                            ]
+                        )
+                    )
         where_key_name = self.auto_case_internal_column_name("where")
         where = request_data.get(where_key_name, [])
         if not isinstance(where, list):
-            raise clearskies.exceptions.ClientError(f"'{where_key_name}' property in request body should be a list, but I found a value of type " + where.__class__.__name)
+            raise clearskies.exceptions.ClientError(
+                f"'{where_key_name}' property in request body should be a list, but I found a value of type "
+                + where.__class__.__name
+            )
         if where:
             column_key_name = self.auto_case_internal_column_name("column")
             operator_key_name = self.auto_case_internal_column_name("operator")
             value_key_name = self.auto_case_internal_column_name("value")
-            for (index, where_entry) in enumerate(where):
+            for index, where_entry in enumerate(where):
                 if not isinstance(where_entry, dict):
-                    raise clearskies.exceptions.ClientError(f"'{where_key_name}' should be a list of dictionaries, but entry #{index+1} is a value of type '{where_entry.__class__.__name}', not a dict")
+                    raise clearskies.exceptions.ClientError(
+                        f"'{where_key_name}' should be a list of dictionaries, but entry #{index + 1} is a value of type '{where_entry.__class__.__name}', not a dict"
+                    )
                 for key_name in [column_key_name, operator_key_name, value_key_name]:
                     if key_name not in where_entry:
-                        raise clearskies.exceptions.ClientError(f"Each entry in the where list should contain '{column_key_name}', '{operator_key_name}', and '{value_key_name}', but entry #{index+1} is missing '{key_name}'")
+                        raise clearskies.exceptions.ClientError(
+                            f"Each entry in the where list should contain '{column_key_name}', '{operator_key_name}', and '{value_key_name}', but entry #{index + 1} is missing '{key_name}'"
+                        )
                     if key_name != value_key_name and not isinstance(where_entry[key_name], str):
-                        raise clearskies.exceptions.ClientError(f"{key_name}' must be a string, but for entry #{index+1} it is a value of type " + sort_entry[key_name].__class__.__name__)
+                        raise clearskies.exceptions.ClientError(
+                            f"{key_name}' must be a string, but for entry #{index + 1} it is a value of type "
+                            + sort_entry[key_name].__class__.__name__
+                        )
                     if where_entry[column_key_name] not in self.searchable_column_names:
-                        raise clearskies.exceptions.ClientError(f"Invalid where column for entry #{index+1}.  Allowed values are: " + ", ".join([self.auto_case_column_name(column_name, True) for column_name in self.searchable_column_names]))
+                        raise clearskies.exceptions.ClientError(
+                            f"Invalid where column for entry #{index + 1}.  Allowed values are: "
+                            + ", ".join(
+                                [
+                                    self.auto_case_column_name(column_name, True)
+                                    for column_name in self.searchable_column_names
+                                ]
+                            )
+                        )
                     [relationship_column_name, column_name] = self.unpack_column_name_with_relationship(
                         self.auto_case_column_name(where_entry[column_key_name], False),
                     )
@@ -373,26 +438,37 @@ class AdvancedSearch(SimpleSearch):
                     if relationship_column_name:
                         column = self.columns[relationship_column_name]
                         if not column.is_allowed_search_operator(operator, relationship_reference=column_name):
-                            error_allowed_operators = column.allowed_search_operators(relationship_reference=column_name)
+                            error_allowed_operators = column.allowed_search_operators(
+                                relationship_reference=column_name
+                            )
                         else:
-                            error = column.check_search_value(value if operator != 'in' else value[0], where_entry[operator_key_name], relationship_reference=column_name)
+                            error = column.check_search_value(
+                                value if operator != "in" else value[0],
+                                where_entry[operator_key_name],
+                                relationship_reference=column_name,
+                            )
                     else:
                         column = self.columns[column_name]
                         if not column.is_allowed_search_operator(operator):
                             error_allowed_operators = column.allowed_search_operators()
                         else:
-                            error = column.check_search_value(value if operator != 'in' else value[0], where_entry[operator_key_name])
+                            error = column.check_search_value(
+                                value if operator != "in" else value[0], where_entry[operator_key_name]
+                            )
                     if error_allowed_operators:
-                        raise clearskies.exceptions.ClientError(f"Invalid operator for entry #{index+1}.  Allowed operators are: " + ", ".join(column.allowed_search_operators(relationship_reference=column_name)))
+                        raise clearskies.exceptions.ClientError(
+                            f"Invalid operator for entry #{index + 1}.  Allowed operators are: "
+                            + ", ".join(column.allowed_search_operators(relationship_reference=column_name))
+                        )
                     if error:
-                        raise clearskies.exceptions.ClientError(f"Invalid search value for entry #{index+1}: {error}")
+                        raise clearskies.exceptions.ClientError(f"Invalid search value for entry #{index + 1}: {error}")
 
     def configure_model_from_request_data(
         self,
         model: Model,
         request_data: dict[str, Any],
         query_parameters: dict[str, Any],
-        pagination_data: dict[str, Any]
+        pagination_data: dict[str, Any],
     ) -> Model:
         if pagination_data:
             model = model.pagination(**pagination_data)
@@ -405,7 +481,9 @@ class AdvancedSearch(SimpleSearch):
             primary_direction = sort[0][direction_key_name]
 
             if len(sort) > 1:
-                [secondary_table_name, secondary_column_name] = self.resolve_references_for_query(sort[1][column_key_name])
+                [secondary_table_name, secondary_column_name] = self.resolve_references_for_query(
+                    sort[1][column_key_name]
+                )
                 secondary_direction = sort[1][direction_key_name]
             else:
                 secondary_column_name = ""
@@ -430,7 +508,9 @@ class AdvancedSearch(SimpleSearch):
 
             model = self.add_join(raw_column_name, model)
             if relationship_column_name:
-                model = self.columns[relationship_column_name].add_search(model, value, operator=operator, relationship_reference=column_name)
+                model = self.columns[relationship_column_name].add_search(
+                    model, value, operator=operator, relationship_reference=column_name
+                )
             else:
                 model = self.columns[column_name].add_search(model, value, operator=operator)
 

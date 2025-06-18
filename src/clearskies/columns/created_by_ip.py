@@ -10,6 +10,7 @@ from clearskies.columns.string import String
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class CreatedByIp(String):
     """
     Returns the ip address of the client when the record is created.
@@ -21,6 +22,7 @@ class CreatedByIp(String):
     ```
     import clearskies
 
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -29,13 +31,14 @@ class CreatedByIp(String):
         name = clearskies.columns.String()
         ip_address = clearskies.columns.CreatedByIp()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["name"],
             readable_column_names=["id", "name", "ip_address"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```

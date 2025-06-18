@@ -30,12 +30,14 @@ class Get(Endpoint):
     ```
     import clearskies
 
+
     class User(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         username = clearskies.columns.String()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Get(
@@ -191,17 +193,23 @@ class Get(Endpoint):
 
         route_parameters = routing.extract_url_parameter_name_map(url)
         if self.record_lookup_column_name not in route_parameters:
-            raise KeyError(f"Configuration error for {self.__class__.__name__} endpoint: record_lookup_column_name is set to '{self.record_lookup_column_name}' but no matching routing parameter is found")
+            raise KeyError(
+                f"Configuration error for {self.__class__.__name__} endpoint: record_lookup_column_name is set to '{self.record_lookup_column_name}' but no matching routing parameter is found"
+            )
 
     def get_model_id(self, input_output: InputOutput) -> str:
         routing_data = input_output.routing_data
         if self.record_lookup_column_name in routing_data:
             return routing_data[self.record_lookup_column_name]
-        raise KeyError(f"I didn't receive the ID in my routing data.  I am probably misconfigured.  My record_lookup_column_name is '{self.record_lookup_column_name}' and my route is {self.url}")
+        raise KeyError(
+            f"I didn't receive the ID in my routing data.  I am probably misconfigured.  My record_lookup_column_name is '{self.record_lookup_column_name}' and my route is {self.url}"
+        )
 
     def fetch_model(self, input_output: InputOutput) -> Model:
         lookup_column_value = self.get_model_id(input_output)
-        model = self.fetch_model_with_base_query(input_output).find(self.record_lookup_column_name + "=" + lookup_column_value)
+        model = self.fetch_model_with_base_query(input_output).find(
+            self.record_lookup_column_name + "=" + lookup_column_value
+        )
         if not model:
             raise clearskies.exceptions.NotFound("Not Found")
         return model
@@ -216,7 +224,11 @@ class Get(Endpoint):
 
         schema_model_name = string.camel_case_to_snake_case(output_schema.__name__)
         output_data_schema = self.documentation_data_schema(output_schema, self.readable_column_names)
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name),
+        output_autodoc = (
+            autodoc.schema.Object(
+                self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name
+            ),
+        )
 
         authentication = self.authentication
         standard_error_responses = [self.documentation_input_error_response()]
@@ -230,7 +242,7 @@ class Get(Endpoint):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,

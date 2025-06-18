@@ -16,6 +16,7 @@ from clearskies.query import Condition
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Datetime(Column):
     """
     Stores date+time data in a column.
@@ -26,6 +27,7 @@ class Datetime(Column):
     ```
     import clearskies
 
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -34,13 +36,14 @@ class Datetime(Column):
         name = clearskies.columns.String()
         my_datetime = clearskies.columns.Datetime()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["name", "my_datetime"],
             readable_column_names=["id", "name", "my_datetime"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
@@ -153,7 +156,9 @@ class Datetime(Column):
         if isinstance(value, str):
             value = dateparser.parse(value)
         if not isinstance(value, datetime.datetime):
-            raise TypeError(f"I was expecting to get a datetime from the backend but I didn't get anything recognizable.  I have a value of type '{value.__class__.__name__}'.  I need either a datetime object or a datetime serialized as a string.")
+            raise TypeError(
+                f"I was expecting to get a datetime from the backend but I didn't get anything recognizable.  I have a value of type '{value.__class__.__name__}'.  I need either a datetime object or a datetime serialized as a string."
+            )
         if self.timezone_aware:
             if not value.tzinfo:
                 value = value.replace(tzinfo=self.timezone)
@@ -170,7 +175,9 @@ class Datetime(Column):
 
         value = data[self.name]
         if not isinstance(data[self.name], datetime.datetime):
-            raise TypeError(f"I was expecting a stringified-date or a datetime object to send to the backend, but instead I found a value of {value.__class__.__name__}")
+            raise TypeError(
+                f"I was expecting a stringified-date or a datetime object to send to the backend, but instead I found a value of {value.__class__.__name__}"
+            )
 
         return {
             **data,
@@ -183,7 +190,7 @@ class Datetime(Column):
         """
         value = self.__get__(model, model.__class__)
         if value and (isinstance(value, datetime.datetime) or isinstance(value, datetime.date)):
-            value = value.isoformat() # type: ignore
+            value = value.isoformat()  # type: ignore
 
         return {self.name: value}
 

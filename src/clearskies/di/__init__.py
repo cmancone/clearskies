@@ -10,6 +10,5 @@ __all__ = [
     "AdditionalConfigAutoImport",
     "Di",
     "InjectableProperties",
-    "inject"
-    "Injectable",
+    "injectInjectable",
 ]

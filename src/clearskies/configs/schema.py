@@ -7,6 +7,7 @@ from clearskies.configs import config
 if TYPE_CHECKING:
     from clearskies.schema import Schema as SchemaType
 
+
 class Schema(config.Config):
     def __set__(self, instance, value: type[SchemaType]) -> None:
         if not hasattr(value, "get_columns"):

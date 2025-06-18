@@ -29,21 +29,23 @@ class Create(Endpoint):
     import clearskies
     from clearskies import validators, columns
 
+
     class MyAwesomeModel(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
         id = columns.Uuid()
-        name = clearskies.columns.String(validators=[
-            validators.Required(),
-            validators.MaximumLength(50),
-        ])
-        email = columns.Email(
-            validators=[validators.Unique()]
+        name = clearskies.columns.String(
+            validators=[
+                validators.Required(),
+                validators.MaximumLength(50),
+            ]
         )
+        email = columns.Email(validators=[validators.Unique()])
         some_number = columns.Integer()
         expires_at = columns.Date()
         created_at = columns.Created()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
@@ -146,7 +148,11 @@ class Create(Endpoint):
 
         schema_model_name = string.camel_case_to_snake_case(output_schema.__name__)
         output_data_schema = self.documentation_data_schema(output_schema, self.readable_column_names)
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name),
+        output_autodoc = (
+            autodoc.schema.Object(
+                self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name
+            ),
+        )
 
         authentication = self.authentication
         standard_error_responses = [self.documentation_input_error_response()]
@@ -160,7 +166,7 @@ class Create(Endpoint):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,

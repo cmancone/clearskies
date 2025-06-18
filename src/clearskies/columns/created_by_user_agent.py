@@ -11,6 +11,7 @@ from clearskies.columns.string import String
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class CreatedByUserAgent(String):
     """
     This column will automatically take the user agent from the client and store it in the model upon creation.
@@ -22,6 +23,7 @@ class CreatedByUserAgent(String):
     ```
     import clearskies
 
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -30,13 +32,14 @@ class CreatedByUserAgent(String):
         name = clearskies.columns.String()
         user_agent = clearskies.columns.CreatedByUserAgent()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["name"],
             readable_column_names=["id", "name", "user_agent"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```

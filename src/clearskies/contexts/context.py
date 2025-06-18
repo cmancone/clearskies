@@ -13,18 +13,19 @@ from clearskies.input_outputs import Programmatic
 if TYPE_CHECKING:
     from clearskies.input_outputs import InputOutput
 
+
 class Context:
-    di: Di = None # type: ignore
+    di: Di = None  # type: ignore
 
     def __init__(
         self,
         application: Callable | clearskies.endpoint.Endpoint | clearskies.endpoint_group.EndpointGroup,
-        classes: type | list[type]=[],
-        modules: ModuleType | list[ModuleType]=[],
-        bindings: dict[str, Any]={},
-        additional_configs: AdditionalConfig | list[AdditionalConfig]=[],
-        class_overrides: dict[type, type]={},
-        overrides: dict[str, type]={},
+        classes: type | list[type] = [],
+        modules: ModuleType | list[ModuleType] = [],
+        bindings: dict[str, Any] = {},
+        additional_configs: AdditionalConfig | list[AdditionalConfig] = [],
+        class_overrides: dict[type, type] = {},
+        overrides: dict[str, type] = {},
         now: datetime.datetime | None = None,
         utcnow: datetime.datetime | None = None,
     ):
@@ -35,7 +36,7 @@ class Context:
             additional_configs=additional_configs,
             class_overrides=class_overrides,
             now=now,
-            utcnow=utcnow
+            utcnow=utcnow,
         )
         self.application = application
 
@@ -45,7 +46,9 @@ class Context:
             return self.application(input_output)
         elif callable(self.application):
             try:
-                return input_output.respond(self.di.call_function(self.application, **input_output.get_context_for_callables()))
+                return input_output.respond(
+                    self.di.call_function(self.application, **input_output.get_context_for_callables())
+                )
             except clearskies.exceptions.ClientError as e:
                 return input_output.respond(str(e), 400)
             except clearskies.exceptions.Authentication as e:
@@ -61,19 +64,21 @@ class Context:
 
     def __call__(
         self,
-        url: str="",
-        request_method: str="GET",
-        body: str | dict[str, Any] | list[Any]="",
-        query_parameters: dict[str, str]={},
-        request_headers: dict[str, str]={},
+        url: str = "",
+        request_method: str = "GET",
+        body: str | dict[str, Any] | list[Any] = "",
+        query_parameters: dict[str, str] = {},
+        request_headers: dict[str, str] = {},
     ):
-        return self.execute_application(Programmatic(
-            url=url,
-            request_method=request_method,
-            body=body,
-            query_parameters=query_parameters,
-            request_headers=request_headers,
-        ))
+        return self.execute_application(
+            Programmatic(
+                url=url,
+                request_method=request_method,
+                body=body,
+                query_parameters=query_parameters,
+                request_headers=request_headers,
+            )
+        )
 
-    def build(self, thing: Any, cache: bool=False) -> Any:
+    def build(self, thing: Any, cache: bool = False) -> Any:
         return self.di.build(thing, cache=cache)

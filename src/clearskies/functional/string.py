@@ -18,8 +18,10 @@ def camel_case_to_words(string):
     string = re.sub("([a-z0-9])([A-Z])", r"\1 \2", string).lower()
     return string
 
+
 def camel_case_to_nice(string):
     return camel_case_to_words(string).title()
+
 
 def title_case_to_snake_case(string: str) -> str:
     """
@@ -35,8 +37,10 @@ def title_case_to_camel_case(string: str) -> str:
         return string.lower()
     return string[0].lower() + string[1:]
 
+
 def title_case_to_nice(string: str) -> str:
     return camel_case_to_nice(string)
+
 
 def snake_case_to_title_case(string: str) -> str:
     """
@@ -65,8 +69,10 @@ def snake_case_to_camel_case(string: str) -> str:
     words = string.lower().split("_")
     return words[0] + "".join([x.title() for x in words[1:]])
 
+
 def snake_case_to_nice(string: str) -> str:
     return camel_case_to_nice(snake_case_to_camel_case(string))
+
 
 casings = ["camelCase", "snake_case", "TitleCase"]
 casing_swap_map = {
@@ -93,7 +99,7 @@ def swap_casing(string: str, from_casing: str, to_casing: str) -> str:
         raise ValueError(f"Invalid casing '{from_casing}'.  Must be one of '" + "', ".join(casings) + "'")
     if to_casing not in casings:
         raise ValueError(f"Invalid casing '{to_casing}'.  Must be one of '" + "', ".join(casings) + "'")
-    return casing_swap_map[from_casing][to_casing](string) # type: ignore
+    return casing_swap_map[from_casing][to_casing](string)  # type: ignore
 
 
 def make_plural(singular: str):

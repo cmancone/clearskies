@@ -14,14 +14,14 @@ class Cors(SecurityHeader):
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
-            self,
-            credentials: bool = False,
-            expose_headers: list[str] = [],
-            headers: list[str] = [],
-            max_age: int = 5,
-            methods: list[str] = [],
-            origin: str = "",
-        ):
+        self,
+        credentials: bool = False,
+        expose_headers: list[str] = [],
+        headers: list[str] = [],
+        max_age: int = 5,
+        methods: list[str] = [],
+        origin: str = "",
+    ):
         self.finalize_and_validate_configuration()
 
     def set_headers(self, headers: list[str]):

@@ -13,4 +13,5 @@ class AdditionalConfigAutoImport(AdditionalConfig):
     Note that automatically-imported AdditionalConfig classes automatically have lower priority than
     any AdditionalConfig classes added explicitly to the Di container.
     """
+
     pass

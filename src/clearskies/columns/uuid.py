@@ -24,12 +24,14 @@ class Uuid(String):
     ```
     import clearskies
 
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
@@ -62,7 +64,6 @@ class Uuid(String):
     _descriptor_config_map = None
 
     uuid = clearskies.di.inject.Uuid()
-
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(

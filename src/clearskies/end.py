@@ -21,7 +21,7 @@ class End(ABC):
     """
 
     def add_url_prefix(self, prefix: str) -> None:
-        self.url = (prefix.rstrip('/') + '/' + self.url.lstrip('/')).lstrip('/')
+        self.url = (prefix.rstrip("/") + "/" + self.url.lstrip("/")).lstrip("/")
 
     def top_level_authentication_and_authorization(self, input_output: InputOutput) -> None:
         """
@@ -107,16 +107,22 @@ class End(ABC):
     def add_response_headers(self, input_output: InputOutput) -> None:
         if self.response_headers:
             if callable(self.response_headers):
-                response_headers = self.di.call_function(self.response_headers, **input_output.get_context_for_callables())
+                response_headers = self.di.call_function(
+                    self.response_headers, **input_output.get_context_for_callables()
+                )
             else:
                 response_headers = self.response_headers
 
-            for (index, response_header) in enumerate(response_headers):
+            for index, response_header in enumerate(response_headers):
                 if not isinstance(response_header, str):
-                    raise TypeError(f"Invalid response header in entry #{index+1}: the header should be a string, but I was given a type of '{header.__class__.__name__}' instead.")
+                    raise TypeError(
+                        f"Invalid response header in entry #{index + 1}: the header should be a string, but I was given a type of '{header.__class__.__name__}' instead."
+                    )
                 parts = response_header.split(":", 1)
                 if len(parts) != 2:
-                    raise ValueError(f"Invalid response header in entry #{index+1}: the header should be a string in the form of 'key: value' but the given header did not have a colon to separate key and value.")
+                    raise ValueError(
+                        f"Invalid response header in entry #{index + 1}: the header should be a string in the form of 'key: value' but the given header did not have a colon to separate key and value."
+                    )
                 input_output.response_headers.add(parts[0], parts[1])
         for security_header in self.security_headers:
             security_header.set_headers_for_input_output(input_output)
@@ -137,7 +143,9 @@ class End(ABC):
             self.auto_case_internal_column_name("status"): self.auto_case_internal_column_name(response_data["status"]),
             self.auto_case_internal_column_name("error"): response_data.get("error", ""),
             self.auto_case_internal_column_name("data"): response_data.get("data", []),
-            self.auto_case_internal_column_name("pagination"): self.normalize_pagination(response_data.get("pagination", {})),
+            self.auto_case_internal_column_name("pagination"): self.normalize_pagination(
+                response_data.get("pagination", {})
+            ),
             self.auto_case_internal_column_name("input_errors"): response_data.get("input_errors", {}),
         }
 

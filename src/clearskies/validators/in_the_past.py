@@ -14,6 +14,7 @@ from clearskies.validator import Validator
 if TYPE_CHECKING:
     import clearskies.model
 
+
 class InThePast(Validator, clearskies.di.InjectableProperties):
     utcnow = clearskies.di.inject.Utcnow()
 

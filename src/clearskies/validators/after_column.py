@@ -17,6 +17,7 @@ class AfterColumn(Validator):
     """
     The name of the other date column for comparison.
     """
+
     other_column_name = clearskies.configs.String(default="", required=True)
 
     """
@@ -52,7 +53,9 @@ class AfterColumn(Validator):
 
         return self.date_comparison(my_value, other_value, column_name)
 
-    def date_comparison(self, incoming_date: datetime.datetime, comparison_date: datetime.datetime, column_name: str) -> str:
+    def date_comparison(
+        self, incoming_date: datetime.datetime, comparison_date: datetime.datetime, column_name: str
+    ) -> str:
         if incoming_date == comparison_date:
             return "" if self.allow_equal else f"'{column_name}' must be after '{self.other_column_name}'"
 
