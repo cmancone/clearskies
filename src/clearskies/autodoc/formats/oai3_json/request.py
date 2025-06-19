@@ -1,6 +1,6 @@
-from .response import Response
+from ...schema import Array, Object
 from .parameter import Parameter
-from ...schema import Object, Array
+from .response import Response
 
 
 class Request:

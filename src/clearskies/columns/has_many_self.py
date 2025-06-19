@@ -17,6 +17,7 @@ class HasManySelf(HasMany):
 
     See also BelongsToSelf.
     """
+
     _descriptor_config_map = None
 
     @parameters_to_properties.parameters_to_properties

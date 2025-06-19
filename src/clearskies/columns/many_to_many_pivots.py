@@ -1,17 +1,19 @@
 from __future__ import annotations
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
+
 from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Callable, Self, overload
 
 import clearskies.typing
-from clearskies import configs, parameters_to_properties # type: ignore
-from clearskies.column import Column
-from clearskies.functional import string
+from clearskies import configs, parameters_to_properties  # type: ignore
 from clearskies.autodoc.schema import Array as AutoDocArray
 from clearskies.autodoc.schema import Object as AutoDocObject
+from clearskies.column import Column
 from clearskies.columns.many_to_many_ids import ManyToManyIds
+from clearskies.functional import string
 
 if TYPE_CHECKING:
     from clearskies import Model
+
 
 class ManyToManyPivots(Column):
     """
@@ -36,9 +38,7 @@ class ManyToManyPivots(Column):
         pass
 
     def finalize_configuration(self, model_class: type, name: str) -> None:
-        """
-        Finalize and check the configuration.
-        """
+        """Finalize and check the configuration."""
         getattr(self.__class__, "many_to_many_column_name").set_model_class(model_class)
         self.model_class = model_class
         self.name = name
@@ -47,7 +47,9 @@ class ManyToManyPivots(Column):
         # finally, make sure we're really pointed at a many-to-many column
         many_to_many_column = getattr(model_class, self.many_to_many_column_name)
         if not isinstance(many_to_many_column, ManyToManyIds):
-            raise ValueError(f"Error with configuration for {model_class.__name__}.{name}, which is a ManyToManyModels column.  It needs to point to a ManyToManyIds column, and it was told to use {model_class.__name__}.{self.many_to_many_column_name}, but this is not a ManyToManyIds column.")
+            raise ValueError(
+                f"Error with configuration for {model_class.__name__}.{name}, which is a ManyToManyModels column.  It needs to point to a ManyToManyIds column, and it was told to use {model_class.__name__}.{self.many_to_many_column_name}, but this is not a ManyToManyIds column."
+            )
 
     @property
     def pivot_model(self):
@@ -78,7 +80,7 @@ class ManyToManyPivots(Column):
             self.model_class = cls
             return self
 
-        many_to_many_column = self.many_to_many_column # type: ignore
+        many_to_many_column = self.many_to_many_column  # type: ignore
         own_column_name_in_pivot = self.config("own_column_name_in_pivot")
         my_id = data[self.config("own_id_column_name")]
         return [model for model in self.pivot_models.where(f"{own_column_name_in_pivot}={my_id}")]
@@ -86,18 +88,12 @@ class ManyToManyPivots(Column):
     def __set__(self, instance, value: Model | list[Model] | list[dict[str, Any]]) -> None:
         raise NotImplementedError("Saving not supported for ManyToManyPivots")
 
-    def add_search(
-        self,
-        model: Model,
-        value: str,
-        operator: str="",
-        relationship_reference: str=""
-    ) -> Model:
+    def add_search(self, model: Model, value: str, operator: str = "", relationship_reference: str = "") -> Model:
         raise NotImplementedError("Searching not supported for ManyToManyPivots")
 
     def to_json(self, model: Model) -> dict[str, Any]:
         records = []
-        many_to_many_column = self.many_to_many_column # type: ignore
+        many_to_many_column = self.many_to_many_column  # type: ignore
         columns = many_to_many_column.pivot_columns
         readable_column_names = many_to_many_column.readable_pivot_column_names
         pivot_id_column_name = many_to_many_column.pivot_model_class.id_column_name
@@ -108,14 +104,14 @@ class ManyToManyPivots(Column):
             for column_name in readable_column_names:
                 column_data = columns[column_name].to_json(pivot)
                 if type(column_data) == dict:
-                    json = {**json, **column_data} # type: ignore
+                    json = {**json, **column_data}  # type: ignore
                 else:
                     json[column_name] = column_data
             records.append(json)
         return {self.name: records}
 
-    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None):
-        many_to_many_column = self.many_to_many_column # type: ignore
+    def documentation(self, name: str | None = None, example: str | None = None, value: str | None = None):
+        many_to_many_column = self.many_to_many_column  # type: ignore
         columns = many_to_many_column.pivot_columns
         pivot_id_column_name = many_to_many_column.pivot_model_class.id_column_name
         pivot_properties = [columns[pivot_id_column_name].documentation()]

@@ -1,10 +1,12 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock, call
-import datetime
 
 import dateparser
+
 import clearskies
 from clearskies.contexts import Context
+
 
 class ColumnTest(unittest.TestCase):
     def test_default(self):
@@ -17,9 +19,7 @@ class ColumnTest(unittest.TestCase):
 
         context = clearskies.contexts.Context(
             clearskies.endpoints.Callable(
-                lambda widgets: widgets.create(no_data=True),
-                model_class=Widget,
-                readable_column_names=["id", "name"]
+                lambda widgets: widgets.create(no_data=True), model_class=Widget, readable_column_names=["id", "name"]
             ),
             classes=[Widget],
         )
@@ -35,8 +35,10 @@ class ColumnTest(unittest.TestCase):
             name = clearskies.columns.String(setable="Spot")
             date_of_birth = clearskies.columns.Date()
             age = clearskies.columns.Integer(
-                setable=lambda data, model, now:
-                    (now-dateparser.parse(model.latest("date_of_birth", data))).total_seconds()/(86400*365),
+                setable=lambda data, model, now: (
+                    now - dateparser.parse(model.latest("date_of_birth", data))
+                ).total_seconds()
+                / (86400 * 365),
             )
             created = clearskies.columns.Created()
 
@@ -44,7 +46,7 @@ class ColumnTest(unittest.TestCase):
             clearskies.endpoints.Callable(
                 lambda pets: pets.create({"date_of_birth": "2020-05-03"}),
                 model_class=Pet,
-                readable_column_names=["id", "name", "date_of_birth", "age"]
+                readable_column_names=["id", "name", "date_of_birth", "age"],
             ),
             classes=[Pet],
             now=datetime.datetime(2025, 5, 3, 0, 0, 0),
@@ -63,8 +65,10 @@ class ColumnTest(unittest.TestCase):
             name = clearskies.columns.String()
             date_of_birth = clearskies.columns.Date(is_temporary=True)
             age = clearskies.columns.Integer(
-                setable=lambda data, model, now:
-                    (now-dateparser.parse(model.latest("date_of_birth", data))).total_seconds()/(86400*365),
+                setable=lambda data, model, now: (
+                    now - dateparser.parse(model.latest("date_of_birth", data))
+                ).total_seconds()
+                / (86400 * 365),
             )
             created = clearskies.columns.Created()
 
@@ -86,13 +90,13 @@ class ColumnTest(unittest.TestCase):
             backend = clearskies.backends.MemoryBackend()
 
             id = clearskies.columns.Uuid()
-            name = clearskies.columns.String(validators=[
-                clearskies.validators.Required(),
-                clearskies.validators.MinimumLength(5),
-            ])
-            date_of_birth = clearskies.columns.Date(validators=[
-                clearskies.validators.InThePast()
-            ])
+            name = clearskies.columns.String(
+                validators=[
+                    clearskies.validators.Required(),
+                    clearskies.validators.MinimumLength(5),
+                ]
+            )
+            date_of_birth = clearskies.columns.Date(validators=[clearskies.validators.InThePast()])
             created = clearskies.columns.Created()
 
         context = clearskies.contexts.Context(
@@ -105,28 +109,18 @@ class ColumnTest(unittest.TestCase):
         (status_code, response_data, response_headers) = context()
         assert status_code == 404
 
-        (status_code, response_data, response_headers) = context(
-            request_method="POST",
-            body={"date_of_birth": "asdf"}
-        )
+        (status_code, response_data, response_headers) = context(request_method="POST", body={"date_of_birth": "asdf"})
         assert list(response_data["input_errors"].keys()) == ["name", "date_of_birth"]
 
-        (status_code, response_data, response_headers) = context(
-            request_method="POST",
-            body={"name": "asdf"}
-        )
+        (status_code, response_data, response_headers) = context(request_method="POST", body={"name": "asdf"})
         assert list(response_data["input_errors"].keys()) == ["name"]
 
         (status_code, response_data, response_headers) = context(
-            request_method="POST",
-            body={"name": "longer", "date_of_birth": "2050-05-03"}
+            request_method="POST", body={"name": "longer", "date_of_birth": "2050-05-03"}
         )
         assert list(response_data["input_errors"].keys()) == ["date_of_birth"]
 
-        (status_code, response_data, response_headers) = context(
-            request_method="POST",
-            body={"name": "Long Enough"}
-        )
+        (status_code, response_data, response_headers) = context(request_method="POST", body={"name": "Long Enough"})
         assert response_data["data"]["name"] == "Long Enough"
         assert response_data["data"]["date_of_birth"] == None
 
@@ -151,7 +145,7 @@ class ColumnTest(unittest.TestCase):
                 writeable_column_names=["status"],
                 readable_column_names=["id", "status", "fulfilled_at"],
             ),
-            utcnow=utcnow
+            utcnow=utcnow,
         )
         context()
         (status_code, response_data, response_headers) = context(body={"status": "Open"}, request_method="POST")
@@ -169,10 +163,9 @@ class ColumnTest(unittest.TestCase):
             status = clearskies.columns.Select(
                 ["Open", "On Hold", "Fulfilled"],
                 on_change_post_save=[
-                    lambda model, data, order_histories: order_histories.create({
-                        "order_id": model.latest("id", data),
-                        "event": "Order status changed to " + data["status"]
-                    }),
+                    lambda model, data, order_histories: order_histories.create(
+                        {"order_id": model.latest("id", data), "event": "Order status changed to " + data["status"]}
+                    ),
                 ],
             )
 
@@ -234,6 +227,8 @@ class ColumnTest(unittest.TestCase):
                 url="/:account_id",
             ),
         )
-        (status_code, response_data, response_headers) = context(url="/1-2-3-4", request_method="POST", body={"name":"Bob"})
+        (status_code, response_data, response_headers) = context(
+            url="/1-2-3-4", request_method="POST", body={"name": "Bob"}
+        )
         assert response_data["data"]["name"] == "Bob"
         assert response_data["data"]["account_id"] == "1-2-3-4"

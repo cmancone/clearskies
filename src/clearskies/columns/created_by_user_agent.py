@@ -1,14 +1,16 @@
 from __future__ import annotations
-import datetime
-from typing import Any, TYPE_CHECKING
 
-import clearskies.typing
-from clearskies.columns.string import String
-from clearskies import configs
+import datetime
+from typing import TYPE_CHECKING, Any
+
 import clearskies.parameters_to_properties
+import clearskies.typing
+from clearskies import configs
+from clearskies.columns.string import String
 
 if TYPE_CHECKING:
     from clearskies import Model
+
 
 class CreatedByUserAgent(String):
     """
@@ -18,8 +20,9 @@ class CreatedByUserAgent(String):
     (depending on the context).  This is a good thing if you are trying to consistely provide audit information,
     but may be a problem if your model creation needs to happen more flexibly.  Example:
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -29,20 +32,21 @@ class CreatedByUserAgent(String):
         name = clearskies.columns.String()
         user_agent = clearskies.columns.CreatedByUserAgent()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["name"],
             readable_column_names=["id", "name", "user_agent"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
 
     And if you invoked this:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Bob"}' | jq
     {
         "status": "success",

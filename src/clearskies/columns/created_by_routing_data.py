@@ -1,6 +1,6 @@
 import clearskies.typing
-from clearskies.columns.string import String
 from clearskies import configs, parameters_to_properties
+from clearskies.columns.string import String
 
 
 class CreatedByRoutingData(String):
@@ -19,8 +19,9 @@ class CreatedByRoutingData(String):
     related to `BelongsToId`, so instead you would use the `BelongsToId` column and set `created_by_source_type` to `routing_data` and
     `created_by_source_key` to `user_id`.  Example usage:
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -30,6 +31,7 @@ class CreatedByRoutingData(String):
         name = clearskies.columns.String()
         organization_id = clearskies.columns.CreatedByRoutingData("organization_id")
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
@@ -37,14 +39,14 @@ class CreatedByRoutingData(String):
             writeable_column_names=["name"],
             readable_column_names=["id", "name", "organization_id"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
 
     And if you invoked this:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/my-org-id' -d '{"name":"Bob"}' | jq
     {
         "status": "success",

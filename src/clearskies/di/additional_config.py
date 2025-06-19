@@ -1,5 +1,6 @@
 from typing import Any
 
+
 class AdditionalConfig:
     """
     This class allows you to add additional names to the Di container.
@@ -24,33 +25,37 @@ class AdditionalConfig:
     extend the `can_cache` method and have it return True/False depending on the name and context.
 
     Example:
-
-    ```
+    ```python
     from clearskies.di import Di, AdditionalConfig
+
 
     class MyAdditionalConfig(AdditionalConfig):
         def provide_inner_dependency(self):
             return 5
 
         def provide_important_thing(self, inner_dependency):
-            return inner_dependency*10
+            return inner_dependency * 10
+
 
     class AnotherAdditionalConfig(AdditionalConfig):
         def provide_inner_dependency(self):
             return 10
+
 
     di = Di(additional_configs=[MyAdditionalConfig(), AnotherAdditionalConfig()])
     # Equivalent:
     # di = Di()
     # di.add_addtional_configs([MyAdditionalConfig(), AnotherAdditionalConfig()])
 
+
     def my_function(important_thing):
-        print(important_thing) # prints 100
+        print(important_thing)  # prints 100
     ```
     """
+
     def can_cache(self, name: str, di, context: str) -> bool:
         """
-        Cache control!
+        Cache control.
 
         The Di container caches values by default, but this method allows you to override that.
         After fetching an object from the AdditionalConfig class, the Di container will call this method to
@@ -61,12 +66,12 @@ class AdditionalConfig:
         cache for a value.  The importance is that, once there is a value in the cache, that will be reused
         for all future requests for that name.  Example:
 
-        ```
+        ```python
         from clearskies.di import Di, AdditionalConfig
         import secrets
 
-        class MyAdditionalConfig(AdditionalConfig):
 
+        class MyAdditionalConfig(AdditionalConfig):
             def provide_random_number_not_cached(self):
                 return secrets.randbelow(100)
 
@@ -76,11 +81,14 @@ class AdditionalConfig:
             def can_cache(self, name, context=None):
                 return name == "random_number_not_cached"
 
+
         di = Di(additional_configs=MyAdditionalConfig())
+
 
         def my_function(random_number_cached, random_number_not_cached):
             print(random_number_cached)
             print(random_number_not_cached)
+
 
         di.call_function(my_function)
         di.call_function(my_function)
@@ -110,19 +118,13 @@ class AdditionalConfig:
         return di.call_function(getattr(self, f"provide_{name}"))
 
     def can_build_class(self, class_to_check: type) -> bool:
-        """
-        Return True/False to denote if this AdditionalConfig class can provide a given class.
-        """
+        """Return True/False to denote if this AdditionalConfig class can provide a given class."""
         return False
 
     def build_class(self, class_to_provide: type, argument_name: str, di, context: str = "") -> Any:
-        """
-        Return the desired instance of a given class.
-        """
+        """Return the desired instance of a given class."""
         pass
 
     def can_cache_class(self, class_to_build: type, di, context: str) -> bool:
-        """
-        Control whether or not the Di container caches the instance after building a class
-        """
+        """Control whether or not the Di container caches the instance after building a class."""
         return False

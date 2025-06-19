@@ -1,12 +1,15 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Any
 
 import requests
-from clearskies.authentication.authorization import Authorization
+
 import clearskies.configurable
+from clearskies.authentication.authorization import Authorization
 
 if TYPE_CHECKING:
     from clearskies.security_headers.cors import Cors
+
 
 class Authentication(clearskies.configurable.Configurable, requests.auth.AuthBase):
     is_public = True
@@ -16,7 +19,7 @@ class Authentication(clearskies.configurable.Configurable, requests.auth.AuthBas
     def clear_credential_cache(self) -> None:
         pass
 
-    def headers(self, retry_auth: bool=False) -> dict[str, str]:
+    def headers(self, retry_auth: bool = False) -> dict[str, str]:
         return {}
 
     def authenticate(self, input_output) -> bool:
@@ -35,5 +38,5 @@ class Authentication(clearskies.configurable.Configurable, requests.auth.AuthBas
         return ""
 
     def __call__(self, request: requests.models.PreparedRequest) -> requests.models.PreparedRequest:
-        request.headers = {**request.headers, **self.headers()} # type: ignore
+        request.headers = {**request.headers, **self.headers()}  # type: ignore
         return request

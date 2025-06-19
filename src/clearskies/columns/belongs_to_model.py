@@ -1,22 +1,20 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, overload, Self
-from collections import OrderedDict
 
+from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Self, overload
+
+import clearskies.parameters_to_properties
 from clearskies import configs
 from clearskies.column import Column
 from clearskies.columns.belongs_to_id import BelongsToId
 from clearskies.functional import validations
-import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class BelongsToModel(Column):
-    """
-    Returns the model object for a belongs to relationship.
-
-
-    """
+    """Return the model object for a belongs to relationship."""
 
     """ The name of the belongs to column we are connected to. """
     belongs_to_column_name = configs.ModelColumn(required=True)
@@ -32,9 +30,7 @@ class BelongsToModel(Column):
         pass
 
     def finalize_configuration(self, model_class: type, name: str) -> None:
-        """
-        Finalize and check the configuration.
-        """
+        """Finalize and check the configuration."""
         getattr(self.__class__, "belongs_to_column_name").set_model_class(model_class)
         self.model_class = model_class
         self.name = name
@@ -43,7 +39,9 @@ class BelongsToModel(Column):
         # finally, let the belongs to column know about us and make sure it's the right thing.
         belongs_to_column = getattr(model_class, self.belongs_to_column_name)
         if not isinstance(belongs_to_column, BelongsToId):
-            raise ValueError(f"Error with configuration for {model_class.__name__}.{name}, which is a BelongsToModel.  It needs to point to a belongs to column, and it was told to use {model_class.__name__}.{self.belongs_to_column_name}, but this is not a BelongsToId column.")
+            raise ValueError(
+                f"Error with configuration for {model_class.__name__}.{name}, which is a BelongsToModel.  It needs to point to a belongs to column, and it was told to use {model_class.__name__}.{self.belongs_to_column_name}, but this is not a BelongsToId column."
+            )
         belongs_to_column.model_column_name = name
 
     @overload
@@ -57,7 +55,7 @@ class BelongsToModel(Column):
     def __get__(self, model, cls):
         if model is None:
             self.model_class = cls
-            return self # type:  ignore
+            return self  # type:  ignore
 
         belongs_to_column = getattr(model.__class__, self.belongs_to_column_name)
         parent_id = getattr(model, self.belongs_to_column_name)
@@ -89,7 +87,9 @@ class BelongsToModel(Column):
         # belongs_to_id column, which is the only one that is actually saved.
         if self.name in data:
             value = data[self.name]
-            data[self.belongs_to_column_name] = getattr(value, value.id_column_name) if validations.is_model(value) else value
+            data[self.belongs_to_column_name] = (
+                getattr(value, value.id_column_name) if validations.is_model(value) else value
+            )
         return super().pre_save(data, model)
 
     def add_join(self, model: Model) -> Model:
@@ -99,28 +99,26 @@ class BelongsToModel(Column):
         return getattr(self.model_class, self.belongs_to_column_name).join_table_alias()
 
     def add_search(
-        self,
-        model: clearskies.model.Model,
-        value: str,
-        operator: str="",
-        relationship_reference: str=""
+        self, model: clearskies.model.Model, value: str, operator: str = "", relationship_reference: str = ""
     ) -> clearskies.model.Model:
-        return getattr(self.model_class, self.belongs_to_column_name).add_search(model, value, operator, relationship_reference=relationship_reference)
+        return getattr(self.model_class, self.belongs_to_column_name).add_search(
+            model, value, operator, relationship_reference=relationship_reference
+        )
 
     def to_json(self, model: Model) -> dict[str, Any]:
-        """
-        Converts the column into a json-friendly representation
-        """
+        """Convert the column into a json-friendly representation."""
         belongs_to_column = getattr(model.__class__, self.belongs_to_column_name)
         if not belongs_to_column.readable_parent_columns:
-            raise ValueError(f"Configuration error for {model.__class__.__name__}: I can't convert to JSON unless you set readable_parent_columns on my parent attribute, {model.__class__.__name__}.{self.belongs_to_column_name}.")
+            raise ValueError(
+                f"Configuration error for {model.__class__.__name__}: I can't convert to JSON unless you set readable_parent_columns on my parent attribute, {model.__class__.__name__}.{self.belongs_to_column_name}."
+            )
 
         # otherwise return an object with the readable parent columns
         columns = belongs_to_column.parent_columns
         parent = getattr(model, self.name)
         json: dict[str, Any] = OrderedDict()
         for column_name in belongs_to_column.readable_parent_columns:
-            json = {**json, **columns[column_name].to_json(parent)} # type: ignore
+            json = {**json, **columns[column_name].to_json(parent)}  # type: ignore
         return {
             self.name: json,
         }

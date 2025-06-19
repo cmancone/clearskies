@@ -40,6 +40,7 @@ name = "PyPI"
 priority = "primary"
 
 [tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
 mypy = "^1.13.0"
 pre-commit = "^3.2.2"
 pytest = "^8.3.1"
@@ -50,9 +51,23 @@ types-pymysql = "^1.1.0.20250516"
 types-requests = "^2.32.4.20250611"
 
 [tool.pytest]
-addopts = "--ignore=src/clearskies/contexts/test.py"
+addopts = "--ignore=src/clearskies/contexts/test.py --cache-clear"
 
 [build-system]
 requires = ['poetry-core (>=2.0,<3.0)']
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+# The following is Black's default, but it's good to be explicit
+# to match your Ruff config.
+skip-magic-trailing-comma = false
+preview = true
+
+[tool.mypy]
+python_version = "3.11"
+
+exclude = [
+ ".*_test\\.py$"
+]
 

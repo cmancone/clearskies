@@ -1,8 +1,9 @@
-import unittest
 import datetime
+import unittest
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class CallableTest(unittest.TestCase):
     def test_overview(self):
@@ -46,38 +47,48 @@ class CallableTest(unittest.TestCase):
             last_name = clearskies.columns.String()
             age = clearskies.columns.Integer(validators=[clearskies.validators.MinimumValue(0)])
 
-        context = Context(clearskies.endpoints.Callable(
-            lambda request_data: request_data,
-            request_methods=["POST"],
-            input_schema=ExpectedInput,
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda request_data: request_data,
+                request_methods=["POST"],
+                input_schema=ExpectedInput,
+            )
+        )
 
-        (status_code, response, response_headers) = context(body={"first_name":"Jane","last_name":"Doe","age":1}, request_method="POST")
+        (status_code, response, response_headers) = context(
+            body={"first_name": "Jane", "last_name": "Doe", "age": 1}, request_method="POST"
+        )
         assert status_code == 200
         assert response["data"] == {"first_name": "Jane", "last_name": "Doe", "age": 1}
 
-        (status_code, response, response_headers) = context(body={"last_name":10,"age":-1,"check":"cool"}, request_method="POST")
+        (status_code, response, response_headers) = context(
+            body={"last_name": 10, "age": -1, "check": "cool"}, request_method="POST"
+        )
         assert status_code == 200
         assert response["input_errors"] == {
             "age": "'age' must be at least 0.",
             "first_name": "'first_name' is required.",
             "last_name": "value should be a string",
-            "check": "Input column check is not an allowed input column."
+            "check": "Input column check is not an allowed input column.",
         }
 
     def test_standard_response(self):
-        context = Context(clearskies.endpoints.Callable(
-            lambda: {"hello": "world"},
-            return_standard_response=True,
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda: {"hello": "world"},
+                return_standard_response=True,
+            )
+        )
 
         (status_code, response, response_headers) = context()
         assert response["data"] == {"hello": "world"}
 
-        context = Context(clearskies.endpoints.Callable(
-            lambda: {"hello": "world"},
-            return_standard_response=False,
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda: {"hello": "world"},
+                return_standard_response=False,
+            )
+        )
 
         (status_code, response, response_headers) = context()
         assert response == {"hello": "world"}

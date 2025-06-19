@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from clearskies import action
@@ -7,8 +8,11 @@ from clearskies.configs import config
 if TYPE_CHECKING:
     from clearskies import typing
 
+
 class Actions(config.Config):
     """
+    Action config.
+
     A config that accepts various things that are accepted as actions in model lifecycle hooks:
 
      1. A callable (which should accept `model` as a parameter)
@@ -28,7 +32,7 @@ class Actions(config.Config):
 
             error_prefix = self._error_prefix(instance)
             raise TypeError(
-                f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index+1} when a callable or Action is required"
+                f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index + 1} when a callable or Action is required"
             )
 
         instance._set_config(self, [*value])

@@ -1,9 +1,10 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock, call
-import datetime
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class SelectTest(unittest.TestCase):
     def test_default(self):
@@ -29,4 +30,3 @@ class SelectTest(unittest.TestCase):
         )
         (status_code, response_data, response_headers) = context()
         assert response_data["data"] == now.isoformat()
-

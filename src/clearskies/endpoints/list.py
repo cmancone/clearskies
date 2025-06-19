@@ -1,23 +1,20 @@
 from __future__ import annotations
-import inspect
-from typing import TYPE_CHECKING, Callable, Any
 
-from clearskies import authentication
-from clearskies import autodoc
-from clearskies import typing
-from clearskies.endpoint import Endpoint
+import inspect
 from collections import OrderedDict
-from clearskies import autodoc
-from clearskies.functional import string
-from clearskies.input_outputs import InputOutput
+from typing import TYPE_CHECKING, Any, Callable
+
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import authentication, autodoc, typing
+from clearskies.endpoint import Endpoint
+from clearskies.functional import string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
-    from clearskies.model import Model
-    from clearskies import Schema
-    from clearskies import SecurityHeader
+    from clearskies import Schema, SecurityHeader
     from clearskies.column import Column
+    from clearskies.model import Model
 
 
 class List(Endpoint):
@@ -35,14 +32,16 @@ class List(Endpoint):
 
     Here's a basic working example:
 
-    ```
+    ```python
     import clearskies
+
 
     class User(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     list_users = clearskies.endpoints.List(
         model_class=User,
@@ -62,17 +61,17 @@ class List(Endpoint):
                         {"id": "1-2-3-4", "name": "Bob"},
                         {"id": "1-2-3-5", "name": "Jane"},
                         {"id": "1-2-3-6", "name": "Greg"},
-                    ]
+                    ],
                 },
             ]
-        }
+        },
     )
     wsgi()
     ```
 
     You can then fetch your records:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' | jq
     {
         "status": "success",
@@ -93,7 +92,7 @@ class List(Endpoint):
 
     Pagination can be set via query parameters or the JSON body:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/?sort=name&direction=desc&limit=2' | jq
     {
         "status": "success",
@@ -119,20 +118,20 @@ class List(Endpoint):
     Use `where`, `joins`, and `group_by` to automatically adjust the query used by the list endpoint.  In particular, where is a list of either
     conditions (as a string) or a callable that can modify the query directly via the model class.  For example:
 
-    ```
+    ```python
     list_users = clearskies.endpoints.List(
         model_class=User,
         readable_column_names=["id", "name"],
         sortable_column_names=["id", "name"],
         default_sort_column_name="name",
-        where=[User.name.equals("Jane")], # equivalent: where=["name=Jane"]
+        where=[User.name.equals("Jane")],  # equivalent: where=["name=Jane"]
     )
     ```
 
     With the above definition, the list endpoint will only ever return records with a name of "Jane".  The following uses standard dependency
     injection rules to execute a similar filter based on arbitrary logic required:
 
-    ```
+    ```python
     import datetime
 
     list_users = clearskies.endpoints.List(
@@ -140,7 +139,11 @@ class List(Endpoint):
         readable_column_names=["id", "name"],
         sortable_column_names=["id", "name"],
         default_sort_column_name="name",
-        where=[lambda model, now: model.where("name=Jane") if now > datetime.datetime(2025, 1, 1) else model],
+        where=[
+            lambda model, now: model.where("name=Jane")
+            if now > datetime.datetime(2025, 1, 1)
+            else model
+        ],
     )
     ```
 
@@ -176,7 +179,9 @@ class List(Endpoint):
 
     readable_column_names = clearskies.configs.ReadableModelColumns("model_class")
     sortable_column_names = clearskies.configs.ReadableModelColumns("model_class", allow_relationship_references=True)
-    searchable_column_names = clearskies.configs.SearchableModelColumns("model_class", allow_relationship_references=True)
+    searchable_column_names = clearskies.configs.SearchableModelColumns(
+        "model_class", allow_relationship_references=True
+    )
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -235,13 +240,15 @@ class List(Endpoint):
             raise clearskies.exceptions.ClientError("Request body was not valid JSON")
         if input_output.request_data and not isinstance(input_output.request_data, dict):
             raise clearskies.exceptions.ClientError("When present, request body must be a JSON dictionary")
-        request_data = self.map_input_to_internal_names(input_output.request_data) # type: ignore
+        request_data = self.map_input_to_internal_names(input_output.request_data)  # type: ignore
         query_parameters = self.map_input_to_internal_names(input_output.query_parameters)
         pagination_data = {}
         for key in model.allowed_pagination_keys():
             if key in request_data and key in query_parameters:
                 original_name = self.auto_case_internal_column_name(key)
-                raise clearskies.exceptions.ClientError(f"Ambiguous request: key '{original_name}' is present in both the JSON body and URL data")
+                raise clearskies.exceptions.ClientError(
+                    f"Ambiguous request: key '{original_name}' is present in both the JSON body and URL data"
+                )
             if key in request_data:
                 pagination_data[key] = request_data[key]
                 del request_data[key]
@@ -270,7 +277,13 @@ class List(Endpoint):
             next_page=model.next_page_data(),
         )
 
-    def configure_model_from_request_data(self, model: Model, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]) -> Model:
+    def configure_model_from_request_data(
+        self,
+        model: Model,
+        request_data: dict[str, Any],
+        query_parameters: dict[str, Any],
+        pagination_data: dict[str, Any],
+    ) -> Model:
         limit = int(self.from_either(request_data, query_parameters, "limit", default=self.default_limit))
         model = model.limit(limit)
         if pagination_data:
@@ -280,7 +293,7 @@ class List(Endpoint):
         if sort and direction:
             model = self.add_join(sort, model)
             [sort_column, sort_table] = self.resolve_references_for_query(sort)
-            model = model.sort_by(sort_column, direction, sort_table) # type: ignore
+            model = model.sort_by(sort_column, direction, sort_table)  # type: ignore
 
         return model
 
@@ -322,7 +335,9 @@ class List(Endpoint):
 
         return data
 
-    def check_request_data(self, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]) -> None:
+    def check_request_data(
+        self, request_data: dict[str, Any], query_parameters: dict[str, Any], pagination_data: dict[str, Any]
+    ) -> None:
         if pagination_data:
             error = self.model.validate_pagination_data(pagination_data, self.auto_case_internal_column_name)
             if error:
@@ -334,7 +349,9 @@ class List(Endpoint):
             if key not in self.allowed_request_keys:
                 raise clearskies.exceptions.ClientError(f"Invalid request parameter found in URL data: '{key}'")
             if key in request_data:
-                raise clearskies.exceptions.ClientError(f"Ambiguous request: '{key}' was found in both the request body and URL data")
+                raise clearskies.exceptions.ClientError(
+                    f"Ambiguous request: '{key}' was found in both the request body and URL data"
+                )
         self.validate_limit(request_data, query_parameters)
         sort = self.from_either(request_data, query_parameters, "sort")
         direction = self.from_either(request_data, query_parameters, "direction")
@@ -344,7 +361,9 @@ class List(Endpoint):
             raise clearskies.exceptions.ClientError("Invalid request: 'direction' should be a string")
         if sort or direction:
             if (sort and not direction) or (direction and not sort):
-                raise clearskies.exceptions.ClientError("You must specify 'sort' and 'direction' together in the request - not just one of them")
+                raise clearskies.exceptions.ClientError(
+                    "You must specify 'sort' and 'direction' together in the request - not just one of them"
+                )
             if sort not in self.sortable_column_names:
                 raise clearskies.exceptions.ClientError(f"Invalid request: invalid sort column")
             if direction.lower() not in ["asc", "desc"]:
@@ -376,7 +395,7 @@ class List(Endpoint):
 
     def resolve_references_for_query(self, column_name: str) -> list[str | None]:
         """
-        Takes the column name and returns the name and table.
+        Take the column name and returns the name and table.
 
         If it's just a column name, we assume the table is the table for our model class.
         If it's something like `belongs_to_column.column_name`, then it will find the appropriate
@@ -392,7 +411,7 @@ class List(Endpoint):
 
     def add_join(self, column_name: str, model: Model) -> Model:
         """
-        Adds a join to the query for the given column name in the case where it references a column in a belongs to.
+        Add a join to the query for the given column name in the case where it references a column in a belongs to.
 
         If column_name is something like `belongs_to_column.column_name`, this will add have the belongs to column
         add it's typical join condition, so that further sorting/searching can work.
@@ -407,9 +426,7 @@ class List(Endpoint):
         return self.columns[relationship_column_name].add_join(model)
 
     def from_either(self, request_data, query_parameters, key, default=None, ignore_none=True):
-        """
-        Returns the key from either object.  Assumes it is not present in both
-        """
+        """Return the key from either object.  Assumes it is not present in both."""
         if key in request_data:
             if request_data[key] is not None or not ignore_none:
                 return request_data[key]
@@ -484,7 +501,7 @@ class List(Endpoint):
             (schema, description) = parameter
             url_parameters.append(autodoc.request.URLParameter(schema, description=description))
 
-        return url_parameters # type: ignore
+        return url_parameters  # type: ignore
 
     def documentation_url_sort_parameters(self) -> list[autodoc.request.Parameter]:
         sort_columns = [self.auto_case_column_name(internal_name, True) for internal_name in self.sortable_column_names]
@@ -523,7 +540,7 @@ class List(Endpoint):
             (schema, description) = parameter
             json_parameters.append(autodoc.request.JSONBody(schema, description=description))
 
-        return json_parameters # type: ignore
+        return json_parameters  # type: ignore
 
     def documentation_json_sort_parameters(self) -> list[autodoc.request.Parameter]:
         sort_columns = [self.auto_case_column_name(internal_name, True) for internal_name in self.sortable_column_names]

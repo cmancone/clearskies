@@ -1,11 +1,14 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
 from clearskies import configurable
 
 if TYPE_CHECKING:
-    import clearskies.model
     import clearskies.column
+    import clearskies.model
+
 
 class Validator(ABC, configurable.Configurable):
     is_unique = False

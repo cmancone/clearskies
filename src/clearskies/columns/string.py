@@ -1,17 +1,20 @@
 from __future__ import annotations
-from typing import overload, Self, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Self, overload
 
 from clearskies.column import Column
 
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class String(Column):
     """
     A simple string column.
 
-    ```
+    ```python
     import clearskies
+
 
     class Pet(clearskies.Model):
         id_column_name = "id"
@@ -19,6 +22,7 @@ class String(Column):
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
@@ -32,7 +36,7 @@ class String(Column):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"name": "Spot"}' | jq
     {
         "status": "success",
@@ -57,8 +61,8 @@ class String(Column):
     }
 
     ```
-
     """
+
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null", "like"]
     _descriptor_config_map = None
 
@@ -76,7 +80,7 @@ class String(Column):
             return self
 
         if self.name not in instance._data:
-            return None # type: ignore
+            return None  # type: ignore
 
         if self.name not in instance._transformed_data:
             instance._transformed_data[self.name] = self.from_backend(instance._data[self.name])
@@ -86,5 +90,5 @@ class String(Column):
     def __set__(self, instance: Model, value: str) -> None:
         instance._next_data[self.name] = value
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         return "value should be a string" if type(value) != str else ""

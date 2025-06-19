@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, overload, Self
+
+from typing import TYPE_CHECKING, Self, overload
 
 import clearskies.parameters_to_properties
 from clearskies import configs
@@ -9,9 +10,10 @@ from clearskies.columns import CategoryTree
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class CategoryTreeChildren(Column):
     """
-    Returns the child categories from a category tree column.
+    Return the child categories from a category tree column.
 
     See the CategoryTree column for usage examples.
 
@@ -42,9 +44,7 @@ class CategoryTreeChildren(Column):
         pass
 
     def finalize_configuration(self, model_class: type, name: str) -> None:
-        """
-        Finalize and check the configuration.
-        """
+        """Finalize and check the configuration."""
         getattr(self.__class__, "category_tree_column_name").set_model_class(model_class)
         self.model_class = model_class
         self.name = name
@@ -53,7 +53,9 @@ class CategoryTreeChildren(Column):
         # double check that we are pointed to a category tree column
         category_tree_column = getattr(model_class, self.category_tree_column_name)
         if not isinstance(category_tree_column, CategoryTree):
-            raise ValueError(f"Error with configuration for {model_class.__name__}.{name}, which is a {self.__class__.__name__}.  It needs to point to a category tree column, and it was told to use {model_class.__name__}.{self.category_tree_column_name}, but this is not a CategoryTree column.")
+            raise ValueError(
+                f"Error with configuration for {model_class.__name__}.{name}, which is a {self.__class__.__name__}.  It needs to point to a category tree column, and it was told to use {model_class.__name__}.{self.category_tree_column_name}, but this is not a CategoryTree column."
+            )
 
     @overload
     def __get__(self, instance: None, cls: type[Model]) -> Self:
@@ -66,14 +68,16 @@ class CategoryTreeChildren(Column):
     def __get__(self, model, cls):
         if model is None:
             self.model_class = cls
-            return self # type:  ignore
+            return self  # type:  ignore
 
         return self.relatives(model)
 
     def __set__(self, model: Model, value: Model) -> None:
-        raise ValueError(f"Attempt to set a value to '{model.__class__.__name__}.{self.name}, but this column is not writeable")
+        raise ValueError(
+            f"Attempt to set a value to '{model.__class__.__name__}.{self.name}, but this column is not writeable"
+        )
 
-    def relatives(self, model: Model, include_all: bool=False, find_parents: bool=False) -> Model | list[Model]:
+    def relatives(self, model: Model, include_all: bool = False, find_parents: bool = False) -> Model | list[Model]:
         id_column_name = model.id_column_name
         model_id = getattr(model, id_column_name)
         model_table_name = model.destination_name()

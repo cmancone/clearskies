@@ -1,21 +1,24 @@
 from __future__ import annotations
-import json
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
 
-import clearskies.typing
+import json
+from typing import TYPE_CHECKING, Any, Callable, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
 from clearskies.column import Column
 
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Json(Column):
     """
     A column to store generic data.
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -24,20 +27,21 @@ class Json(Column):
         id = clearskies.columns.Uuid()
         my_data = clearskies.columns.Json()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["my_data"],
             readable_column_names=["id", "my_data"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"my_data":{"count":[1,2,3,4,{"thing":true}]}}' | jq
     {
         "status": "success",
@@ -64,6 +68,7 @@ class Json(Column):
     Note that there is no attempt to check the shape of the input passed into a JSON column.
 
     """
+
     is_searchable = configs.Boolean(default=False)
     _descriptor_config_map = None
 

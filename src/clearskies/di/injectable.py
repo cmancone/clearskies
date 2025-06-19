@@ -1,5 +1,6 @@
-from typing import Any
 from abc import ABC, abstractmethod
+from typing import Any
+
 
 class Injectable(ABC):
     _di: Any = None
@@ -16,8 +17,8 @@ class Injectable(ABC):
                 continue
             reference += attribute_name
         raise ValueError(
-            f"There was an attempt to get a value out of '{reference}' but the injectable hasn't been properly" + \
-            "initialized.  This usually means that objects are being created outside of the normal Di system."
+            f"There was an attempt to get a value out of '{reference}' but the injectable hasn't been properly"
+            + "initialized.  This usually means that objects are being created outside of the normal Di system."
         )
 
     def set_di(self, di):

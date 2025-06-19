@@ -1,22 +1,22 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, overload, Self
 
-import clearskies.typing
-from clearskies import configs
-from clearskies.column import Column
-from clearskies.autodoc.schema import Boolean as AutoDocBoolean
-from clearskies.autodoc.schema import Schema as AutoDocSchema
-from clearskies.query import Condition
+from typing import TYPE_CHECKING, Callable, Self, overload
+
 import clearskies.configs.actions
 import clearskies.parameters_to_properties
+import clearskies.typing
+from clearskies import configs
+from clearskies.autodoc.schema import Boolean as AutoDocBoolean
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.column import Column
+from clearskies.query import Condition
 
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Boolean(Column):
-    """
-    Represents a column with a true/false type.
-    """
+    """Represents a column with a true/false type."""
 
     """
     Actions to trigger when the column changes to True
@@ -34,8 +34,8 @@ class Boolean(Column):
     auto_doc_class: type[AutoDocSchema] = AutoDocBoolean
 
     _allowed_search_operators = ["="]
-    default = configs.Boolean() #  type: ignore
-    setable = configs.BooleanOrCallable() #  type: ignore
+    default = configs.Boolean()  #  type: ignore
+    setable = configs.BooleanOrCallable()  #  type: ignore
     _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -84,19 +84,17 @@ class Boolean(Column):
     def __set__(self, instance, value: bool) -> None:
         instance._next_data[self.name] = value
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         return f"{self.name} must be a boolean" if type(value) != bool else ""
 
-    def build_condition(self, value: str, operator: str | None=None, column_prefix: str=""):
+    def build_condition(self, value: str, operator: str | None = None, column_prefix: str = ""):
         condition_value = "1" if value else "0"
         if not operator:
             operator = "="
         return f"{column_prefix}{self.name}{operator}{condition_value}"
 
     def save_finished(self, model: Model) -> None:
-        """
-        Make any necessary changes needed after a save has completely finished.
-        """
+        """Make any necessary changes needed after a save has completely finished."""
         super().save_finished(model)
 
         if (not self.on_true and not self.on_false) or not model.was_changed(self.name):

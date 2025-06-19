@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Any
 
 import clearskies.parameters_to_properties
 import clearskies.typing
-from clearskies.columns.string import String
 from clearskies import configs
+from clearskies.columns.string import String
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -28,7 +29,7 @@ class CreatedByAuthorizationData(String):
     use the `BelongsToId` column and set `created_by_source_type` to `authorization_data` and `created_by_source_key` to `user_id`.
     Example usage:
 
-    ```
+    ```python
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -36,6 +37,7 @@ class CreatedByAuthorizationData(String):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         organization_id = clearskies.columns.CreatedByAuthorizationData("organization_id")
+
 
     class MyAuthentication(clearskies.authentication.Authentication):
         def authenticate(self, input_output) -> bool:
@@ -50,6 +52,7 @@ class CreatedByAuthorizationData(String):
             }
             return True
 
+
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Create(
             MyModel,
@@ -57,27 +60,26 @@ class CreatedByAuthorizationData(String):
             readable_column_names=["id", "name", "organization_id"],
             authentication=MyAuthentication(),
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     cli()
     ```
 
     And running this will give you something like:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
         "data": {
             "id": "49816ea4-0956-461e-abd4-03dbde845ba9",
             "name": "Bob",
-            "organization_id": "my-super-awesome-organization"
+            "organization_id": "my-super-awesome-organization",
         },
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
-
     """
 
     """

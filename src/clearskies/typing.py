@@ -1,8 +1,8 @@
 from typing import Any, Callable
 
 from clearskies.action import Action
-from clearskies.validator import Validator
 from clearskies.query.condition import Condition
+from clearskies.validator import Validator
 
 action = Callable[..., dict[str, Any]] | Action
 condition = str | Callable | Condition

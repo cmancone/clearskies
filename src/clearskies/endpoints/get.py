@@ -1,21 +1,20 @@
 from __future__ import annotations
-import inspect
-from typing import TYPE_CHECKING, Type, Any, Callable
 
-from clearskies import authentication
-from clearskies import typing
-from clearskies.endpoint import Endpoint
+import inspect
 from collections import OrderedDict
-from clearskies import autodoc
-from clearskies.functional import string, routing
-from clearskies.input_outputs import InputOutput
+from typing import TYPE_CHECKING, Any, Callable, Type
+
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import authentication, autodoc, typing
 from clearskies.authentication import Authentication, Authorization
+from clearskies.endpoint import Endpoint
+from clearskies.functional import routing, string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
+    from clearskies import Column, Schema, SecurityHeader
     from clearskies.model import Model
-    from clearskies import SecurityHeader, Column, Schema
 
 
 class Get(Endpoint):
@@ -28,8 +27,9 @@ class Get(Endpoint):
     of the model.  Finally, you must declare a route parameter with a matching column name: the get endpoint will then
     fetch the desired record id out of the URL path.  Here's a simple example:
 
-    ```
+    ```python
     import clearskies
+
 
     class User(clearskies.Model):
         id_column_name = "id"
@@ -37,6 +37,7 @@ class Get(Endpoint):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         username = clearskies.columns.String()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Get(
@@ -62,7 +63,7 @@ class Get(Endpoint):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/1-2-3-4' | jq
     {
         "status": "success",
@@ -105,7 +106,7 @@ class Get(Endpoint):
 
     If not specified, it will default to the id column name.  There must be a matching route parameter in the URL.
 
-    ```
+    ```python
     import clearskies
 
     class User(clearskies.Model):
@@ -141,7 +142,7 @@ class Get(Endpoint):
     Note that `record_lookup_column_name` is set to `username` and we similarly changed the route from
     `/{id}` to `/{username}`.  We then invoke it with the username rather than the id:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/janedoe' | jq
     {
         "status": "success",
@@ -192,17 +193,23 @@ class Get(Endpoint):
 
         route_parameters = routing.extract_url_parameter_name_map(url)
         if self.record_lookup_column_name not in route_parameters:
-            raise KeyError(f"Configuration error for {self.__class__.__name__} endpoint: record_lookup_column_name is set to '{self.record_lookup_column_name}' but no matching routing parameter is found")
+            raise KeyError(
+                f"Configuration error for {self.__class__.__name__} endpoint: record_lookup_column_name is set to '{self.record_lookup_column_name}' but no matching routing parameter is found"
+            )
 
     def get_model_id(self, input_output: InputOutput) -> str:
         routing_data = input_output.routing_data
         if self.record_lookup_column_name in routing_data:
             return routing_data[self.record_lookup_column_name]
-        raise KeyError(f"I didn't receive the ID in my routing data.  I am probably misconfigured.  My record_lookup_column_name is '{self.record_lookup_column_name}' and my route is {self.url}")
+        raise KeyError(
+            f"I didn't receive the ID in my routing data.  I am probably misconfigured.  My record_lookup_column_name is '{self.record_lookup_column_name}' and my route is {self.url}"
+        )
 
     def fetch_model(self, input_output: InputOutput) -> Model:
         lookup_column_value = self.get_model_id(input_output)
-        model = self.fetch_model_with_base_query(input_output).find(self.record_lookup_column_name + "=" + lookup_column_value)
+        model = self.fetch_model_with_base_query(input_output).find(
+            self.record_lookup_column_name + "=" + lookup_column_value
+        )
         if not model:
             raise clearskies.exceptions.NotFound("Not Found")
         return model
@@ -217,7 +224,11 @@ class Get(Endpoint):
 
         schema_model_name = string.camel_case_to_snake_case(output_schema.__name__)
         output_data_schema = self.documentation_data_schema(output_schema, self.readable_column_names)
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name),
+        output_autodoc = (
+            autodoc.schema.Object(
+                self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name
+            ),
+        )
 
         authentication = self.authentication
         standard_error_responses = [self.documentation_input_error_response()]
@@ -231,7 +242,7 @@ class Get(Endpoint):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,

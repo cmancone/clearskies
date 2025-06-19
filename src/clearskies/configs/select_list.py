@@ -29,13 +29,13 @@ class SelectList(config.Config):
             if not isinstance(item, str):
                 error_prefix = self._error_prefix(instance)
                 raise TypeError(
-                    f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' for item #{index+1}.  A string was expected."
+                    f"{error_prefix} attempt to set a value of type '{value.__class__.__name__}' for item #{index + 1}.  A string was expected."
                 )
 
             if item not in self.allowed_values:
                 error_prefix = self._error_prefix(instance)
                 raise ValueError(
-                    f"{error_prefix} attempt to set a value of '{item}' for item #{index+1}.  This is not in the list of allowed values.  It must be one of '"
+                    f"{error_prefix} attempt to set a value of '{item}' for item #{index + 1}.  This is not in the list of allowed values.  It must be one of '"
                     + "', '".join(self.allowed_values)
                     + "'"
                 )

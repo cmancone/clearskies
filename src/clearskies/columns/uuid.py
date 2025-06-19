@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
 
-from clearskies import configs
-import clearskies.parameters_to_properties
+from typing import TYPE_CHECKING, Any
+
 import clearskies.di
+import clearskies.parameters_to_properties
 import clearskies.typing
+from clearskies import configs
 from clearskies.columns.string import String
 
 if TYPE_CHECKING:
@@ -20,8 +21,9 @@ class Uuid(String):
     When used, it will automatically populate the column with a random UUID upon record creation.
     It is not a writeable column, which means that you cannot expose it for write operations via an endpoint.
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -29,6 +31,7 @@ class Uuid(String):
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
@@ -42,7 +45,7 @@ class Uuid(String):
 
     and when invoked:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"name": "John Doe"}' | jq
     {
         "status": "success",
@@ -61,7 +64,6 @@ class Uuid(String):
     _descriptor_config_map = None
 
     uuid = clearskies.di.inject.Uuid()
-
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(

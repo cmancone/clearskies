@@ -1,7 +1,10 @@
 import unittest
 from unittest.mock import MagicMock
-from .unique import Unique
+
 import clearskies
+
+from .unique import Unique
+
 
 class MyModel(clearskies.Model):
     id_column_name = "id"
@@ -14,8 +17,8 @@ class UniqueTest(unittest.TestCase):
     def setUp(self):
         di = clearskies.di.Di()
         self.my_models = di.build(MyModel)
-        self.bob = self.my_models.create({"name":"Bob"})
-        self.jane = self.my_models.create({"name":"Jane"})
+        self.bob = self.my_models.create({"name": "Bob"})
+        self.jane = self.my_models.create({"name": "Jane"})
 
         self.unique = Unique()
 

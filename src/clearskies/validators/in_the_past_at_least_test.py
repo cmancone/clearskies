@@ -1,9 +1,10 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock
-import datetime
+
+import clearskies
 
 from .in_the_past_at_least import InThePastAtLeast
-import clearskies
 
 
 class InThePastAtLeastTest(unittest.TestCase):

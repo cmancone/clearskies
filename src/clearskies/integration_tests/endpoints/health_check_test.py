@@ -1,8 +1,9 @@
-import unittest
 import datetime
+import unittest
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class HealthCheckTest(unittest.TestCase):
     def test_success(self):
@@ -41,7 +42,9 @@ class HealthCheckTest(unittest.TestCase):
             pass
 
         context = clearskies.contexts.Context(
-            clearskies.endpoints.HealthCheck(callables=[my_function],),
+            clearskies.endpoints.HealthCheck(
+                callables=[my_function],
+            ),
         )
         (status_code, response_data, response_headers) = context()
 

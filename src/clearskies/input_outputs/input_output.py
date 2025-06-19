@@ -1,21 +1,21 @@
-from typing import Any
 import json
 from abc import ABC, abstractmethod
+from typing import Any
 from urllib.parse import parse_qs
 
 import clearskies.configurable
-from clearskies.exceptions import ClientError
-from .headers import Headers
 import clearskies.typing
 from clearskies.configs import AnyDict, StringDict
+from clearskies.exceptions import ClientError
+
+from .headers import Headers
 
 
 class InputOutput(ABC, clearskies.configurable.Configurable):
-    """
-    Manage the request and response to the client
-    """
-    response_headers: Headers = None # type: ignore
-    request_headers: Headers = None # type: ignore
+    """Manage the request and response to the client."""
+
+    response_headers: Headers = None  # type: ignore
+    request_headers: Headers = None  # type: ignore
     query_parameters = clearskies.configs.AnyDict(default={})
     routing_data = clearskies.configs.StringDict(default={})
     authorization_data = clearskies.configs.AnyDict(default={})
@@ -32,7 +32,7 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
         self.finalize_and_validate_configuration()
 
     @abstractmethod
-    def respond(self, body: clearskies.typing.response, status_code: int=200) -> Any:
+    def respond(self, body: clearskies.typing.response, status_code: int = 200) -> Any:
         """
         Pass along a response to the client.
 
@@ -43,23 +43,17 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
 
     @abstractmethod
     def get_body(self) -> str:
-        """
-        Return the raw body set by the client
-        """
+        """Return the raw body set by the client."""
         pass
 
     @abstractmethod
     def has_body(self) -> bool:
-        """
-        Whether or not the request included a body
-        """
+        """Whether or not the request included a body."""
         pass
 
     @property
     def request_data(self) -> dict[str, Any] | list[Any] | None:
-        """
-        Returns the data from the request body, assuming it is JSON
-        """
+        """Return the data from the request body, assuming it is JSON."""
         if not self._body_loaded_as_json:
             self._body_loaded_as_json = True
             if not self.has_body():
@@ -71,33 +65,24 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
                     self._body_as_json = None
         return self._body_as_json
 
-
     @abstractmethod
     def get_request_method(self) -> str:
-        """
-        Return the request method set by the client.
-        """
+        """Return the request method set by the client."""
         pass
 
     @abstractmethod
     def get_script_name(self) -> str:
-        """
-        Return the script name, e.g. the path requested
-        """
+        """Return the script name, e.g. the path requested."""
         pass
 
     @abstractmethod
     def get_path_info(self) -> str:
-        """
-        The path info for the request
-        """
+        """Return the path info for the request."""
         pass
 
     @abstractmethod
     def get_query_string(self) -> str:
-        """
-        The full query string for the request (everything after the first question mark in the document URL).
-        """
+        """Return the full query string for the request (everything after the first question mark in the document URL)."""
         pass
 
     @abstractmethod
@@ -109,9 +94,7 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
         pass
 
     def get_full_path(self) -> str:
-        """
-        The full path requested by the client.
-        """
+        """Return the full path requested by the client."""
         path_info = self.get_path_info()
         script_name = self.get_script_name()
         if not path_info or path_info[0] != "/":
@@ -123,7 +106,7 @@ class InputOutput(ABC, clearskies.configurable.Configurable):
 
     def get_context_for_callables(self) -> dict[str, Any]:
         """
-        Return a dictionary with various important parts of the request that are passed along to user-defined functions
+        Return a dictionary with various important parts of the request that are passed along to user-defined functions.
 
         It's common to make various aspects of an incoming request available to user-defined functions that are
         attached to clearskies hooks everywhere.  This function centralizes the definition of what aspects of

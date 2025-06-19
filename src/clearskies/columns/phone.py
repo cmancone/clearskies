@@ -1,5 +1,5 @@
-from typing import Any, Callable
 import re
+from typing import Any, Callable
 
 import clearskies.typing
 from clearskies import configs, parameters_to_properties
@@ -17,8 +17,9 @@ class Phone(String):
     If you also set the usa_only flag to true then it will also validate that it is a valid US number containing
     9 digits and, optionally, a leading `1`.  Example:
 
-    ```
+    ```python
     import clearskies
+
 
     class User(clearskies.Model):
         id_column_name = "id"
@@ -27,6 +28,7 @@ class Phone(String):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         phone = clearskies.columns.Phone(usa_only=True)
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
@@ -40,7 +42,7 @@ class Phone(String):
 
     Which you can invoke:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"name":"John Doe", "phone": "+1 (555) 451-1234"}' | jq
     {
         "status": "success",
@@ -123,7 +125,7 @@ class Phone(String):
         # phone numbers are stored as only digits.
         return {**data, **{self.name: re.sub(r"\D", "", data[self.name])}}
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         if type(value) != str:
             return f"Value must be a string for {self.name}"
 

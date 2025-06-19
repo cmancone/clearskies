@@ -1,20 +1,19 @@
 from __future__ import annotations
+
 import inspect
+from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, Callable
 
-from clearskies import authentication
-from clearskies import autodoc
-from clearskies import typing
-from clearskies.endpoint import Endpoint
-from collections import OrderedDict
-from clearskies.functional import string
-from clearskies.input_outputs import InputOutput
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import authentication, autodoc, typing
+from clearskies.endpoint import Endpoint
+from clearskies.functional import string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
+    from clearskies import Column, SecurityHeader
     from clearskies.model import Model
-    from clearskies import SecurityHeader, Column
 
 
 class Create(Endpoint):
@@ -26,25 +25,27 @@ class Create(Endpoint):
     to the client.  The column definitions in the model class are used to strictly validate the user
     input.  Here's a basic example of a model class with the create endpoint in use:
 
-    ```
+    ```python
     import clearskies
     from clearskies import validators, columns
+
 
     class MyAwesomeModel(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
         id = columns.Uuid()
-        name = clearskies.columns.String(validators=[
-            validators.Required(),
-            validators.MaximumLength(50),
-        ])
-        email = columns.Email(
-            validators=[validators.Unique()]
+        name = clearskies.columns.String(
+            validators=[
+                validators.Required(),
+                validators.MaximumLength(50),
+            ]
         )
+        email = columns.Email(validators=[validators.Unique()])
         some_number = columns.Integer()
         expires_at = columns.Date()
         created_at = columns.Created()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
@@ -59,7 +60,7 @@ class Create(Endpoint):
     The following shows how to invoke it, and demonstrates the strict input validation that happens as part of the
     process:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -d '{"name":"Example", "email":"test@example.com","some_number":5,"expires_at":"2024-12-31"}' | jq
     {
         "status": "success",
@@ -147,7 +148,11 @@ class Create(Endpoint):
 
         schema_model_name = string.camel_case_to_snake_case(output_schema.__name__)
         output_data_schema = self.documentation_data_schema(output_schema, self.readable_column_names)
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name),
+        output_autodoc = (
+            autodoc.schema.Object(
+                self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name
+            ),
+        )
 
         authentication = self.authentication
         standard_error_responses = [self.documentation_input_error_response()]
@@ -161,7 +166,7 @@ class Create(Endpoint):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,

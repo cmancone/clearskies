@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import MagicMock
-from clearskies import configs, Configurable, parameters_to_properties
+
+from clearskies import Configurable, configs, parameters_to_properties
+
 from .. import action
 
 

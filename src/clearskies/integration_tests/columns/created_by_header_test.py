@@ -1,9 +1,10 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock, call
-import datetime
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class CreatedByHeaderTest(unittest.TestCase):
     def test_default(self):
@@ -21,11 +22,9 @@ class CreatedByHeaderTest(unittest.TestCase):
                 writeable_column_names=["name"],
                 readable_column_names=["id", "name", "custom_header"],
             ),
-            classes=[MyModel]
+            classes=[MyModel],
         )
         (status_code, response_data, response_headers) = context(
-            request_method="POST",
-            body={"name":"Bob"},
-            request_headers={"my_custom_header": "some_value"}
+            request_method="POST", body={"name": "Bob"}, request_headers={"my_custom_header": "some_value"}
         )
         assert response_data["data"]["custom_header"] == "some_value"

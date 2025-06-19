@@ -2,7 +2,7 @@ from clearskies.configs import config
 
 
 class String(config.Config):
-    def __init__(self, required=False, default=None, regexp: str=""):
+    def __init__(self, required=False, default=None, regexp: str = ""):
         self.required = required
         self.default = default
         self.regexp = regexp
@@ -15,6 +15,7 @@ class String(config.Config):
             )
         if self.regexp:
             import re
+
             if not re.match(self.regexp, value):
                 error_prefix = self._error_prefix(instance)
                 raise ValueError(

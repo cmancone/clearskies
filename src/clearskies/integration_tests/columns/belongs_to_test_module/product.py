@@ -1,5 +1,7 @@
 import clearskies
+
 from . import category_reference
+
 
 class Product(clearskies.model.Model):
     id_column_name = "id"

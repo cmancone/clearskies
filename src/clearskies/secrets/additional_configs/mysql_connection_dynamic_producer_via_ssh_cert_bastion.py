@@ -1,9 +1,10 @@
-import clearskies.di
-from pathlib import Path
+import os
 import socket
 import subprocess
-import os
 import time
+from pathlib import Path
+
+import clearskies.di
 
 
 class MySQLConnectionDynamicProducerViaSSHCertBastion(clearskies.di.additional_config.AdditionalConfig):
@@ -93,7 +94,11 @@ class MySQLConnectionDynamicProducerViaSSHCertBastion(clearskies.di.additional_c
         if default is not None:
             return default
         raise ValueError(
-            f"I was asked to connect to a database via an AKeyless dynamic producer through an SSH bastion with certificate auth, but I wasn't given a required configuration value: '{config_key_name}'.  This can be set in the call to `clearskies.backends.akeyless.mysql_connection_dynamic_producer_via_ssh_cert_bastion()` by providing the '{config_key_name}' argument, or by setting an environment variable named '{environment_key_name}'."
+            f"I was asked to connect to a database via an AKeyless dynamic producer through an SSH bastion"
+            "with certificate auth, but I wasn't given a required configuration value: '{config_key_name}'."
+            "This can be set in the call to "
+            "`clearskies.backends.akeyless.mysql_connection_dynamic_producer_via_ssh_cert_bastion()` by providing the "
+            "'{config_key_name}' argument, or by setting an environment variable named '{environment_key_name}'."
         )
 
     def _create_tunnel(
@@ -115,7 +120,8 @@ class MySQLConnectionDynamicProducerViaSSHCertBastion(clearskies.di.additional_c
 
         if not os.path.isfile(public_key_file_path):
             raise ValueError(
-                f"I was asked to connect to AKeyless SSH with the public key file in '{public_key_file_path}', but this file does not exist"
+                f"I was asked to connect to AKeyless SSH with the public key file in '{public_key_file_path}',"
+                "but this file does not exist"
             )
 
         ssh_certificate = secrets.get_ssh_certificate(cert_issuer_name, bastion_username, public_key_file_path)

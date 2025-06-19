@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import clearskies
 from clearskies.contexts import Context
 
+
 class ManyToManyIdsTest(unittest.TestCase):
     def test_default(self):
         class ThingyToWidget(clearskies.Model):
@@ -36,15 +37,16 @@ class ManyToManyIdsTest(unittest.TestCase):
             )
             thingies = clearskies.columns.ManyToManyModels("thingy_ids")
 
-
         def my_application(widgets: Widget, thingies: Thingy):
             thing_1 = thingies.create({"name": "Thing 1"})
             thing_2 = thingies.create({"name": "Thing 2"})
             thing_3 = thingies.create({"name": "Thing 3"})
-            widget = widgets.create({
-                "name": "Widget 1",
-                "thingy_ids": [thing_1.id, thing_2.id],
-            })
+            widget = widgets.create(
+                {
+                    "name": "Widget 1",
+                    "thingy_ids": [thing_1.id, thing_2.id],
+                }
+            )
 
             # remove an item by saving without it's id in place
             widget.save({"thingy_ids": [thing.id for thing in widget.thingies if thing.id != thing_1.id]})

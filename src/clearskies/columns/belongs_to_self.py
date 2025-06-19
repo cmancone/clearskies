@@ -1,8 +1,8 @@
 from typing import Callable
 
 import clearskies.typing
-from clearskies.columns.belongs_to_id import BelongsToId
 from clearskies import parameters_to_properties
+from clearskies.columns.belongs_to_id import BelongsToId
 
 
 class BelongsToSelf(BelongsToId):
@@ -16,10 +16,11 @@ class BelongsToSelf(BelongsToId):
 
     See also HasManySelf
 
-    ```
+    ```python
     from typing import Any
 
     import clearskies
+
 
     class Category(clearskies.Model):
         id_column_name = "id"
@@ -31,6 +32,7 @@ class BelongsToSelf(BelongsToId):
         parent = clearskies.columns.BelongsToModel("parent_id")
         children = clearskies.columns.HasManySelf()
 
+
     def test_self_relationship(categories: Category) -> dict[str, Any]:
         root = categories.create({"name": "Root"})
         sub = categories.create({"name": "Sub", "parent": root})
@@ -39,8 +41,9 @@ class BelongsToSelf(BelongsToId):
 
         return {
             "root_from_child": subsub_1.parent.parent.name,
-            "subsubs_from_sub": [subsub.name for subsub in sub.children]
+            "subsubs_from_sub": [subsub.name for subsub in sub.children],
         }
+
 
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(test_self_relationship),
@@ -53,19 +56,13 @@ class BelongsToSelf(BelongsToId):
 
     Which when invoked returns:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
-        "data": {
-            "root_from_child": "Root",
-            "subsubs_from_sub": [
-                "Sub Sub 1",
-                "Sub Sub 2"
-            ]
-        },
+        "data": {"root_from_child": "Root", "subsubs_from_sub": ["Sub Sub 1", "Sub Sub 2"]},
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
     """

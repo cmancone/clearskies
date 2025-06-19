@@ -1,5 +1,6 @@
-from .request import Request
 import json
+
+from .request import Request
 
 
 class OAI3JSON:

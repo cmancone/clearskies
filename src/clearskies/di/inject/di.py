@@ -1,5 +1,7 @@
 from typing import Any
+
 from clearskies.di.injectable import Injectable
+
 
 class Di(Injectable):
     def __init__(self):

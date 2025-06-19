@@ -1,10 +1,10 @@
-from typing import Any
 import inspect
+from typing import Any
 
 
 def is_model(to_check: Any) -> bool:
     """
-    Returns True/False to denote if the given value is a model instance
+    Return True/False to denote if the given value is a model instance.
 
     Uses ducktyping rather than checking the type, mostly to minimize the risk of circular imports
     """
@@ -14,16 +14,12 @@ def is_model(to_check: Any) -> bool:
 
 
 def is_model_class(to_check: Any) -> bool:
-    """
-    Returns True/False to denote if the given value is a model class
-    """
+    """Return True/False to denote if the given value is a model class."""
     return inspect.isclass(to_check) and is_model(to_check)
 
 
 def is_model_class_reference(to_check: Any) -> bool:
-    """
-    Returns True/False to denote if the given value is a reference to a model class.
-    """
+    """Return True/False to denote if the given value is a reference to a model class."""
     if not hasattr(to_check, "get_model_class"):
         return False
 
@@ -34,7 +30,7 @@ def is_model_class_reference(to_check: Any) -> bool:
 
 def is_model_class_or_reference(to_check: Any, raise_error_message=False, strict=True) -> bool:
     """
-    Returns True/False to denote if the given value is a model class or a model reference
+    Return True/False to denote if the given value is a model class or a model reference.
 
     If strict is false, then it won't check that the model reference returns a model class.  This is often necessary during
     validation by configs as, otherwise, it tends to trigger circular dependency errors.
@@ -76,7 +72,5 @@ def is_model_class_or_reference(to_check: Any, raise_error_message=False, strict
 
 
 def is_model_or_class(to_check: Any) -> bool:
-    """
-    Returns True/False to denote if the given value is a model instance or model class
-    """
+    """Return True/False to denote if the given value is a model instance or model class."""
     return is_model(to_check) or is_model_class(to_check)

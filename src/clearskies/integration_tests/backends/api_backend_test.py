@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import clearskies
 from clearskies.contexts import Context
 
+
 class ApiBackendTest(unittest.TestCase):
     def test_overview(self):
         class GithubPublicBackend(clearskies.backends.ApiBackend):
@@ -47,14 +48,18 @@ class ApiBackendTest(unittest.TestCase):
             repos_url = clearskies.columns.String()
 
             repos = clearskies.columns.HasMany(
-                UserRepo,
-                foreign_column_name="login",
-                readable_child_column_names=["id", "full_name", "html_url"]
+                UserRepo, foreign_column_name="login", readable_child_column_names=["id", "full_name", "html_url"]
             )
 
         def fetch_user(users: User, user_repos: UserRepo):
             # If we execute this models query:
-            some_repos = user_repos.where("login=cmancone").sort_by("created", "desc").where("type=owner").pagination(page=2).limit(5)
+            some_repos = (
+                user_repos.where("login=cmancone")
+                .sort_by("created", "desc")
+                .where("type=owner")
+                .pagination(page=2)
+                .limit(5)
+            )
             # the API backend will fetch this url:
             # https://api.github.com/users/cmancone/repos?type=owner&sort=created&direction=desc&per_page=5&page=2
             # and we can use the results like always
@@ -75,11 +80,23 @@ class ApiBackendTest(unittest.TestCase):
         response_1.ok = True
         response_1.status_code = 200
         response_2 = MagicMock()
-        response_2.json = MagicMock(return_value={"id":"1","login":"cmancone","full_name":"Conor Mancone", "html_url": "https://clearskies.info"})
+        response_2.json = MagicMock(
+            return_value={
+                "id": "1",
+                "login": "cmancone",
+                "full_name": "Conor Mancone",
+                "html_url": "https://clearskies.info",
+            }
+        )
         response_2.ok = True
         response_2.status_code = 200
         response_3 = MagicMock()
-        response_3.json = MagicMock(return_value=[{"id":"2", "full_name":"repo_1", "html_url":"https://repo.com"},{"id":"3", "full_name": "repo_2", "html_url":"https://another.com"}])
+        response_3.json = MagicMock(
+            return_value=[
+                {"id": "2", "full_name": "repo_1", "html_url": "https://repo.com"},
+                {"id": "3", "full_name": "repo_2", "html_url": "https://another.com"},
+            ]
+        )
         requests.request.side_effect = [response_1, response_2, response_3]
         context = Context(
             clearskies.endpoints.Callable(
@@ -98,8 +115,8 @@ class ApiBackendTest(unittest.TestCase):
             "html_url": "https://clearskies.info",
             "repos": [
                 {"id": 2, "full_name": "repo_1", "html_url": "https://repo.com"},
-                {"id": 3, "full_name": "repo_2", "html_url":"https://another.com"},
-            ]
+                {"id": 3, "full_name": "repo_2", "html_url": "https://another.com"},
+            ],
         }
 
     def test_overview_list(self):
@@ -121,11 +138,17 @@ class ApiBackendTest(unittest.TestCase):
         requests = MagicMock()
         response = MagicMock()
         response.ok = True
-        response.headers = {"link": ' <https://api.github.com/users?per_page=5&since=5>; rel="next", <https://api.github.com/users{?since}>; rel="first"'}
-        response.json = MagicMock(return_value=[
-            {"id": "4", "login": "eijerei", "html_url": "https://github.com/eijerei"},
-            {"id": "5", "login": "qwerty", "html_url": "https://github.com/qwerty"},
-        ])
+        response.headers = {
+            "link": (
+                ' <https://api.github.com/users?per_page=5&since=5>; rel="next", <https://api.github.com/users{?since}>; rel="first"'
+            )
+        }
+        response.json = MagicMock(
+            return_value=[
+                {"id": "4", "login": "eijerei", "html_url": "https://github.com/eijerei"},
+                {"id": "5", "login": "qwerty", "html_url": "https://github.com/qwerty"},
+            ]
+        )
         requests.request = MagicMock(return_value=response)
 
         context = Context(
@@ -175,10 +198,22 @@ class ApiBackendTest(unittest.TestCase):
         requests = MagicMock()
         response = MagicMock()
         response.ok = True
-        response.headers = {"link": ' <https://api.github.com/users?per_page=5&since=5>; rel="next", <https://api.github.com/users{?since}>; rel="first"'}
-        response.json = MagicMock(return_value=[
-            {"id": "4", "login": "eijerei", "avatar_url": "https://avatar.com", "html_url": "https://github.com/eijerei", "repos_url": "https://repos.com"},
-        ])
+        response.headers = {
+            "link": (
+                ' <https://api.github.com/users?per_page=5&since=5>; rel="next", <https://api.github.com/users{?since}>; rel="first"'
+            )
+        }
+        response.json = MagicMock(
+            return_value=[
+                {
+                    "id": "4",
+                    "login": "eijerei",
+                    "avatar_url": "https://avatar.com",
+                    "html_url": "https://github.com/eijerei",
+                    "repos_url": "https://repos.com",
+                },
+            ]
+        )
         requests.request = MagicMock(return_value=response)
 
         context = Context(
@@ -199,7 +234,12 @@ class ApiBackendTest(unittest.TestCase):
         assert status_code == 200
         assert response["Status"] == "Success"
         assert response["Data"] == [
-            {"Login": "eijerei", "AvatarUrl": "https://avatar.com", "HtmlUrl": "https://github.com/eijerei", "ReposUrl": "https://repos.com"},
+            {
+                "Login": "eijerei",
+                "AvatarUrl": "https://avatar.com",
+                "HtmlUrl": "https://github.com/eijerei",
+                "ReposUrl": "https://repos.com",
+            },
         ]
 
     def test_map(self):
@@ -219,10 +259,22 @@ class ApiBackendTest(unittest.TestCase):
         requests = MagicMock()
         response = MagicMock()
         response.ok = True
-        response.headers = {"link": ' <https://api.github.com/users?per_page=5&since=5>; rel="next", <https://api.github.com/users{?since}>; rel="first"'}
-        response.json = MagicMock(return_value=[
-            {"id": "4", "login": "eijerei", "avatar_url": "https://avatar.com", "html_url": "https://github.com/eijerei", "repos_url": "https://repos.com"},
-        ])
+        response.headers = {
+            "link": (
+                ' <https://api.github.com/users?per_page=5&since=5>; rel="next", <https://api.github.com/users{?since}>; rel="first"'
+            )
+        }
+        response.json = MagicMock(
+            return_value=[
+                {
+                    "id": "4",
+                    "login": "eijerei",
+                    "avatar_url": "https://avatar.com",
+                    "html_url": "https://github.com/eijerei",
+                    "repos_url": "https://repos.com",
+                },
+            ]
+        )
         requests.request = MagicMock(return_value=response)
 
         context = Context(

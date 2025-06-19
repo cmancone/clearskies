@@ -1,7 +1,8 @@
+import os
 import unittest
 from unittest.mock import MagicMock, call
+
 from .environment import Environment
-import os
 
 
 class EnvironmentTest(unittest.TestCase):

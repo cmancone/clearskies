@@ -1,6 +1,7 @@
-import unittest
-from . import string
 import datetime
+import unittest
+
+from . import string
 
 
 class StringTest(unittest.TestCase):

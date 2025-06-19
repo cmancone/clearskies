@@ -1,6 +1,7 @@
-from .public import Public
 import unittest
 from unittest.mock import MagicMock
+
+from .public import Public
 
 
 class PublicTest(unittest.TestCase):

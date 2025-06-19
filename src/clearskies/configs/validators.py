@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from clearskies.configs import config
@@ -9,6 +10,8 @@ if TYPE_CHECKING:
 
 class Validators(config.Config):
     """
+    Validator config.
+
     A config that accepts various things that are accepted as validators in model columns:
 
      1. An instance of clearskies.validators.Validator
@@ -31,7 +34,7 @@ class Validators(config.Config):
 
             error_prefix = self._error_prefix(instance)
             raise TypeError(
-                f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index+1} when a Validator is required"
+                f"{error_prefix} attempt to set a value of type '{item.__class__.__name__}' for item #{index + 1} when a Validator is required"
             )
 
         instance._set_config(self, [*value])

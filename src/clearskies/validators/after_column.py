@@ -1,20 +1,21 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
-import datetime
 
-from clearskies.validator import Validator
+import datetime
+from typing import TYPE_CHECKING, Any
+
+import dateparser
+
 import clearskies.configs
 import clearskies.parameters_to_properties
-import dateparser
+from clearskies.validator import Validator
 
 if TYPE_CHECKING:
     import clearskies.model
 
 
 class AfterColumn(Validator):
-    """
-    The name of the other date column for comparison.
-    """
+    """The name of the other date column for comparison."""
+
     other_column_name = clearskies.configs.String(default="", required=True)
 
     """
@@ -50,7 +51,9 @@ class AfterColumn(Validator):
 
         return self.date_comparison(my_value, other_value, column_name)
 
-    def date_comparison(self, incoming_date: datetime.datetime, comparison_date: datetime.datetime, column_name: str) -> str:
+    def date_comparison(
+        self, incoming_date: datetime.datetime, comparison_date: datetime.datetime, column_name: str
+    ) -> str:
         if incoming_date == comparison_date:
             return "" if self.allow_equal else f"'{column_name}' must be after '{self.other_column_name}'"
 

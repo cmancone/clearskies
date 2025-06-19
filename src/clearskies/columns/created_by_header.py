@@ -1,8 +1,8 @@
-import clearskies.typing
 import clearskies.parameters_to_properties
-from clearskies.query import Condition
-from clearskies.columns.string import String
+import clearskies.typing
 from clearskies import configs
+from clearskies.columns.string import String
+from clearskies.query import Condition
 
 
 class CreatedByHeader(String):
@@ -21,8 +21,9 @@ class CreatedByHeader(String):
     related to `BelongsToId`, so instead you would use the `BelongsToId` column and set `created_by_source_type` to `http_header` and
     `created_by_source_key` to `user_id`.  Example usage:
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -32,20 +33,21 @@ class CreatedByHeader(String):
         name = clearskies.columns.String()
         custom_header = clearskies.columns.CreatedByHeader("my_custom_header")
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["name"],
             readable_column_names=["id", "name", "custom_header"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
 
     If you invoked this:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Bob"}' -H 'my_custom_header: some header value' | jq
 
     {
@@ -61,7 +63,6 @@ class CreatedByHeader(String):
     }
 
     ```
-
     """
 
     """

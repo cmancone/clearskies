@@ -1,20 +1,21 @@
 import datetime
-from typing import Any, Callable
-from types import ModuleType
-import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry # type: ignore
 import inspect
+import os
 import re
 import sys
-import os
+from types import ModuleType
+from typing import Any, Callable
 
-from clearskies.di.additional_config import AdditionalConfig
-from clearskies.di.additional_config_auto_import import AdditionalConfigAutoImport
-from clearskies.functional import string
-from clearskies.environment import Environment
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry  # type: ignore
+
 import clearskies.input_outputs.input_output
 import clearskies.secrets
+from clearskies.di.additional_config import AdditionalConfig
+from clearskies.di.additional_config_auto_import import AdditionalConfigAutoImport
+from clearskies.environment import Environment
+from clearskies.functional import string
 
 
 class Di:
@@ -109,19 +110,22 @@ class Di:
     and then clearskies itself will build your class or call your functions as needed.  Full explanation comes after
     the example.
 
-    ```
+    ```python
     from clearskies.di import Di, AdditionalConfig
+
 
     class SomeClass:
         def __init__(self, my_value: int):
             self.my_value = my_value
+
 
     class MyClass:
         def __init__(self, some_specific_value: int, some_class: SomeClass):
             # `some_specific_value` is defined in both `MyProvider` and `MyOtherProvider`
             # `some_class` will be injected from the type hint, and the actual instance is made by our
             # `MyProvider`
-            self.final_value = some_specific_value*some_class.my_value
+            self.final_value = some_specific_value * some_class.my_value
+
 
     class VeryNeedy:
         def __init__(self, my_class, some_other_value: str):
@@ -132,12 +136,14 @@ class Di:
             self.my_class = my_class
             self.some_other_value = some_other_value
 
+
     class MyOtherProvider(AdditionalConfig):
         def provide_some_specific_value(self):
             # the order of additional configs will cause this function to be invoked
             # (and hence some_specific_value will be `10`) despite the fact that MyProvider
             # also has a `provide_` function with the same name.
             return 10
+
 
     class MyProvider(AdditionalConfig):
         def provide_some_specific_value(self):
@@ -154,7 +160,10 @@ class Di:
         def build_class(self, class_to_provide: type, argument_name: str, di, context: str = ""):
             if class_to_provide == SomeClass:
                 return SomeClass(5)
-            raise ValueError(f"I was asked to build a class I didn't expect '{class_to_provide.__name__}'")
+            raise ValueError(
+                f"I was asked to build a class I didn't expect '{class_to_provide.__name__}'"
+            )
+
 
     di = Di(
         classes=[MyClass, VeryNeedy, SomeClass],
@@ -164,9 +173,11 @@ class Di:
         },
     )
 
+
     def my_function(my_fancy_argument: VeryNeedy):
         print(f"Jane owns {my_fancy_argument.my_class.final_value}:")
         print(f"{my_fancy_argument.some_other_value}s")
+
 
     print(di.call_function(my_function))
     # prints 'Jane owns 50 dogs'
@@ -196,6 +207,7 @@ class Di:
         2. `some_other_value` uses a built-in for a type hint, so clearskies falls back on name-based resolution.  It falls back
            on the registered binding of `"dog"` to the name `"some_other_value"`, so clearskies provides `"dog"`.
     """
+
     _added_modules: dict[int, bool] = {}
     _additional_configs: list[AdditionalConfig] = []
     _bindings: dict[str, Any] = {}
@@ -215,12 +227,12 @@ class Di:
 
     def __init__(
         self,
-        classes: type | list[type]=[],
-        modules: ModuleType | list[ModuleType]=[],
-        bindings: dict[str, Any]={},
-        additional_configs: AdditionalConfig | list[AdditionalConfig]=[],
-        class_overrides: dict[type, type]={},
-        overrides: dict[str, type]={},
+        classes: type | list[type] = [],
+        modules: ModuleType | list[ModuleType] = [],
+        bindings: dict[str, Any] = {},
+        additional_configs: AdditionalConfig | list[AdditionalConfig] = [],
+        class_overrides: dict[type, type] = {},
+        overrides: dict[str, type] = {},
         now: datetime.datetime | None = None,
         utcnow: datetime.datetime | None = None,
     ):
@@ -253,10 +265,10 @@ class Di:
         if additional_configs is not None:
             self.add_additional_configs(additional_configs)
         if class_overrides:
-            for (key, value) in class_overrides.items():  # type: ignore
+            for key, value in class_overrides.items():  # type: ignore
                 self.add_class_override(key, value)  # type: ignore
         if overrides:
-            for (key, value) in overrides.items():
+            for key, value in overrides.items():
                 self.add_override(key, value)
         if now:
             self.set_now(now)
@@ -270,7 +282,7 @@ class Di:
         All classes that come in here become available via their injection name, which is calculated
         by converting the class name from TitleCase to snake_case.  e.g. the following class:
 
-        ```
+        ```python
         class MyClass:
             pass
         ```
@@ -278,7 +290,7 @@ class Di:
         gets an injection name of `my_class`.  Also, clearskies will only resolve and reject based on type hints
         if those classes are first added via `add_classes`.  See the following example:
 
-        ```
+        ```python
         from clearskies.di import Di
 
         class MyClass:
@@ -310,7 +322,9 @@ class Di:
             if hasattr(add_class, "id_column_name"):
                 self._classes[string.make_plural(name)] = {"id": id(add_class), "class": add_class}
 
-    def add_modules(self, modules: ModuleType | list[ModuleType], root: str | None=None, is_root: bool=True) -> None:
+    def add_modules(
+        self, modules: ModuleType | list[ModuleType], root: str | None = None, is_root: bool = True
+    ) -> None:
         """
         Add a module to the dependency injection container.
 
@@ -329,14 +343,19 @@ class Di:
         Assuming that the submodule and class are imported at each level (e.g. my_module/__init__.py imports my_sub_module,
         and my_sub_module/__init__.py imports my_class.py) then you can:
 
-        ```
+        ```python
         from clearksies.di import Di
         import my_module
 
         di = Di()
-        di.add_modules([my_module]) # also equivalent: di.add_modules(my_module), or Di(modules=[my_module])
+        di.add_modules([
+            my_module
+        ])  # also equivalent: di.add_modules(my_module), or Di(modules=[my_module])
+
+
         def my_function(my_class):
             pass
+
 
         di.call_function(my_function)
         ```
@@ -396,7 +415,7 @@ class Di:
 
     def add_additional_configs(self, additional_configs: AdditionalConfig | list[AdditionalConfig]) -> None:
         """
-        Adds an additional config instance to the dependency injection container.
+        Add an additional config instance to the dependency injection container.
 
         Additional config class provide an additional way to provide dependencies into the dependency
         injection system.  For more details about how to use them, see both base classes:
@@ -406,15 +425,17 @@ class Di:
 
         To use this method:
 
-        ```
+        ```python
         import clearskies.di
+
 
         class MyConfig(clearskies.di.AdditionalConfig):
             def provide_some_value(self):
                 return 2
 
             def provide_another_value(self, some_value):
-                return some_value*2
+                return some_value * 2
+
 
         di = clearskies.di.Di()
         di.add_additional_configs([MyConfig()])
@@ -422,8 +443,10 @@ class Di:
         # di.add_additional_configs(MyConfig())
         # di = clearskies.di.Di(additional_configs=[MyConfig()])
 
+
         def my_function(another_value):
-            print(another_value) # prints 4
+            print(another_value)  # prints 4
+
 
         di.call_function(my_function)
         ```
@@ -438,7 +461,7 @@ class Di:
 
         This method attaches a value to a specific dependency injection name.
 
-        ```
+        ```python
         import clearskies.di
 
         di = clearskies.di.Di()
@@ -446,8 +469,10 @@ class Di:
         # equivalent:
         # di = clearskies.di.Di(bindings={"my_name": 12345})
 
+
         def my_function(my_name):
-            print(my_name) # prints 12345
+            print(my_name)  # prints 12345
+
 
         di.call_function(my_function)
         ```
@@ -465,15 +490,14 @@ class Di:
 
     def add_class_override(self, class_to_override: type, replacement: Any) -> None:
         """
-        Overrides a class for type-based injection.
+        Override a class for type-based injection.
 
         This function allows you to replace/mock class provided when relying on type hinting for injection.
         This is most often (but not exclusively) used for mocking out classes during texting.  Note that
         this only overrides that specific class - not classes that extend it.
 
         Example:
-
-        ```
+        ```python
         from clearskies.import Di
 
         class TypeHintedClass:
@@ -515,9 +539,7 @@ class Di:
         return override
 
     def add_override(self, name: str, replacement_class: type) -> None:
-        """
-        Overrides a specific injection name by specifying a class that should be injected in its place.
-        """
+        """Override a specific injection name by specifying a class that should be injected in its place."""
         if not inspect.isclass(replacement_class):
             raise ValueError(
                 "Invalid value passed to add_override for 'replacement_class' parameter: a class should be passed but I got a "
@@ -527,22 +549,22 @@ class Di:
         self._class_overrides_by_name[name] = replacement_class
 
     def set_now(self, now: datetime.datetime) -> None:
-        """
-        Set the current time which will be passed along to any dependency arguments named `now`.
-        """
+        """Set the current time which will be passed along to any dependency arguments named `now`."""
         if now.tzinfo is not None:
-            raise ValueError("set_now() was passed a datetime object with timezone information - it should only be given timezone-naive datetime objects.  Maybe you meant to use di.set_utcnow()")
+            raise ValueError(
+                "set_now() was passed a datetime object with timezone information - it should only be given timezone-naive datetime objects.  Maybe you meant to use di.set_utcnow()"
+            )
         self._now = now
 
     def set_utcnow(self, utcnow: datetime.datetime) -> None:
-        """
-        Set the current time which will be passed along to any dependency arguments named `utcnow`.
-        """
+        """Set the current time which will be passed along to any dependency arguments named `utcnow`."""
         if not utcnow.tzinfo:
-            raise ValueError("set_utcnow() was passed a datetime object without timezone information - it should only be given timezone-aware datetime objects.  Maybe you meant to use di.set_now()")
+            raise ValueError(
+                "set_utcnow() was passed a datetime object without timezone information - it should only be given timezone-aware datetime objects.  Maybe you meant to use di.set_now()"
+            )
         self._utcnow = utcnow
 
-    def build(self, thing: Any, context: str | None=None, cache: bool=False) -> Any:
+    def build(self, thing: Any, context: str | None = None, cache: bool = False) -> Any:
         """
         Have the dependency injection container build a value for you.
 
@@ -558,9 +580,9 @@ class Di:
         # if we got here then our thing is already and object of some sort and doesn't need anything further
         return thing
 
-    def build_from_name(self, name: str, context: str | None=None, cache: bool=False) -> Any:
+    def build_from_name(self, name: str, context: str | None = None, cache: bool = False) -> Any:
         """
-        Builds a dependency based on its name
+        Build a dependency based on its name.
 
         Order of priority:
           1. Things set via `add_binding(name, value)`
@@ -578,7 +600,11 @@ class Di:
             return built_value
 
         if name in self._classes or name in self._class_overrides_by_name:
-            class_to_build = self._class_overrides_by_name[name]["class"] if name in self._class_overrides_by_name else self._classes[name]["class"]  # type: ignore
+            class_to_build = (
+                self._class_overrides_by_name[name]["class"]
+                if name in self._class_overrides_by_name
+                else self._classes[name]["class"]
+            )  # type: ignore
             built_value = self.build_class(class_to_build, context=context)  # type: ignore
             if cache:
                 self._prepared[name] = built_value  # type: ignore
@@ -614,7 +640,7 @@ class Di:
             + f"or a corresponding 'provide_{name}' method for this name."
         )
 
-    def build_argument(self, argument_name: str, type_hint: type | None, context: str="", cache: bool = True) -> Any:
+    def build_argument(self, argument_name: str, type_hint: type | None, context: str = "", cache: bool = True) -> Any:
         """
         Build an argument given the name and type hint.
 
@@ -628,7 +654,7 @@ class Di:
 
     def build_class(self, class_to_build: type, context=None, cache=True) -> Any:
         """
-        Builds a class.
+        Build a class.
 
         The class constructor cannot accept any kwargs.   See self._disallow_kwargs for more details
         """
@@ -668,7 +694,9 @@ class Di:
         self._building[class_id] = context
         # Turn on caching when building the automatic dependencies that get injected into a class constructor
         args = [
-            self.build_argument(build_argument, init_args.annotations.get(build_argument, None), context=my_class_name, cache=True)
+            self.build_argument(
+                build_argument, init_args.annotations.get(build_argument, None), context=my_class_name, cache=True
+            )
             for build_argument in build_arguments
         ]
 
@@ -681,7 +709,9 @@ class Di:
             self._prepared[class_to_build] = built_value  # type: ignore
         return built_value
 
-    def build_class_from_type_hint(self, argument_name: str, class_to_build: type | None, context: str='', cache: bool=True) -> Any | None:
+    def build_class_from_type_hint(
+        self, argument_name: str, class_to_build: type | None, context: str = "", cache: bool = True
+    ) -> Any | None:
         """
         Build an argument from a type hint.
 
@@ -690,7 +720,6 @@ class Di:
 
         This follows the resolution order defined in the docblock of the Di class.
         """
-
         # these first checks just verify that it is something that we can actually build
         if not class_to_build:
             return None
@@ -735,16 +764,20 @@ class Di:
 
     def call_function(self, callable_to_execute: Callable, **kwargs):
         """
-        Calls a function, building any positional arguments and providing them.
+        Call a function, building any positional arguments and providing them.
 
         Any kwargs passed to call_function will populate the equivalent dependencies.
 
-        ```
+        ```python
         from clearskies.di import Di
 
         di = Di(bindings={"some_name": "hello"})
+
+
         def my_function(some_name, some_other_name):
-            print(f"{some_name} {some_other_value}") # prints 'hello world'
+            print(f"{some_name} {some_other_value}")  # prints 'hello world'
+
+
         di.call_function(my_function, some_other_value="world")
         ```
         """
@@ -767,9 +800,13 @@ class Di:
         kwarg_names = call_arguments[nargs - nkwargs :]
 
         callable_args = [
-            kwargs[arg]
-            if arg in kwargs
-            else self.build_argument(arg, args_data.annotations.get(arg, None), context=callable_to_execute.__name__, cache=True)
+            (
+                kwargs[arg]
+                if arg in kwargs
+                else self.build_argument(
+                    arg, args_data.annotations.get(arg, None), context=callable_to_execute.__name__, cache=True
+                )
+            )
             for arg in arg_names
         ]
         callable_kwargs = {}
@@ -782,7 +819,7 @@ class Di:
 
     def _disallow_kwargs(self, action):
         """
-        Raises an exception
+        Raise an exception.
 
         This is used to raise an exception and stop building a class if its constructor accepts kwargs. To be clear,
         we actually can support kwargs - it just doesn't make much sense.  The issue is that keywords are
@@ -801,9 +838,7 @@ class Di:
         raise ValueError(f"Cannot {action} because it has keyword arguments.")
 
     def can_cache(self, name: str, context: str) -> bool:
-        """
-        Control whether or not to cache a value built by the DI container.
-        """
+        """Control whether or not to cache a value built by the DI container."""
         if name == "now" or name == "utcnow":
             return False
         return True
@@ -826,6 +861,7 @@ class Di:
 
     def provide_sys(self):
         import sys
+
         return sys
 
     def provide_environment(self):
@@ -837,7 +873,9 @@ class Di:
         try:
             import pymysql
         except:
-            raise ValueError("The cursor requires pymysql to be installed.  This is an optional dependency of clearskies, so to include it do a `pip install 'clear-skies[mysql]'`")
+            raise ValueError(
+                "The cursor requires pymysql to be installed.  This is an optional dependency of clearskies, so to include it do a `pip install 'clear-skies[mysql]'`"
+            )
 
         return pymysql.connect(
             user=connection_details["username"],
@@ -855,7 +893,9 @@ class Di:
         try:
             import pymysql
         except:
-            raise ValueError("The cursor requires pymysql to be installed.  This is an optional dependency of clearskies, so to include it do a `pip install 'clear-skies[mysql]'`")
+            raise ValueError(
+                "The cursor requires pymysql to be installed.  This is an optional dependency of clearskies, so to include it do a `pip install 'clear-skies[mysql]'`"
+            )
 
         return pymysql.connect(
             user=connection_details["username"],
@@ -905,10 +945,12 @@ class Di:
 
     def provide_oai3_schema_resolver(self):
         from clearskies import autodoc
+
         return autodoc.formats.oai3_json.OAI3SchemaResolver()
 
     def provide_uuid(self):
         import uuid
+
         return uuid
 
     def provide_secrets(self):
@@ -921,5 +963,6 @@ class Di:
         return ""
 
     def provide_akeyless(self):
-        import akeyless # type: ignore
+        import akeyless  # type: ignore
+
         return akeyless

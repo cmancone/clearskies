@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from clearskies.configs import config
 
 if TYPE_CHECKING:
     from clearskies.schema import Schema as SchemaType
+
 
 class Schema(config.Config):
     def __set__(self, instance, value: type[SchemaType]) -> None:
@@ -19,4 +21,3 @@ class Schema(config.Config):
         if not instance:
             return self  # type: ignore
         return instance._get_config(self)
-

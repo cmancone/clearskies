@@ -28,19 +28,19 @@ class Condition:
     Some examples:
 
     ```
-    condition = Condition("id=asdf-qwerty") # note: same results for: Condition("id = asdf-qwerty")
-    print(condition.table_name) # prints ''
-    print(condition.column_name) # prints 'id'
-    print(condition.operator) # prints '='
-    print(condition.values) # prints ['asdf-qwerty']
-    print(condition.parsed) # prints 'id=%s'
+    condition = Condition("id=asdf-qwerty")  # note: same results for: Condition("id = asdf-qwerty")
+    print(condition.table_name)  # prints ''
+    print(condition.column_name)  # prints 'id'
+    print(condition.operator)  # prints '='
+    print(condition.values)  # prints ['asdf-qwerty']
+    print(condition.parsed)  # prints 'id=%s'
 
     condition = Condition("orders.status_id in ('ACTIVE', 'PENDING')")
-    print(condition.table_name) # prints 'orders'
-    print(condition.column_name) # prints 'status_id'
-    print(condition.operator) # prints 'IN'
-    print(condition.values) # prints ['ACTIVE', 'PENDING']
-    print(condition.parsed) # prints 'status_id IN (%s, %s)'
+    print(condition.table_name)  # prints 'orders'
+    print(condition.column_name)  # prints 'status_id'
+    print(condition.operator)  # prints 'IN'
+    print(condition.values)  # prints ['ACTIVE', 'PENDING']
+    print(condition.parsed)  # prints 'status_id IN (%s, %s)'
     ```
     """
 
@@ -89,7 +89,21 @@ class Condition:
     longer one first, which means it matches first, and so a condition with a '<=>' operator won't accidentally
     match to the '<=' operator.
     """
-    operators: list[str] = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null", "is not", "is", "like"]
+    operators: list[str] = [
+        "<=>",
+        "!=",
+        "<=",
+        ">=",
+        ">",
+        "<",
+        "=",
+        "in",
+        "is not null",
+        "is null",
+        "is not",
+        "is",
+        "like",
+    ]
 
     operator_lengths: dict[str, int] = {
         "<=>": 3,
@@ -167,7 +181,9 @@ class Condition:
             self.values = []
 
         self.operator = self.operator.upper()
-        self.parsed = self._with_placeholders(column_for_parsed, self.operator, self.values, escape=False if self.table_name else True)
+        self.parsed = self._with_placeholders(
+            column_for_parsed, self.operator, self.values, escape=False if self.table_name else True
+        )
 
     def _parse_condition_list(self, value):
         if value[0] != "(" and value[-1] != ")":
@@ -191,6 +207,7 @@ class Condition:
         # the only thing left is "in" which has a variable number of placeholders
         return f"{quote}{column}{quote} IN (" + ", ".join(["%s" for i in range(len(values))]) + ")"
 
+
 class ParsedCondition(Condition):
     def __init__(self, column_name: str, operator: str, values: list[str], table_name: str = ""):
         self.column_name = column_name
@@ -200,5 +217,7 @@ class ParsedCondition(Condition):
         self.values = values
         self.table_name = table_name
         column_for_parsed = f"{self.table_name}.{self.column_name}" if self.table_name else self.column_name
-        self.parsed = self._with_placeholders(column_for_parsed, self.operator, self.values, escape=False if self.table_name else True)
+        self.parsed = self._with_placeholders(
+            column_for_parsed, self.operator, self.values, escape=False if self.table_name else True
+        )
         self._raw_condition = self.parsed

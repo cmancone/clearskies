@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from clearskies.configs import config
 
 if TYPE_CHECKING:
     from clearskies.authentication import Authentication as AuthenticationType
+
 
 class Authentication(config.Config):
     def __set__(self, instance, value: AuthenticationType):

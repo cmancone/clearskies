@@ -1,4 +1,5 @@
 from typing import Any as AnyType
+
 from clearskies.configs import config
 
 

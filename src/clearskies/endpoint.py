@@ -1,34 +1,35 @@
 from __future__ import annotations
-from typing import Any, Callable, TYPE_CHECKING
+
+import inspect
 import urllib.parse
 from collections import OrderedDict
-import inspect
+from typing import TYPE_CHECKING, Any, Callable
 
-from clearskies.autodoc.request import Request, Parameter
-from clearskies.autodoc.response import Response
-from clearskies.autodoc import schema
-from clearskies import autodoc
 import clearskies.column
-import clearskies.configurable
 import clearskies.configs
+import clearskies.configurable
 import clearskies.di
+import clearskies.end
 import clearskies.parameters_to_properties
 import clearskies.typing
-from clearskies import exceptions
+from clearskies import autodoc, exceptions
 from clearskies.authentication import Authentication, Authorization, Public
-from clearskies.functional import string, routing, validations
-import clearskies.end
+from clearskies.autodoc import schema
+from clearskies.autodoc.request import Parameter, Request
+from clearskies.autodoc.response import Response
+from clearskies.functional import routing, string, validations
 
 if TYPE_CHECKING:
     from clearskies import Column, Model, SecurityHeader
-    from clearskies.security_headers import Cors
     from clearskies.input_outputs import InputOutput
     from clearskies.schema import Schema
+    from clearskies.security_headers import Cors
+
 
 class Endpoint(
-    clearskies.end.End, # type: ignore
+    clearskies.end.End,  # type: ignore
     clearskies.configurable.Configurable,
-    clearskies.di.InjectableProperties
+    clearskies.di.InjectableProperties,
 ):
     """
     Endpoints - the clearskies workhorse.
@@ -73,7 +74,7 @@ class Endpoint(
     any of the standard dependencies or context-specific values like any other callable in a clearskies
     application:
 
-    ```
+    ```python
     def custom_headers(query_parameters):
         some_value = "yes" if query_parameters.get("stuff") else "no"
         return [f"x-custom: {some_value}", "content-type: application/custom"]
@@ -97,7 +98,7 @@ class Endpoint(
     becomes a suffix on the URL of the group.  This is described in more detail in the documentation for endpoint
     groups, so here's an example of attaching endpoints directly and setting the URL:
 
-    ```
+    ```python
     import clearskies
 
     endpoint = clearskies.endpoints.Callable(
@@ -111,7 +112,7 @@ class Endpoint(
 
     Which then acts as expected:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/hello/asdf' | jq
     {
         "status": "client_error",
@@ -137,7 +138,7 @@ class Endpoint(
     `/{name}/` syntax or `/:name/`.  These parameters can be injected into any callable via the `routing_data`
     dependency injection name, as well as via their name:
 
-    ```
+    ```python
     import clearskies
 
     endpoint = clearskies.endpoints.Callable(
@@ -151,7 +152,7 @@ class Endpoint(
 
     Which you can then invoke in the usual way:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/hello/bob/brown' | jq
     {
         "status": "success",
@@ -173,7 +174,7 @@ class Endpoint(
 
     By default, only GET is allowed.
 
-    ```
+    ```python
     import clearskies
 
     endpoint = clearskies.endpoints.Callable(
@@ -187,7 +188,7 @@ class Endpoint(
 
     And to execute:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -X POST | jq
     {
         "status": "success",
@@ -209,7 +210,9 @@ class Endpoint(
     }
     ```
     """
-    request_methods = clearskies.configs.SelectList(allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH", "QUERY"], default=["GET"])
+    request_methods = clearskies.configs.SelectList(
+        allowed_values=["GET", "POST", "PUT", "DELETE", "PATCH", "QUERY"], default=["GET"]
+    )
 
     """
     The authentication for this endpoint (default is public)
@@ -237,7 +240,7 @@ class Endpoint(
 
     Your function can request any named dependency injection parameter as well as the standard context parameters for the request.
 
-    ```
+    ```python
     import clearskies
     import datetime
     from dateutil.relativedelta import relativedelta
@@ -296,7 +299,7 @@ class Endpoint(
 
     Which gives:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/jane' | jq
     {
         "status": "success",
@@ -357,7 +360,7 @@ class Endpoint(
     instructs the model what columns should be sent back to the user.  This information is similarly used when generating
     the documentation for the endpoint.
 
-    ```
+    ```python
     import clearskies
 
     class User(clearskies.Model):
@@ -395,7 +398,7 @@ class Endpoint(
 
     And then:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080'
     {
         "status": "success",
@@ -434,7 +437,7 @@ class Endpoint(
     set.  Clearskies will then use the model schema to validate the input and also auto-generate documentation
     for the endpoint.
 
-    ```
+    ```python
     import clearskies
 
     class User(clearskies.Model):
@@ -457,7 +460,7 @@ class Endpoint(
 
     If we send a valid payload:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Jane","date_of_birth":"01/01/1990"}' | jq
     {
         "status": "success",
@@ -473,7 +476,7 @@ class Endpoint(
 
     And we can see the automatic input validation by sending some incorrect data:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"","date_of_birth":"this is not a date","id":"hey"}' | jq
     {
         "status": "input_errors",
@@ -513,7 +516,7 @@ class Endpoint(
     being a dictionary.  The Callable endpoint, however, only requires input if `writeable_column_names` is set.  If it's not set,
     and the end-user doesn't provide a request body, then request_data will be None.
 
-    ```
+    ```python
     import clearskies
 
     def check_input(request_data):
@@ -535,7 +538,7 @@ class Endpoint(
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"name":"sup"}' | jq
     {
         "status": "input_errors",
@@ -572,7 +575,7 @@ class Endpoint(
     columns from the model.  In general, if you want a column not to be exposed through an endpoint, then all you have to do is remove
     that column from the list of writeable columns.
 
-    ```
+    ```python
     import clearskies
 
     endpoint = clearskies.Endpoint(
@@ -600,7 +603,7 @@ class Endpoint(
 
     By default internal_casing and external_casing are both set to 'snake_case', which means that no conversion happens.
 
-    ```
+    ```python
     import clearskies
     import datetime
 
@@ -627,7 +630,7 @@ class Endpoint(
 
     And then when called:
 
-    ```
+    ```bash
     $ curl http://localhost:8080  | jq
     {
         "Status": "Success",
@@ -641,14 +644,14 @@ class Endpoint(
     }
     ```
     """
-    internal_casing = clearskies.configs.Select(['snake_case', 'camelCase', 'TitleCase'], default='snake_case')
+    internal_casing = clearskies.configs.Select(["snake_case", "camelCase", "TitleCase"], default="snake_case")
 
     """
     Used in conjunction with internal_casing to change the casing of the key names in the outputted JSON of the endpoint.
 
     See the docs for `internal_casing` for more details and usage examples.
     """
-    external_casing = clearskies.configs.Select(['snake_case', 'camelCase', 'TitleCase'], default='snake_case')
+    external_casing = clearskies.configs.Select(["snake_case", "camelCase", "TitleCase"], default="snake_case")
 
     """
     Configure standard security headers to be sent along in the response from this endpoint.
@@ -656,7 +659,7 @@ class Endpoint(
     Note that, with CORS, you generally only have to specify the origin.  The routing system will automatically add
     in the appropriate HTTP verbs, and the authorization classes will add in the appropriate headers.
 
-    ```
+    ```python
     import clearskies
 
     hello_world = clearskies.endpoints.Callable(
@@ -675,7 +678,7 @@ class Endpoint(
 
     And then execute the options endpoint to see all the security headers:
 
-    ```
+    ```bash
     $ curl -v http://localhost:8080 -X OPTIONS
     * Host localhost:8080 was resolved.
     < HTTP/1.0 200 Ok
@@ -717,7 +720,7 @@ class Endpoint(
 
     Here's an example:
 
-    ```
+    ```python
     import clearskies
 
     class Student(clearskies.Model):
@@ -757,7 +760,7 @@ class Endpoint(
 
     Which you can invoke:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' | jq
     {
         "status": "success",
@@ -791,7 +794,7 @@ class Endpoint(
     """
     Additional joins to always add to the query.
 
-    ```
+    ```python
     import clearskies
 
     class Student(clearskies.Model):
@@ -846,7 +849,7 @@ class Endpoint(
 
     Which when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' | jq
     {
         "status": "success",
@@ -880,7 +883,7 @@ class Endpoint(
     _writeable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
     _searchable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
     _sortable_columns: dict[str, clearskies.column.Column] = None  # type: ignore
-    _as_json_map: dict[str, clearskies.column.Column] = None # type: ignore
+    _as_json_map: dict[str, clearskies.column.Column] = None  # type: ignore
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
@@ -901,7 +904,7 @@ class Endpoint(
         for security_header in self.security_headers:
             if not security_header.is_cors:
                 continue
-            self.cors_header = security_header # type: ignore
+            self.cors_header = security_header  # type: ignore
             self.has_cors = True
             break
 
@@ -950,7 +953,7 @@ class Endpoint(
             raise exceptions.ClientError("Request body was not a JSON dictionary.")
 
         return {
-            **input_output.request_data, # type: ignore
+            **input_output.request_data,  # type: ignore
             **(input_output.routing_data if self.include_routing_data_in_request_data else {}),
         }
 
@@ -979,8 +982,7 @@ class Endpoint(
         raise NotImplementedError()
 
     def matches_request(self, input_output: InputOutput, allow_partial=False) -> bool:
-        """ Whether or not we can handle an incoming request based on URL and request method. """
-
+        """Whether or not we can handle an incoming request based on URL and request method."""
         # soo..... this excessively duplicates the logic in __call__, but I'm being lazy right now
         # and not fixing it.
         request_method = input_output.get_request_method().upper()
@@ -988,8 +990,8 @@ class Endpoint(
             return True
         if request_method not in self.request_methods:
             return False
-        expected_url = self.url.strip('/')
-        incoming_url = input_output.get_full_path().strip('/')
+        expected_url = self.url.strip("/")
+        incoming_url = input_output.get_full_path().strip("/")
         if not expected_url and not incoming_url:
             return True
 
@@ -1005,8 +1007,8 @@ class Endpoint(
             return self.cors(input_output)
         if request_method not in self.request_methods:
             return self.error(input_output, "Not Found", 404)
-        expected_url = self.url.strip('/')
-        incoming_url = input_output.get_full_path().strip('/')
+        expected_url = self.url.strip("/")
+        incoming_url = input_output.get_full_path().strip("/")
         if expected_url or incoming_url:
             matches, routing_data = routing.match_route(expected_url, incoming_url, allow_partial=False)
             if not matches:
@@ -1016,30 +1018,31 @@ class Endpoint(
     def failure(self, input_output: InputOutput) -> Any:
         return self.respond_json(input_output, {"status": "failure"}, 500)
 
-    def input_errors(self, input_output: InputOutput, errors: dict[str, str], status_code: int=200) -> Any:
-        """
-        Return input errors to the client.
-        """
+    def input_errors(self, input_output: InputOutput, errors: dict[str, str], status_code: int = 200) -> Any:
+        """Return input errors to the client."""
         return self.respond_json(input_output, {"status": "input_errors", "input_errors": errors}, status_code)
 
     def error(self, input_output: InputOutput, message: str, status_code: int) -> Any:
-        """
-        Return a client-side error (e.g. 400)
-        """
+        """Return a client-side error (e.g. 400)."""
         return self.respond_json(input_output, {"status": "client_error", "error": message}, status_code)
 
     def redirect(self, input_output: InputOutput, location: str, status_code: int) -> Any:
-        """
-        Return a redirect.
-        """
+        """Return a redirect."""
         input_output.response_headers.add("content-type", "text/html")
         input_output.response_headers.add("location", location)
-        return self.respond('<meta http-equiv="refresh" content="0; url=' + urllib.parse.quote(location) + '">Redirecting', status_code)
+        return self.respond(
+            '<meta http-equiv="refresh" content="0; url=' + urllib.parse.quote(location) + '">Redirecting', status_code
+        )
 
-    def success(self, input_output: InputOutput, data: dict[str, Any] | list[Any], number_results: int | None=None, limit: int | None=None, next_page: Any=None) -> Any:
-        """
-        Return a successful response.
-        """
+    def success(
+        self,
+        input_output: InputOutput,
+        data: dict[str, Any] | list[Any],
+        number_results: int | None = None,
+        limit: int | None = None,
+        next_page: Any = None,
+    ) -> Any:
+        """Return a successful response."""
         response_data = {"status": "success", "data": data, "pagination": {}}
 
         if next_page or number_results:
@@ -1076,14 +1079,20 @@ class Endpoint(
     def _build_as_json_map(self, model: clearskies.model.Model) -> dict[str, clearskies.column.Column]:
         conversion_map = {}
         if not self.readable_column_names:
-            raise ValueError("I was asked to convert a model to JSON but I wasn't provided with `readable_column_names'")
+            raise ValueError(
+                "I was asked to convert a model to JSON but I wasn't provided with `readable_column_names'"
+            )
         for column in self.readable_columns.values():
             conversion_map[self.auto_case_column_name(column.name, True)] = column
         return conversion_map
 
-    def validate_input_against_schema(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]) -> None:
+    def validate_input_against_schema(
+        self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]
+    ) -> None:
         if not self.writeable_column_names:
-            raise ValueError(f"I was asked to validate input against a schema, but no writeable columns are defined, so I can't :(  This is probably a bug in the endpoint class - {self.__class__.__name__}.")
+            raise ValueError(
+                f"I was asked to validate input against a schema, but no writeable columns are defined, so I can't :(  This is probably a bug in the endpoint class - {self.__class__.__name__}."
+            )
         request_data = self.map_request_data_external_to_internal(request_data)
         self.find_input_errors(request_data, input_output, schema)
 
@@ -1097,7 +1106,9 @@ class Endpoint(
         # needs to return an error for unexpected data.
         return {key_map.get(key, key): value for (key, value) in request_data.items()}
 
-    def find_input_errors(self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]) -> None:
+    def find_input_errors(
+        self, request_data: dict[str, Any], input_output: InputOutput, schema: Schema | type[Schema]
+    ) -> None:
         input_errors: dict[str, str] = {}
         columns = schema.get_columns()
         model = self.di.build(schema) if inspect.isclass(schema) else schema
@@ -1105,7 +1116,7 @@ class Endpoint(
             column = columns[column_name]
             input_errors = {
                 **input_errors,
-                **column.input_errors(model, request_data), # type: ignore
+                **column.input_errors(model, request_data),  # type: ignore
             }
         input_errors = {
             **input_errors,
@@ -1117,18 +1128,17 @@ class Endpoint(
         if input_errors:
             raise exceptions.InputErrors(input_errors)
 
-    def find_input_errors_from_callable(self, request_data: dict[str, Any] | list[Any] | None, input_output: InputOutput) -> dict[str, str]:
+    def find_input_errors_from_callable(
+        self, request_data: dict[str, Any] | list[Any] | None, input_output: InputOutput
+    ) -> dict[str, str]:
         if not self.input_validation_callable:
             return {}
 
         more_input_errors = self.di.call_function(
-            self.input_validation_callable,
-            **input_output.get_context_for_callables()
+            self.input_validation_callable, **input_output.get_context_for_callables()
         )
         if not isinstance(more_input_errors, dict):
-            raise ValueError(
-                "The input error callable did not return a dictionary as required"
-            )
+            raise ValueError("The input error callable did not return a dictionary as required")
         return more_input_errors
 
     def cors(self, input_output: InputOutput):
@@ -1158,7 +1168,9 @@ class Endpoint(
             return {}
 
         return {
-            self.authentication.documentation_security_scheme_name(): self.authentication.documentation_security_scheme(),
+            self.authentication.documentation_security_scheme_name(): (
+                self.authentication.documentation_security_scheme()
+            ),
         }
 
     def documentation_models(self) -> dict[str, schema.Schema]:
@@ -1181,7 +1193,9 @@ class Endpoint(
             ],
         )
 
-    def documentation_success_response(self, data_schema: schema.Object | schema.Array, description: str="", include_pagination: bool=False) -> Response:
+    def documentation_success_response(
+        self, data_schema: schema.Object | schema.Array, description: str = "", include_pagination: bool = False
+    ) -> Response:
         return Response(
             200,
             schema.Object(
@@ -1248,7 +1262,9 @@ class Endpoint(
         name = authentication.documentation_security_scheme_name()
         return [{name: []}] if name else []
 
-    def documentation_data_schema(self, schema: type[Schema] | None=None, column_names: list[str] = []) -> list[schema.Schema]:
+    def documentation_data_schema(
+        self, schema: type[Schema] | None = None, column_names: list[str] = []
+    ) -> list[schema.Schema]:
         if schema is None:
             schema = self.model_class
         if column_names is None and self.readable_column_names:
@@ -1264,7 +1280,9 @@ class Endpoint(
 
         return properties
 
-    def standard_json_request_parameters(self, schema: type[Schema] | None=None, column_names: list[str] = []) -> list[Parameter]:
+    def standard_json_request_parameters(
+        self, schema: type[Schema] | None = None, column_names: list[str] = []
+    ) -> list[Parameter]:
         if not column_names:
             if not self.writeable_column_names:
                 return []
@@ -1287,7 +1305,7 @@ class Endpoint(
         ]
 
     def standard_url_request_parameters(self) -> list[Parameter]:
-        parameter_names = routing.extract_url_parameter_name_map(self.url.strip('/'))
+        parameter_names = routing.extract_url_parameter_name_map(self.url.strip("/"))
         return [
             autodoc.request.URLPath(
                 autodoc.schema.String(parameter_name),
@@ -1296,4 +1314,3 @@ class Endpoint(
             )
             for parameter_name in parameter_names.keys()
         ]
-

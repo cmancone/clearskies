@@ -3,7 +3,7 @@ from .additional_config import AdditionalConfig
 
 class AdditionalConfigAutoImport(AdditionalConfig):
     """
-    AdditionalConfig, but now with auto import!
+    AdditionalConfig, but now with auto import.
 
     This works exactly like the AdditionalConfig class, but will be automatically imported into the Di
     container if found in a module being imported into the Di container.  This just provides a way for
@@ -13,4 +13,5 @@ class AdditionalConfigAutoImport(AdditionalConfig):
     Note that automatically-imported AdditionalConfig classes automatically have lower priority than
     any AdditionalConfig classes added explicitly to the Di container.
     """
+
     pass

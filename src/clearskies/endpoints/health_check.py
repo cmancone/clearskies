@@ -1,14 +1,15 @@
 from __future__ import annotations
-import inspect
-from typing import Type, Callable, Any
 
-from clearskies import autodoc
-from clearskies import typing
-from clearskies.endpoint import Endpoint
-from clearskies.functional import string, routing
-from clearskies.input_outputs import InputOutput
+import inspect
+from typing import Any, Callable, Type
+
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import autodoc, typing
+from clearskies.endpoint import Endpoint
+from clearskies.functional import routing, string
+from clearskies.input_outputs import InputOutput
+
 
 class HealthCheck(Endpoint):
     """
@@ -21,7 +22,7 @@ class HealthCheck(Endpoint):
 
     If you don't provide any configuration to the endpoint, it will always succeed:
 
-    ```
+    ```python
     import clearskies
 
     wsgi = clearskies.contexts.WsgiRef(
@@ -32,7 +33,7 @@ class HealthCheck(Endpoint):
 
     which when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' | jq
     {
         "status": "success",
@@ -46,7 +47,7 @@ class HealthCheck(Endpoint):
     This example demonstrates a failed healthcheck by requesting the cursor (which attempts to connect to the database).
     Since no database has been setup/configured, it always fails:
 
-    ```
+    ```python
     import clearskies
 
     wsgi = clearskies.contexts.WsgiRef(
@@ -59,7 +60,7 @@ class HealthCheck(Endpoint):
 
     And when invoked returns:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' | jq
     {
         "status": "failure",
@@ -88,7 +89,7 @@ class HealthCheck(Endpoint):
     In the following example, since the class-to-build requests the cursor, and we don't have a reachable
     database configured,
 
-    ```
+    ```python
     import clearskies
 
     class MyClass:
@@ -113,7 +114,7 @@ class HealthCheck(Endpoint):
     the dependency injection system, which will call the healthcheck to fail since we don't have a database setup
     and configured:
 
-    ```
+    ```python
     import clearskies
 
     def my_function(cursor):
@@ -162,7 +163,7 @@ class HealthCheck(Endpoint):
     def documentation(self) -> list[autodoc.request.Request]:
         output_schema = self.model_class
         nice_model = string.camel_case_to_words(output_schema.__name__)
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=[]),
+        output_autodoc = (autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=[]),)
 
         description = self.description if self.description else "Health Check"
         return [
@@ -170,7 +171,7 @@ class HealthCheck(Endpoint):
                 description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=description,
                     ),
                 ],

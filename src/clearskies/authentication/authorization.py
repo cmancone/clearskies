@@ -8,7 +8,5 @@ class Authorization:
         return True
 
     def filter_model(self, model, authorization_data, input_output):
-        """
-        Return a models object with additional filters applied to account for authorization needs
-        """
+        """Return a models object with additional filters applied to account for authorization needs."""
         return model

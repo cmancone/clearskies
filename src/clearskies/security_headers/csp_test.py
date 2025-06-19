@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, call
+
 from .csp import Csp
 
 
@@ -16,4 +17,6 @@ class CSPTest(unittest.TestCase):
             },
         )
         csp.set_headers_for_input_output(input_output)
-        input_output.response_headers.add.assert_called_with("content-security-policy", "default-src 'self'; img-src 'self'")
+        input_output.response_headers.add.assert_called_with(
+            "content-security-policy", "default-src 'self'; img-src 'self'"
+        )

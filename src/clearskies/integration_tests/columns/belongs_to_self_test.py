@@ -1,9 +1,10 @@
-from typing import Any
 import unittest
+from typing import Any
 from unittest.mock import MagicMock, call
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class BelongsToSelfTest(unittest.TestCase):
     def test_basics(self):
@@ -25,7 +26,7 @@ class BelongsToSelfTest(unittest.TestCase):
 
             return {
                 "root_from_child": subsub_1.parent.parent.name,
-                "subsubs_from_sub": [subsub.name for subsub in sub.children]
+                "subsubs_from_sub": [subsub.name for subsub in sub.children],
             }
 
         context = clearskies.contexts.Context(
@@ -35,8 +36,5 @@ class BelongsToSelfTest(unittest.TestCase):
         (status_code, response, response_headers) = context()
         assert response["data"] == {
             "root_from_child": "Root",
-            "subsubs_from_sub": [
-                "Sub Sub 1",
-                "Sub Sub 2"
-            ],
+            "subsubs_from_sub": ["Sub Sub 1", "Sub Sub 2"],
         }

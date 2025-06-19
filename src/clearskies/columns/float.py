@@ -1,23 +1,26 @@
 from __future__ import annotations
-from typing import Callable, overload, Self, TYPE_CHECKING
 
-import clearskies.typing
+from typing import TYPE_CHECKING, Callable, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
+from clearskies.autodoc.schema import Number as AutoDocNumber
+from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.column import Column
 from clearskies.query import Condition
-from clearskies.autodoc.schema import Schema as AutoDocSchema
-from clearskies.autodoc.schema import Number as AutoDocNumber
 
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Float(Column):
     """
-    A column that stores a float
+    A column that stores a float.
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -26,20 +29,21 @@ class Float(Column):
         id = clearskies.columns.Uuid()
         score = clearskies.columns.Float()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["score"],
             readable_column_names=["id", "score"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
 
     and when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"score":15.2}' | jq
     {
         "status": "success",
@@ -63,11 +67,10 @@ class Float(Column):
         }
     }
     ```
-
     """
 
-    default = configs.Float() #  type: ignore
-    setable = configs.FloatOrCallable(default=None) #  type: ignore
+    default = configs.Float()  #  type: ignore
+    setable = configs.FloatOrCallable(default=None)  #  type: ignore
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
     auto_doc_class: type[AutoDocSchema] = AutoDocNumber
     _descriptor_config_map = None

@@ -1,19 +1,23 @@
 from __future__ import annotations
-from typing import Self, TYPE_CHECKING, Self
+
 from collections import OrderedDict
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     from clearskies import Column
+
 
 class Schema:
     """
     Define a schema by extending and declaring columns.
 
-    ```
+    ```python
     from clearskies.schema import Schema
     from clearskies.validators import Required, Unique
 
     import clearskies.columns
+
+
     class Person(Schema):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String(validators=[Required()])
@@ -35,7 +39,7 @@ class Schema:
     @classmethod
     def get_columns(cls: type[Self], overrides={}) -> dict[str, Column]:
         """
-        Returns an ordered dictionary with the configuration for the columns
+        Return an ordered dictionary with the configuration for the columns.
 
         Generally, this method is meant for internal use.  It just pulls the column configuration
         information out of class attributes.  It doesn't return the fully prepared columns,
@@ -60,7 +64,7 @@ class Schema:
                 del overrides[attribute_name]
             columns[attribute_name] = attribute
 
-        for (attribute_name, column) in overrides.items():
+        for attribute_name, column in overrides.items():
             columns[attribute_name] = column  # type: ignore
 
         if not overrides:
@@ -69,11 +73,10 @@ class Schema:
         # now go through and finalize everything.  We have to do this after setting cls._columns, because finalization
         # sometimes depends on fetching the list of columns, so if we do it before caching the answer, we may end up
         # creating circular loops.  I don't *think* this will cause painful side-effects, but we'll find out!
-        for (column_name, column) in cls._columns.items():
+        for column_name, column in cls._columns.items():
             column.finalize_configuration(cls, column_name)
 
         return columns
-
 
     def __bool__(self):
         return False

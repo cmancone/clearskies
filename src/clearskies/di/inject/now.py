@@ -1,8 +1,10 @@
 import datetime
+
 from clearskies.di.injectable import Injectable
 
+
 class Now(Injectable):
-    def __init__(self, cache: bool=False):
+    def __init__(self, cache: bool = False):
         self.cache = cache
 
     def __get__(self, instance, parent) -> datetime.datetime:

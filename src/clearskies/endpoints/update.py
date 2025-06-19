@@ -1,25 +1,24 @@
 from __future__ import annotations
-import inspect
-from typing import TYPE_CHECKING, Type, Any, Callable
 
-from clearskies import authentication
-from clearskies import autodoc
-from clearskies import typing
-from clearskies.endpoints.get import Get
+import inspect
 from collections import OrderedDict
-from clearskies.functional import string, routing
-from clearskies.input_outputs import InputOutput
+from typing import TYPE_CHECKING, Any, Callable, Type
+
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import authentication, autodoc, typing
+from clearskies.endpoints.get import Get
+from clearskies.functional import routing, string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
-    from clearskies.model import Model, Schema, Column
     from clearskies import SecurityHeader
+    from clearskies.model import Column, Model, Schema
 
 
 class Update(Get):
     """
-    An endpoint to update a record
+    An endpoint to update a record.
 
     This endpoint handles update operations.  As with the `Get` endpoint, it will lookup the record by taking
     the record id (or any other unique column you specify) out of the URL and then will fetch that record
@@ -27,17 +26,17 @@ class Update(Get):
     incoming user input.  The default request method is `PATCH`.  If everything checks out, it will then
     update the record.
 
-    ```
+    ```python
     import clearskies
+
 
     class User(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
-        username = clearskies.columns.String(
-            validators=[clearskies.validators.Required()]
-        )
+        username = clearskies.columns.String(validators=[clearskies.validators.Required()])
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Update(
@@ -64,7 +63,7 @@ class Update(Get):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/1-2-3-4' -X PATCH -d '{"name": "Bobby Brown", "username": "bobbybrown"}' | jq
     {
         "status": "success",
@@ -137,7 +136,11 @@ class Update(Get):
 
         schema_model_name = string.camel_case_to_snake_case(output_schema.__name__)
         output_data_schema = self.documentation_data_schema(output_schema, self.readable_column_names)
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name),
+        output_autodoc = (
+            autodoc.schema.Object(
+                self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name
+            ),
+        )
 
         authentication = self.authentication
         standard_error_responses = [self.documentation_input_error_response()]
@@ -151,7 +154,7 @@ class Update(Get):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,

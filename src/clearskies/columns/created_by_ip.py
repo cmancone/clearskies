@@ -1,24 +1,27 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
 
-import clearskies.typing
-from clearskies.columns.string import String
-from clearskies import configs
+from typing import TYPE_CHECKING, Any
+
 import clearskies.parameters_to_properties
+import clearskies.typing
+from clearskies import configs
+from clearskies.columns.string import String
 
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class CreatedByIp(String):
     """
-    Returns the ip address of the client when the record is created.
+    Return the ip address of the client when the record is created.
 
     If the ip address isn't available from the context being executed, then you may end up with an error
     (depending on the context).  This is a good thing if you are trying to consistely provide audit information,
     but may be a problem if your model creation needs to happen more flexibly.  Example:
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -28,20 +31,21 @@ class CreatedByIp(String):
         name = clearskies.columns.String()
         ip_address = clearskies.columns.CreatedByIp()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["name"],
             readable_column_names=["id", "name", "ip_address"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
 
     And if you invoked this:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Bob"}' | jq
     {
         "status": "success",

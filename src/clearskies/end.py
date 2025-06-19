@@ -1,7 +1,8 @@
 # type: ignore
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
+
 from abc import ABC
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from clearskies.input_output import InputOutput
@@ -9,9 +10,10 @@ if TYPE_CHECKING:
 from clearskies import exceptions
 from clearskies.functional import string
 
+
 class End(ABC):
     """
-    DRY for endpoint and endpoint groups
+    DRY for endpoint and endpoint groups.
 
     This class is just here to hold some common functionality between Endpoints and EndpointGroups.
     The two classes have plenty of overlap but are different enough that I don't want either to inherit
@@ -19,7 +21,7 @@ class End(ABC):
     """
 
     def add_url_prefix(self, prefix: str) -> None:
-        self.url = (prefix.rstrip('/') + '/' + self.url.lstrip('/')).lstrip('/')
+        self.url = (prefix.rstrip("/") + "/" + self.url.lstrip("/")).lstrip("/")
 
     def top_level_authentication_and_authorization(self, input_output: InputOutput) -> None:
         """
@@ -43,14 +45,13 @@ class End(ABC):
 
     def __call__(self, input_output: InputOutput) -> Any:
         """
-        Execute the endpoint!
+        Execute the endpoint.
 
         This function mostly just checks AuthN/AuthZ and then passes along control to the handle method.
         It also checks for all the appropriate exceptions from clearskies.exceptions and turns those into the
         expected response.  As a result, when building a new endpoint, you normally modify the handle method
         rather than this one.
         """
-
         # these two configs can have arbitrary classes attached, which may use injectable properties.  Because they are
         # hiding in configs, the system for automatically discovering these won't work, so we have to manually check them.
         # We can't do this in the constructor because self.di hasn't been populated yet, and we can't do this in
@@ -106,16 +107,22 @@ class End(ABC):
     def add_response_headers(self, input_output: InputOutput) -> None:
         if self.response_headers:
             if callable(self.response_headers):
-                response_headers = self.di.call_function(self.response_headers, **input_output.get_context_for_callables())
+                response_headers = self.di.call_function(
+                    self.response_headers, **input_output.get_context_for_callables()
+                )
             else:
                 response_headers = self.response_headers
 
-            for (index, response_header) in enumerate(response_headers):
+            for index, response_header in enumerate(response_headers):
                 if not isinstance(response_header, str):
-                    raise TypeError(f"Invalid response header in entry #{index+1}: the header should be a string, but I was given a type of '{header.__class__.__name__}' instead.")
+                    raise TypeError(
+                        f"Invalid response header in entry #{index + 1}: the header should be a string, but I was given a type of '{header.__class__.__name__}' instead."
+                    )
                 parts = response_header.split(":", 1)
                 if len(parts) != 2:
-                    raise ValueError(f"Invalid response header in entry #{index+1}: the header should be a string in the form of 'key: value' but the given header did not have a colon to separate key and value.")
+                    raise ValueError(
+                        f"Invalid response header in entry #{index + 1}: the header should be a string in the form of 'key: value' but the given header did not have a colon to separate key and value."
+                    )
                 input_output.response_headers.add(parts[0], parts[1])
         for security_header in self.security_headers:
             security_header.set_headers_for_input_output(input_output)
@@ -136,7 +143,9 @@ class End(ABC):
             self.auto_case_internal_column_name("status"): self.auto_case_internal_column_name(response_data["status"]),
             self.auto_case_internal_column_name("error"): response_data.get("error", ""),
             self.auto_case_internal_column_name("data"): response_data.get("data", []),
-            self.auto_case_internal_column_name("pagination"): self.normalize_pagination(response_data.get("pagination", {})),
+            self.auto_case_internal_column_name("pagination"): self.normalize_pagination(
+                response_data.get("pagination", {})
+            ),
             self.auto_case_internal_column_name("input_errors"): response_data.get("input_errors", {}),
         }
 

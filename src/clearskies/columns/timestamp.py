@@ -1,14 +1,16 @@
 from __future__ import annotations
-import datetime
-from typing import Any, Callable, overload, Self, TYPE_CHECKING, Type
 
-import clearskies.typing
+import datetime
+from typing import TYPE_CHECKING, Any, Callable, Self, Type, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
 from clearskies.columns.datetime import Datetime
 
 if TYPE_CHECKING:
     from clearskies import Model
+
 
 class Timestamp(Datetime):
     """
@@ -19,9 +21,10 @@ class Timestamp(Datetime):
 
     Also, this **always** assumes the timezone for the timestamp is UTC
 
-    ```
+    ```python
     import datetime
     import clearskies
+
 
     class Pet(clearskies.Model):
         id_column_name = "id"
@@ -30,6 +33,7 @@ class Timestamp(Datetime):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         last_fed = clearskies.columns.Timestamp()
+
 
     def demo_timestamp(utcnow: datetime.datetime, pets: Pet) -> dict[str, str | int]:
         pet = pets.create({
@@ -40,6 +44,7 @@ class Timestamp(Datetime):
             "last_fed": pet.last_fed.isoformat(),
             "raw_data": pet.get_raw_data()["last_fed"],
         }
+
 
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
@@ -52,16 +57,13 @@ class Timestamp(Datetime):
 
     And when invoked it returns:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
-        "data": {
-            "last_fed": "2025-05-18T19:14:56+00:00",
-            "raw_data": 1747595696
-        },
+        "data": {"last_fed": "2025-05-18T19:14:56+00:00", "raw_data": 1747595696},
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
 
@@ -148,13 +150,11 @@ class Timestamp(Datetime):
     def __set__(self, instance, value: datetime.datetime) -> None:
         instance._next_data[self.name] = value
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         if not isinstance(value, int):
             return f"'{self.name}' must be an integer"
         return ""
 
     def values_match(self, value_1, value_2):
-        """
-        Compares two values to see if they are the same
-        """
+        """Compare two values to see if they are the same."""
         return value_1 == value_2

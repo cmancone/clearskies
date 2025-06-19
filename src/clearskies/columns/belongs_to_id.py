@@ -1,20 +1,21 @@
 from __future__ import annotations
-from typing import Callable, TYPE_CHECKING, Any
-from collections import OrderedDict
 
-import clearskies.typing
+from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Callable
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
-from clearskies.columns.string import String
-from clearskies.functional import validations
-from clearskies.di.inject import InputOutput
-from clearskies.autodoc.schema import String as AutoDocString
-from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.autodoc.schema import Object as AutoDocObject
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.autodoc.schema import String as AutoDocString
+from clearskies.columns.string import String
+from clearskies.di.inject import InputOutput
+from clearskies.functional import validations
 
 if TYPE_CHECKING:
-    from clearskies import Column
-    from clearskies import Model
+    from clearskies import Column, Model
+
 
 class BelongsToId(String):
     """
@@ -29,8 +30,9 @@ class BelongsToId(String):
     will automatically verify that the given id corresponds to an actual record.  Here's a simple
     usage example:
 
-    ```
+    ```python
     import clearskies
+
 
     class Category(clearskies.Model):
         id_column_name = "id"
@@ -38,6 +40,7 @@ class BelongsToId(String):
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     class Product(clearskies.Model):
         id_column_name = "id"
@@ -47,6 +50,7 @@ class BelongsToId(String):
         name = clearskies.columns.String()
         category_id = clearskies.columns.BelongsToId(Category)
         category = clearskies.columns.BelongsToModel("category_id")
+
 
     def test_belongs_to(products: Product, categories: Category):
         toys = categories.create({"name": "Toys"})
@@ -65,6 +69,7 @@ class BelongsToId(String):
             "ball_fidget_id_check": fidget_spinner.category_id == ball.category.id,
         }
 
+
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(test_belongs_to),
         classes=[Category, Product],
@@ -72,7 +77,6 @@ class BelongsToId(String):
 
     if __name__ == "__main__":
         cli()
-
     ```
 
     ## Circular Dependency Trees
@@ -83,8 +87,9 @@ class BelongsToId(String):
     depenency errors in python.  To work around this, clearskies requires the addition of
     a "model reference" class that looks like this:
 
-    ```
+    ```python
     import some_model
+
 
     class SomeModelReference:
         def get_model_class(self):
@@ -107,9 +112,10 @@ class BelongsToId(String):
     The files would then contain:
 
     category.py
-    ```
+    ```python
     import clearskies
     import models.product_reference
+
 
     class Category(clearskies.Model):
         id_column_name = "id"
@@ -121,9 +127,10 @@ class BelongsToId(String):
     ```
 
     category_reference.py
-    ```
+    ```python
     from clearskies.model import ModelClassReference
     import models.cateogry
+
 
     class CategoryReference(ModelClassReference):
         def get_model_class(self):
@@ -131,9 +138,10 @@ class BelongsToId(String):
     ```
 
     product.py
-    ```
+    ```python
     import clearskies
     import models.category_reference
+
 
     class Product(clearskies.model.Model):
         id_column_name = "id"
@@ -146,9 +154,10 @@ class BelongsToId(String):
     ```
 
     product_reference.py
-    ```
+    ```python
     from clearskies.model import ModelClassReference
     import models.product
+
 
     class ProductReference(ModelClassReference):
         def get_model_class(self):
@@ -173,7 +182,7 @@ class BelongsToId(String):
     If you do this, you must set readable_parent_columns on the BelongsToId column to specify which
     columns from the parent model should be returned in the response.  See this example:
 
-    ```
+    ```python
     import clearskies
 
     class Owner(clearskies.Model):
@@ -231,7 +240,7 @@ class BelongsToId(String):
     With readable_parent_columns set in the Pet.owner_id column, and owner set in the list configuration,
     The owner id and name are included in the `owner` key of the returned Pet dictionary:
 
-    ```
+    ```bash
     $ ./test.py  | jq
     {
         "status": "success",
@@ -324,12 +333,12 @@ class BelongsToId(String):
         if not self.where:
             return parents
 
-        for (index, where) in enumerate(self.where):
+        for index, where in enumerate(self.where):
             if callable(where):
                 parents = self.di.call_function(where, model=parents, **self.input_output.get_context_for_callables())
                 if not validations.is_model(parents):
                     raise ValueError(
-                        f"Configuration error for {self.model_class.__name__}.{self.name}: when 'where' is a callable, it must return a model class, but when the callable in where entry #{index+1} was called, it returned something else."
+                        f"Configuration error for {self.model_class.__name__}.{self.name}: when 'where' is a callable, it must return a model class, but when the callable in where entry #{index + 1} was called, it returned something else."
                     )
             else:
                 parents = parents.where(where)
@@ -339,7 +348,7 @@ class BelongsToId(String):
     def parent_columns(self) -> dict[str, Any]:
         return self.parent_model_class.get_columns()
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         parent_check = super().input_error_for_value(value)
         if parent_check:
             return parent_check
@@ -357,9 +366,7 @@ class BelongsToId(String):
         return ""
 
     def n_plus_one_add_joins(self, model: Model, column_names: list[str] = []) -> Model:
-        """
-        Add any additional joins to solve the N+1 problem.
-        """
+        """Add any additional joins to solve the N+1 problem."""
         if not column_names:
             column_names = self.readable_parent_columns
         if not column_names:
@@ -391,9 +398,7 @@ class BelongsToId(String):
         return self.parent_model.destination_name() + "_" + self.name
 
     def is_allowed_operator(self, operator, relationship_reference=None):
-        """
-        This is called when processing user data to decide if the end-user is specifying an allowed operator
-        """
+        """Proces user data to decide if the end-user is specifying an allowed operator."""
         if not relationship_reference:
             return "="
         parent_columns = self.parent_columns
@@ -421,7 +426,9 @@ class BelongsToId(String):
             raise ValueError(
                 "I was asked to check search operators on a related column that doens't exist.  This shouldn't have happened :("
             )
-        return self.parent_columns[relationship_reference].is_allowed_search_operator(operator, relationship_reference=relationship_reference)
+        return self.parent_columns[relationship_reference].is_allowed_search_operator(
+            operator, relationship_reference=relationship_reference
+        )
 
     def allowed_search_operators(self, relationship_reference: str = ""):
         if not relationship_reference:
@@ -434,11 +441,7 @@ class BelongsToId(String):
         return self.parent_columns[relationship_reference].allowed_search_operators()
 
     def add_search(
-        self,
-        model: clearskies.model.Model,
-        value: str,
-        operator: str="",
-        relationship_reference: str=""
+        self, model: clearskies.model.Model, value: str, operator: str = "", relationship_reference: str = ""
     ) -> clearskies.model.Model:
         if not relationship_reference:
             return super().add_search(model, value, operator=operator)
@@ -453,7 +456,9 @@ class BelongsToId(String):
         alias = self.join_table_alias()
         return model.where(related_column.build_condition(value, operator=operator, column_prefix=f"{alias}."))
 
-    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None) -> list[AutoDocSchema]:
+    def documentation(
+        self, name: str | None = None, example: str | None = None, value: str | None = None
+    ) -> list[AutoDocSchema]:
         columns = self.parent_columns
         parent_id_column_name = self.parent_model.id_column_name
         parent_properties = [columns[parent_id_column_name].documentation()]

@@ -1,19 +1,20 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING, overload, Self
 
-import clearskies.typing
+from typing import TYPE_CHECKING, Any, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
-from clearskies.functional import string, validations
-from clearskies.di.inject import InputOutput
-from clearskies.column import Column
 from clearskies.autodoc.schema import Array as AutoDocArray
 from clearskies.autodoc.schema import Object as AutoDocObject
 from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.column import Column
+from clearskies.di.inject import InputOutput
+from clearskies.functional import string, validations
 
 if TYPE_CHECKING:
-    from clearskies import Column
-    from clearskies import Model
+    from clearskies import Column, Model
+
 
 class HasMany(Column):
     """
@@ -32,8 +33,9 @@ class HasMany(Column):
 
     See the BelongsToId class for additional background and directions on avoiding circular dependency trees.
 
-    ```
+    ```python
     import clearskies
+
 
     class Product(clearskies.Model):
         id_column_name = "id"
@@ -43,6 +45,7 @@ class HasMany(Column):
         name = clearskies.columns.String()
         category_id = clearskies.columns.String()
 
+
     class Category(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -50,6 +53,7 @@ class HasMany(Column):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         products = clearskies.columns.HasMany(Product)
+
 
     def test_has_many(products: Product, categories: Category):
         toys = categories.create({"name": "Toys"})
@@ -66,6 +70,7 @@ class HasMany(Column):
         # it specifically returns a models object so you can do more filtering/transformations
         return toys.products.sort_by("name", "asc")
 
+
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
             test_has_many,
@@ -81,29 +86,19 @@ class HasMany(Column):
 
     And if you execute this it will return:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
         "data": [
-            {
-            "id": "edc68e8d-7fc8-45ce-98f0-9c6f883e4e7f",
-            "name": "Ball"
-            },
-            {
-            "id": "b51a0de5-c784-4e0c-880c-56e5bf731dfd",
-            "name": "Crayon"
-            },
-            {
-            "id": "06cec3af-d042-4d6b-a99c-b4a0072f188d",
-            "name": "Fidget Spinner"
-            }
+            {"id": "edc68e8d-7fc8-45ce-98f0-9c6f883e4e7f", "name": "Ball"},
+            {"id": "b51a0de5-c784-4e0c-880c-56e5bf731dfd", "name": "Crayon"},
+            {"id": "06cec3af-d042-4d6b-a99c-b4a0072f188d", "name": "Fidget Spinner"},
         ],
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
-
     """
 
     """
@@ -125,7 +120,7 @@ class HasMany(Column):
 
     Example:
 
-    ```
+    ```python
     import clearskies
 
     class Product(clearskies.Model):
@@ -174,7 +169,7 @@ class HasMany(Column):
     the naming convention, we had to specify `foreign_column_name="my_parent_category_id"` in `Category.products`,
     in order for the `HasMany` column to find the children.  Therefore, when invoked it returns the same thing:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -206,7 +201,7 @@ class HasMany(Column):
     from the child class that are included in the JSON response are determined by `readable_child_column_names`.
     Example:
 
-    ```
+    ```python
     import clearskies
 
     class Product(clearskies.Model):
@@ -251,7 +246,7 @@ class HasMany(Column):
     on the categories nodel and asking the endpoint to also unpack their products.  We set `readable_child_column_names`
     to `["id", "name"]` for `Category.products`, so when the endpoint unpacks the products, it includes those columns:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -301,7 +296,7 @@ class HasMany(Column):
     """
     Additional conditions to add to searches on the child table.
 
-    ```
+    ```python
     import clearskies
 
     class Order(clearskies.Model):
@@ -353,7 +348,7 @@ class HasMany(Column):
     The above example shows two different ways of adding conditions.  Note that `where` can be either a list or a single
     condition.  If you invoked this you would get:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -373,7 +368,7 @@ class HasMany(Column):
     and then returns the modified model class.  Like usual, this callable can request any defined depenency.  So, for
     instance, the following column definition is equivalent to the example above:
 
-    ```
+    ```python
     class User(clearskies.Model):
         # removing unchanged part for brevity
         large_open_orders = clearskies.columns.HasMany(
@@ -411,7 +406,6 @@ class HasMany(Column):
         Therefore, we need the model involved, and the only way for a property to know what class it is
         in is if the parent class checks in (which is what happens here).
         """
-
         # this is where we auto-calculate the expected name of our id column in the child model.
         # we can't do it until now because it comes from the model class we are connected to, and
         # we only just get it.
@@ -447,7 +441,7 @@ class HasMany(Column):
     def __get__(self, model, cls):
         if model is None:
             self.model_class = cls
-            return self # type:  ignore
+            return self  # type:  ignore
 
         foreign_column_name = self.foreign_column_name
         model_id = getattr(model, model.id_column_name)
@@ -456,19 +450,21 @@ class HasMany(Column):
         if not self.where:
             return children
 
-        for (index, where) in enumerate(self.where):
+        for index, where in enumerate(self.where):
             if callable(where):
                 children = self.di.call_function(where, model=children, **self.input_output.get_context_for_callables())
                 if not validations.is_model(children):
                     raise ValueError(
-                        f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index+1} was called, it did not return the models class"
+                        f"Configuration error for column '{self.name}' in model '{self.model_class.__name__}': when 'where' is a callable, it must return a models class, but when the callable in where entry #{index + 1} was called, it did not return the models class"
                     )
             else:
                 children = children.where(where)
         return children
 
     def __set__(self, model: Model, value: Model) -> None:
-        raise ValueError(f"Attempt to set a value to {model.__class__.__name__}.{self.name}: this is not allowed because it is a HasMany column, which is not writeable.")
+        raise ValueError(
+            f"Attempt to set a value to {model.__class__.__name__}.{self.name}: this is not allowed because it is a HasMany column, which is not writeable."
+        )
 
     def to_json(self, model: Model) -> dict[str, Any]:
         children = []
@@ -488,13 +484,15 @@ class HasMany(Column):
             children.append(json)
         return {self.name: children}
 
-    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None) -> list[AutoDocSchema]:
+    def documentation(
+        self, name: str | None = None, example: str | None = None, value: str | None = None
+    ) -> list[AutoDocSchema]:
         columns = self.child_columns
         child_id_column_name = self.child_model.id_column_name
         child_properties = [columns[child_id_column_name].documentation()]
 
         for column_name in self.readable_child_column_names:
-            child_properties.extend(columns[column_name].documentation()) # type: ignore
+            child_properties.extend(columns[column_name].documentation())  # type: ignore
 
         child_object = AutoDocObject(
             string.title_case_to_nice(self.child_model_class.__name__),

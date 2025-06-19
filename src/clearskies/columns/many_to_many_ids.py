@@ -1,18 +1,19 @@
 from __future__ import annotations
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
-from collections import OrderedDict
 
-import clearskies.typing
+from collections import OrderedDict
+from typing import TYPE_CHECKING, Any, Callable, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
-from clearskies.column import Column
-from clearskies.functional import string
 from clearskies.autodoc.schema import Array as AutoDocArray
 from clearskies.autodoc.schema import String as AutoDocString
+from clearskies.column import Column
+from clearskies.functional import string
 
 if TYPE_CHECKING:
-    from clearskies import Column
-    from clearskies import Model
+    from clearskies import Column, Model
+
 
 class ManyToManyIds(Column):
     """
@@ -36,8 +37,9 @@ class ManyToManyIds(Column):
     and therefore be easy to demonstrate.  In order to have both models reference eachother, you have to use model
     references to avoid circular imports.  There are examples of doing this in the `BelongsTo` column class.
 
-    ```
+    ```python
     import clearskies
+
 
     class ThingyToWidget(clearskies.Model):
         id_column_name = "id"
@@ -50,12 +52,14 @@ class ManyToManyIds(Column):
         thingy_id = clearskies.columns.String()
         widget_id = clearskies.columns.String()
 
+
     class Thingy(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     class Widget(clearskies.Model):
         id_column_name = "id"
@@ -87,6 +91,7 @@ class ManyToManyIds(Column):
 
         return widget.thingies
 
+
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
             my_application,
@@ -103,39 +108,33 @@ class ManyToManyIds(Column):
 
     And when executed:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
         "data": [
-            {
-                "id": "741bc838-c694-4624-9fc2-e9032f6cb962",
-                "name": "Thing 2"
-            },
-            {
-                "id": "1808a8ef-e288-44e6-9fed-46e3b0df057f",
-                "name": "Thing 3"
-            }
+            {"id": "741bc838-c694-4624-9fc2-e9032f6cb962", "name": "Thing 2"},
+            {"id": "1808a8ef-e288-44e6-9fed-46e3b0df057f", "name": "Thing 3"},
         ],
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
 
     Of course, you can also create or remove individual relationships by using the pivot model directly,
     as shown in these partial code snippets:
 
-    ```
+    ```python
     def add_items(thingy_to_widgets):
         thingy_to_widgets.create({
             "thingy_id": "some_id",
             "widget_id": "other_id",
         })
 
+
     def remove_item(thingy_to_widgets):
         thingy_to_widgets.where("thingy_id=some_id").where("widget_id=other_id").first().delete()
     ```
-
     """
 
     """ The model class for the model that we are related to. """
@@ -159,7 +158,9 @@ class ManyToManyIds(Column):
     appending `_id`. If you name your columns according to this standard then you don't have to specify this column
     name.
     """
-    related_column_name_in_pivot = configs.ModelToIdColumn(model_column_config_name="pivot_model_class", source_model_class_config_name="related_model_class")
+    related_column_name_in_pivot = configs.ModelToIdColumn(
+        model_column_config_name="pivot_model_class", source_model_class_config_name="related_model_class"
+    )
 
     """ The name of the pivot table."""
     pivot_table_name = configs.ModelDestinationName("pivot_model_class")
@@ -167,8 +168,8 @@ class ManyToManyIds(Column):
     """ The list of columns to be loaded from the related models when we are converted to JSON. """
     readable_related_column_names = configs.ReadableModelColumns("related_model_class")
 
-    default = configs.StringList(default=None) #  type: ignore
-    setable = configs.StringListOrCallable(default=None) #  type: ignore
+    default = configs.StringList(default=None)  #  type: ignore
+    setable = configs.StringListOrCallable(default=None)  #  type: ignore
     is_searchable = configs.Boolean(default=False)
     _descriptor_config_map = None
 
@@ -266,7 +267,9 @@ class ManyToManyIds(Column):
         return related_models
 
     def get_pivot_models(self, model: Model) -> Model:
-        return self.pivot_model.where(f"{self.own_column_name_in_pivot}=" + getattr(model, self.model_class.id_column_name))
+        return self.pivot_model.where(
+            f"{self.own_column_name_in_pivot}=" + getattr(model, self.model_class.id_column_name)
+        )
 
     def post_save(self, data: dict[str, Any], model: clearskies.model.Model, id: int | str) -> None:
         # if our incoming data is not in the data array or is None, then nothing has been set and we do not want
@@ -302,22 +305,14 @@ class ManyToManyIds(Column):
 
         super().post_save(data, model, id)
 
-    def add_search(
-        self,
-        model: Model,
-        value: str,
-        operator: str="",
-        relationship_reference: str=""
-    ) -> Model:
+    def add_search(self, model: Model, value: str, operator: str = "", relationship_reference: str = "") -> Model:
         related_column_name_in_pivot = self.related_column_name_in_pivot
         own_column_name_in_pivot = self.own_column_name_in_pivot
         own_id_column_name = self.model_class.id_column_name
         pivot_table_name = self.pivot_table_name
         my_table_name = self.model_class.destination_name()
         related_table_name = self.related_model.destination_name()
-        join_pivot = (
-            f"JOIN {pivot_table_name} ON {pivot_table_name}.{own_column_name_in_pivot}={my_table_name}.{own_id_column_name}"
-        )
+        join_pivot = f"JOIN {pivot_table_name} ON {pivot_table_name}.{own_column_name_in_pivot}={my_table_name}.{own_id_column_name}"
         # no reason we can't support searching by both an id or a list of ids
         values = value if type(value) == list else [value]
         search = " IN (" + ", ".join([str(val) for val in value]) + ")"
@@ -328,6 +323,6 @@ class ManyToManyIds(Column):
         records = [getattr(related, related_id_column_name) for related in self.get_related_models(model)]
         return {self.name: records}
 
-    def documentation(self, name: str | None=None, example: str | None=None, value: str | None=None):
+    def documentation(self, name: str | None = None, example: str | None = None, value: str | None = None):
         related_id_column_name = self.related_model_class.id_column_name
         return AutoDocArray(name if name is not None else self.name, AutoDocString(related_id_column_name))

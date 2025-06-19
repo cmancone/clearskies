@@ -45,7 +45,9 @@ class Configurable:
     def _descriptor_to_name(self, descriptor):
         descriptor_config_map = self.get_descriptor_config_map()
         if id(descriptor) not in descriptor_config_map:
-            raise ValueError(f"The reason behind this error is kinda long and complicated, but doens't really matter.  To make it go away, just add `_descriptor_config_map = None` to the definition of {self.__class__.__name__}")
+            raise ValueError(
+                f"The reason behind this error is kinda long and complicated, but doens't really matter.  To make it go away, just add `_descriptor_config_map = None` to the definition of {self.__class__.__name__}"
+            )
         return descriptor_config_map[id(descriptor)]
 
     def finalize_and_validate_configuration(self):

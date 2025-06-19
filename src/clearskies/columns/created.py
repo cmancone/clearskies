@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 import datetime
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import clearskies.di
 import clearskies.typing
+from clearskies import configs, parameters_to_properties  # type: ignore
 from clearskies.columns.datetime import Datetime
-from clearskies import configs, parameters_to_properties # type: ignore
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -18,8 +19,10 @@ class Created(Datetime):
     This will always populate the column when the model is first created.  If you attempt to set a value
     to this column on create then it will be overwritten.
 
-    ```
+    ```python
     import clearskies
+
+
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -27,34 +30,33 @@ class Created(Datetime):
         name = clearskies.columns.String()
         created = clearskies.columns.Created()
 
+
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
             lambda my_models: my_models.create({"name": "An Example"}),
             model_class=MyModel,
             readable_column_names=["id", "name", "created"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     cli()
     ```
 
     And if you execute this you'll see that the `created` column was automatically populated:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
         "data": {
             "id": "c54d74ac-5282-439e-af4f-23efb9ba96d4",
             "name": "An Example",
-            "created": "2025-05-09T19:58:43+00:00"
+            "created": "2025-05-09T19:58:43+00:00",
         },
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
-
     ```
-
     """
 
     """

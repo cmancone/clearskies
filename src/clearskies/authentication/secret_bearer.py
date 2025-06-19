@@ -1,8 +1,8 @@
+import clearskies.configs
+import clearskies.di
+import clearskies.parameters_to_properties
 from clearskies import autodoc
 from clearskies.authentication.authentication import Authentication
-import clearskies.di
-import clearskies.configs
-import clearskies.parameters_to_properties
 
 
 class SecretBearer(Authentication, clearskies.di.InjectableProperties):
@@ -21,7 +21,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     environment variable which is set in the code itself.  Normally you wouldn't set environment variables like this,
     but it's done here to create a self-contained example that is easy to run:
 
-    ```
+    ```python
     import os
     import clearskies
 
@@ -37,7 +37,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     ```
     We can then call it with and without the authentication header:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -H 'Authorization: SUPERSECRET' | jq
     {
         "status": "success",
@@ -73,12 +73,13 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     The secret bearer class can also be attached to an API Backend to provide authentication to remote APIs.  To
     demonstrate, here is an example server that expects a secret token in the authorization header:
 
-    ```
+    ```python
     import os
     import clearskies
     from clearskies import columns
 
     os.environ["MY_SECRET"] = "SUPERSECRET"
+
 
     class Widget(clearskies.Model):
         id_column_name = "id"
@@ -91,15 +92,16 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
         created_at = columns.Created()
         updated_at = columns.Updated()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.RestfulApi(
             url="widgets",
             model_class=Widget,
             authentication=clearskies.authentication.SecretBearer(environment_key="MY_SECRET"),
-            readable_column_names=['id', 'name', 'category', 'cost', 'created_at', 'updated_at'],
-            writeable_column_names=['name', 'category', 'cost'],
-            sortable_column_names=['name', 'category', 'cost'],
-            searchable_column_names=['id', 'name', 'category', 'cost'],
+            readable_column_names=["id", "name", "category", "cost", "created_at", "updated_at"],
+            writeable_column_names=["name", "category", "cost"],
+            sortable_column_names=["name", "category", "cost"],
+            searchable_column_names=["id", "name", "category", "cost"],
             default_sort_column_name="name",
         )
     )
@@ -109,12 +111,13 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     Then here is a client app (you can launch the above server and then run this in a new terminal) that
     similarly uses the secret bearer class to authenticate to the server:
 
-    ```
+    ```python
     import os
     import clearskies
     from clearskies import columns
 
     os.environ["MY_SECRET"] = "SUPERSECRET"
+
 
     class Widget(clearskies.Model):
         id_column_name = "id"
@@ -130,10 +133,12 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
         created_at = columns.Datetime()
         updated_at = columns.Datetime()
 
+
     def api_demo(widgets: Widget) -> Widget:
         thinga = widgets.create({"name": "Thinga", "category": "Doohickey", "cost": 125})
         mabob = widgets.create({"name": "Mabob", "category": "Doohicky", "cost": 150})
         return widgets
+
 
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
@@ -142,7 +147,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
             return_records=True,
             readable_column_names=["id", "name", "category", "cost", "created_at", "updated_at"],
         ),
-        classes=[Widget]
+        classes=[Widget],
     )
     cli()
     ```
@@ -155,7 +160,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     writeable columns, the API would return an input error.  If you launch the above server/API and then run
     the given client script, you'll see output like this:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -166,7 +171,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
                 "category": "Doohicky",
                 "cost": 150.0,
                 "created_at": "2025-06-13T15:19:27+00:00",
-                "updated_at": "2025-06-13T15:19:27+00:00"
+                "updated_at": "2025-06-13T15:19:27+00:00",
             },
             {
                 "id": "ed1421b8-88ad-49d2-a130-c34b4ac4dfcf",
@@ -174,15 +179,15 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
                 "category": "Doohickey",
                 "cost": 125.0,
                 "created_at": "2025-06-13T15:19:27+00:00",
-                "updated_at": "2025-06-13T15:19:27+00:00"
-            }
+                "updated_at": "2025-06-13T15:19:27+00:00",
+            },
         ],
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
-
     ```
     """
+
     is_public = False
     can_authorize = False
 
@@ -195,7 +200,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     Of course, to use `secret_key`, you must also provide a secret manager.  The below example uses the dependency
     injection system to create a faux secret manager to demonstrate how it works in general:
 
-    ```
+    ```python
     from types import SimpleNamespace
     import clearskies
 
@@ -220,7 +225,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -H "Authorization: SUPERSECRET" | jq
     {
         "status": "success",
@@ -253,7 +258,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     be accepted and you can migrate your applications to only send the new secret.  Once they are all updated,
     remove the alternate_secret_key:
 
-    ```
+    ```python
     from types import SimpleNamespace
     import clearskies
 
@@ -283,7 +288,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -H "Authorization: SUPERSECRET" | jq
     {
         "status": "success",
@@ -332,7 +337,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     to use the new key and, once they are all migrated, remove the old key from the application
     configuration.  Here's an example:
 
-    ```
+    ```python
     import os
     import clearskies
 
@@ -353,7 +358,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -H "Authorization: SUPERSECRET" | jq
     {
         "status": "success",
@@ -398,7 +403,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     to provide such a prefix.  Note that the prefix is case-insensitive and it does not assume a space between the
     prefix and the token (so, if you want a space, you must explicitly put it in the prefix).  Here's an example:
 
-    ```
+    ```python
     import os
     import clearskies
 
@@ -418,7 +423,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     And then usage:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -H "Authorization: SECRET-TOKEN SUPERSECRET" | jq
     {
         "status": "success",
@@ -452,30 +457,30 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     """
     documentation_security_name = clearskies.configs.String(default="ApiKey")
 
-    _secret: str = None #  type: ignore
-    _alternate_secret: str = None # type: ignore
+    _secret: str = None  #  type: ignore
+    _alternate_secret: str = None  # type: ignore
 
     @clearskies.parameters_to_properties.parameters_to_properties
     def __init__(
         self,
-        secret_key: str="",
-        alternate_secret_key: str="",
-        environment_key: str="",
-        alternate_environment_key: str="",
-        header_prefix: str="",
-        documentation_security_name: str="",
+        secret_key: str = "",
+        alternate_secret_key: str = "",
+        environment_key: str = "",
+        alternate_environment_key: str = "",
+        header_prefix: str = "",
+        documentation_security_name: str = "",
     ):
         if not secret_key and not environment_key:
-            raise ValueError(
-                "Must set either 'secret_key' or 'environment_key' when configuring the SecretBearer"
-            )
+            raise ValueError("Must set either 'secret_key' or 'environment_key' when configuring the SecretBearer")
         self.header_prefix_length = len(header_prefix)
         self.finalize_and_validate_configuration()
 
     @property
     def secret(self):
         if not self._secret:
-            self._secret = self.secrets.get(self.secret_key) if self.secret_key else self.environment.get(self.environment_key)
+            self._secret = (
+                self.secrets.get(self.secret_key) if self.secret_key else self.environment.get(self.environment_key)
+            )
         return self._secret
 
     def clear_credential_cache(self):
@@ -488,7 +493,11 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
             return ""
 
         if not self._alternate_secret:
-            self._alternate_secret = self.secrets.get(self.alternate_secret_key) if self.secret_key else self.environment.get(self.alternate_environment_key)
+            self._alternate_secret = (
+                self.secrets.get(self.alternate_secret_key)
+                if self.secret_key
+                else self.environment.get(self.alternate_environment_key)
+            )
         return self._alternate_secret
 
     def headers(self, retry_auth=False):

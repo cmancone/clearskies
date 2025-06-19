@@ -1,9 +1,10 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock, call
-import datetime
 
 import clearskies
 from clearskies.contexts import Context
+
 
 class CreatedByAuthorizationDataTest(unittest.TestCase):
     def test_default(self):
@@ -29,7 +30,7 @@ class CreatedByAuthorizationDataTest(unittest.TestCase):
                 readable_column_names=["id", "name", "organization_id"],
                 authentication=MyAuthentication(),
             ),
-            classes=[MyModel]
+            classes=[MyModel],
         )
         (status_code, response_data, response_headers) = context(request_method="POST", body={"name": "Bob"})
         assert response_data["data"]["organization_id"] == "my-super-awesome-organization"

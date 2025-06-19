@@ -1,26 +1,33 @@
-import unittest
-from clearskies.di import Di, AdditionalConfig, inject, InjectableProperties
-from clearskies import parameters_to_properties, Configurable
-import clearskies.configs
 import datetime
+import unittest
+
 import requests
+
+import clearskies.configs
+from clearskies import Configurable, parameters_to_properties
+from clearskies.di import AdditionalConfig, Di, InjectableProperties, inject
+
 
 class SomeClass:
     def __init__(self, my_value: int):
         self.my_value = my_value
 
+
 class MyClass:
     def __init__(self, some_specific_value: int, some_class: SomeClass):
-        self.final_value = some_specific_value*some_class.my_value
+        self.final_value = some_specific_value * some_class.my_value
+
 
 class VeryNeedy:
     def __init__(self, my_class, some_other_value: str):
         self.my_class = my_class
         self.some_other_value = some_other_value
 
+
 class MyOtherProvider(AdditionalConfig):
     def provide_some_specific_value(self):
         return 10
+
 
 class MyProvider(AdditionalConfig):
     def provide_some_specific_value(self):
@@ -33,6 +40,7 @@ class MyProvider(AdditionalConfig):
         if class_to_provide == SomeClass:
             return SomeClass(5)
         raise ValueError(f"I was asked to build a class I didn't expect '{class_to_provide.__name__}'")
+
 
 def my_function(this_uses_type_hinting_exclusively: VeryNeedy):
     return f"Jane owns {this_uses_type_hinting_exclusively.my_class.final_value} {this_uses_type_hinting_exclusively.some_other_value}s"
@@ -83,7 +91,7 @@ class DiTest(unittest.TestCase):
                 return 2
 
             def provide_another_value(self, some_value):
-                return some_value*2
+                return some_value * 2
 
         def my_function(another_value):
             return another_value
@@ -184,7 +192,7 @@ class DiTest(unittest.TestCase):
 
         class ReusableClass(clearskies.Configurable, InjectableProperties):
             my_int = clearskies.configs.Integer(required=True)
-            some_number = inject.ByName('some_number')
+            some_number = inject.ByName("some_number")
             my_other_thing = inject.ByClass(MyOtherThing)
 
             @parameters_to_properties
@@ -192,7 +200,7 @@ class DiTest(unittest.TestCase):
                 self.finalize_and_validate_configuration()
 
             def my_value(self) -> int:
-                return self.my_int*self.some_number
+                return self.my_int * self.some_number
 
         class MyClass(InjectableProperties):
             reusable = ReusableClass(5)

@@ -1,17 +1,19 @@
 from __future__ import annotations
-from typing import Any, Callable, Iterator, Self, TYPE_CHECKING
-from abc import abstractmethod
+
 import re
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Self
 
-
-from clearskies.functional import string
-from clearskies.di import InjectableProperties, inject
-from clearskies.query import Query, Sort, Condition, Join
 from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.di import InjectableProperties, inject
+from clearskies.functional import string
+from clearskies.query import Condition, Join, Query, Sort
 from clearskies.schema import Schema
+
 if TYPE_CHECKING:
     from clearskies import Column
     from clearskies.backends import Backend
+
 
 class Model(Schema, InjectableProperties):
     """
@@ -37,19 +39,27 @@ class Model(Schema, InjectableProperties):
     _next_page_data: dict[str, Any] | None = None
 
     id_column_name: str = ""
-    backend: Backend = None # type: ignore
+    backend: Backend = None  # type: ignore
 
     _di = inject.Di()
 
     def __init__(self):
         if not self.id_column_name:
-            raise ValueError(f"You must define the 'id_column_name' property for every model class, but this is missing for model '{self.__class__.__name__}'")
+            raise ValueError(
+                f"You must define the 'id_column_name' property for every model class, but this is missing for model '{self.__class__.__name__}'"
+            )
         if not isinstance(self.id_column_name, str):
-            raise TypeError(f"The 'id_column_name' property of a model must be a string that specifies the name of the id column, but that is not the case for model '{self.__class__.__name__}'.")
+            raise TypeError(
+                f"The 'id_column_name' property of a model must be a string that specifies the name of the id column, but that is not the case for model '{self.__class__.__name__}'."
+            )
         if not self.backend:
-            raise ValueError(f"You must define the 'backend' property for every model class, but this is missing for model '{self.__class__.__name__}'")
+            raise ValueError(
+                f"You must define the 'backend' property for every model class, but this is missing for model '{self.__class__.__name__}'"
+            )
         if not hasattr(self.backend, "documentation_pagination_parameters"):
-            raise TypeError(f"The 'backend' property of a model must be an object that extends the clearskies.Backend class, but that is not the case for model '{self.__class__.__name__}'.")
+            raise TypeError(
+                f"The 'backend' property of a model must be an object that extends the clearskies.Backend class, but that is not the case for model '{self.__class__.__name__}'."
+            )
         self._previous_data = {}
         self._data = {}
         self._next_data = {}
@@ -63,7 +73,7 @@ class Model(Schema, InjectableProperties):
     @classmethod
     def destination_name(cls: type[Self]) -> str:
         """
-        Return the name of the destination that the model uses for data storage
+        Return the name of the destination that the model uses for data storage.
 
         For SQL backends, this would return the table name.  Other backends will use this
         same function but interpret it in whatever way it makes sense.  For instance, an
@@ -81,9 +91,9 @@ class Model(Schema, InjectableProperties):
         return f"{singular}s"
 
     def supports_n_plus_one(self: Self):
-        return self.backend.supports_n_plus_one #  type: ignore
+        return self.backend.supports_n_plus_one  #  type: ignore
 
-    def __bool__(self: Self) -> bool:
+    def __bool__(self: Self) -> bool:  # noqa: D105
         if self._query:
             return bool(self.__len__())
 
@@ -98,15 +108,15 @@ class Model(Schema, InjectableProperties):
         self._data = {} if data is None else data
         self._transformed_data = {}
 
-    def save(self: Self, data: dict[str, Any] | None = None, columns: dict[str, Column]={}, no_data=False) -> bool:
+    def save(self: Self, data: dict[str, Any] | None = None, columns: dict[str, Column] = {}, no_data=False) -> bool:
         """
-        Save data to the database and update the model!
+        Save data to the database and update the model.
 
         Executes an update if the model corresponds to a record already, or an insert if not.
 
         There are two supported flows.  One is to pass in a dictionary of data to save:
 
-        ```
+        ```python
         model.save({
             "some_column": "New Value",
             "another_column": 5,
@@ -115,7 +125,7 @@ class Model(Schema, InjectableProperties):
 
         And the other is to set new values on the columns attributes and then call save without data:
 
-        ```
+        ```python
         model.some_column = "New Value"
         model.another_column = 5
         model.save()
@@ -175,7 +185,7 @@ class Model(Schema, InjectableProperties):
 
     def is_changing(self: Self, key: str, data: dict[str, Any]) -> bool:
         """
-        Returns True/False to denote if the given column is being modified by the active save operation
+        Return True/False to denote if the given column is being modified by the active save operation.
 
         Pass in the name of the column to check and the data dictionary from the save in progress
         """
@@ -192,9 +202,9 @@ class Model(Schema, InjectableProperties):
 
     def latest(self: Self, key: str, data: dict[str, Any]) -> Any:
         """
-        Returns the 'latest' value for a column during the save operation
+        Return the 'latest' value for a column during the save operation.
 
-        Returns either the column value from the data dictionary or the current value stored in the model
+        Return either the column value from the data dictionary or the current value stored in the model
         Basically, shorthand for the optimized version of:  `data.get(key, default=getattr(self, key))` (which is
         less than ideal because it always builds the default value, even when not necessary)
 
@@ -206,7 +216,7 @@ class Model(Schema, InjectableProperties):
         return getattr(self, key)
 
     def was_changed(self: Self, key: str) -> bool:
-        """Returns True/False to denote if a column was changed in the last save"""
+        """Return True/False to denote if a column was changed in the last save."""
         self.no_queries()
         if self._previous_data is None:
             raise ValueError("was_changed was called before a save was finished - you must save something first")
@@ -251,7 +261,7 @@ class Model(Schema, InjectableProperties):
         return True
 
     def columns_pre_save(self: Self, data: dict[str, Any], columns) -> dict[str, Any]:
-        """Uses the column information present in the model to make any necessary changes before saving"""
+        """Use the column information present in the model to make any necessary changes before saving."""
         for column in columns.values():
             data = column.pre_save(data, self)
             if data is None:
@@ -282,19 +292,19 @@ class Model(Schema, InjectableProperties):
         return data
 
     def columns_post_save(self: Self, data: dict[str, Any], id: str | int, columns) -> dict[str, Any]:
-        """Uses the column information present in the model to make additional changes as needed after saving"""
+        """Use the column information present in the model to make additional changes as needed after saving."""
         for column in columns.values():
             column.post_save(data, self, id)
         return data
 
     def columns_save_finished(self: Self, columns) -> None:
-        """Calls the save_finished method on all of our columns"""
+        """Call the save_finished method on all of our columns."""
         for column in columns.values():
             column.save_finished(self)
 
     def post_save(self: Self, data: dict[str, Any], id: str | int) -> None:
         """
-        A hook to extend so you can provide additional pre-save logic as needed
+        Create a hook to extend so you can provide additional pre-save logic as needed.
 
         It is passed in the data being saved as well as the id.  It should take action as needed and then return
         either the original data array or an adjusted one if appropriate.
@@ -303,7 +313,7 @@ class Model(Schema, InjectableProperties):
 
     def pre_save(self: Self, data: dict[str, Any]) -> dict[str, Any]:
         """
-        A hook to extend so you can provide additional pre-save logic as needed
+        Create a hook to extend so you can provide additional pre-save logic as needed.
 
         It is passed in the data being saved and it should return the same data with adjustments as needed
         """
@@ -311,7 +321,7 @@ class Model(Schema, InjectableProperties):
 
     def save_finished(self: Self) -> None:
         """
-        A hook to extend so you can provide additional logic after a save operation has fully completed
+        Create a hook to extend so you can provide additional logic after a save operation has fully completed.
 
         It has no retrun value and is passed no data.  By the time this fires the model has already been
         updated with the new data.  You can decide on the necessary actions using the `was_changed` and
@@ -320,25 +330,21 @@ class Model(Schema, InjectableProperties):
         pass
 
     def columns_pre_delete(self: Self, columns: dict[str, Column]) -> None:
-        """Uses the column information present in the model to make any necessary changes before deleting"""
+        """Use the column information present in the model to make any necessary changes before deleting."""
         for column in columns.values():
             column.pre_delete(self)
 
     def pre_delete(self: Self) -> None:
-        """
-        A hook to extend so you can provide additional pre-delete logic as needed
-        """
+        """Create a hook to extend so you can provide additional pre-delete logic as needed."""
         pass
 
     def columns_post_delete(self: Self, columns: dict[str, Column]) -> None:
-        """Uses the column information present in the model to make any necessary changes after deleting"""
+        """Use the column information present in the model to make any necessary changes after deleting."""
         for column in columns.values():
             column.post_delete(self)
 
     def post_delete(self: Self) -> None:
-        """
-        A hook to extend so you can provide additional post-delete logic as needed
-        """
+        """Create a hook to extend so you can provide additional post-delete logic as needed."""
         pass
 
     def where_for_request(
@@ -347,11 +353,9 @@ class Model(Schema, InjectableProperties):
         routing_data: dict[str, str],
         authorization_data: dict[str, Any],
         input_output: Any,
-        overrides: dict[str, Column]={},
+        overrides: dict[str, Column] = {},
     ) -> Self:
-        """
-        A hook to automatically apply filtering whenever the model makes an appearance in a get/update/list/search handler.
-        """
+        """Create a hook to automatically apply filtering whenever the model makes an appearance in a get/update/list/search handler."""
         for column in self.get_columns(overrides=overrides).values():
             models = column.where_for_request(models, routing_data, authorization_data, input_output)  # type: ignore
         return models
@@ -360,31 +364,27 @@ class Model(Schema, InjectableProperties):
     ### From here down is functionality related to list/search ###
     ##############################################################
     def has_query(self) -> bool:
-        """
-        Whether or not this model instance represents a query.
-        """
+        """Whether or not this model instance represents a query."""
         return bool(self._query)
 
     def get_query(self) -> Query:
-        """
-        Fetch the query object in the model
-        """
+        """Fetch the query object in the model."""
         return self._query if self._query else Query(self.__class__)
 
     def as_query(self) -> Self:
         """
-        Make the model queryable!
+        Make the model queryable.
 
         This is used to remove the ambiguity of attempting execute a query against a model object that stores a record.
 
         The reason this exists is because the model class is used both to query as well as to operate on single records, which can cause
         subtle bugs if a developer accidentally confuses the two usages.  Consider the following (partial) example:
 
-        ```
+        ```python
         def some_function(models):
             model = models.find("id=5")
             if model:
-                models.save({"test":"example"})
+                models.save({"test": "example"})
             other_record = model.find("id=6")
         ```
 
@@ -398,21 +398,19 @@ class Model(Schema, InjectableProperties):
         inject the model class more generally.  That's where the `as_query()` method comes in.  It's basically just a way of telling clearskies
         "yes, I really do want to start a query using a model that represents a record".  So, for example:
 
-        ```
+        ```python
         def some_function(models):
             model = models.find("id=5")
-            more_models = model.where("test=example") # throws an exception.
-            more_models = model.as_query().where("test=example") # works as expected.
+            more_models = model.where("test=example")  # throws an exception.
+            more_models = model.as_query().where("test=example")  # works as expected.
         ```
         """
-        new_model= self._di.build(self.__class__, cache=False)
+        new_model = self._di.build(self.__class__, cache=False)
         new_model.set_query(Query(self.__class__))
         return new_model
 
     def set_query(self, query: Query) -> Self:
-        """
-        Set the query object
-        """
+        """Set the query object."""
         self._query = query
         self._query_executed = False
         return self
@@ -427,7 +425,7 @@ class Model(Schema, InjectableProperties):
         This method returns a new object with the updated query.  The original model object is unmodified.
         Multiple calls to this method add together.  The following:
 
-        ```
+        ```python
         models.select("column_1 column_2").select("column_3")
         ```
 
@@ -447,7 +445,7 @@ class Model(Schema, InjectableProperties):
 
     def where(self: Self, where: str | Condition) -> Self:
         """
-        Adds the given condition to the query.
+        Add the given condition to the query.
 
         This method returns a new object with the updated query.  The original model object is unmodified.
 
@@ -459,9 +457,10 @@ class Model(Schema, InjectableProperties):
         IN condition.
 
         Examples:
-
-        ```
-        for record in models.where("order_id=5").where("status IN ('ACTIVE','PENDING')").where("other_table.id=asdf"):
+        ```python
+        for record in (
+            models.where("order_id=5").where("status IN ('ACTIVE','PENDING')").where("other_table.id=asdf")
+        ):
             print(record.id)
         ```
         """
@@ -469,13 +468,11 @@ class Model(Schema, InjectableProperties):
         return self.with_query(self.get_query().add_where(where if isinstance(where, Condition) else Condition(where)))
 
     def join(self: Self, join: str) -> Self:
-        """
-        Adds a join clause to the query.
-        """
+        """Add a join clause to the query."""
         self.no_single_model()
         return self.with_query(self.get_query().add_join(Join(join)))
 
-    def is_joined(self: Self, table_name: str, alias: str="") -> bool:
+    def is_joined(self: Self, table_name: str, alias: str = "") -> bool:
         """
         Check if a given table was already joined.
 
@@ -499,10 +496,10 @@ class Model(Schema, InjectableProperties):
         self: Self,
         primary_column_name: str,
         primary_direction: str,
-        primary_table_name: str="",
-        secondary_column_name: str="",
-        secondary_direction: str="",
-        secondary_table_name: str="",
+        primary_table_name: str = "",
+        secondary_column_name: str = "",
+        secondary_direction: str = "",
+        secondary_table_name: str = "",
     ) -> Self:
         self.no_single_model()
         sort = Sort(primary_table_name, primary_column_name, primary_direction)
@@ -527,11 +524,11 @@ class Model(Schema, InjectableProperties):
 
     def find(self: Self, where: str | Condition) -> Self:
         """
-        Returns the first model matching a given where condition.
+        Return the first model matching a given where condition.
 
         This is just shorthand for `models.where("column=value").find()`.  Example:
 
-        ```
+        ```python
         model = models.find("column=value")
         print(model.id)
         ```
@@ -539,13 +536,13 @@ class Model(Schema, InjectableProperties):
         self.no_single_model()
         return self.where(where).first()
 
-    def __len__(self: Self):
+    def __len__(self: Self):  # noqa: D105
         self.no_single_model()
         if self._count is None:
             self._count = self.backend.count(self.get_query())
         return self._count
 
-    def __iter__(self: Self) -> Iterator[Self]:
+    def __iter__(self: Self) -> Iterator[Self]:  # noqa: D105
         self.no_single_model()
         self._next_page_data = {}
         raw_rows = self.backend.records(
@@ -556,14 +553,15 @@ class Model(Schema, InjectableProperties):
 
     def paginate_all(self: Self) -> list[Self]:
         """
-        Loops through all available pages of results and returns a list of all models that match the query.
+        Loop through all available pages of results and returns a list of all models that match the query.
 
         NOTE: this loads up all records in memory before returning (e.g. it isn't using generators yet), so
         expect delays for large record sets.
 
-        ```
+        ```python
         for model in models.where("column=value").paginate_all():
             print(model.id)
+        ```
         """
         self.no_single_model()
         next_models = self.with_query(self.get_query())
@@ -577,7 +575,7 @@ class Model(Schema, InjectableProperties):
 
     def model(self: Self, data: dict[str, Any] = {}) -> Self:
         """
-        Creates a new model object and populates it with the data in `data`.
+        Create a new model object and populates it with the data in `data`.
 
         NOTE: the difference between this and `model.create` is that model.create() actually saves a record in the backend,
         while this method just creates a model object populated with the given data.
@@ -586,9 +584,9 @@ class Model(Schema, InjectableProperties):
         model.set_raw_data(data)
         return model
 
-    def create(self: Self, data: dict[str, Any] = {}, columns: dict[str, Column]={}, no_data=False) -> Self:
+    def create(self: Self, data: dict[str, Any] = {}, columns: dict[str, Column] = {}, no_data=False) -> Self:
         """
-        Creates a new record in the backend using the information in `data`.
+        Create a new record in the backend using the information in `data`.
 
         new_model = models.create({"column": "value"})
         """
@@ -598,9 +596,9 @@ class Model(Schema, InjectableProperties):
 
     def first(self: Self) -> Self:
         """
-        Returns the first model matching the given query:
+        Return the first model matching the given query.
 
-        ```
+        ```python
         model = models.where("column=value").sort_by("age", "DESC").first()
         print(model.id)
         ```
@@ -632,11 +630,15 @@ class Model(Schema, InjectableProperties):
 
     def no_queries(self) -> None:
         if self._query:
-            raise ValueError("You attempted to save/read record data for a model being used to make a query.  This is not allowed, as it is typically a sign of a bug in your application code.")
+            raise ValueError(
+                "You attempted to save/read record data for a model being used to make a query.  This is not allowed, as it is typically a sign of a bug in your application code."
+            )
 
     def no_single_model(self):
         if self._data:
-            raise ValueError("You have attempted to execute a query against a model that represents an individual record.  This is not allowed, as it is typically a sign of a bug in your application code.  If this is intentional, call model.as_query() before executing your query.")
+            raise ValueError(
+                "You have attempted to execute a query against a model that represents an individual record.  This is not allowed, as it is typically a sign of a bug in your application code.  If this is intentional, call model.as_query() before executing your query."
+            )
 
 
 class ModelClassReference:

@@ -1,6 +1,8 @@
-from .input_output import InputOutput
-import urllib, urllib.parse
 import json
+import urllib
+import urllib.parse
+
+from .input_output import InputOutput
 
 
 class Wsgi(InputOutput):
@@ -35,11 +37,15 @@ class Wsgi(InputOutput):
         return [final_body]
 
     def has_body(self):
-        return bool(self._from_environment('CONTENT_LENGTH'))
+        return bool(self._from_environment("CONTENT_LENGTH"))
 
     def get_body(self):
         if self._cached_body is None:
-            self._cached_body = self._from_environment("wsgi.input").read(int(self._from_environment('CONTENT_LENGTH'))).decode("utf-8") if self._from_environment('CONTENT_LENGTH') else ""
+            self._cached_body = (
+                self._from_environment("wsgi.input").read(int(self._from_environment("CONTENT_LENGTH"))).decode("utf-8")
+                if self._from_environment("CONTENT_LENGTH")
+                else ""
+            )
         return self._cached_body
 
     def get_request_method(self):

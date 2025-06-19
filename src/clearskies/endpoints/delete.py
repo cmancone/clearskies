@@ -1,20 +1,19 @@
 from __future__ import annotations
-import inspect
-from typing import TYPE_CHECKING, Type, Any, Callable
 
-from clearskies import authentication
-from clearskies import autodoc
-from clearskies import typing
-from clearskies.endpoints.get import Get
+import inspect
 from collections import OrderedDict
-from clearskies.functional import string, routing
-from clearskies.input_outputs import InputOutput
+from typing import TYPE_CHECKING, Any, Callable, Type
+
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import authentication, autodoc, typing
+from clearskies.endpoints.get import Get
+from clearskies.functional import routing, string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
-    from clearskies.model import Model, Schema
     from clearskies import SecurityHeader
+    from clearskies.model import Model, Schema
 
 
 class Delete(Get):
@@ -27,8 +26,9 @@ class Delete(Get):
     declare a route parameter with a matching column name: the delete endpoint will then fetch the desired record id
     out of the URL path.  The default request method is DELETE. Here's a simple example:
 
-    ```
+    ```python
     import clearskies
+
 
     class User(clearskies.Model):
         id_column_name = "id"
@@ -36,6 +36,7 @@ class Delete(Get):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         username = clearskies.columns.String()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Delete(
@@ -60,7 +61,7 @@ class Delete(Get):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/1-2-3-4' -X DELETE | jq
     {
         "status": "success",
@@ -103,7 +104,7 @@ class Delete(Get):
         return self.success(input_output, {})
 
     def documentation(self) -> list[autodoc.request.Request]:
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children={}),
+        output_autodoc = (autodoc.schema.Object(self.auto_case_internal_column_name("data"), children={}),)
 
         authentication = self.authentication
         standard_error_responses = [self.documentation_input_error_response()]
@@ -117,7 +118,7 @@ class Delete(Get):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=self.description,
                     ),
                     *standard_error_responses,

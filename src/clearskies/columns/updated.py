@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 import datetime
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import clearskies.di
-import clearskies.typing
 import clearskies.parameters_to_properties
-from clearskies.columns.datetime import Datetime
+import clearskies.typing
 from clearskies import configs
+from clearskies.columns.datetime import Datetime
 
 if TYPE_CHECKING:
     from clearskies import Model
@@ -20,9 +21,10 @@ class Updated(Datetime):
     You don't have to provide the timestamp yourself and you should never expose it as
     a writeable column through an endpoint (in fact, you can't).
 
-    ```
+    ```python
     import clearskies
     import time
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -32,6 +34,7 @@ class Updated(Datetime):
         name = clearskies.columns.String()
         created = clearskies.columns.Created()
         updated = clearskies.columns.Updated()
+
 
     def test_updated(my_models: MyModel) -> MyModel:
         my_model = my_models.create({"name": "Jane"})
@@ -44,19 +47,17 @@ class Updated(Datetime):
         return {
             "updated_column_after_create": updated_column_after_create.isoformat(),
             "updated_column_at_end": my_model.updated.isoformat(),
-            "difference_in_seconds": (my_model.updated-updated_column_after_create).total_seconds()
+            "difference_in_seconds": (my_model.updated - updated_column_after_create).total_seconds(),
         }
 
-    cli = clearskies.contexts.Cli(
-        clearskies.endpoints.Callable(test_updated),
-        classes=[MyModel]
-    )
+
+    cli = clearskies.contexts.Cli(clearskies.endpoints.Callable(test_updated), classes=[MyModel])
     cli()
     ```
 
     And when invoked:
 
-    ```
+    ```bash
     $ ./test.py | jq
     {
         "status": "success",

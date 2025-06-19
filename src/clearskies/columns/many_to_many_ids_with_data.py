@@ -1,13 +1,15 @@
 from __future__ import annotations
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
 
-import clearskies.typing
+from typing import TYPE_CHECKING, Any, Callable, Self, overload
+
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
 from clearskies.columns.many_to_many_ids import ManyToManyIds
 
 if TYPE_CHECKING:
     from clearskies import Model
+
 
 class ManyToManyIdsWithData(ManyToManyIds):
     """
@@ -17,8 +19,9 @@ class ManyToManyIdsWithData(ManyToManyIds):
     relationship is stored in the pivot table.  This creates some differences, which are best
     explained by example:
 
-    ```
+    ```python
     import clearskies
+
 
     class ThingyWidgets(clearskies.Model):
         id_column_name = "id"
@@ -33,12 +36,14 @@ class ManyToManyIdsWithData(ManyToManyIds):
         name = clearskies.columns.String()
         kind = clearskies.columns.String()
 
+
     class Thingy(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
 
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
+
 
     class Widget(clearskies.Model):
         id_column_name = "id"
@@ -54,6 +59,7 @@ class ManyToManyIdsWithData(ManyToManyIds):
         thingies = clearskies.columns.ManyToManyModels("thingy_ids")
         thingy_widgets = clearskies.columns.ManyToManyPivots("thingy_ids")
 
+
     def my_application(widgets: Widget, thingies: Thingy):
         thing_1 = thingies.create({"name": "Thing 1"})
         thing_2 = thingies.create({"name": "Thing 2"})
@@ -67,6 +73,7 @@ class ManyToManyIdsWithData(ManyToManyIds):
         })
 
         return widget
+
 
     cli = clearskies.contexts.Cli(
         clearskies.endpoints.Callable(
@@ -92,7 +99,7 @@ class ManyToManyIdsWithData(ManyToManyIds):
     the pivot (e.g. `{"thingy_id": id}` in the first example.  However, if there are unique columns in the
     related model, you can provide those instead.  If you execute the above example you'll get:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -100,24 +107,24 @@ class ManyToManyIdsWithData(ManyToManyIds):
             "id": "c4be91a8-85a1-4e29-994a-327f59e26ec7",
             "name": "Widget 1",
             "thingy_widgets": [
-            {
-                "id": "3a8f6f14-9657-49d8-8844-0db3452525fe",
-                "thingy_id": "db292ebc-7b2b-4306-aced-8e6d073ec264",
-                "widget_id": "c4be91a8-85a1-4e29-994a-327f59e26ec7",
-                "name": "Widget Thing 1",
-                "kind": "Special"
-            },
-            {
-                "id": "480a0192-70d9-4363-a669-4a59f0b56730",
-                "thingy_id": "d469dbe9-556e-46f3-bc48-03f8cb8d8e44",
-                "widget_id": "c4be91a8-85a1-4e29-994a-327f59e26ec7",
-                "name": "Widget Thing 2",
-                "kind": "Also Special"
-            }
-            ]
+                {
+                    "id": "3a8f6f14-9657-49d8-8844-0db3452525fe",
+                    "thingy_id": "db292ebc-7b2b-4306-aced-8e6d073ec264",
+                    "widget_id": "c4be91a8-85a1-4e29-994a-327f59e26ec7",
+                    "name": "Widget Thing 1",
+                    "kind": "Special",
+                },
+                {
+                    "id": "480a0192-70d9-4363-a669-4a59f0b56730",
+                    "thingy_id": "d469dbe9-556e-46f3-bc48-03f8cb8d8e44",
+                    "widget_id": "c4be91a8-85a1-4e29-994a-327f59e26ec7",
+                    "name": "Widget Thing 2",
+                    "kind": "Also Special",
+                },
+            ],
         },
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
     """
@@ -138,8 +145,8 @@ class ManyToManyIdsWithData(ManyToManyIds):
     """
     persist_unique_lookup_column_to_pivot_table = configs.Boolean(default=False)
 
-    default = configs.ListAnyDict(default=None) #  type: ignore
-    setable = configs.ListAnyDictOrCallable(default=None) #  type: ignore
+    default = configs.ListAnyDict(default=None)  #  type: ignore
+    setable = configs.ListAnyDictOrCallable(default=None)  #  type: ignore
     _descriptor_config_map = None
 
     @clearskies.parameters_to_properties.parameters_to_properties
@@ -179,7 +186,7 @@ class ManyToManyIdsWithData(ManyToManyIds):
     def __get__(self, instance, cls):
         return super().__get__(instance, cls)
 
-    def __set__(self, instance, value: list[dict[str, Any]]) -> None: # type: ignore
+    def __set__(self, instance, value: list[dict[str, Any]]) -> None:  # type: ignore
         instance._next_data[self.name] = value
 
     def post_save(self, data, model, id):

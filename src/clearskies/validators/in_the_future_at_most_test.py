@@ -1,9 +1,10 @@
+import datetime
 import unittest
 from unittest.mock import MagicMock
-import datetime
+
+import clearskies
 
 from .in_the_future_at_most import InTheFutureAtMost
-import clearskies
 
 
 class InTheFutureAtMostTest(unittest.TestCase):

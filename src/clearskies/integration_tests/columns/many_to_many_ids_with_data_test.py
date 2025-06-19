@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import clearskies
 from clearskies.contexts import Context
 
+
 class ManyToManyIdsWithDataTest(unittest.TestCase):
     def test_default(self):
         class ThingyWidgets(clearskies.Model):
@@ -44,13 +45,15 @@ class ManyToManyIdsWithDataTest(unittest.TestCase):
             thing_1 = thingies.create({"name": "Thing 1"})
             thing_2 = thingies.create({"name": "Thing 2"})
             thing_3 = thingies.create({"name": "Thing 3"})
-            widget = widgets.create({
-                "name": "Widget 1",
-                "thingy_ids": [
-                    {"thingy_id": thing_1.id, "name": "Widget Thing 1", "kind": "Special"},
-                    {"thingy_id": thing_2.id, "name": "Widget Thing 2", "kind": "Also Special"},
-                ],
-            })
+            widget = widgets.create(
+                {
+                    "name": "Widget 1",
+                    "thingy_ids": [
+                        {"thingy_id": thing_1.id, "name": "Widget Thing 1", "kind": "Special"},
+                        {"thingy_id": thing_2.id, "name": "Widget Thing 2", "kind": "Also Special"},
+                    ],
+                }
+            )
 
             return widget
 
@@ -64,4 +67,7 @@ class ManyToManyIdsWithDataTest(unittest.TestCase):
             classes=[Widget, Thingy, ThingyWidgets],
         )
         (status_code, response_data, response_headers) = context()
-        assert [record["name"] for record in response_data["data"]["thingy_widgets"]] == ["Widget Thing 1", "Widget Thing 2"]
+        assert [record["name"] for record in response_data["data"]["thingy_widgets"]] == [
+            "Widget Thing 1",
+            "Widget Thing 2",
+        ]

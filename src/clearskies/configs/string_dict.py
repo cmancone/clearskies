@@ -2,9 +2,7 @@ from clearskies.configs import config
 
 
 class StringDict(config.Config):
-    """
-    This is for a configuration that should be a dictionary with keys and values that are all strings.
-    """
+    """This is for a configuration that should be a dictionary with keys and values that are all strings."""
 
     def __set__(self, instance, value: dict[str, str]):
         if value is None:

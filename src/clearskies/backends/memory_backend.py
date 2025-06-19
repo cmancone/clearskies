@@ -1,12 +1,12 @@
-from functools import cmp_to_key
 import inspect
+from functools import cmp_to_key
 from typing import Any, Callable
 
+import clearskies.model
+import clearskies.query
 from clearskies import functional
 from clearskies.autodoc.schema import Integer as AutoDocInteger
 from clearskies.autodoc.schema import Schema as AutoDocSchema
-import clearskies.model
-import clearskies.query
 from clearskies.backends.backend import Backend
 from clearskies.di import InjectableProperties, inject
 
@@ -74,11 +74,13 @@ def cheating_equals(column, values, null):
     decide if fixing this will cause more problems than it solves, so for now I'm just cheating
     and putting in a hack for this specific use case :shame:.
     """
+
     def inner(row):
         backend_value = row[column] if column in row else null
         if isinstance(backend_value, bool):
             return backend_value == bool(values[0])
         return str(backend_value) == str(values[0])
+
     return inner
 
 
@@ -90,21 +92,29 @@ class MemoryTable:
     _id_index: dict[int | str, int] = {}
     id_column_name: str = ""
     _next_id: int = 1
-    _model_class: type[clearskies.model.Model] = None # type:  ignore
+    _model_class: type[clearskies.model.Model] = None  # type:  ignore
 
     # here be dragons.  This is not a 100% drop-in replacement for the equivalent SQL operators
     # https://codereview.stackexchange.com/questions/259198/in-memory-table-filtering-in-python
     _operator_lambda_builders = {
         "<=>": lambda column, values, null: lambda row: row.get(column, null) == values[0],
         "!=": lambda column, values, null: lambda row: row.get(column, null) != values[0],
-        "<=": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
-        <= gentle_float_conversion(values[0]),
-        ">=": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
-        >= gentle_float_conversion(values[0]),
-        ">": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
-        > gentle_float_conversion(values[0]),
-        "<": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
-        < gentle_float_conversion(values[0]),
+        "<=": (
+            lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+            <= gentle_float_conversion(values[0])
+        ),
+        ">=": (
+            lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+            >= gentle_float_conversion(values[0])
+        ),
+        ">": (
+            lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+            > gentle_float_conversion(values[0])
+        ),
+        "<": (
+            lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+            < gentle_float_conversion(values[0])
+        ),
         "=": cheating_equals,
         "is not null": lambda column, values, null: lambda row: (column in row and row[column] is not None),
         "is null": lambda column, values, null: lambda row: (column not in row or row[column] is None),
@@ -186,7 +196,13 @@ class MemoryTable:
     def count(self, query: clearskies.query.Query):
         return len(self.rows(query, query.conditions, filter_only=True))
 
-    def rows(self, query: clearskies.query.Query, conditions: list[clearskies.query.Condition], filter_only: bool=False, next_page_data: dict[str, Any] | None=None):
+    def rows(
+        self,
+        query: clearskies.query.Query,
+        conditions: list[clearskies.query.Condition],
+        filter_only: bool = False,
+        next_page_data: dict[str, Any] | None = None,
+    ):
         rows = [row for row in self._rows if row is not None]
         for condition in conditions:
             rows = list(filter(self._condition_as_filter(condition), rows))
@@ -194,7 +210,12 @@ class MemoryTable:
         if filter_only:
             return rows
         if query.sorts:
-            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, query.sorts, query.model_class.destination_name())))
+            rows = sorted(
+                rows,
+                key=cmp_to_key(
+                    lambda row_a, row_b: _sort(row_a, row_b, query.sorts, query.model_class.destination_name())
+                ),
+            )
         if query.limit or query.pagination.get("start"):
             number_rows = len(rows)
             start = int(query.pagination.get("start", 0))
@@ -239,15 +260,18 @@ class MemoryBackend(Backend, InjectableProperties):
     but when you run this code it will actually end up with the memory backend, so the code will run even without
     attempting to connect to a database.
 
-    ```
+    ```python
     import clearskies
+
 
     class UserPreference(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.CursorBackend()
         id = clearskies.columns.Uuid()
 
-    cli = clearskies.contexts.Cli(clearskies.endpoints.Callable(
+
+    cli = clearskies.contexts.Cli(
+        clearskies.endpoints.Callable(
             lambda user_preferences: user_preferences.create(no_data=True).id,
         ),
         classes=[UserPreference],
@@ -290,8 +314,9 @@ class MemoryBackend(Backend, InjectableProperties):
     can be helpful in testing to setup your tests, and is occassionally helpful for keeping track of data in
     fixed, read-only tables.  Here's an example:
 
-    ```
+    ```python
     import clearskies
+
 
     class Owner(clearskies.Model):
         id_column_name = "id"
@@ -300,6 +325,7 @@ class MemoryBackend(Backend, InjectableProperties):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         phone = clearskies.columns.Phone()
+
 
     class Pet(clearskies.Model):
         id_column_name = "id"
@@ -310,6 +336,7 @@ class MemoryBackend(Backend, InjectableProperties):
         species = clearskies.columns.String()
         owner_id = clearskies.columns.BelongsToId(Owner, readable_parent_columns=["id", "name"])
         owner = clearskies.columns.BelongsToModel("owner_id")
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.List(
@@ -333,11 +360,16 @@ class MemoryBackend(Backend, InjectableProperties):
                     "records": [
                         {"id": "a-b-c-d", "name": "Fido", "species": "Dog", "owner_id": "1-2-3-4"},
                         {"id": "e-f-g-h", "name": "Spot", "species": "Dog", "owner_id": "1-2-3-4"},
-                        {"id": "i-j-k-l", "name": "Puss in Boots", "species": "Cat", "owner_id": "5-6-7-8"},
+                        {
+                            "id": "i-j-k-l",
+                            "name": "Puss in Boots",
+                            "species": "Cat",
+                            "owner_id": "5-6-7-8",
+                        },
                     ],
                 },
             ],
-        }
+        },
     )
 
     if __name__ == "__main__":
@@ -346,7 +378,7 @@ class MemoryBackend(Backend, InjectableProperties):
 
     And if you invoke it:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' | jq
     {
         "status": "success",
@@ -388,8 +420,8 @@ class MemoryBackend(Backend, InjectableProperties):
         "input_errors": {}
     }
     ```
-
     """
+
     default_data = inject.ByName("memory_backend_default_data")
     default_data_loaded = False
     _tables: dict[str, MemoryTable] = {}
@@ -404,18 +436,28 @@ class MemoryBackend(Backend, InjectableProperties):
             return
         self.default_data_loaded = True
         if not isinstance(self.default_data, list):
-            raise TypeError(f"'memory_backend_default_data' should be populated with a list, but I received a value of type '{self.default_data.__class__.__name__}'")
-        for (index, table_data) in enumerate(self.default_data):
+            raise TypeError(
+                f"'memory_backend_default_data' should be populated with a list, but I received a value of type '{self.default_data.__class__.__name__}'"
+            )
+        for index, table_data in enumerate(self.default_data):
             if "model_class" not in table_data:
-                raise TypeError(f"Each entry in the 'memory_backend_default_data' list should have a key named 'model_class', but entry #{index+1} is missing this key.")
+                raise TypeError(
+                    f"Each entry in the 'memory_backend_default_data' list should have a key named 'model_class', but entry #{index + 1} is missing this key."
+                )
             model_class = table_data["model_class"]
             if not functional.validations.is_model_class(table_data["model_class"]):
-                raise TypeError(f"The 'model_class' key in 'memory_backend_default_data' for entry #{index+1} is not a model class.")
+                raise TypeError(
+                    f"The 'model_class' key in 'memory_backend_default_data' for entry #{index + 1} is not a model class."
+                )
             if "records" not in table_data:
-                raise TypeError(f"Each entry in the 'memory_backend_default_data' list should have a key named 'records', but entry #{index+1} is missing this key.")
+                raise TypeError(
+                    f"Each entry in the 'memory_backend_default_data' list should have a key named 'records', but entry #{index + 1} is missing this key."
+                )
             records = table_data["records"]
             if not isinstance(records, list):
-                raise TypeError(f"The 'records' key in 'memory_backend_default_data' for entry #{index+1} was not a list.")
+                raise TypeError(
+                    f"The 'records' key in 'memory_backend_default_data' for entry #{index + 1} was not a list."
+                )
             self.create_table(model_class)
             for record in records:
                 self.create_with_model_class(record, model_class)
@@ -441,10 +483,14 @@ class MemoryBackend(Backend, InjectableProperties):
             if create_if_missing:
                 self.create_table(model_class)
             else:
-                raise ValueError(f"The memory backend was asked to work with the model '{model_class.__name__}' but this model hasn't been explicitly added to the memory backend.  This typically means that you are querying for records in a model but haven't created any yet.")
+                raise ValueError(
+                    f"The memory backend was asked to work with the model '{model_class.__name__}' but this model hasn't been explicitly added to the memory backend.  This typically means that you are querying for records in a model but haven't created any yet."
+                )
         return self.__class__._tables[table_name]
 
-    def create_with_model_class(self, data: dict[str, Any], model_class: type[clearskies.model.Model]) -> dict[str, Any]:
+    def create_with_model_class(
+        self, data: dict[str, Any], model_class: type[clearskies.model.Model]
+    ) -> dict[str, Any]:
         self.create_table(model_class)
         return self.get_table(model_class).create(data)
 
@@ -478,7 +524,9 @@ class MemoryBackend(Backend, InjectableProperties):
         query.joins = [join for join in query.joins if join.join_type != "LEFT"]
         return len(self.rows_with_joins(query))
 
-    def records(self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None=None) -> list[dict[str, Any]]:
+    def records(
+        self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None = None
+    ) -> list[dict[str, Any]]:
         self.check_query(query)
         if not self.has_table(query.model_class):
             if self._silent_on_missing_tables:
@@ -495,7 +543,9 @@ class MemoryBackend(Backend, InjectableProperties):
 
         if query.sorts:
             default_table_name = query.model_class.destination_name()
-            rows = sorted(rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, query.sorts, default_table_name)))
+            rows = sorted(
+                rows, key=cmp_to_key(lambda row_a, row_b: _sort(row_a, row_b, query.sorts, default_table_name))
+            )
 
         # currently we don't do much with selects, so just limit results down to the data from the original
         # table.
@@ -574,7 +624,9 @@ class MemoryBackend(Backend, InjectableProperties):
         left_condition_ids = [id(condition) for condition in left_conditions]
         for condition in [condition for condition in conditions if id(condition) not in left_condition_ids]:
             condition_filter = MemoryTable._condition_as_filter(condition)
-            rows = list(filter(lambda row: condition.table_name in row and condition_filter(row[condition.table_name]), rows))
+            rows = list(
+                filter(lambda row: condition.table_name in row and condition_filter(row[condition.table_name]), rows)
+            )
 
         return rows
 
@@ -588,33 +640,47 @@ class MemoryBackend(Backend, InjectableProperties):
 
     def check_query(self, query: clearskies.query.Query) -> None:
         if query.group_by:
-            raise KeyError(f"MemoryBackend does not support group_by clauses in queries. You may be using the wrong backend.")
+            raise KeyError(
+                f"MemoryBackend does not support group_by clauses in queries. You may be using the wrong backend."
+            )
 
-    def conditions_for_table(self, table_name: str, conditions: list[clearskies.query.Condition], is_left=False) -> list[clearskies.query.Condition]:
+    def conditions_for_table(
+        self, table_name: str, conditions: list[clearskies.query.Condition], is_left=False
+    ) -> list[clearskies.query.Condition]:
         """
-        Returns only the conditions for the given table
+        Return only the conditions for the given table.
 
         If you set is_left=True then it assumes this is the "default" table and so will also return conditions
         without a table name.
         """
-        return [condition for condition in conditions if condition.table_name == table_name or (is_left and not condition.table_name)]
+        return [
+            condition
+            for condition in conditions
+            if condition.table_name == table_name or (is_left and not condition.table_name)
+        ]
 
-    def join_rows(self, rows: list[dict[str, Any]], join_rows: list[dict[str, Any]], join: clearskies.query.Join, joined_tables: list[str]) -> list[dict[str, Any]]:
+    def join_rows(
+        self,
+        rows: list[dict[str, Any]],
+        join_rows: list[dict[str, Any]],
+        join: clearskies.query.Join,
+        joined_tables: list[str],
+    ) -> list[dict[str, Any]]:
         """
-        Adds the rows in `join_rows` in to the `rows` holder.
+        Add the rows in `join_rows` in to the `rows` holder.
 
         `rows` should be something like:
 
-        ```
+        ```python
         [
             {
-                'table_1': {'table_1_row_1'},
-                'table_2': {'table_2_row_1'},
+                "table_1": {"table_1_row_1"},
+                "table_2": {"table_2_row_1"},
             },
             {
-                'table_1': {'table_1_row_2'},
-                'table_2': {'table_2_row_2'},
-            }
+                "table_1": {"table_1_row_2"},
+                "table_2": {"table_2_row_2"},
+            },
         ]
         ```
 
@@ -662,7 +728,7 @@ class MemoryBackend(Backend, InjectableProperties):
                     matched_right_row_indexes.add(right_value)
 
             # if we have matching rows then join them in.
-            for (index, matching_row) in enumerate(matching_rows):
+            for index, matching_row in enumerate(matching_rows):
                 if not index:
                     rows[row_index][join_table_name] = matching_row
                 else:
@@ -675,7 +741,7 @@ class MemoryBackend(Backend, InjectableProperties):
                 else:
                     # we can't immediately delete the row because we're looping over the array it is in,
                     # so just mark it as None and remove it later
-                    rows[row_index] = None # type: ignore
+                    rows[row_index] = None  # type: ignore
 
         rows = [row for row in rows if row is not None]
 
@@ -716,7 +782,9 @@ class MemoryBackend(Backend, InjectableProperties):
     def documentation_pagination_next_page_example(self, case_mapping: Callable[[str], str]) -> dict[str, Any]:
         return {case_mapping("start"): 0}
 
-    def documentation_pagination_parameters(self, case_mapping: Callable[[str], str]) -> list[tuple[AutoDocSchema, str]]:
+    def documentation_pagination_parameters(
+        self, case_mapping: Callable[[str], str]
+    ) -> list[tuple[AutoDocSchema, str]]:
         return [
             (
                 AutoDocInteger(case_mapping("start"), example=0),

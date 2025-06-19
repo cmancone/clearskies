@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import clearskies
 from clearskies.contexts import Context
 
+
 class BelongsToTest(unittest.TestCase):
     def test_basics(self):
         class Category(clearskies.Model):
@@ -53,6 +54,7 @@ class BelongsToTest(unittest.TestCase):
 
     def test_handle_circular(self):
         from . import belongs_to_test_module
+
         def test_belongs_to(categories: belongs_to_test_module.Category, products: belongs_to_test_module.Product):
             category = categories.create({"name": "My Category"})
             product_1 = products.create({"name": "My First Product", "category_id": category.id})
@@ -119,34 +121,13 @@ class BelongsToTest(unittest.TestCase):
                         ],
                     },
                 ],
-            }
+            },
         )
 
         (status_code, response, response_headers) = context()
         assert status_code == 200
         assert response["data"] == [
-            {
-                "id": "a-b-c-d",
-                "name": "Fido",
-                "owner": {
-                    "id": "1-2-3-4",
-                    "name": "John Doe"
-                }
-            },
-            {
-                "id": "i-j-k-l",
-                "name": "Puss in Boots",
-                "owner": {
-                    "id": "5-6-7-8",
-                    "name": "Jane Doe"
-                }
-            },
-            {
-                "id": "e-f-g-h",
-                "name": "Spot",
-                "owner": {
-                    "id": "1-2-3-4",
-                    "name": "John Doe"
-                }
-            }
+            {"id": "a-b-c-d", "name": "Fido", "owner": {"id": "1-2-3-4", "name": "John Doe"}},
+            {"id": "i-j-k-l", "name": "Puss in Boots", "owner": {"id": "5-6-7-8", "name": "Jane Doe"}},
+            {"id": "e-f-g-h", "name": "Spot", "owner": {"id": "1-2-3-4", "name": "John Doe"}},
         ]

@@ -1,14 +1,15 @@
 import datetime
-from typing import Any, Callable
 from types import ModuleType
-from wsgiref.util import setup_testing_defaults
+from typing import Any, Callable
 from wsgiref.simple_server import make_server
+from wsgiref.util import setup_testing_defaults
 
 import clearskies.endpoint
 import clearskies.endpoint_group
+from clearskies.contexts.context import Context
 from clearskies.di import AdditionalConfig
 from clearskies.input_outputs import Wsgi as WsgiInputOutput
-from clearskies.contexts.context import Context
+
 
 class WsgiRef(Context):
     port = None
@@ -17,12 +18,12 @@ class WsgiRef(Context):
         self,
         application: Callable | clearskies.endpoint.Endpoint | clearskies.endpoint_group.EndpointGroup,
         port: int = 8080,
-        classes: type | list[type]=[],
-        modules: ModuleType | list[ModuleType]=[],
-        bindings: dict[str, Any]={},
-        additional_configs: AdditionalConfig | list[AdditionalConfig]=[],
-        class_overrides: dict[type, type]={},
-        overrides: dict[str, type]={},
+        classes: type | list[type] = [],
+        modules: ModuleType | list[ModuleType] = [],
+        bindings: dict[str, Any] = {},
+        additional_configs: AdditionalConfig | list[AdditionalConfig] = [],
+        class_overrides: dict[type, type] = {},
+        overrides: dict[str, type] = {},
         now: datetime.datetime | None = None,
         utcnow: datetime.datetime | None = None,
     ):
@@ -40,7 +41,7 @@ class WsgiRef(Context):
         self.port = port
 
     def __call__(self):
-        with make_server('', self.port, self.handler) as httpd:
+        with make_server("", self.port, self.handler) as httpd:
             print(f"Starting WSGI server on port {self.port}.  This is NOT intended for production usage.")
             httpd.serve_forever()
 

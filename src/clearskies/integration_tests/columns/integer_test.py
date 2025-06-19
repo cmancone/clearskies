@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call
 import clearskies
 from clearskies.contexts import Context
 
+
 class IntegerTest(unittest.TestCase):
     def test_default(self):
         class MyModel(clearskies.Model):
@@ -19,7 +20,7 @@ class IntegerTest(unittest.TestCase):
                 writeable_column_names=["age"],
                 readable_column_names=["id", "age"],
             ),
-            classes=[MyModel]
+            classes=[MyModel],
         )
 
         (status_code, response_data, response_headers) = context(request_method="POST", body={"age": 20})

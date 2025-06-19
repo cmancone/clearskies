@@ -1,23 +1,22 @@
 from __future__ import annotations
+
 import inspect
+from collections import OrderedDict
 from typing import TYPE_CHECKING, Any
 from typing import Callable as CallableType
 
-from clearskies import authentication
-from clearskies import typing
-from clearskies.endpoint import Endpoint
-from collections import OrderedDict
-from clearskies import autodoc
-from clearskies.functional import string
-from clearskies.input_outputs import InputOutput
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import authentication, autodoc, typing
+from clearskies.endpoint import Endpoint
+from clearskies.functional import string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
+    from clearskies import Column, SecurityHeader
+    from clearskies.authentication import Authentication, Authorization
     from clearskies.model import Model
     from clearskies.schema import Schema
-    from clearskies.authentication import Authentication, Authorization
-    from clearskies import SecurityHeader, Column
 
 
 class Callable(Endpoint):
@@ -35,8 +34,9 @@ class Callable(Endpoint):
 
     Here's a basic working example:
 
-    ```
+    ```python
     import clearskies
+
 
     class User(clearskies.Model):
         id_column_name = "id"
@@ -46,12 +46,14 @@ class Callable(Endpoint):
         last_name = clearskies.columns.String()
         age = clearskies.columns.Integer()
 
+
     def my_users_callable(users: User):
         bob = users.create({"first_name": "Bob", "last_name": "Brown", "age": 10})
         jane = users.create({"first_name": "Jane", "last_name": "Brown", "age": 10})
         alice = users.create({"first_name": "Alice", "last_name": "Green", "age": 10})
 
         return jane
+
 
     my_users = clearskies.endpoints.Callable(
         my_users_callable,
@@ -68,7 +70,7 @@ class Callable(Endpoint):
 
     If you run the above script and invoke the server:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' | jq
     {
         "status": "success",
@@ -89,13 +91,15 @@ class Callable(Endpoint):
     custom data, and also want your API to be documented, you can pass a schema along to output_schema so clearskies can document
     it:
 
-    ```
+    ```python
     import clearskies
 
+
     class DogResponse(clearskies.Schema):
-        species = clearskies.columns.String(),
-        nickname = clearskies.columns.String(),
-        level = clearskies.columns.Integer(),
+        species = (clearskies.columns.String(),)
+        nickname = (clearskies.columns.String(),)
+        level = (clearskies.columns.Integer(),)
+
 
     clearskies.contexts.WsgiRef(
         clearskies.endpoints.Callable(
@@ -118,7 +122,7 @@ class Callable(Endpoint):
     Note that if this is specified it will take precedence over writeable_column_names and model_class, which
     can also be used to specify the expected input.
 
-    ```
+    ```python
     import clearskies
 
     class ExpectedInput(clearskies.Schema):
@@ -138,7 +142,7 @@ class Callable(Endpoint):
 
     And then valid and invalid requests:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"first_name":"Jane","last_name":"Doe","age":1}' | jq
     {
         "status": "success",
@@ -176,7 +180,7 @@ class Callable(Endpoint):
     With the standard response schema, the return value of the function will be placed in the `data` portion of
     the standard clearskies response:
 
-    ```
+    ```python
     import clearskies
 
     wsgi = clearskies.contexts.WsgiRef(
@@ -190,7 +194,7 @@ class Callable(Endpoint):
 
     Results in:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 | jq
     {
         "status": "success",
@@ -204,7 +208,7 @@ class Callable(Endpoint):
     ```
     But if you want to build your own response:
 
-    ```
+    ```python
     import clearskies
 
     wsgi = clearskies.contexts.WsgiRef(
@@ -218,7 +222,7 @@ class Callable(Endpoint):
 
     Results in:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 | jq
     {
         "hello": "world"
@@ -247,8 +251,8 @@ class Callable(Endpoint):
         input_schema: Schema | None = None,
         output_schema: Schema | None = None,
         input_validation_callable: CallableType | None = None,
-        return_standard_response: bool=True,
-        return_records: bool=False,
+        return_standard_response: bool = True,
+        return_records: bool = False,
         response_headers: list[str | CallableType[..., list[str]]] = [],
         output_map: CallableType[..., dict[str, Any]] | None = None,
         column_overrides: dict[str, Column] = {},
@@ -269,7 +273,11 @@ class Callable(Endpoint):
 
     def handle(self, input_output: InputOutput):
         if self.writeable_column_names or self.input_schema:
-            self.validate_input_against_schema(self.get_request_data(input_output), input_output, self.input_schema if self.input_schema else self.model_class)
+            self.validate_input_against_schema(
+                self.get_request_data(input_output),
+                input_output,
+                self.input_schema if self.input_schema else self.model_class,
+            )
         else:
             input_errors = self.find_input_errors_from_callable(input_output.request_data, input_output)
             if input_errors:
@@ -306,14 +314,24 @@ class Callable(Endpoint):
         nice_model = string.camel_case_to_words(output_schema.__name__)
 
         schema_model_name = string.camel_case_to_snake_case(output_schema.__name__)
-        output_data_schema = self.documentation_data_schema(output_schema, self.readable_column_names) if self.readable_column_names else []
-        output_autodoc = autodoc.schema.Object(self.auto_case_internal_column_name("data"), children=output_data_schema, model_name=schema_model_name if self.readable_column_names else ""),
+        output_data_schema = (
+            self.documentation_data_schema(output_schema, self.readable_column_names)
+            if self.readable_column_names
+            else []
+        )
+        output_autodoc = (
+            autodoc.schema.Object(
+                self.auto_case_internal_column_name("data"),
+                children=output_data_schema,
+                model_name=schema_model_name if self.readable_column_names else "",
+            ),
+        )
         if self.return_records:
-            output_autodoc.name = nice_model # type: ignore
+            output_autodoc.name = nice_model  # type: ignore
             output_autodoc = autodoc.schema.Array(
                 self.auto_case_internal_column_name("data"),
                 output_autodoc,
-            ) # type: ignore
+            )  # type: ignore
 
         authentication = self.authentication
         standard_error_responses = []
@@ -329,7 +347,7 @@ class Callable(Endpoint):
                 self.description,
                 [
                     self.documentation_success_response(
-                        output_autodoc, # type: ignore
+                        output_autodoc,  # type: ignore
                         description=self.description,
                         include_pagination=self.return_records,
                     ),
@@ -352,9 +370,7 @@ class Callable(Endpoint):
         if not self.writeable_column_names:
             return []
 
-        return self.standard_json_request_parameters(
-            self.input_schema if self.input_schema else self.model_class
-        )
+        return self.standard_json_request_parameters(self.input_schema if self.input_schema else self.model_class)
 
     def documentation_models(self) -> dict[str, autodoc.schema.Schema]:
         if not self.readable_column_names:

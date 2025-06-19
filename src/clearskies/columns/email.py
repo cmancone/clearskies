@@ -1,13 +1,15 @@
-from clearskies.columns.string import String
 import re
+
+from clearskies.columns.string import String
 
 
 class Email(String):
     """
     A string column that specifically expects an email.
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -16,20 +18,21 @@ class Email(String):
         id = clearskies.columns.Uuid()
         email = clearskies.columns.Email()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["email"],
             readable_column_names=["id", "email"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"email":"test@example.com"}' | jq
     {
         "status": "success",
@@ -54,12 +57,14 @@ class Email(String):
     }
     ```
     """
+
     _descriptor_config_map = None
 
     """
     A column that always requires an email address.
     """
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         if type(value) != str:
             return f"Value must be a string for {self.name}"
         if operator and operator.lower() == "like":

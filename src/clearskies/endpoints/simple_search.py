@@ -1,20 +1,20 @@
 from __future__ import annotations
-import inspect
-from typing import TYPE_CHECKING, Callable, Any
 
-from clearskies import authentication
-from clearskies import typing
-from clearskies.endpoints.list import List
+import inspect
 from collections import OrderedDict
-from clearskies import autodoc
-from clearskies.functional import string
-from clearskies.input_outputs import InputOutput
+from typing import TYPE_CHECKING, Any, Callable
+
 import clearskies.configs
 import clearskies.exceptions
+from clearskies import authentication, autodoc, typing
+from clearskies.endpoints.list import List
+from clearskies.functional import string
+from clearskies.input_outputs import InputOutput
 
 if TYPE_CHECKING:
+    from clearskies import Column, Schema, SecurityHeader
     from clearskies.model import Model
-    from clearskies import SecurityHeader, Column, Schema
+
 
 class SimpleSearch(List):
     """
@@ -27,8 +27,9 @@ class SimpleSearch(List):
     `Student` model, return `id`, `name`, and `grade` in the results, and allow the user to search by
     `name` and `grade`.  We also seed the memory backend with data so the endpoint has something to return:
 
-    ```
+    ```python
     import clearskies
+
 
     class Student(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -37,6 +38,7 @@ class SimpleSearch(List):
         id = clearskies.columns.Uuid()
         name = clearskies.columns.String()
         grade = clearskies.columns.Integer()
+
 
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.SimpleSearch(
@@ -66,7 +68,7 @@ class SimpleSearch(List):
     Here is the basic operation of the endpoint itself, without any search parameters, in which case it behaves
     identically to the list endpoint:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' | jq
     {
         "status": "success",
@@ -100,7 +102,7 @@ class SimpleSearch(List):
 
     We can then search on name via the `name` URL parameter:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080?name=Bob' | jq
     {
         "status": "success",
@@ -124,7 +126,7 @@ class SimpleSearch(List):
 
     and multiple search terms are allowed:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080?name=Bob&grade=2' | jq
     {
         "status": "success",
@@ -143,7 +145,7 @@ class SimpleSearch(List):
 
     Pagination and sorting work just like with the list endpoint:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080?sort=grade&direction=desc&limit=2' | jq
     {
         "status": "success",
@@ -225,14 +227,15 @@ class SimpleSearch(List):
         # which is why we have to call the parent.
         super().__init__(model_class, readable_column_names, sortable_column_names, default_sort_column_name)
 
-
     def check_search_in_request_data(self, request_data: dict[str, Any], query_parameters: dict[str, Any]) -> None:
         for input_source_label, input_data in [("request body", request_data), ("URL data", query_parameters)]:
             for column_name, value in input_data.items():
                 if column_name in self.allowed_request_keys and column_name not in self.searchable_column_names:
                     continue
                 if column_name not in self.searchable_column_names:
-                    raise clearskies.exceptions.ClientError(f"Invalid request parameter found in {input_source_label}: '{column_name}'")
+                    raise clearskies.exceptions.ClientError(
+                        f"Invalid request parameter found in {input_source_label}: '{column_name}'"
+                    )
                 [relationship_column_name, final_column_name] = self.unpack_column_name_with_relationship(column_name)
                 column_to_check = relationship_column_name if relationship_column_name else final_column_name
                 value_error = self.searchable_columns[column_to_check].check_search_value(
@@ -246,7 +249,7 @@ class SimpleSearch(List):
         model: Model,
         request_data: dict[str, Any],
         query_parameters: dict[str, Any],
-        pagination_data: dict[str, Any]
+        pagination_data: dict[str, Any],
     ) -> Model:
         model = super().configure_model_from_request_data(
             model,
@@ -280,4 +283,4 @@ class SimpleSearch(List):
                     description=f"Search by {column_doc.name} (via exact match)",
                 )
             )
-        return docs # type: ignore
+        return docs  # type: ignore

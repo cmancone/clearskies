@@ -1,8 +1,9 @@
 import re
 
+
 def match_route(expected_route, incoming_route, allow_partial=False) -> tuple[bool, dict[str, str]]:
     """
-    Checks if two routes match, and returns the routing data if so.
+    Check if two routes match, and returns the routing data if so.
 
     A partial match happens when the beginning of the incoming route matches the expected route.  It's okay for the
     incoming route to be longer because the routing system is hierarchical, so a partial match at the beginning
@@ -16,11 +17,11 @@ def match_route(expected_route, incoming_route, allow_partial=False) -> tuple[bo
     Expected route: `/user`
     Incoming route: `/users/orders/5`
     """
-    expected_route = expected_route.strip('/')
-    incoming_route = incoming_route.strip('/')
+    expected_route = expected_route.strip("/")
+    incoming_route = incoming_route.strip("/")
 
-    expected_parts = expected_route.split('/')
-    incoming_parts = incoming_route.split('/')
+    expected_parts = expected_route.split("/")
+    incoming_parts = incoming_route.split("/")
 
     # quick check: if there are less parts in the incoming route than the expected route, then we can't possibly match
     if len(incoming_parts) < len(expected_parts):
@@ -33,7 +34,7 @@ def match_route(expected_route, incoming_route, allow_partial=False) -> tuple[bo
     routing_data = {}
     routing_parameters = extract_url_parameter_name_map(expected_route)
     # we want it backwards
-    routing_parameters_by_index = {value: key for (key,value) in routing_parameters.items()}
+    routing_parameters_by_index = {value: key for (key, value) in routing_parameters.items()}
     for index in range(len(expected_parts)):
         if index in routing_parameters_by_index:
             if not incoming_parts[index]:
@@ -48,12 +49,14 @@ def match_route(expected_route, incoming_route, allow_partial=False) -> tuple[bo
 
 def extract_url_parameter_name_map(url: str) -> dict[str, int]:
     """
-    This creates a map to help match URLs with routing parameters.
+    Create a map to help match URLs with routing parameters.
 
     Routing parameters are either brace enclosed or start with colons:
 
     ```
-    print(routing.extract_url_parameter_name_map("my/path/{some_parameter}/:other_parameter/more/paths"))
+    print(
+        routing.extract_url_parameter_name_map("my/path/{some_parameter}/:other_parameter/more/paths")
+    )
     # prints {"some_parameter": 2, "other_parameter": 3}
     ```
 
@@ -65,7 +68,7 @@ def extract_url_parameter_name_map(url: str) -> dict[str, int]:
     for index, part in enumerate(path_parts):
         if not part:
             continue
-        if part[0] == ':':
+        if part[0] == ":":
             match = re.match("^:(\\w[\\w\\d_]{0,})$", part)
         else:
             if part[0] != "{":

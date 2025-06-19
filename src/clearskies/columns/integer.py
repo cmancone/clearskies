@@ -1,23 +1,26 @@
 from __future__ import annotations
-from typing import Callable, overload, Self, TYPE_CHECKING
 
+from typing import TYPE_CHECKING, Callable, Self, overload
+
+import clearskies.parameters_to_properties
 import clearskies.typing
 from clearskies import configs
-import clearskies.parameters_to_properties
+from clearskies.autodoc.schema import Integer as AutoDocInteger
+from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.column import Column
 from clearskies.query import Condition
-from clearskies.autodoc.schema import Schema as AutoDocSchema
-from clearskies.autodoc.schema import Integer as AutoDocInteger
 
 if TYPE_CHECKING:
     from clearskies import Model
 
+
 class Integer(Column):
     """
-    A column that stores integer data
+    A column that stores integer data.
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -26,20 +29,21 @@ class Integer(Column):
         id = clearskies.columns.Uuid()
         age = clearskies.columns.Integer()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["age"],
             readable_column_names=["id", "age"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"age":20}' | jq
     {
         "status": "success",
@@ -65,8 +69,8 @@ class Integer(Column):
     ```
     """
 
-    default = configs.Integer(default=None) #  type: ignore
-    setable = configs.IntegerOrCallable(default=None) #  type: ignore
+    default = configs.Integer(default=None)  #  type: ignore
+    setable = configs.IntegerOrCallable(default=None)  #  type: ignore
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null"]
 
     auto_doc_class: type[AutoDocSchema] = AutoDocInteger

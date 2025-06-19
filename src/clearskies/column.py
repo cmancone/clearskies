@@ -1,24 +1,26 @@
 from __future__ import annotations
-from typing import Any, overload, Callable, Self, TYPE_CHECKING, Type
 
-import clearskies.di
-import clearskies.model
-import clearskies.typing
-import clearskies.configurable
+from typing import TYPE_CHECKING, Any, Callable, Self, Type, overload
+
 import clearskies.configs.actions
 import clearskies.configs.boolean
 import clearskies.configs.select
 import clearskies.configs.string
 import clearskies.configs.string_or_callable
 import clearskies.configs.validators
+import clearskies.configurable
+import clearskies.di
+import clearskies.model
+import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.autodoc.schema import String as AutoDocString
 from clearskies.query.condition import Condition, ParsedCondition
 from clearskies.validator import Validator
-import clearskies.parameters_to_properties
 
 if TYPE_CHECKING:
-    from clearskies import Schema, Model
+    from clearskies import Model, Schema
+
 
 class Column(clearskies.configurable.Configurable, clearskies.di.InjectableProperties):
     """
@@ -42,7 +44,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     The default is only used when creating a record for the first time, and only if
     a value for this column has not been set.
 
-    ```
+    ```python
     import clearskies
 
     class Widget(clearskies.Model):
@@ -67,7 +69,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Which when invoked returns:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -89,7 +91,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     even override other values, so it is intended to be used in cases where the value is always controlled
     programmatically.
 
-    ```
+    ```python
     import clearskies
     import datetime
 
@@ -125,7 +127,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     If you then execute this it will return something like:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -180,7 +182,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     with similar data.  One could be marked as temporary and it will be available during the save operation, but
     it will be skipped when saving data to the backend:
 
-    ```
+    ```python
     import clearskies
 
     class Pet(clearskies.Model):
@@ -211,7 +213,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Which will return:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -241,7 +243,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     be in the past.  Note that date of birth is not required, so the end-user can create a record without
     a date of birth.  In general, only the `Required` validator will reject a non-existent input.
 
-    ```
+    ```python
     import clearskies
 
     class Pet(clearskies.Model):
@@ -270,7 +272,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     You can then see the result of calling the endpoint with various kinds of invalid data:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"date_of_birth": "asdf"}'
     {
         "status": "input_errors",
@@ -342,7 +344,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Here's an example where we want to record a timestamp anytime an order status becomes a particular value:
 
-    ```
+    ```python
     import clearskies
 
     class Order(clearskies.Model):
@@ -370,7 +372,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     You can then see the difference depending on what you set the status to:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"status":"Open"}' | jq
     {
         "status": "success",
@@ -420,7 +422,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Here's an example of using a post-save action to record a simple audit trail when the order status changes:
 
-    ```
+    ```python
     import clearskies
 
     class Order(clearskies.Model):
@@ -480,13 +482,13 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Finally, the post-save action has a named parameter called `id`, so in this specific case we could use:
 
-    ```
+    ```python
     lambda data, id, order_histories: order_histories.create("order_id": id, "event": data["status"])
     ```
 
     When we execute the above script it will return something like:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -567,7 +569,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Here's an example:
 
-    ```
+    ```python
     class User(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -595,7 +597,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     Naturally, our endpoint has a url of `/:account_id`, and so the parameter provided by the uesr gets
     reflected into the save.
 
-    ```
+    ```bash
     $ curl http://localhost:8080/1-2-3-4 -d '{"name":"Bob"}' | jq
     {
         "status": "success",
@@ -611,7 +613,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     ```
 
     """
-    created_by_source_type = clearskies.configs.select.Select(["authorization_data", "http_header", "routing_data", ""], default="")
+    created_by_source_type = clearskies.configs.select.Select(
+        ["authorization_data", "http_header", "routing_data", ""], default=""
+    )
 
     """
     If True, and the key requested via created_by_source_key doesn't exist in the designated source, an error will be raised.
@@ -684,7 +688,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         pass
 
     def get_model_columns(self):
-        """ Return the columns or the model this column is attached to. """
+        """Return the columns or the model this column is attached to."""
         return self.model_class.get_columns()
 
     def finalize_configuration(self, model_class: type[Schema], name: str) -> None:
@@ -703,7 +707,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     def from_backend(self, value):
         """
-        Takes the backend representation and returns a python representation
+        Take the backend representation and returns a python representation.
 
         For instance, for an SQL date field, this will return a Python DateTime object
         """
@@ -711,7 +715,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     def to_backend(self, data: dict[str, Any]) -> dict[str, Any]:
         """
-        Makes any changes needed to save the data to the backend.
+        Make any changes needed to save the data to the backend.
 
         This typically means formatting changes - converting DateTime objects to database
         date strings, etc...
@@ -740,7 +744,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             return self
 
         if self.name not in instance._data:
-            return None # type: ignore
+            return None  # type: ignore
 
         if self.name not in instance._transformed_data:
             instance._transformed_data[self.name] = self.from_backend(instance._data[self.name])
@@ -767,25 +771,21 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     @property
     def is_unique(self) -> bool:
-        """
-        Return True/False to denote if this column should always have unique values
-        """
+        """Return True/False to denote if this column should always have unique values."""
         if self._is_unique is None:
             self._is_unique = any([validator.is_unique for validator in self.validators])
         return self._is_unique
 
     @property
     def is_required(self):
-        """
-        Return True/False to denote if this column should is required
-        """
+        """Return True/False to denote if this column should is required."""
         if self._is_required is None:
             self._is_required = any([validator.is_required for validator in self.validators])
         return self._is_required
 
     def additional_write_columns(self, is_create=False) -> dict[str, Self]:
         """
-        Returns any additional columns that should be included in write operations.
+        Return any additional columns that should be included in write operations.
 
         Some column types, and some validation requirements, necessitate the presence of additional
         columns in the save operation.  This function adds those in so they can be included in the
@@ -797,14 +797,12 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
                 continue
             additional_write_columns = {
                 **additional_write_columns,
-                **validator.additional_write_columns(is_create=is_create), # type: ignore
+                **validator.additional_write_columns(is_create=is_create),  # type: ignore
             }
         return additional_write_columns
 
     def to_json(self, model: clearskies.model.Model) -> dict[str, Any]:
-        """
-        Grabs the column out of the model and converts it into a representation that can be turned into JSON
-        """
+        """Grabs the column out of the model and converts it into a representation that can be turned into JSON."""
         return {self.name: self.__get__(model, model.__class__)}
 
     def input_errors(self, model: clearskies.model.Model, data: dict[str, Any]) -> dict[str, Any]:
@@ -830,7 +828,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         """
         if self.name in data and data[self.name]:
             error = self.input_error_for_value(data[self.name])
-            if  error:
+            if error:
                 return {self.name: error}
 
         for validator in self.validators:
@@ -844,12 +842,11 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         return {}
 
     def check_search_value(
-        self,
-        value: str,
-        operator: str | None=None,
-        relationship_reference: str | None=None
+        self, value: str, operator: str | None = None, relationship_reference: str | None = None
     ) -> str:
         """
+        Check if the given value is an allowed value.
+
         This is called by the search operation in the various API-related handlers to validate a search value.
 
         Generally, this just defers to self.input_error_for_value, but it is a separate method in case you
@@ -857,7 +854,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         """
         return self.input_error_for_value(value, operator=operator)
 
-    def input_error_for_value(self, value: str, operator: str | None=None) -> str:
+    def input_error_for_value(self, value: str, operator: str | None = None) -> str:
         """
         Check if the given value is an allowed value.
 
@@ -881,7 +878,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     def pre_save(self, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         """
-        Make any necessary changes to the data before starting the save process
+        Make any necessary changes to the data before starting the save process.
 
         The difference between this and to_backend is that to_backend only affects
         the data as it is going into the database, while this affects the data that will get persisted
@@ -893,11 +890,13 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         model class for more details.
         """
         if not model and self.created_by_source_type:
-                data[self.name] = self._extract_value_from_source_type()
+            data[self.name] = self._extract_value_from_source_type()
         if self.setable:
             if callable(self.setable):
                 input_output = self.di.build("input_output", cache=True)
-                data[self.name] = self.di.call_function(self.setable, data=data, model=model, **input_output.get_context_for_callables())
+                data[self.name] = self.di.call_function(
+                    self.setable, data=data, model=model, **input_output.get_context_for_callables()
+                )
             else:
                 data[self.name] = self.setable
         if not model and self.default and self.name not in data:
@@ -923,7 +922,14 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         have to execute a new save operation.
         """
         if self.on_change_post_save and model.is_changing(self.name, data):
-            self.execute_actions_with_data(self.on_change_post_save, model, data, id=id, context="on_change_post_save", require_dict_return_value=False)
+            self.execute_actions_with_data(
+                self.on_change_post_save,
+                model,
+                data,
+                id=id,
+                context="on_change_post_save",
+                require_dict_return_value=False,
+            )
 
     def save_finished(self, model: clearskies.model.Model) -> None:
         """
@@ -937,21 +943,15 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             self.execute_actions(self.on_change_save_finished, model)
 
     def pre_delete(self, model):
-        """
-        Make any changes needed to the data before starting the delete process
-        """
+        """Make any changes needed to the data before starting the delete process."""
         pass
 
     def post_delete(self, model):
-        """
-        Make any changes needed to the data before finishing the delete process
-        """
+        """Make any changes needed to the data before finishing the delete process."""
         pass
 
     def _extract_value_from_source_type(self) -> Any:
-        """
-        For columns with `created_by_source_type` set, this fetches the appropriate value from the request
-        """
+        """For columns with `created_by_source_type` set, this fetches the appropriate value from the request."""
         input_output = self.di.build("input_output", cache=True)
         source_type = self.created_by_source_type
         if source_type == "authorization_data":
@@ -963,8 +963,8 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
         if self.created_by_source_key not in data and self.created_by_source_strict:
             raise ValueError(
-                f"Column '{self.name}' is configured to load the key named '{self.created_by_source_key}' from " +
-                f"the {self.created_by_source_type}', but this key was not present in the request."
+                f"Column '{self.name}' is configured to load the key named '{self.created_by_source_key}' from "
+                + f"the {self.created_by_source_type}', but this key was not present in the request."
             )
 
         return data.get(self.created_by_source_key, "N/A")
@@ -978,11 +978,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         context: str = "on_change_pre_save",
         require_dict_return_value: bool = True,
     ) -> dict[str, Any]:
-        """
-        Executes a given set of actions and expects data to be both provided and returned
-        """
+        """Execute a given set of actions and expects data to be both provided and returned."""
         input_output = self.di.build("input_output", cache=True)
-        for (index, action) in enumerate(actions):
+        for index, action in enumerate(actions):
             new_data = self.di.call_function(
                 action,
                 model=model,
@@ -992,7 +990,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             )
             if not isinstance(new_data, dict):
                 if require_dict_return_value:
-                    raise ValueError(f"Return error for action #{index+1} in 'on_change_pre_save' for column '{self.name}' in model '{self.model_class.__name__}': this action must return a dictionary but returned an object of type '{new_data.__class__.__name__}' instead")
+                    raise ValueError(
+                        f"Return error for action #{index + 1} in 'on_change_pre_save' for column '{self.name}' in model '{self.model_class.__name__}': this action must return a dictionary but returned an object of type '{new_data.__class__.__name__}' instead"
+                    )
                 else:
                     return new_data
             data = {
@@ -1006,16 +1006,14 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         actions: list[clearskies.typing.action],
         model: clearskies.model.Model,
     ) -> None:
-        """
-        Executes a given set of actions
-        """
+        """Execute a given set of actions."""
         input_output = self.di.build("input_output", cache=True)
         for action in actions:
             self.di.call_function(action, model=model, **input_output.get_context_for_callables())
 
     def values_match(self, value_1, value_2):
         """
-        Compares two values to see if they are the same.
+        Compare two values to see if they are the same.
 
         This is mainly used to compare incoming data with old data to determine if a column has changed.
 
@@ -1026,22 +1024,13 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         return value_1 == value_2
 
     def add_search(
-        self,
-        model: clearskies.model.Model,
-        value: str,
-        operator: str="",
-        relationship_reference: str=""
+        self, model: clearskies.model.Model, value: str, operator: str = "", relationship_reference: str = ""
     ) -> clearskies.model.Model:
         return model.where(self.condition(operator, value))
 
-    def build_condition(
-        self,
-        value: str,
-        operator: str="",
-        column_prefix: str=""
-    ):
+    def build_condition(self, value: str, operator: str = "", column_prefix: str = ""):
         """
-        This is called by the read (and related) handlers to turn user input into a condition.
+        Build condition for the read (and related) handlers to turn user input into a condition.
 
         Note that this may look like it is vulnerable to SQLi, but it isn't.  These conditions aren't passed directly
         into a query.  Rather, they are parsed by the condition parser before being sent into the backend.
@@ -1061,22 +1050,20 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     def is_allowed_operator(
         self,
         operator: str,
-        relationship_reference: str="",
+        relationship_reference: str = "",
     ):
-        """
-        This is called when processing user data to decide if the end-user is specifying an allowed operator
-        """
+        """Process user data to decide if the end-user is specifying an allowed operator."""
         return operator.lower() in self._allowed_search_operators
 
-    def n_plus_one_add_joins(self, model: clearskies.model.Model, column_names: list[str] = []) -> clearskies.model.Model:
-        """
-        Add any additional joins to solve the N+1 problem.
-        """
+    def n_plus_one_add_joins(
+        self, model: clearskies.model.Model, column_names: list[str] = []
+    ) -> clearskies.model.Model:
+        """Add any additional joins to solve the N+1 problem."""
         return model
 
     def n_plus_one_join_table_alias_prefix(self):
         """
-        A table alias to use with joins for n+1 solutions.
+        Create a table alias to use with joins for n+1 solutions.
 
         When joining tables in for n+1 solutions, you can't just do a SELECT * on the new table, because that
         often results in duplicate column names.  A solution that generally works across the board is to select
@@ -1099,10 +1086,10 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         model: clearskies.model.Model,
         routing_data: dict[str, str],
         authorization_data: dict[str, Any],
-        input_output
+        input_output,
     ) -> clearskies.model.Model:
         """
-        A hook to automatically apply filtering whenever the column makes an appearance in a get/update/list/search handler.
+        Create a hook to automatically apply filtering whenever the column makes an appearance in a get/update/list/search handler.
 
         This hook is called by all the handlers that execute queries, so if your column needs to automatically
         do some filtering whenever the model shows up in an API endpoint, this is the place for it.
@@ -1114,7 +1101,9 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             return self.name
 
         if not self._config or not self._config.get("model_class"):
-            raise ValueError(f"A condition builder was called but the model class isn't set.  This means that the __get__ method for column class {self.__class__.__name__} forgot to set `self.model_class = cls`")
+            raise ValueError(
+                f"A condition builder was called but the model class isn't set.  This means that the __get__ method for column class {self.__class__.__name__} forgot to set `self.model_class = cls`"
+            )
 
         for attribute_name in dir(self.model_class):
             if id(getattr(self.model_class, attribute_name)) != id(self):
@@ -1129,49 +1118,51 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         if "=" not in self._allowed_search_operators:
             raise ValueError(f"An 'equals search' is not allowed for '{self.model_class.__name__}.{name}'.")
         value = self.to_backend({name: value}).get(name)
-        return ParsedCondition(name, '=', [value])
+        return ParsedCondition(name, "=", [value])
 
     def spaceship(self, value) -> Condition:
         name = self.name_for_building_condition()
         if "<=>" not in self._allowed_search_operators:
             raise ValueError(f"A 'spaceship' search is not allowed for '{self.model_class.__name__}.{name}'.")
         value = self.to_backend({name: value}).get(name)
-        return ParsedCondition(name, '<=>', [value])
+        return ParsedCondition(name, "<=>", [value])
 
     def not_equals(self, value) -> Condition:
         name = self.name_for_building_condition()
         if "!=" not in self._allowed_search_operators:
             raise ValueError(f"A 'not equals' search is not allowed for '{self.model_class.__name__}.{name}'.")
         value = self.to_backend({name: value}).get(name)
-        return ParsedCondition(name, '!=', [value])
+        return ParsedCondition(name, "!=", [value])
 
     def less_than_equals(self, value) -> Condition:
         name = self.name_for_building_condition()
         if "<=" not in self._allowed_search_operators:
             raise ValueError(f"A 'less than or equals' search is not allowed for '{self.model_class.__name__}.{name}'.")
         value = self.to_backend({name: value}).get(name)
-        return ParsedCondition(name, '<=', [value])
+        return ParsedCondition(name, "<=", [value])
 
     def greater_than_equals(self, value) -> Condition:
         name = self.name_for_building_condition()
         if ">=" not in self._allowed_search_operators:
-            raise ValueError(f"A 'greater than' or equals search is not allowed for '{self.model_class.__name__}.{name}'.")
+            raise ValueError(
+                f"A 'greater than' or equals search is not allowed for '{self.model_class.__name__}.{name}'."
+            )
         value = self.to_backend({name: value}).get(name)
-        return ParsedCondition(name, '>=', [value])
+        return ParsedCondition(name, ">=", [value])
 
     def less_than(self, value) -> Condition:
         name = self.name_for_building_condition()
         if "<" not in self._allowed_search_operators:
             raise ValueError(f"A 'less than' search is not allowed for '{self.model_class.__name__}.{name}'.")
         value = self.to_backend({name: value}).get(name)
-        return ParsedCondition(name, '<', [value])
+        return ParsedCondition(name, "<", [value])
 
     def greater_than(self, value) -> Condition:
         name = self.name_for_building_condition()
         if ">" not in self._allowed_search_operators:
             raise ValueError(f"A 'greater than' search is not allowed for '{self.model_class.__name__}.{name}'.")
         value = self.to_backend({name: value}).get(name)
-        return ParsedCondition(name, '>', [value])
+        return ParsedCondition(name, ">", [value])
 
     def is_in(self, values) -> Condition:
         name = self.name_for_building_condition()
@@ -1182,26 +1173,26 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         final_values = []
         for value in values:
             final_values.append(self.to_backend({name: value}).get(name))
-        return ParsedCondition(name, 'in', final_values) # type: ignore
+        return ParsedCondition(name, "in", final_values)  # type: ignore
 
     def is_not_null(self) -> Condition:
         name = self.name_for_building_condition()
         if "is not null" not in self._allowed_search_operators:
             raise ValueError(f"An 'is not null' search is not allowed for '{self.model_class.__name__}.{name}'.")
-        return ParsedCondition(name, 'is not null', [])
+        return ParsedCondition(name, "is not null", [])
 
     def is_null(self) -> Condition:
         name = self.name_for_building_condition()
         if "is null" not in self._allowed_search_operators:
             raise ValueError(f"An 'is null' search is not allowed for '{self.model_class.__name__}.{name}'.")
-        return ParsedCondition(name, 'is null', [])
+        return ParsedCondition(name, "is null", [])
 
     def like(self, value) -> Condition:
         name = self.name_for_building_condition()
         if "like" not in self._allowed_search_operators:
             raise ValueError(f"A 'like' search is not allowed for '{self.model_class.__name__}.{name}'.")
         value = self.to_backend({name: value}).get(name)
-        return ParsedCondition(name, 'like', [value])
+        return ParsedCondition(name, "like", [value])
 
     def condition(self, operator: str, value) -> Condition:
         name = self.name_for_building_condition()

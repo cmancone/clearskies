@@ -1,19 +1,21 @@
 from __future__ import annotations
+
 import datetime
-from typing import Any, Callable, overload, Self, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Self, overload
 
-import dateparser # type: ignore
+import dateparser  # type: ignore
 
-import clearskies.typing
 import clearskies.parameters_to_properties
+import clearskies.typing
 from clearskies import configs
-from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.autodoc.schema import Datetime as AutoDocDatetime
+from clearskies.autodoc.schema import Schema as AutoDocSchema
 from clearskies.column import Column
 from clearskies.query import Condition
 
 if TYPE_CHECKING:
     from clearskies import Model
+
 
 class Datetime(Column):
     """
@@ -22,8 +24,9 @@ class Datetime(Column):
     When processing user input, this value is passed through `dateparser.parse()` to decide if it is a proper date string.
     This makes for relatively flexible input validation.  Example:
 
-    ```
+    ```python
     import clearskies
+
 
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
@@ -33,20 +36,21 @@ class Datetime(Column):
         name = clearskies.columns.String()
         my_datetime = clearskies.columns.Datetime()
 
+
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.Create(
             MyModel,
             writeable_column_names=["name", "my_datetime"],
             readable_column_names=["id", "name", "my_datetime"],
         ),
-        classes=[MyModel]
+        classes=[MyModel],
     )
     wsgi()
     ```
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Bob", "my_datetime":"2025-05-13 12:35:45+00:00"}' | jq
     {
         "status": "success",
@@ -152,7 +156,9 @@ class Datetime(Column):
         if isinstance(value, str):
             value = dateparser.parse(value)
         if not isinstance(value, datetime.datetime):
-            raise TypeError(f"I was expecting to get a datetime from the backend but I didn't get anything recognizable.  I have a value of type '{value.__class__.__name__}'.  I need either a datetime object or a datetime serialized as a string.")
+            raise TypeError(
+                f"I was expecting to get a datetime from the backend but I didn't get anything recognizable.  I have a value of type '{value.__class__.__name__}'.  I need either a datetime object or a datetime serialized as a string."
+            )
         if self.timezone_aware:
             if not value.tzinfo:
                 value = value.replace(tzinfo=self.timezone)
@@ -169,7 +175,9 @@ class Datetime(Column):
 
         value = data[self.name]
         if not isinstance(data[self.name], datetime.datetime):
-            raise TypeError(f"I was expecting a stringified-date or a datetime object to send to the backend, but instead I found a value of {value.__class__.__name__}")
+            raise TypeError(
+                f"I was expecting a stringified-date or a datetime object to send to the backend, but instead I found a value of {value.__class__.__name__}"
+            )
 
         return {
             **data,
@@ -177,12 +185,10 @@ class Datetime(Column):
         }
 
     def to_json(self, model: clearskies.model.Model) -> dict[str, Any]:
-        """
-        Grabs the column out of the model and converts it into a representation that can be turned into JSON
-        """
+        """Grabs the column out of the model and converts it into a representation that can be turned into JSON."""
         value = self.__get__(model, model.__class__)
         if value and (isinstance(value, datetime.datetime) or isinstance(value, datetime.date)):
-            value = value.isoformat() # type: ignore
+            value = value.isoformat()  # type: ignore
 
         return {self.name: value}
 
@@ -233,9 +239,7 @@ class Datetime(Column):
         return ""
 
     def values_match(self, value_1, value_2):
-        """
-        Compares two values to see if they are the same
-        """
+        """Compare two values to see if they are the same."""
         # in this function we deal with data directly out of the backend, so our date is likely
         # to be string-ified and we want to look for default (e.g. null) values in string form.
         if type(value_1) == str and ("0000-00-00" in value_1 or value_1 == self.backend_default):

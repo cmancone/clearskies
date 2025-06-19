@@ -1,7 +1,8 @@
-from typing import Any
 import datetime
-from clearskies.di import InjectableProperties, inject
+from typing import Any
+
 import clearskies.configs
+from clearskies.di import InjectableProperties, inject
 
 
 class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
@@ -9,19 +10,16 @@ class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
     environment = clearskies.di.inject.Environment()
     akeyless = clearskies.di.inject.ByName("akeyless")
 
-    access_id = clearskies.configs.String(
-        required=True,
-        regexp=r"^p-[\d\w]+$"
-    )
+    access_id = clearskies.configs.String(required=True, regexp=r"^p-[\d\w]+$")
     access_type = clearskies.configs.Select(["aws_iam", "saml", "jwt"], required=True)
     api_host = clearskies.configs.String(default="https://api.akeyless.io")
     profile = clearskies.configs.String(regexp=r"^[\d\w\-]+$")
 
-    _token_refresh: datetime.datetime = None # type: ignore
+    _token_refresh: datetime.datetime = None  # type: ignore
     _token: str = ""
     _api: Any = None
 
-    def __init__(self, access_id: str, access_type: str, jwt_env_key: str="", api_host: str="", profile: str=""):
+    def __init__(self, access_id: str, access_type: str, jwt_env_key: str = "", api_host: str = "", profile: str = ""):
         self.access_id = access_id
         self.access_type = access_type
         self.jwt_env_key = jwt_env_key
@@ -43,34 +41,34 @@ class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
         res = self.api.create_secret(self.akeyless.CreateSecret(name=path, value=str(value), token=self._get_token()))
         return True
 
-    def get(self, path: str, silent_if_not_found: bool=False) -> str:
+    def get(self, path: str, silent_if_not_found: bool = False) -> str:
         try:
             res = self._api.get_secret_value(self.akeyless.GetSecretValue(names=[path], token=self._get_token()))
         except Exception as e:
-            if e.status == 404: # type: ignore
+            if e.status == 404:  # type: ignore
                 if silent_if_not_found:
                     return ""
                 raise KeyError(f"Secret '{path}' not found")
             raise e
         return res[path]
 
-    def get_dynamic_secret(self, path: str, args: dict[str, Any] | None=None) -> Any:
+    def get_dynamic_secret(self, path: str, args: dict[str, Any] | None = None) -> Any:
         kwargs = {
             "name": path,
             "token": self._get_token(),
         }
         if args:
-            kwargs["args"] = args # type: ignore
+            kwargs["args"] = args  # type: ignore
 
         return self._api.get_dynamic_secret_value(self.akeyless.GetDynamicSecretValue(**kwargs))
 
-    def get_rotated_secret(self, path: str, args: dict[str, Any] | None=None) -> Any:
+    def get_rotated_secret(self, path: str, args: dict[str, Any] | None = None) -> Any:
         kwargs = {
             "names": path,
             "token": self._get_token(),
         }
         if args:
-            kwargs["args"] = args # type: ignore
+            kwargs["args"] = args  # type: ignore
 
         res = self._api.get_rotated_secret_value(self.akeyless.GetRotatedSecretValue(**kwargs))
         return res
@@ -130,10 +128,10 @@ class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
         return self._token
 
     def auth_aws_iam(self):
-        from akeyless_cloud_id import CloudId # type: ignore
+        from akeyless_cloud_id import CloudId  # type: ignore
 
         res = self._api.auth(
-            self.akeyless.Auth(access_id=self._access_id, access_type="aws_iam", cloud_id=CloudId().generate())
+            self.akeyless.Auth(access_id=self.access_id, access_type="aws_iam", cloud_id=CloudId().generate())
         )
         return res.token
 
@@ -158,25 +156,27 @@ class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
         return response.json()["token"]
 
     def auth_jwt(self):
-        if not self._jwt_env_key:
+        if not self.jwt_env_key:
             raise ValueError(
-                "To use AKeyless JWT Auth, you must specify the name of the ENV key to load the JWT from when configuring AKeyless"
+                "To use AKeyless JWT Auth, "
+                "you must specify the name of the ENV key to load the JWT from when configuring AKeyless"
             )
         res = self._api.auth(
-            self.akeyless.Auth(
-                access_id=self.access_id, access_type="jwt", jwt=self.environment.get(self._jwt_env_key)
-            )
+            self.akeyless.Auth(access_id=self.access_id, access_type="jwt", jwt=self.environment.get(self.jwt_env_key))
         )
         return res.token
 
+
 class AkeylessSaml(Akeyless):
-    def __init__(self, access_id: str, api_host: str="", profile: str=""):
-        return super().__init__(access_id, 'saml', api_host=api_host, profile=profile)
+    def __init__(self, access_id: str, api_host: str = "", profile: str = ""):
+        return super().__init__(access_id, "saml", api_host=api_host, profile=profile)
+
 
 class AkeylessJwt(Akeyless):
-    def __init__(self, access_id: str, jwt_env_key: str="", api_host: str="", profile: str=""):
-        return super().__init__(access_id, 'jwt', jwt_env_key=jwt_env_key, api_host=api_host, profile=profile)
+    def __init__(self, access_id: str, jwt_env_key: str = "", api_host: str = "", profile: str = ""):
+        return super().__init__(access_id, "jwt", jwt_env_key=jwt_env_key, api_host=api_host, profile=profile)
+
 
 class AkeylessAwsIam(Akeyless):
-    def __init__(self, access_id: str, api_host: str=""):
-        return super().__init__(access_id, 'aws_iam', api_host=api_host)
+    def __init__(self, access_id: str, api_host: str = ""):
+        return super().__init__(access_id, "aws_iam", api_host=api_host)

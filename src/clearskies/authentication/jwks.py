@@ -1,16 +1,16 @@
 from typing import Any
+
+import clearskies.configs
 import clearskies.di
+import clearskies.parameters_to_properties
 from clearskies.authentication.authentication import Authentication
 from clearskies.exceptions import ClientError
-import clearskies.configs
-import clearskies.parameters_to_properties
 from clearskies.security_headers.cors import Cors
 
 
 class Jwks(Authentication, clearskies.di.InjectableProperties):
-    """
-    The URL where the JWKS can be found.
-    """
+    """The URL where the JWKS can be found."""
+
     jwks_url = clearskies.configs.String(required=True)
 
     """
@@ -98,10 +98,12 @@ class Jwks(Authentication, clearskies.di.InjectableProperties):
 
     def validate_jwt(self, raw_jwt):
         try:
-            from jwcrypto import jws, jwk, jwt
+            from jwcrypto import jwk, jws, jwt
             from jwcrypto.common import JWException
         except:
-            raise ValueError("The JWKS authentication method requires the jwcrypto libraries to be installed.  These are optional dependencies of clearskies, so to include them do a `pip install 'clear-skies[jwcrypto]'`")
+            raise ValueError(
+                "The JWKS authentication method requires the jwcrypto libraries to be installed.  These are optional dependencies of clearskies, so to include them do a `pip install 'clear-skies[jwcrypto]'`"
+            )
 
         keys = jwk.JWKSet()
         keys.import_keyset(json.dumps(self._get_jwks()))
@@ -133,7 +135,6 @@ class Jwks(Authentication, clearskies.di.InjectableProperties):
                 raise ClientError("Audience does not match")
 
         return True
-
 
     def _get_jwks(self):
         if self._jwks is None or ((self.now - self._jwks_fetched).total_seconds() > self.jwks_cache_time):
