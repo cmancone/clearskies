@@ -99,7 +99,6 @@ jobs:
         with:
           options: "--check --verbose"
           src: "./src"
-          use_pyproject: true
 
   ruff-check:
     name: ruff-check
