@@ -13,7 +13,7 @@ Data is stored in the `_config` property on the instance.
 
 Usage:
 
-```
+```python
 from clearskies import configs
 
 
@@ -47,7 +47,7 @@ decorated function and assign them as instance properties.  You can use this to 
 especially if you have a lot of configuration parameters.  In the above example, you could simplify
 it as:
 
-```
+```python
 from clearskies import configs
 
 

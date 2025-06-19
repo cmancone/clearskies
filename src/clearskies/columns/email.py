@@ -7,7 +7,7 @@ class Email(String):
     """
     A string column that specifically expects an email.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -32,7 +32,7 @@ class Email(String):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"email":"test@example.com"}' | jq
     {
         "status": "success",

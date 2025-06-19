@@ -33,7 +33,7 @@ class HasMany(Column):
 
     See the BelongsToId class for additional background and directions on avoiding circular dependency trees.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -86,7 +86,7 @@ class HasMany(Column):
 
     And if you execute this it will return:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -99,7 +99,6 @@ class HasMany(Column):
         "input_errors": {},
     }
     ```
-
     """
 
     """
@@ -121,7 +120,7 @@ class HasMany(Column):
 
     Example:
 
-    ```
+    ```python
     import clearskies
 
     class Product(clearskies.Model):
@@ -170,7 +169,7 @@ class HasMany(Column):
     the naming convention, we had to specify `foreign_column_name="my_parent_category_id"` in `Category.products`,
     in order for the `HasMany` column to find the children.  Therefore, when invoked it returns the same thing:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -202,7 +201,7 @@ class HasMany(Column):
     from the child class that are included in the JSON response are determined by `readable_child_column_names`.
     Example:
 
-    ```
+    ```python
     import clearskies
 
     class Product(clearskies.Model):
@@ -247,7 +246,7 @@ class HasMany(Column):
     on the categories nodel and asking the endpoint to also unpack their products.  We set `readable_child_column_names`
     to `["id", "name"]` for `Category.products`, so when the endpoint unpacks the products, it includes those columns:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -297,7 +296,7 @@ class HasMany(Column):
     """
     Additional conditions to add to searches on the child table.
 
-    ```
+    ```python
     import clearskies
 
     class Order(clearskies.Model):
@@ -349,7 +348,7 @@ class HasMany(Column):
     The above example shows two different ways of adding conditions.  Note that `where` can be either a list or a single
     condition.  If you invoked this you would get:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -369,7 +368,7 @@ class HasMany(Column):
     and then returns the modified model class.  Like usual, this callable can request any defined depenency.  So, for
     instance, the following column definition is equivalent to the example above:
 
-    ```
+    ```python
     class User(clearskies.Model):
         # removing unchanged part for brevity
         large_open_orders = clearskies.columns.HasMany(

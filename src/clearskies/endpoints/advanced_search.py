@@ -35,7 +35,7 @@ class AdvancedSearch(SimpleSearch):
 
     Here's an example making use of the AdvancedSearch endpoint:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -118,7 +118,7 @@ class AdvancedSearch(SimpleSearch):
 
     If you invoke the endpoint without any additional data, it will simply list all records:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' | jq
     {
         "status": "success",
@@ -176,7 +176,7 @@ class AdvancedSearch(SimpleSearch):
 
     Of course you can also sort and paginate.  Keep in mind that pagination is backend-dependent:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -d '{"sort":[ {"column": "name", "direction": "desc"} ], "limit": 2, "start": 1}' | jq
     {
         "status": "success",
@@ -219,7 +219,7 @@ class AdvancedSearch(SimpleSearch):
     must be listed as such in the list of sortable/searchable columns, and then you use the same name to sort/search
     by them:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -d '{"sort":[ {"column": "company.name", "direction": "desc"}, {"column": "age", "direction": "asc"} ]}' | jq
     {
         "status": "success",
@@ -278,7 +278,7 @@ class AdvancedSearch(SimpleSearch):
 
     And finally searching:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -d '{"where":[ {"column": "age", "operator": "<=", "value": 37}, {"column": "username", "operator": "in", "value": ["curious", "greg"]} ]}' | jq
     {
         "status": "success",

@@ -260,7 +260,7 @@ class MemoryBackend(Backend, InjectableProperties):
     but when you run this code it will actually end up with the memory backend, so the code will run even without
     attempting to connect to a database.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -314,7 +314,7 @@ class MemoryBackend(Backend, InjectableProperties):
     can be helpful in testing to setup your tests, and is occassionally helpful for keeping track of data in
     fixed, read-only tables.  Here's an example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -378,7 +378,7 @@ class MemoryBackend(Backend, InjectableProperties):
 
     And if you invoke it:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' | jq
     {
         "status": "success",
@@ -420,7 +420,6 @@ class MemoryBackend(Backend, InjectableProperties):
         "input_errors": {}
     }
     ```
-
     """
 
     default_data = inject.ByName("memory_backend_default_data")
@@ -672,7 +671,7 @@ class MemoryBackend(Backend, InjectableProperties):
 
         `rows` should be something like:
 
-        ```
+        ```python
         [
             {
                 "table_1": {"table_1_row_1"},

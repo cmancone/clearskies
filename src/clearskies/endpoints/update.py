@@ -26,7 +26,7 @@ class Update(Get):
     incoming user input.  The default request method is `PATCH`.  If everything checks out, it will then
     update the record.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -63,7 +63,7 @@ class Update(Get):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/1-2-3-4' -X PATCH -d '{"name": "Bobby Brown", "username": "bobbybrown"}' | jq
     {
         "status": "success",

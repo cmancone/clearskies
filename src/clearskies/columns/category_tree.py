@@ -22,7 +22,7 @@ class CategoryTree(BelongsToId):
     necessary information to perform quick lookups about relationships in a cateogry
     tree.  So, imagine you have a table that represents a standard category heirarchy:
 
-    ```
+    ```sql
     CREATE TABLE categories (
       id varchar(255),
       parent_id varchar(255),
@@ -35,7 +35,7 @@ class CategoryTree(BelongsToId):
     This column class solves that by building a tree table that caches this data as the categories are updated.
     That table should look like this:
 
-    ```
+    ```sql
     CREATE TABLE category_tree (
       id varchar(255),
       parent_id varchar(255),
@@ -47,7 +47,7 @@ class CategoryTree(BelongsToId):
 
     Then you would attach this column to your category model as a replacement for a typical BelongsToId relationship:
 
-    ```
+    ```python
     import clearskies
 
     class Tree(clearskies.Model):
@@ -96,30 +96,18 @@ class CategoryTree(BelongsToId):
 
     And if you invoke the above you will get:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
         "data": {
-            "descendants_of_root_1": [
-                "Sub 1 of Root 1",
-                "Sub 2 of Root 1",
-                "Sub Sub"
-            ],
-            "children_of_root_1": [
-                "Sub 1 of Root 1",
-                "Sub 2 of Root 1"
-            ],
-            "descendants_of_root_2": [
-                "Sub 1 of Root 2"
-            ],
-            "ancestors_of_sub_sub": [
-                "Root 1",
-                "Sub 1 of Root 1"
-            ]
+            "descendants_of_root_1": ["Sub 1 of Root 1", "Sub 2 of Root 1", "Sub Sub"],
+            "children_of_root_1": ["Sub 1 of Root 1", "Sub 2 of Root 1"],
+            "descendants_of_root_2": ["Sub 1 of Root 2"],
+            "ancestors_of_sub_sub": ["Root 1", "Sub 1 of Root 1"],
         },
         "pagination": {},
-        "input_errors": {}
+        "input_errors": {},
     }
     ```
 

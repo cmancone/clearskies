@@ -27,7 +27,7 @@ class Get(Endpoint):
     of the model.  Finally, you must declare a route parameter with a matching column name: the get endpoint will then
     fetch the desired record id out of the URL path.  Here's a simple example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -63,7 +63,7 @@ class Get(Endpoint):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/1-2-3-4' | jq
     {
         "status": "success",
@@ -106,7 +106,7 @@ class Get(Endpoint):
 
     If not specified, it will default to the id column name.  There must be a matching route parameter in the URL.
 
-    ```
+    ```python
     import clearskies
 
     class User(clearskies.Model):
@@ -142,7 +142,7 @@ class Get(Endpoint):
     Note that `record_lookup_column_name` is set to `username` and we similarly changed the route from
     `/{id}` to `/{username}`.  We then invoke it with the username rather than the id:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/janedoe' | jq
     {
         "status": "success",

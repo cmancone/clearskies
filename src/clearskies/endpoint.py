@@ -74,7 +74,7 @@ class Endpoint(
     any of the standard dependencies or context-specific values like any other callable in a clearskies
     application:
 
-    ```
+    ```python
     def custom_headers(query_parameters):
         some_value = "yes" if query_parameters.get("stuff") else "no"
         return [f"x-custom: {some_value}", "content-type: application/custom"]
@@ -98,7 +98,7 @@ class Endpoint(
     becomes a suffix on the URL of the group.  This is described in more detail in the documentation for endpoint
     groups, so here's an example of attaching endpoints directly and setting the URL:
 
-    ```
+    ```python
     import clearskies
 
     endpoint = clearskies.endpoints.Callable(
@@ -112,7 +112,7 @@ class Endpoint(
 
     Which then acts as expected:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/hello/asdf' | jq
     {
         "status": "client_error",
@@ -138,7 +138,7 @@ class Endpoint(
     `/{name}/` syntax or `/:name/`.  These parameters can be injected into any callable via the `routing_data`
     dependency injection name, as well as via their name:
 
-    ```
+    ```python
     import clearskies
 
     endpoint = clearskies.endpoints.Callable(
@@ -152,7 +152,7 @@ class Endpoint(
 
     Which you can then invoke in the usual way:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/hello/bob/brown' | jq
     {
         "status": "success",
@@ -174,7 +174,7 @@ class Endpoint(
 
     By default, only GET is allowed.
 
-    ```
+    ```python
     import clearskies
 
     endpoint = clearskies.endpoints.Callable(
@@ -188,7 +188,7 @@ class Endpoint(
 
     And to execute:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -X POST | jq
     {
         "status": "success",
@@ -240,7 +240,7 @@ class Endpoint(
 
     Your function can request any named dependency injection parameter as well as the standard context parameters for the request.
 
-    ```
+    ```python
     import clearskies
     import datetime
     from dateutil.relativedelta import relativedelta
@@ -299,7 +299,7 @@ class Endpoint(
 
     Which gives:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/jane' | jq
     {
         "status": "success",
@@ -360,7 +360,7 @@ class Endpoint(
     instructs the model what columns should be sent back to the user.  This information is similarly used when generating
     the documentation for the endpoint.
 
-    ```
+    ```python
     import clearskies
 
     class User(clearskies.Model):
@@ -398,7 +398,7 @@ class Endpoint(
 
     And then:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080'
     {
         "status": "success",
@@ -437,7 +437,7 @@ class Endpoint(
     set.  Clearskies will then use the model schema to validate the input and also auto-generate documentation
     for the endpoint.
 
-    ```
+    ```python
     import clearskies
 
     class User(clearskies.Model):
@@ -460,7 +460,7 @@ class Endpoint(
 
     If we send a valid payload:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Jane","date_of_birth":"01/01/1990"}' | jq
     {
         "status": "success",
@@ -476,7 +476,7 @@ class Endpoint(
 
     And we can see the automatic input validation by sending some incorrect data:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"","date_of_birth":"this is not a date","id":"hey"}' | jq
     {
         "status": "input_errors",
@@ -516,7 +516,7 @@ class Endpoint(
     being a dictionary.  The Callable endpoint, however, only requires input if `writeable_column_names` is set.  If it's not set,
     and the end-user doesn't provide a request body, then request_data will be None.
 
-    ```
+    ```python
     import clearskies
 
     def check_input(request_data):
@@ -538,7 +538,7 @@ class Endpoint(
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"name":"sup"}' | jq
     {
         "status": "input_errors",
@@ -575,7 +575,7 @@ class Endpoint(
     columns from the model.  In general, if you want a column not to be exposed through an endpoint, then all you have to do is remove
     that column from the list of writeable columns.
 
-    ```
+    ```python
     import clearskies
 
     endpoint = clearskies.Endpoint(
@@ -603,7 +603,7 @@ class Endpoint(
 
     By default internal_casing and external_casing are both set to 'snake_case', which means that no conversion happens.
 
-    ```
+    ```python
     import clearskies
     import datetime
 
@@ -630,7 +630,7 @@ class Endpoint(
 
     And then when called:
 
-    ```
+    ```bash
     $ curl http://localhost:8080  | jq
     {
         "Status": "Success",
@@ -659,7 +659,7 @@ class Endpoint(
     Note that, with CORS, you generally only have to specify the origin.  The routing system will automatically add
     in the appropriate HTTP verbs, and the authorization classes will add in the appropriate headers.
 
-    ```
+    ```python
     import clearskies
 
     hello_world = clearskies.endpoints.Callable(
@@ -678,7 +678,7 @@ class Endpoint(
 
     And then execute the options endpoint to see all the security headers:
 
-    ```
+    ```bash
     $ curl -v http://localhost:8080 -X OPTIONS
     * Host localhost:8080 was resolved.
     < HTTP/1.0 200 Ok
@@ -720,7 +720,7 @@ class Endpoint(
 
     Here's an example:
 
-    ```
+    ```python
     import clearskies
 
     class Student(clearskies.Model):
@@ -760,7 +760,7 @@ class Endpoint(
 
     Which you can invoke:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' | jq
     {
         "status": "success",
@@ -794,7 +794,7 @@ class Endpoint(
     """
     Additional joins to always add to the query.
 
-    ```
+    ```python
     import clearskies
 
     class Student(clearskies.Model):
@@ -849,7 +849,7 @@ class Endpoint(
 
     Which when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' | jq
     {
         "status": "success",

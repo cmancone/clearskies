@@ -21,7 +21,7 @@ class CreatedByHeader(String):
     related to `BelongsToId`, so instead you would use the `BelongsToId` column and set `created_by_source_type` to `http_header` and
     `created_by_source_key` to `user_id`.  Example usage:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -47,7 +47,7 @@ class CreatedByHeader(String):
 
     If you invoked this:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Bob"}' -H 'my_custom_header: some header value' | jq
 
     {
@@ -63,7 +63,6 @@ class CreatedByHeader(String):
     }
 
     ```
-
     """
 
     """

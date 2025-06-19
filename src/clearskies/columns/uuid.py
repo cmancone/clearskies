@@ -21,7 +21,7 @@ class Uuid(String):
     When used, it will automatically populate the column with a random UUID upon record creation.
     It is not a writeable column, which means that you cannot expose it for write operations via an endpoint.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -45,7 +45,7 @@ class Uuid(String):
 
     and when invoked:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"name": "John Doe"}' | jq
     {
         "status": "success",

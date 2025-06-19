@@ -44,7 +44,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     The default is only used when creating a record for the first time, and only if
     a value for this column has not been set.
 
-    ```
+    ```python
     import clearskies
 
     class Widget(clearskies.Model):
@@ -69,7 +69,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Which when invoked returns:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -91,7 +91,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     even override other values, so it is intended to be used in cases where the value is always controlled
     programmatically.
 
-    ```
+    ```python
     import clearskies
     import datetime
 
@@ -127,7 +127,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     If you then execute this it will return something like:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -182,7 +182,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     with similar data.  One could be marked as temporary and it will be available during the save operation, but
     it will be skipped when saving data to the backend:
 
-    ```
+    ```python
     import clearskies
 
     class Pet(clearskies.Model):
@@ -213,7 +213,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Which will return:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -243,7 +243,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     be in the past.  Note that date of birth is not required, so the end-user can create a record without
     a date of birth.  In general, only the `Required` validator will reject a non-existent input.
 
-    ```
+    ```python
     import clearskies
 
     class Pet(clearskies.Model):
@@ -272,7 +272,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     You can then see the result of calling the endpoint with various kinds of invalid data:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"date_of_birth": "asdf"}'
     {
         "status": "input_errors",
@@ -344,7 +344,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Here's an example where we want to record a timestamp anytime an order status becomes a particular value:
 
-    ```
+    ```python
     import clearskies
 
     class Order(clearskies.Model):
@@ -372,7 +372,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     You can then see the difference depending on what you set the status to:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"status":"Open"}' | jq
     {
         "status": "success",
@@ -422,7 +422,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Here's an example of using a post-save action to record a simple audit trail when the order status changes:
 
-    ```
+    ```python
     import clearskies
 
     class Order(clearskies.Model):
@@ -482,13 +482,13 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Finally, the post-save action has a named parameter called `id`, so in this specific case we could use:
 
-    ```
+    ```python
     lambda data, id, order_histories: order_histories.create("order_id": id, "event": data["status"])
     ```
 
     When we execute the above script it will return something like:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -569,7 +569,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     Here's an example:
 
-    ```
+    ```python
     class User(clearskies.Model):
         id_column_name = "id"
         backend = clearskies.backends.MemoryBackend()
@@ -597,7 +597,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
     Naturally, our endpoint has a url of `/:account_id`, and so the parameter provided by the uesr gets
     reflected into the save.
 
-    ```
+    ```bash
     $ curl http://localhost:8080/1-2-3-4 -d '{"name":"Bob"}' | jq
     {
         "status": "success",

@@ -1,6 +1,6 @@
 Models are configured by attaching columns as properties:
 
-```
+```python
 import clearskies.
 def SomeModel:
     name = columns.String(required=True)

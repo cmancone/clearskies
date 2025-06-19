@@ -19,7 +19,7 @@ class ManyToManyIdsWithData(ManyToManyIds):
     relationship is stored in the pivot table.  This creates some differences, which are best
     explained by example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -99,7 +99,7 @@ class ManyToManyIdsWithData(ManyToManyIds):
     the pivot (e.g. `{"thingy_id": id}` in the first example.  However, if there are unique columns in the
     related model, you can provide those instead.  If you execute the above example you'll get:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",

@@ -16,7 +16,7 @@ class BelongsToSelf(BelongsToId):
 
     See also HasManySelf
 
-    ```
+    ```python
     from typing import Any
 
     import clearskies
@@ -56,7 +56,7 @@ class BelongsToSelf(BelongsToId):
 
     Which when invoked returns:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",

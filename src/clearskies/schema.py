@@ -11,7 +11,7 @@ class Schema:
     """
     Define a schema by extending and declaring columns.
 
-    ```
+    ```python
     from clearskies.schema import Schema
     from clearskies.validators import Required, Unique
 

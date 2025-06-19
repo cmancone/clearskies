@@ -27,7 +27,7 @@ class SimpleSearch(List):
     `Student` model, return `id`, `name`, and `grade` in the results, and allow the user to search by
     `name` and `grade`.  We also seed the memory backend with data so the endpoint has something to return:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -68,7 +68,7 @@ class SimpleSearch(List):
     Here is the basic operation of the endpoint itself, without any search parameters, in which case it behaves
     identically to the list endpoint:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' | jq
     {
         "status": "success",
@@ -102,7 +102,7 @@ class SimpleSearch(List):
 
     We can then search on name via the `name` URL parameter:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080?name=Bob' | jq
     {
         "status": "success",
@@ -126,7 +126,7 @@ class SimpleSearch(List):
 
     and multiple search terms are allowed:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080?name=Bob&grade=2' | jq
     {
         "status": "success",
@@ -145,7 +145,7 @@ class SimpleSearch(List):
 
     Pagination and sorting work just like with the list endpoint:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080?sort=grade&direction=desc&limit=2' | jq
     {
         "status": "success",

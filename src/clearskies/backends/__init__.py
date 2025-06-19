@@ -33,7 +33,7 @@ There are four primary kinds of backends built into clearskies, with a few sub-t
 See the documentation for each backend to understand how to configure and use it.  In all cases though, you specify
 the backend by instantiating the backend and attaching it to the model class via the `backend` attribute:
 
-```
+```python
 import clearskies
 
 

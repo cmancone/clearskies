@@ -425,7 +425,7 @@ class Model(Schema, InjectableProperties):
         This method returns a new object with the updated query.  The original model object is unmodified.
         Multiple calls to this method add together.  The following:
 
-        ```
+        ```python
         models.select("column_1 column_2").select("column_3")
         ```
 
@@ -457,7 +457,7 @@ class Model(Schema, InjectableProperties):
         IN condition.
 
         Examples:
-        ```
+        ```python
         for record in (
             models.where("order_id=5").where("status IN ('ACTIVE','PENDING')").where("other_table.id=asdf")
         ):
@@ -528,7 +528,7 @@ class Model(Schema, InjectableProperties):
 
         This is just shorthand for `models.where("column=value").find()`.  Example:
 
-        ```
+        ```python
         model = models.find("column=value")
         print(model.id)
         ```
@@ -558,7 +558,7 @@ class Model(Schema, InjectableProperties):
         NOTE: this loads up all records in memory before returning (e.g. it isn't using generators yet), so
         expect delays for large record sets.
 
-        ```
+        ```python
         for model in models.where("column=value").paginate_all():
             print(model.id)
         ```

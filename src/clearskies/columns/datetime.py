@@ -24,7 +24,7 @@ class Datetime(Column):
     When processing user input, this value is passed through `dateparser.parse()` to decide if it is a proper date string.
     This makes for relatively flexible input validation.  Example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -50,7 +50,7 @@ class Datetime(Column):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Bob", "my_datetime":"2025-05-13 12:35:45+00:00"}' | jq
     {
         "status": "success",

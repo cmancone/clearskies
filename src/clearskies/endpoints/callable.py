@@ -34,7 +34,7 @@ class Callable(Endpoint):
 
     Here's a basic working example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -70,7 +70,7 @@ class Callable(Endpoint):
 
     If you run the above script and invoke the server:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' | jq
     {
         "status": "success",
@@ -91,7 +91,7 @@ class Callable(Endpoint):
     custom data, and also want your API to be documented, you can pass a schema along to output_schema so clearskies can document
     it:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -122,7 +122,7 @@ class Callable(Endpoint):
     Note that if this is specified it will take precedence over writeable_column_names and model_class, which
     can also be used to specify the expected input.
 
-    ```
+    ```python
     import clearskies
 
     class ExpectedInput(clearskies.Schema):
@@ -142,7 +142,7 @@ class Callable(Endpoint):
 
     And then valid and invalid requests:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"first_name":"Jane","last_name":"Doe","age":1}' | jq
     {
         "status": "success",
@@ -180,7 +180,7 @@ class Callable(Endpoint):
     With the standard response schema, the return value of the function will be placed in the `data` portion of
     the standard clearskies response:
 
-    ```
+    ```python
     import clearskies
 
     wsgi = clearskies.contexts.WsgiRef(
@@ -194,7 +194,7 @@ class Callable(Endpoint):
 
     Results in:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 | jq
     {
         "status": "success",
@@ -208,7 +208,7 @@ class Callable(Endpoint):
     ```
     But if you want to build your own response:
 
-    ```
+    ```python
     import clearskies
 
     wsgi = clearskies.contexts.WsgiRef(
@@ -222,7 +222,7 @@ class Callable(Endpoint):
 
     Results in:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 | jq
     {
         "hello": "world"

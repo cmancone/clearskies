@@ -17,7 +17,7 @@ class Phone(String):
     If you also set the usa_only flag to true then it will also validate that it is a valid US number containing
     9 digits and, optionally, a leading `1`.  Example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -42,7 +42,7 @@ class Phone(String):
 
     Which you can invoke:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"name":"John Doe", "phone": "+1 (555) 451-1234"}' | jq
     {
         "status": "success",

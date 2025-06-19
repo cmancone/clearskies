@@ -25,7 +25,7 @@ class AdditionalConfig:
     extend the `can_cache` method and have it return True/False depending on the name and context.
 
     Example:
-    ```
+    ```python
     from clearskies.di import Di, AdditionalConfig
 
 
@@ -66,7 +66,7 @@ class AdditionalConfig:
         cache for a value.  The importance is that, once there is a value in the cache, that will be reused
         for all future requests for that name.  Example:
 
-        ```
+        ```python
         from clearskies.di import Di, AdditionalConfig
         import secrets
 

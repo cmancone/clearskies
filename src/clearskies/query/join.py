@@ -16,7 +16,7 @@ class Join:
     NOTE: backticks are optionally allowed around column and table names.
 
     Examples:
-    ```
+    ```python
     join = Join("INNER JOIN orders ON users.id=orders.user_id")
     print(f"{join.left_table_name}.{join.left_column_name}")  # prints 'users.id'
     print(f"{join.right_table_name}.{join.right_column_name}")  # prints 'orders.user_id'

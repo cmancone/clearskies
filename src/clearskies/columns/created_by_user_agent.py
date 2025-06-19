@@ -20,7 +20,7 @@ class CreatedByUserAgent(String):
     (depending on the context).  This is a good thing if you are trying to consistely provide audit information,
     but may be a problem if your model creation needs to happen more flexibly.  Example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -46,7 +46,7 @@ class CreatedByUserAgent(String):
 
     And if you invoked this:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Bob"}' | jq
     {
         "status": "success",

@@ -2,7 +2,7 @@
 
 There are all sorts of things in clearskies that need to be configured - handlers, columns, models, etc...  `configurable.Configurable` works together with the config classes to make this happen.  The idea is that something that needs to be configured extends `Configurable` and then declares configs as properties.  A simple example:
 
-```
+```python
 class ConfigurableThing(configurable.Configurable):
     my_name = config.String(required=True)
     is_required = config.Boolean(default=False)
@@ -17,7 +17,7 @@ We've declared three configuration options for our `ConfigurableThing` class:
 
 However, our example above is missing one important thing: actually setting these values.  They act like standard descriptors, so with just the above code you could:
 
-```
+```python
 configruable_thing = ConfigurableThing()
 configruable_thing.my_name = "Jane Doe"
 configruable_thing.is_required = True
@@ -26,7 +26,7 @@ configruable_thing.some_option = "option 2"
 
 Typically though you need a well defined way to set these values **AND** the class must call `super().finalize_and_validate_configuration()` once the configuration is set.  This is because many of the validations are only possible after all the configs are set, so the configurable class treats the process of setting the configuration as a one-time, monolithic process: you set the configs, validate everything, and then use the config.  It's *NOT* the goal to continually change the configuration for an object after creation.  The simplest way to do this would be in the constructor:
 
-```
+```python
 class ConfigurableThing(configurable.Configurable):
     my_name = config.String(required=True)
     is_required = config.Boolean(default=False)
@@ -46,7 +46,7 @@ class ConfigurableThing(configurable.Configurable):
 
 However, this doesn't always work because your class may be constructed via the dependency injection system.  In this case, the constructor must be reserved for injecting the necessary dependencies.  In addition, the object won't be constructed directly via code, so it's not possible to specify the configuration options there.  In this case, config values can be shifted to the `configure` method and you can use a binding config:
 
-```
+```python
 class ConfigurableThing(configurable.Configurable):
     my_name = config.String(required=True)
     is_required = config.Boolean(default=False)
@@ -77,7 +77,7 @@ context = clearskies.contexts.cli(
 
 Note that we've lost our strong typing when creating the binding, but that can be fixed by extending the binding config:
 
-```
+```python
 class ConfigurableThing:
     """ See above """
 

@@ -18,7 +18,7 @@ class Integer(Column):
     """
     A column that stores integer data.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -43,7 +43,7 @@ class Integer(Column):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"age":20}' | jq
     {
         "status": "success",

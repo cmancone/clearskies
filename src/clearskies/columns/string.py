@@ -12,7 +12,7 @@ class String(Column):
     """
     A simple string column.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -36,7 +36,7 @@ class String(Column):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"name": "Spot"}' | jq
     {
         "status": "success",
@@ -61,7 +61,6 @@ class String(Column):
     }
 
     ```
-
     """
 
     _allowed_search_operators = ["<=>", "!=", "<=", ">=", ">", "<", "=", "in", "is not null", "is null", "like"]

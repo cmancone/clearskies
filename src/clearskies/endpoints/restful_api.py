@@ -46,7 +46,7 @@ class RestfulApi(EndpointGroup):
     endoints all expect the id to be appended to the base URL, and then are separated by request method
     (PATCH for update, DELETE for delete, and GET for get).  See the example app and calls below:
 
-    ```
+    ```python
     import clearskies
     from clearskies.validators import Required, Unique
     from clearskies import columns
@@ -86,7 +86,7 @@ class RestfulApi(EndpointGroup):
     Which spins up a fully functional API.  In the below usage examples we create two users, fetch
     one of them, update a user, delete the other, and then list all users.
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/users' -d '{"name":"Bob", "username": "bob", "age": 25}' | jq
     {
         "status": "success",

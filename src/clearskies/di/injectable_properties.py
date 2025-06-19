@@ -41,7 +41,7 @@ class InjectableProperties:
 
     Here's an example:
 
-    ```
+    ```python
     import clearskies
     import time
     from clearskies import parameters_to_properties

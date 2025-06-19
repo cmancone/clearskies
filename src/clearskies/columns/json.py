@@ -16,7 +16,7 @@ class Json(Column):
     """
     A column to store generic data.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -41,7 +41,7 @@ class Json(Column):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"my_data":{"count":[1,2,3,4,{"thing":true}]}}' | jq
     {
         "status": "success",

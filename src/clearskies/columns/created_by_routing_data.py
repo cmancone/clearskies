@@ -19,7 +19,7 @@ class CreatedByRoutingData(String):
     related to `BelongsToId`, so instead you would use the `BelongsToId` column and set `created_by_source_type` to `routing_data` and
     `created_by_source_key` to `user_id`.  Example usage:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -46,7 +46,7 @@ class CreatedByRoutingData(String):
 
     And if you invoked this:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/my-org-id' -d '{"name":"Bob"}' | jq
     {
         "status": "success",

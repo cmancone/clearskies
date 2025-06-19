@@ -21,7 +21,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     environment variable which is set in the code itself.  Normally you wouldn't set environment variables like this,
     but it's done here to create a self-contained example that is easy to run:
 
-    ```
+    ```python
     import os
     import clearskies
 
@@ -37,7 +37,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     ```
     We can then call it with and without the authentication header:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -H 'Authorization: SUPERSECRET' | jq
     {
         "status": "success",
@@ -73,7 +73,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     The secret bearer class can also be attached to an API Backend to provide authentication to remote APIs.  To
     demonstrate, here is an example server that expects a secret token in the authorization header:
 
-    ```
+    ```python
     import os
     import clearskies
     from clearskies import columns
@@ -111,7 +111,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     Then here is a client app (you can launch the above server and then run this in a new terminal) that
     similarly uses the secret bearer class to authenticate to the server:
 
-    ```
+    ```python
     import os
     import clearskies
     from clearskies import columns
@@ -160,7 +160,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     writeable columns, the API would return an input error.  If you launch the above server/API and then run
     the given client script, you'll see output like this:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -200,7 +200,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     Of course, to use `secret_key`, you must also provide a secret manager.  The below example uses the dependency
     injection system to create a faux secret manager to demonstrate how it works in general:
 
-    ```
+    ```python
     from types import SimpleNamespace
     import clearskies
 
@@ -225,7 +225,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -H "Authorization: SUPERSECRET" | jq
     {
         "status": "success",
@@ -258,7 +258,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     be accepted and you can migrate your applications to only send the new secret.  Once they are all updated,
     remove the alternate_secret_key:
 
-    ```
+    ```python
     from types import SimpleNamespace
     import clearskies
 
@@ -288,7 +288,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -H "Authorization: SUPERSECRET" | jq
     {
         "status": "success",
@@ -337,7 +337,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     to use the new key and, once they are all migrated, remove the old key from the application
     configuration.  Here's an example:
 
-    ```
+    ```python
     import os
     import clearskies
 
@@ -358,7 +358,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -H "Authorization: SUPERSECRET" | jq
     {
         "status": "success",
@@ -403,7 +403,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
     to provide such a prefix.  Note that the prefix is case-insensitive and it does not assume a space between the
     prefix and the token (so, if you want a space, you must explicitly put it in the prefix).  Here's an example:
 
-    ```
+    ```python
     import os
     import clearskies
 
@@ -423,7 +423,7 @@ class SecretBearer(Authentication, clearskies.di.InjectableProperties):
 
     And then usage:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -H "Authorization: SECRET-TOKEN SUPERSECRET" | jq
     {
         "status": "success",

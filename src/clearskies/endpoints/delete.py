@@ -26,7 +26,7 @@ class Delete(Get):
     declare a route parameter with a matching column name: the delete endpoint will then fetch the desired record id
     out of the URL path.  The default request method is DELETE. Here's a simple example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -61,7 +61,7 @@ class Delete(Get):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/1-2-3-4' -X DELETE | jq
     {
         "status": "success",

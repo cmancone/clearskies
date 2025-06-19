@@ -25,7 +25,7 @@ class Date(Datetime):
     this value is passed through `dateparser.parse()` to decide if it is a proper date string.  This makes for relatively
     flexible input validation.  Example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -51,7 +51,7 @@ class Date(Datetime):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"name":"Bob", "my_date":"May 5th 2025"}' | jq
     {
         "status": "success",
@@ -89,7 +89,6 @@ class Date(Datetime):
         }
     }
     ```
-
     """
 
     date_format = configs.String(default="%Y-%m-%d")

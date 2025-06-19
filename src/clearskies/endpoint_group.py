@@ -30,7 +30,7 @@ class EndpointGroup(
     endpoint is defined for the purpose of the example, but note that in practice you could accomplish this same
     thing with much less code by using the RestfulApi endpoint:
 
-    ```
+    ```python
     import clearskies
     from clearskies.validators import Required, Unique
     from clearskies import columns
@@ -156,7 +156,7 @@ class EndpointGroup(
 
     Usage then works exactly as expected:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/companies' -d '{"name": "Box Store"}' | jq
     {
         "status": "success",
@@ -211,7 +211,6 @@ class EndpointGroup(
     }
 
     ```
-
     """
 
     """

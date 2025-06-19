@@ -37,7 +37,7 @@ class ManyToManyIds(Column):
     and therefore be easy to demonstrate.  In order to have both models reference eachother, you have to use model
     references to avoid circular imports.  There are examples of doing this in the `BelongsTo` column class.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -108,7 +108,7 @@ class ManyToManyIds(Column):
 
     And when executed:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -124,7 +124,7 @@ class ManyToManyIds(Column):
     Of course, you can also create or remove individual relationships by using the pivot model directly,
     as shown in these partial code snippets:
 
-    ```
+    ```python
     def add_items(thingy_to_widgets):
         thingy_to_widgets.create({
             "thingy_id": "some_id",
@@ -135,7 +135,6 @@ class ManyToManyIds(Column):
     def remove_item(thingy_to_widgets):
         thingy_to_widgets.where("thingy_id=some_id").where("widget_id=other_id").first().delete()
     ```
-
     """
 
     """ The model class for the model that we are related to. """

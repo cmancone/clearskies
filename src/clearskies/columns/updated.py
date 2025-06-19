@@ -21,7 +21,7 @@ class Updated(Datetime):
     You don't have to provide the timestamp yourself and you should never expose it as
     a writeable column through an endpoint (in fact, you can't).
 
-    ```
+    ```python
     import clearskies
     import time
 
@@ -57,7 +57,7 @@ class Updated(Datetime):
 
     And when invoked:
 
-    ```
+    ```bash
     $ ./test.py | jq
     {
         "status": "success",

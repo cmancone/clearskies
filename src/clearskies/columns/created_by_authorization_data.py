@@ -29,7 +29,7 @@ class CreatedByAuthorizationData(String):
     use the `BelongsToId` column and set `created_by_source_type` to `authorization_data` and `created_by_source_key` to `user_id`.
     Example usage:
 
-    ```
+    ```python
     class MyModel(clearskies.Model):
         backend = clearskies.backends.MemoryBackend()
         id_column_name = "id"
@@ -67,7 +67,7 @@ class CreatedByAuthorizationData(String):
 
     And running this will give you something like:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -80,7 +80,6 @@ class CreatedByAuthorizationData(String):
         "input_errors": {},
     }
     ```
-
     """
 
     """

@@ -25,7 +25,7 @@ class Create(Endpoint):
     to the client.  The column definitions in the model class are used to strictly validate the user
     input.  Here's a basic example of a model class with the create endpoint in use:
 
-    ```
+    ```python
     import clearskies
     from clearskies import validators, columns
 
@@ -60,7 +60,7 @@ class Create(Endpoint):
     The following shows how to invoke it, and demonstrates the strict input validation that happens as part of the
     process:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' -d '{"name":"Example", "email":"test@example.com","some_number":5,"expires_at":"2024-12-31"}' | jq
     {
         "status": "success",

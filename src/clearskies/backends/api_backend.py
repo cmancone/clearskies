@@ -73,7 +73,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
 
     Here's an example of how to use the API Backend to integrate with the Github API:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -191,7 +191,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
     other model.  Note that the following example is re-using the above models and backend, I have just omitted them for the sake
     of brevity:
 
-    ```
+    ```python
     wsgi = clearskies.contexts.WsgiRef(
         clearskies.endpoints.List(
             model_class=User,
@@ -209,7 +209,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
 
     And if you invoke it:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' | jq
     {
         "status": "success",
@@ -281,8 +281,8 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
     makes API calls.  It also tracks pagination as expected, so you can use the data in `pagination.next_page` to
     fetch the next set of results, just as you would if this were backed by a database, e.g.:
 
-    ```
-    curl http://localhost:8080?since=19
+    ```bash
+    $ curl http://localhost:8080?since=19
     ```
 
     ## Mapping from Queries to API calls
@@ -343,7 +343,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
     request will succeed and the service will continue to operate successfully with only a slight delay in response time
     caused by refreshing the cache.
 
-    ```
+    ```python
     import clearskies
 
     class GithubBackend(clearskies.backends.ApiBackend):
@@ -409,7 +409,7 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
     example, these parameters are used to convert from the snake_casing native to the Github API into the
     TitleCasing used in the model class:
 
-    ```
+    ```python
     import clearskies
 
     class User(clearskies.Model):
@@ -448,8 +448,8 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
 
     and when executed:
 
-    ```
-$ curl http://localhost:8080 | jq
+    ```bash
+    $ curl http://localhost:8080 | jq
     {
         "Status": "Success",
         "Error": "",
@@ -495,7 +495,7 @@ $ curl http://localhost:8080 | jq
     is the name of the column in the model.  The API Backend will use this to match the API data to your model.
     In the example below, `html_url` from the API has been mapped to `profile_url` in the model:
 
-    ```
+    ```python
     import clearskies
 
     class User(clearskies.Model):
@@ -528,8 +528,8 @@ $ curl http://localhost:8080 | jq
 
     And if you invoke it:
 
-    ```
-$ curl http://localhost:8080 | jq
+    ```bash
+    $ curl http://localhost:8080 | jq
     {
         "status": "success",
         "error": "",
@@ -606,7 +606,7 @@ $ curl http://localhost:8080 | jq
 
         For example, consider a base URL of `/my/api/{record_id}/:other_id` and then this is called as so:
 
-        ```
+        ```python
         (url, used_routing_parameters) = api_backend.finalize_url(
             "entries",
             {
@@ -1001,8 +1001,11 @@ $ curl http://localhost:8080 | jq
         return self._response_to_model_map
 
     def set_next_page_data_from_response(
-        self, next_page_data: dict[str, Any], query: clearskies.query.Query, response: requests.models.Response
-    ) -> None:  # type: ignore
+        self,
+        next_page_data: dict[str, Any],
+        query: clearskies.query.Query,
+        response: requests.Response,  # type: ignore
+    ) -> None:
         """
         Update the next_page_data dictionary with the appropriate data needed to fetch the next page of records.
 
@@ -1011,13 +1014,13 @@ $ curl http://localhost:8080 | jq
         information is necessary.  Note that this relies on next_page_data being passed by reference, hence the need to update
         it in place.  That means that you can do this:
 
-        ```
+        ```python
         next_page_data["some_key"] = "some_value"
         ```
 
         but if you do this:
 
-        ```
+        ```python
         next_page_data = {"some_key": "some_value"}
         ```
 

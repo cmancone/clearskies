@@ -17,7 +17,7 @@ class CursorBackend(Backend, InjectableProperties):
     clearskies uses PyMySQL to manage the database connection and make queries.  This is not installed by default,
     but is a named extra that you can install when needed via:
 
-    ```
+    ```bash
     pip install clear-skies[mysql]
     ```
 
@@ -37,7 +37,7 @@ class CursorBackend(Backend, InjectableProperties):
     However, you can fully control the credential provisioning process by declaring a dependency named `connection_details` and
     setting it to a dictionary with the above keys, minus the `db_` prefix:
 
-    ```
+    ```python
     class ConnectionDetails(clearskies.di.AdditionalConfig):
         provide_connection_details(self, secrets):
             return {
@@ -68,7 +68,7 @@ class CursorBackend(Backend, InjectableProperties):
     class named `UserPreference` then the cursor backend will look for a table called `user_preferences`.  If this
     isn't what you want, then you can simply override `destination_name` to return whatever table you want:
 
-    ```
+    ```python
     class UserPreference(clearskies.Model):
         @classmethod
         def destination_name(cls):
@@ -84,7 +84,7 @@ class CursorBackend(Backend, InjectableProperties):
      2. The `table_prefix` argument to the CursorBackend constructor adds a prefix of `configuration_`
      3. The `global_table_prefix` binding sets a prefix of `user_`, wihch goes before everything else.
 
-    ```
+    ```python
     import clearskies
 
 

@@ -282,7 +282,7 @@ class Di:
         All classes that come in here become available via their injection name, which is calculated
         by converting the class name from TitleCase to snake_case.  e.g. the following class:
 
-        ```
+        ```python
         class MyClass:
             pass
         ```
@@ -290,7 +290,7 @@ class Di:
         gets an injection name of `my_class`.  Also, clearskies will only resolve and reject based on type hints
         if those classes are first added via `add_classes`.  See the following example:
 
-        ```
+        ```python
         from clearskies.di import Di
 
         class MyClass:
@@ -343,7 +343,7 @@ class Di:
         Assuming that the submodule and class are imported at each level (e.g. my_module/__init__.py imports my_sub_module,
         and my_sub_module/__init__.py imports my_class.py) then you can:
 
-        ```
+        ```python
         from clearksies.di import Di
         import my_module
 
@@ -768,7 +768,7 @@ class Di:
 
         Any kwargs passed to call_function will populate the equivalent dependencies.
 
-        ```
+        ```python
         from clearskies.di import Di
 
         di = Di(bindings={"some_name": "hello"})

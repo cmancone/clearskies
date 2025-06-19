@@ -11,7 +11,7 @@ class Select(String):
 
     Note: the allowed values are case sensitive.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -36,7 +36,7 @@ class Select(String):
 
     And when invoked:
 
-    ```
+    ```bash
     $ curl http://localhost:8080 -d '{"total": 125, "status": "Open"}' | jq
     {
         "status": "success",
@@ -61,7 +61,6 @@ class Select(String):
         }
     }
     ```
-
     """
 
     """ The allowed values. """

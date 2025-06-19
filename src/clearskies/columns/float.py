@@ -18,7 +18,7 @@ class Float(Column):
     """
     A column that stores a float.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -43,7 +43,7 @@ class Float(Column):
 
     and when invoked:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080' -d '{"score":15.2}' | jq
     {
         "status": "success",
@@ -67,7 +67,6 @@ class Float(Column):
         }
     }
     ```
-
     """
 
     default = configs.Float()  #  type: ignore

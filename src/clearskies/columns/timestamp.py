@@ -21,7 +21,7 @@ class Timestamp(Datetime):
 
     Also, this **always** assumes the timezone for the timestamp is UTC
 
-    ```
+    ```python
     import datetime
     import clearskies
 
@@ -57,7 +57,7 @@ class Timestamp(Datetime):
 
     And when invoked it returns:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",

@@ -19,7 +19,7 @@ class Created(Datetime):
     This will always populate the column when the model is first created.  If you attempt to set a value
     to this column on create then it will be overwritten.
 
-    ```
+    ```python
     import clearskies
 
 
@@ -44,7 +44,7 @@ class Created(Datetime):
 
     And if you execute this you'll see that the `created` column was automatically populated:
 
-    ```
+    ```json
     {
         "status": "success",
         "error": "",
@@ -57,7 +57,6 @@ class Created(Datetime):
         "input_errors": {},
     }
     ```
-
     """
 
     """
