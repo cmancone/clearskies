@@ -76,6 +76,8 @@ jobs:
       python-version: ${{ matrix.python-version }}
       run-mypy: ${{ needs.changes.outputs.tests == 'true' }}
       run-pytest: ${{ needs.changes.outputs.tests == 'true' }}
+      run-black: ${{ needs.changes.outputs.tests == 'true' }}
+      run-ruff-check: ${{ needs.changes.outputs.tests == 'true' }}
     secrets: inherit
     strategy:
       matrix:
@@ -92,6 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     needs:
+      - changes
       - lockfile
       - tests-matrix
     steps:

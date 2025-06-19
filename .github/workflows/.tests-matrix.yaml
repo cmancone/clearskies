@@ -14,7 +14,7 @@ on:
       run-pytest:
         required: true
         type: boolean
-      run-ruff-format:
+      run-black:
         required: true
         type: boolean
       run-ruff-check:
@@ -74,12 +74,25 @@ jobs:
 
       - run: poetry run pytest -v
       - run: git diff --exit-code --stat HEAD
-
-  ruff-format:
-    name: ruff-format
+        
+  black:
+    name: black
     runs-on: ${{ inputs.runner }}
-    if: inputs.run-ruff-format
+    if: inputs.run-black
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+          src: "./src"
+          use_pyproject: true
+
+  ruff-check:
+    name: ruff-check
+    runs-on: ${{ inputs.runner }}
+    if: inputs.run-ruff-check
     steps:
       - uses: astral-sh/ruff-action@v3
         with:
-          args: "format --check --diff"
+          args: "check --diff"
+
