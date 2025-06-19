@@ -1,25 +1,78 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
+ci:
+  autofix_commit_msg: "chore(pre-commit): autofix run"
+  autoupdate_commit_msg: "chore(pre-commit): autoupdate hooks"
+
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+  - post-checkout
+  - post-merge
+
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
-    hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
--   repo: local
-    hooks:
-    -   id: black
-        name: black
-        entry: bash -c 'poetry run black .'
-        require_serial: true
-        language: system
-        types: [python]
-        pass_filenames: false
-        files: ^src/clearskies/
-    -   id: pytest
-        name: pytest
-        entry: bash -c 'cd src && poetry run pytest'
-        require_serial: true
-        language: system
-        types: [python]
-        pass_filenames: false
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v5.0.0
+      hooks:
+        - id: check-added-large-files
+        - id: check-ast
+        - id: check-builtin-literals
+        - id: check-case-conflict
+        - id: check-docstring-first
+        - id: check-json
+        - id: check-merge-conflict
+        - id: check-shebang-scripts-are-executable
+        - id: check-symlinks
+        - id: check-toml
+        - id: check-vcs-permalinks
+        - id: check-xml
+        - id: check-yaml
+          exclude: (.gitlab-ci.yml|mkdocs.yml)
+        - id: debug-statements
+        - id: destroyed-symlinks
+        - id: detect-private-key
+        - id: end-of-file-fixer
+          types: [python]
+        - id: fix-byte-order-marker
+        - id: mixed-line-ending
+        - id: name-tests-test
+          args: [--pytest-test-first]
+          stages: ["pre-commit"]
+        - id: trailing-whitespace
+          types: [python]
+    - repo: https://github.com/python-poetry/poetry
+      rev: 2.1.3  # add version here
+      hooks:
+        - id: poetry-check
+        - id: poetry-lock
+        - id: poetry-install
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: v1.16.1 # Use the sha / tag you want to point at
+      hooks:
+        - id: mypy
+          types: [python]
+          additional_dependencies: [types-requests]
+          stages: ["pre-commit"]
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      # Ruff version.
+      rev: v0.12.0
+      hooks:
+        # Run the linter.
+        - id: ruff-check
+          stages: ["pre-commit"]
+          args: 
+            - --diff
+        # Run the formatter.
+        - id: ruff-format
+          stages: ["pre-commit"]
+          args:
+            - --diff --check
+    - repo: local
+      hooks:
+        - id: pytest
+          name: pytest
+          entry: bash -c 'cd src && poetry run pytest'
+          language: system
+          types: [python]
+          pass_filenames: false
+          always_run: true
+          stages: ["pre-commit"]
+ 

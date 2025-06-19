@@ -1,0 +1,44 @@
+name: Bootstrap Poetry
+description: Configure the environment with the specified Python and Poetry version.
+
+inputs:
+  python-version:
+    description: Desired node-semver compatible Python version expression (or 'default')
+    default: "default"
+  python-latest:
+    description: Use an uncached Python if a newer match is available
+    default: "false"
+  poetry-spec:
+    description: pip-compatible installation specification to use for Poetry
+    default: "poetry"
+
+outputs:
+  python-path:
+    description: Path to the installed Python interpreter
+    value: ${{ steps.setup-python.outputs.python-path }}
+  python-version:
+    description: Version of the installed Python interpreter
+    value: ${{ steps.setup-python.outputs.python-version }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      id: setup-python
+      if: inputs.python-version != 'default'
+      with:
+        python-version: ${{ inputs.python-version }}
+        check-latest: ${{ inputs.python-latest == 'true' }}
+        allow-prereleases: true
+        update-environment: false
+
+    - run: pipx install ${PYTHON_PATH:+--python "$PYTHON_PATH"} "${POETRY_SPEC}"
+      shell: bash
+      env:
+        PYTHON_PATH: ${{ inputs.python-version != 'default' && steps.setup-python.outputs.python-path || '' }}
+        POETRY_SPEC: ${{ inputs.poetry-spec }}
+
+    # Use Poetry Python for virtual environments
+    # (Otherwise, the system Python will be used per default instead of the Python version we just installed)
+    - run: poetry config virtualenvs.use-poetry-python true
+      shell: bash
