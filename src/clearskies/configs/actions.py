@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 class Actions(config.Config):
     """
+    Action config.
+
     A config that accepts various things that are accepted as actions in model lifecycle hooks:
 
      1. A callable (which should accept `model` as a parameter)

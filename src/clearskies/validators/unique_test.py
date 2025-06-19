@@ -17,8 +17,8 @@ class UniqueTest(unittest.TestCase):
     def setUp(self):
         di = clearskies.di.Di()
         self.my_models = di.build(MyModel)
-        self.bob = self.my_models.create({"name":"Bob"})
-        self.jane = self.my_models.create({"name":"Jane"})
+        self.bob = self.my_models.create({"name": "Bob"})
+        self.jane = self.my_models.create({"name": "Jane"})
 
         self.unique = Unique()
 

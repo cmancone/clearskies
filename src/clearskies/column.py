@@ -707,7 +707,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     def from_backend(self, value):
         """
-        Takes the backend representation and returns a python representation
+        Take the backend representation and returns a python representation.
 
         For instance, for an SQL date field, this will return a Python DateTime object
         """
@@ -715,7 +715,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     def to_backend(self, data: dict[str, Any]) -> dict[str, Any]:
         """
-        Makes any changes needed to save the data to the backend.
+        Make any changes needed to save the data to the backend.
 
         This typically means formatting changes - converting DateTime objects to database
         date strings, etc...
@@ -771,25 +771,21 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     @property
     def is_unique(self) -> bool:
-        """
-        Return True/False to denote if this column should always have unique values
-        """
+        """Return True/False to denote if this column should always have unique values."""
         if self._is_unique is None:
             self._is_unique = any([validator.is_unique for validator in self.validators])
         return self._is_unique
 
     @property
     def is_required(self):
-        """
-        Return True/False to denote if this column should is required
-        """
+        """Return True/False to denote if this column should is required."""
         if self._is_required is None:
             self._is_required = any([validator.is_required for validator in self.validators])
         return self._is_required
 
     def additional_write_columns(self, is_create=False) -> dict[str, Self]:
         """
-        Returns any additional columns that should be included in write operations.
+        Return any additional columns that should be included in write operations.
 
         Some column types, and some validation requirements, necessitate the presence of additional
         columns in the save operation.  This function adds those in so they can be included in the
@@ -806,9 +802,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         return additional_write_columns
 
     def to_json(self, model: clearskies.model.Model) -> dict[str, Any]:
-        """
-        Grabs the column out of the model and converts it into a representation that can be turned into JSON
-        """
+        """Grabs the column out of the model and converts it into a representation that can be turned into JSON."""
         return {self.name: self.__get__(model, model.__class__)}
 
     def input_errors(self, model: clearskies.model.Model, data: dict[str, Any]) -> dict[str, Any]:
@@ -851,6 +845,8 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         self, value: str, operator: str | None = None, relationship_reference: str | None = None
     ) -> str:
         """
+        Check if the given value is an allowed value.
+
         This is called by the search operation in the various API-related handlers to validate a search value.
 
         Generally, this just defers to self.input_error_for_value, but it is a separate method in case you
@@ -882,7 +878,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     def pre_save(self, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         """
-        Make any necessary changes to the data before starting the save process
+        Make any necessary changes to the data before starting the save process.
 
         The difference between this and to_backend is that to_backend only affects
         the data as it is going into the database, while this affects the data that will get persisted
@@ -947,21 +943,15 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
             self.execute_actions(self.on_change_save_finished, model)
 
     def pre_delete(self, model):
-        """
-        Make any changes needed to the data before starting the delete process
-        """
+        """Make any changes needed to the data before starting the delete process."""
         pass
 
     def post_delete(self, model):
-        """
-        Make any changes needed to the data before finishing the delete process
-        """
+        """Make any changes needed to the data before finishing the delete process."""
         pass
 
     def _extract_value_from_source_type(self) -> Any:
-        """
-        For columns with `created_by_source_type` set, this fetches the appropriate value from the request
-        """
+        """For columns with `created_by_source_type` set, this fetches the appropriate value from the request."""
         input_output = self.di.build("input_output", cache=True)
         source_type = self.created_by_source_type
         if source_type == "authorization_data":
@@ -988,9 +978,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         context: str = "on_change_pre_save",
         require_dict_return_value: bool = True,
     ) -> dict[str, Any]:
-        """
-        Executes a given set of actions and expects data to be both provided and returned
-        """
+        """Execute a given set of actions and expects data to be both provided and returned."""
         input_output = self.di.build("input_output", cache=True)
         for index, action in enumerate(actions):
             new_data = self.di.call_function(
@@ -1018,16 +1006,14 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         actions: list[clearskies.typing.action],
         model: clearskies.model.Model,
     ) -> None:
-        """
-        Executes a given set of actions
-        """
+        """Execute a given set of actions."""
         input_output = self.di.build("input_output", cache=True)
         for action in actions:
             self.di.call_function(action, model=model, **input_output.get_context_for_callables())
 
     def values_match(self, value_1, value_2):
         """
-        Compares two values to see if they are the same.
+        Compare two values to see if they are the same.
 
         This is mainly used to compare incoming data with old data to determine if a column has changed.
 
@@ -1044,7 +1030,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
 
     def build_condition(self, value: str, operator: str = "", column_prefix: str = ""):
         """
-        This is called by the read (and related) handlers to turn user input into a condition.
+        Build condition for the read (and related) handlers to turn user input into a condition.
 
         Note that this may look like it is vulnerable to SQLi, but it isn't.  These conditions aren't passed directly
         into a query.  Rather, they are parsed by the condition parser before being sent into the backend.
@@ -1066,22 +1052,18 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         operator: str,
         relationship_reference: str = "",
     ):
-        """
-        This is called when processing user data to decide if the end-user is specifying an allowed operator
-        """
+        """Process user data to decide if the end-user is specifying an allowed operator."""
         return operator.lower() in self._allowed_search_operators
 
     def n_plus_one_add_joins(
         self, model: clearskies.model.Model, column_names: list[str] = []
     ) -> clearskies.model.Model:
-        """
-        Add any additional joins to solve the N+1 problem.
-        """
+        """Add any additional joins to solve the N+1 problem."""
         return model
 
     def n_plus_one_join_table_alias_prefix(self):
         """
-        A table alias to use with joins for n+1 solutions.
+        Create a table alias to use with joins for n+1 solutions.
 
         When joining tables in for n+1 solutions, you can't just do a SELECT * on the new table, because that
         often results in duplicate column names.  A solution that generally works across the board is to select
@@ -1107,7 +1089,7 @@ class Column(clearskies.configurable.Configurable, clearskies.di.InjectablePrope
         input_output,
     ) -> clearskies.model.Model:
         """
-        A hook to automatically apply filtering whenever the column makes an appearance in a get/update/list/search handler.
+        Create a hook to automatically apply filtering whenever the column makes an appearance in a get/update/list/search handler.
 
         This hook is called by all the handlers that execute queries, so if your column needs to automatically
         do some filtering whenever the model shows up in an API endpoint, this is the place for it.

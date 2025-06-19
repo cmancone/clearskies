@@ -32,22 +32,14 @@ class GetTest(unittest.TestCase):
                         ],
                     },
                 ]
-            }
+            },
         )
 
         (status_code, response_data, response_headers) = context(url="/1-2-3-4")
-        assert response_data["data"] == {
-            "id": "1-2-3-4",
-            "name": "Bob Brown",
-            "username": "bobbrown"
-        }
+        assert response_data["data"] == {"id": "1-2-3-4", "name": "Bob Brown", "username": "bobbrown"}
 
         (status_code, response_data, response_headers) = context(url="/1-2-3-5")
-        assert response_data["data"] == {
-            "id": "1-2-3-5",
-            "name": "Jane Doe",
-            "username": "janedoe"
-        }
+        assert response_data["data"] == {"id": "1-2-3-5", "name": "Jane Doe", "username": "janedoe"}
 
         (status_code, response_data, response_headers) = context(url="/notauser")
         assert status_code == 404
@@ -83,18 +75,10 @@ class GetTest(unittest.TestCase):
         )
 
         (status_code, response_data, response_headers) = context(url="/bobbrown")
-        assert response_data["data"] == {
-            "id": "1-2-3-4",
-            "name": "Bob Brown",
-            "username": "bobbrown"
-        }
+        assert response_data["data"] == {"id": "1-2-3-4", "name": "Bob Brown", "username": "bobbrown"}
 
         (status_code, response_data, response_headers) = context(url="/janedoe")
-        assert response_data["data"] == {
-            "id": "1-2-3-5",
-            "name": "Jane Doe",
-            "username": "janedoe"
-        }
+        assert response_data["data"] == {"id": "1-2-3-5", "name": "Jane Doe", "username": "janedoe"}
 
         (status_code, response_data, response_headers) = context(url="/notauser")
         assert status_code == 404

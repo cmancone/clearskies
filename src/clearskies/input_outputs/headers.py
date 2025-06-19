@@ -41,7 +41,5 @@ class Headers:
         return list(self._headers.items())  # type: ignore
 
     def add(self, key: str, value: str) -> None:
-        """
-        Add a header.  This expects a string with a colon separating the key and value
-        """
+        """Add a header.  This expects a string with a colon separating the key and value."""
         setattr(self, key, value)

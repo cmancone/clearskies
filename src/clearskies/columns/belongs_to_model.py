@@ -14,11 +14,7 @@ if TYPE_CHECKING:
 
 
 class BelongsToModel(Column):
-    """
-    Returns the model object for a belongs to relationship.
-
-
-    """
+    """Return the model object for a belongs to relationship."""
 
     """ The name of the belongs to column we are connected to. """
     belongs_to_column_name = configs.ModelColumn(required=True)
@@ -34,9 +30,7 @@ class BelongsToModel(Column):
         pass
 
     def finalize_configuration(self, model_class: type, name: str) -> None:
-        """
-        Finalize and check the configuration.
-        """
+        """Finalize and check the configuration."""
         getattr(self.__class__, "belongs_to_column_name").set_model_class(model_class)
         self.model_class = model_class
         self.name = name
@@ -112,9 +106,7 @@ class BelongsToModel(Column):
         )
 
     def to_json(self, model: Model) -> dict[str, Any]:
-        """
-        Converts the column into a json-friendly representation
-        """
+        """Convert the column into a json-friendly representation."""
         belongs_to_column = getattr(model.__class__, self.belongs_to_column_name)
         if not belongs_to_column.readable_parent_columns:
             raise ValueError(

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class CreatedByIp(String):
     """
-    Returns the ip address of the client when the record is created.
+    Return the ip address of the client when the record is created.
 
     If the ip address isn't available from the context being executed, then you may end up with an error
     (depending on the context).  This is a good thing if you are trying to consistely provide audit information,

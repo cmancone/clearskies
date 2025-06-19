@@ -22,15 +22,21 @@ class DateTest(unittest.TestCase):
                 writeable_column_names=["name", "my_date"],
                 readable_column_names=["id", "name", "my_date"],
             ),
-            classes=[MyModel]
+            classes=[MyModel],
         )
 
-        (status_code, response_data, response_headers) = context(request_method="POST", body={"name": "Bob", "my_date": "May 13th 2025"})
+        (status_code, response_data, response_headers) = context(
+            request_method="POST", body={"name": "Bob", "my_date": "May 13th 2025"}
+        )
         assert response_data["data"]["my_date"] == "2025-05-13"
 
-        (status_code, response_data, response_headers) = context(request_method="POST", body={"name": "Bob", "my_date": "2025-05-13"})
+        (status_code, response_data, response_headers) = context(
+            request_method="POST", body={"name": "Bob", "my_date": "2025-05-13"}
+        )
         assert response_data["data"]["my_date"] == "2025-05-13"
 
-        (status_code, response_data, response_headers) = context(request_method="POST", body={"name": "Bob", "my_date": "not a date"})
+        (status_code, response_data, response_headers) = context(
+            request_method="POST", body={"name": "Bob", "my_date": "not a date"}
+        )
         assert "my_date" not in response_data["data"]
         assert "my_date" in response_data["input_errors"]

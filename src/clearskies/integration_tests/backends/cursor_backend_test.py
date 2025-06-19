@@ -19,7 +19,7 @@ class CursorBackendTest(unittest.TestCase):
         cursor = MagicMock()
         cursor.execute = MagicMock()
         cursor.execute.side_effect = [None, None]
-        cursor.__iter__ = lambda self: [{"id":"1-2-3-4"}].__iter__()
+        cursor.__iter__ = lambda self: [{"id": "1-2-3-4"}].__iter__()
 
         uuid = MagicMock()
         uuid.uuid4 = MagicMock(return_value=["1-2-3-4"])
@@ -33,13 +33,18 @@ class CursorBackendTest(unittest.TestCase):
                 "global_table_prefix": "user_",
                 "cursor": cursor,
                 "uuid": uuid,
-            }
+            },
         )
 
         (status_code, response, response_headers) = context()
         assert status_code == 200
         assert response["data"] == "1-2-3-4"
-        cursor.execute.assert_has_calls([
-            call('INSERT INTO `user_configuration_preferences` (`id`) VALUES (%s)', ("['1-2-3-4']",)),
-            call('SELECT `user_configuration_preferences`.* FROM `user_configuration_preferences` WHERE user_configuration_preferences.id=%s', ("['1-2-3-4']",))
-        ])
+        cursor.execute.assert_has_calls(
+            [
+                call("INSERT INTO `user_configuration_preferences` (`id`) VALUES (%s)", ("['1-2-3-4']",)),
+                call(
+                    "SELECT `user_configuration_preferences`.* FROM `user_configuration_preferences` WHERE user_configuration_preferences.id=%s",
+                    ("['1-2-3-4']",),
+                ),
+            ]
+        )

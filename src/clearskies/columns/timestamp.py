@@ -36,12 +36,10 @@ class Timestamp(Datetime):
 
 
     def demo_timestamp(utcnow: datetime.datetime, pets: Pet) -> dict[str, str | int]:
-        pet = pets.create(
-            {
-                "name": "Spot",
-                "last_fed": utcnow,
-            }
-        )
+        pet = pets.create({
+            "name": "Spot",
+            "last_fed": utcnow,
+        })
         return {
             "last_fed": pet.last_fed.isoformat(),
             "raw_data": pet.get_raw_data()["last_fed"],
@@ -158,7 +156,5 @@ class Timestamp(Datetime):
         return ""
 
     def values_match(self, value_1, value_2):
-        """
-        Compares two values to see if they are the same
-        """
+        """Compare two values to see if they are the same."""
         return value_1 == value_2

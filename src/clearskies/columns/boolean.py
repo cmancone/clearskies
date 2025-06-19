@@ -16,9 +16,7 @@ if TYPE_CHECKING:
 
 
 class Boolean(Column):
-    """
-    Represents a column with a true/false type.
-    """
+    """Represents a column with a true/false type."""
 
     """
     Actions to trigger when the column changes to True
@@ -96,9 +94,7 @@ class Boolean(Column):
         return f"{column_prefix}{self.name}{operator}{condition_value}"
 
     def save_finished(self, model: Model) -> None:
-        """
-        Make any necessary changes needed after a save has completely finished.
-        """
+        """Make any necessary changes needed after a save has completely finished."""
         super().save_finished(model)
 
         if (not self.on_true and not self.on_false) or not model.was_changed(self.name):

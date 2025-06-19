@@ -131,7 +131,7 @@ class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
         from akeyless_cloud_id import CloudId  # type: ignore
 
         res = self._api.auth(
-            self.akeyless.Auth(access_id=self._access_id, access_type="aws_iam", cloud_id=CloudId().generate())
+            self.akeyless.Auth(access_id=self.access_id, access_type="aws_iam", cloud_id=CloudId().generate())
         )
         return res.token
 
@@ -156,12 +156,13 @@ class Akeyless(clearskies.Configurable, clearskies.di.InjectableProperties):
         return response.json()["token"]
 
     def auth_jwt(self):
-        if not self._jwt_env_key:
+        if not self.jwt_env_key:
             raise ValueError(
-                "To use AKeyless JWT Auth, you must specify the name of the ENV key to load the JWT from when configuring AKeyless"
+                "To use AKeyless JWT Auth, "
+                "you must specify the name of the ENV key to load the JWT from when configuring AKeyless"
             )
         res = self._api.auth(
-            self.akeyless.Auth(access_id=self.access_id, access_type="jwt", jwt=self.environment.get(self._jwt_env_key))
+            self.akeyless.Auth(access_id=self.access_id, access_type="jwt", jwt=self.environment.get(self.jwt_env_key))
         )
         return res.token
 

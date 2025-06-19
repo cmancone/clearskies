@@ -64,15 +64,13 @@ class ManyToManyIdsWithData(ManyToManyIds):
         thing_1 = thingies.create({"name": "Thing 1"})
         thing_2 = thingies.create({"name": "Thing 2"})
         thing_3 = thingies.create({"name": "Thing 3"})
-        widget = widgets.create(
-            {
-                "name": "Widget 1",
-                "thingy_ids": [
-                    {"thingy_id": thing_1.id, "name": "Widget Thing 1", "kind": "Special"},
-                    {"thingy_id": thing_2.id, "name": "Widget Thing 2", "kind": "Also Special"},
-                ],
-            }
-        )
+        widget = widgets.create({
+            "name": "Widget 1",
+            "thingy_ids": [
+                {"thingy_id": thing_1.id, "name": "Widget Thing 1", "kind": "Special"},
+                {"thingy_id": thing_2.id, "name": "Widget Thing 2", "kind": "Also Special"},
+            ],
+        })
 
         return widget
 

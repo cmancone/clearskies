@@ -185,9 +185,7 @@ class Datetime(Column):
         }
 
     def to_json(self, model: clearskies.model.Model) -> dict[str, Any]:
-        """
-        Grabs the column out of the model and converts it into a representation that can be turned into JSON
-        """
+        """Grabs the column out of the model and converts it into a representation that can be turned into JSON."""
         value = self.__get__(model, model.__class__)
         if value and (isinstance(value, datetime.datetime) or isinstance(value, datetime.date)):
             value = value.isoformat()  # type: ignore
@@ -241,9 +239,7 @@ class Datetime(Column):
         return ""
 
     def values_match(self, value_1, value_2):
-        """
-        Compares two values to see if they are the same
-        """
+        """Compare two values to see if they are the same."""
         # in this function we deal with data directly out of the backend, so our date is likely
         # to be string-ified and we want to look for default (e.g. null) values in string form.
         if type(value_1) == str and ("0000-00-00" in value_1 or value_1 == self.backend_default):

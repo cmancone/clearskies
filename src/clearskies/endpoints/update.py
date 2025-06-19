@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 class Update(Get):
     """
-    An endpoint to update a record
+    An endpoint to update a record.
 
     This endpoint handles update operations.  As with the `Get` endpoint, it will lookup the record by taking
     the record id (or any other unique column you specify) out of the URL and then will fetch that record

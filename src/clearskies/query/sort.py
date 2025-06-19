@@ -1,7 +1,5 @@
 class Sort:
-    """
-    Stores a sort directive
-    """
+    """Stores a sort directive."""
 
     """
     The name of the table to sort on.

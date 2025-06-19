@@ -78,12 +78,10 @@ class ManyToManyIds(Column):
         thing_1 = thingies.create({"name": "Thing 1"})
         thing_2 = thingies.create({"name": "Thing 2"})
         thing_3 = thingies.create({"name": "Thing 3"})
-        widget = widgets.create(
-            {
-                "name": "Widget 1",
-                "thingy_ids": [thing_1.id, thing_2.id],
-            }
-        )
+        widget = widgets.create({
+            "name": "Widget 1",
+            "thingy_ids": [thing_1.id, thing_2.id],
+        })
 
         # remove an item by saving without it's id in place
         widget.save({"thingy_ids": [thing.id for thing in widget.thingies if thing.id != thing_1.id]})
@@ -128,12 +126,10 @@ class ManyToManyIds(Column):
 
     ```
     def add_items(thingy_to_widgets):
-        thingy_to_widgets.create(
-            {
-                "thingy_id": "some_id",
-                "widget_id": "other_id",
-            }
-        )
+        thingy_to_widgets.create({
+            "thingy_id": "some_id",
+            "widget_id": "other_id",
+        })
 
 
     def remove_item(thingy_to_widgets):

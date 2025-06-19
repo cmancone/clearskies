@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class Float(Column):
     """
-    A column that stores a float
+    A column that stores a float.
 
     ```
     import clearskies

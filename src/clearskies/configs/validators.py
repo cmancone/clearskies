@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 
 class Validators(config.Config):
     """
+    Validator config.
+
     A config that accepts various things that are accepted as validators in model columns:
 
      1. An instance of clearskies.validators.Validator

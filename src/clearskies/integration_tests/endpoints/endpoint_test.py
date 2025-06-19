@@ -13,30 +13,34 @@ class EndpointTest(unittest.TestCase):
             some_value = "yes" if query_parameters.get("stuff") else "no"
             return [f"x-custom: {some_value}", "content-type: application/custom"]
 
-        context = Context(clearskies.endpoints.Callable(
-            lambda: {"hello": "world"},
-            response_headers=custom_headers,
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda: {"hello": "world"},
+                response_headers=custom_headers,
+            )
+        )
         (status_code, response, headers) = context()
         assert status_code == 200
         assert response["status"] == "success"
-        assert response["data"] == {"hello":"world"}
+        assert response["data"] == {"hello": "world"}
         assert headers.content_type == "application/custom"
         assert headers.x_custom == "no"
 
-        (status_code, response, headers) = context(query_parameters={"stuff":"1"})
+        (status_code, response, headers) = context(query_parameters={"stuff": "1"})
         assert headers.x_custom == "yes"
 
     def test_routing_simple(self):
-        context = Context(clearskies.endpoints.Callable(
-            lambda: {"hello": "World"},
-            url="/hello/world",
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda: {"hello": "World"},
+                url="/hello/world",
+            )
+        )
 
         (status_code, response, headers) = context(url="/hello/world")
         assert status_code == 200
         assert response["status"] == "success"
-        assert response["data"] == {"hello":"World"}
+        assert response["data"] == {"hello": "World"}
 
         (status_code, response, headers) = context(url="/sup")
         assert status_code == 404
@@ -44,21 +48,25 @@ class EndpointTest(unittest.TestCase):
         assert response["data"] == []
 
     def test_routing_data(self):
-        context = Context(clearskies.endpoints.Callable(
-            lambda first_name, last_name: {"hello": f"{first_name} {last_name}"},
-            url="/hello/:first_name/{last_name}",
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda first_name, last_name: {"hello": f"{first_name} {last_name}"},
+                url="/hello/:first_name/{last_name}",
+            )
+        )
 
         (status_code, response, headers) = context(url="/hello/bob/brown")
         assert status_code == 200
         assert response["status"] == "success"
-        assert response["data"] == {"hello":"bob brown"}
+        assert response["data"] == {"hello": "bob brown"}
 
     def test_request_methods(self):
-        context = Context(clearskies.endpoints.Callable(
-            lambda: {"hello": "world"},
-            request_methods=["POST"],
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda: {"hello": "world"},
+                request_methods=["POST"],
+            )
+        )
 
         (status_code, response, headers) = context(request_method="POST")
         assert status_code == 200
@@ -92,8 +100,8 @@ class EndpointTest(unittest.TestCase):
         list_users = clearskies.endpoints.List(
             model_class=User,
             url="/{special_person}",
-            output_map = user_to_json,
-            output_schema = UserResponse,
+            output_map=user_to_json,
+            output_schema=UserResponse,
             readable_column_names=["id", "name"],
             sortable_column_names=["id", "name", "dob"],
             default_sort_column_name="dob",
@@ -111,10 +119,10 @@ class EndpointTest(unittest.TestCase):
                             {"id": "1-2-3-4", "name": "Bob", "dob": datetime.datetime(1990, 1, 1)},
                             {"id": "1-2-3-5", "name": "Jane", "dob": datetime.datetime(2020, 1, 1)},
                             {"id": "1-2-3-6", "name": "Greg", "dob": datetime.datetime(1980, 1, 1)},
-                        ]
+                        ],
                     },
                 ]
-            }
+            },
         )
         (status_code, response, response_headers) = context(url="jane")
 
@@ -151,10 +159,10 @@ class EndpointTest(unittest.TestCase):
                             {"id": "1-2-3-4", "name": "Bob", "secret": "Awesome dude"},
                             {"id": "1-2-3-5", "name": "Jane", "secret": "Gets things done"},
                             {"id": "1-2-3-6", "name": "Greg", "secret": "Loves chocolate"},
-                        ]
+                        ],
                     },
                 ]
-            }
+            },
         )
 
         (status_code, response, response_headers) = context()
@@ -173,29 +181,31 @@ class EndpointTest(unittest.TestCase):
             name = clearskies.columns.String(validators=[clearskies.validators.Required()])
             date_of_birth = clearskies.columns.Date()
 
-        context = Context(clearskies.endpoints.Callable(
-            lambda request_data: request_data,
-            request_methods=["GET","POST"],
-            writeable_column_names=["name", "date_of_birth"],
-            model_class=User,
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda request_data: request_data,
+                request_methods=["GET", "POST"],
+                writeable_column_names=["name", "date_of_birth"],
+                model_class=User,
+            )
+        )
 
         (status_code, response, response_headers) = context(
             request_method="POST",
-            body={"name":"Jane","date_of_birth":"01/01/1990"},
+            body={"name": "Jane", "date_of_birth": "01/01/1990"},
         )
         assert status_code == 200
-        assert response["data"] == {"name":"Jane","date_of_birth":"01/01/1990"}
+        assert response["data"] == {"name": "Jane", "date_of_birth": "01/01/1990"}
 
         (status_code, response, response_headers) = context(
             request_method="POST",
-            body={"name":"","date_of_birth":"this is not a date", "id":"hey"},
+            body={"name": "", "date_of_birth": "this is not a date", "id": "hey"},
         )
         assert status_code == 200
         assert response["input_errors"] == {
             "name": "'name' is required.",
             "date_of_birth": "given value did not appear to be a valid date",
-            "id": "Input column id is not an allowed input column."
+            "id": "Input column id is not an allowed input column.",
         }
 
     def test_input_validation_callable(self):
@@ -203,22 +213,24 @@ class EndpointTest(unittest.TestCase):
             if not request_data:
                 return {}
             if request_data.get("name"):
-                return {"name":"This is a privacy-preserving system, so please don't tell us your name"}
+                return {"name": "This is a privacy-preserving system, so please don't tell us your name"}
             return {}
 
-        context = Context(clearskies.endpoints.Callable(
-            lambda request_data: request_data,
-            request_methods=["GET", "POST"],
-            input_validation_callable=check_input,
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda request_data: request_data,
+                request_methods=["GET", "POST"],
+                input_validation_callable=check_input,
+            )
+        )
 
-        (status_code, response, response_headers) = context(body={"name":"sup"})
+        (status_code, response, response_headers) = context(body={"name": "sup"})
         assert status_code == 200
         assert response["input_errors"] == {
             "name": "This is a privacy-preserving system, so please don't tell us your name",
         }
 
-        (status_code, response, response_headers) = context(body={"hello":"world"})
+        (status_code, response, response_headers) = context(body={"hello": "world"})
         assert status_code == 200
         assert response["data"] == {"hello": "world"}
 
@@ -230,36 +242,38 @@ class EndpointTest(unittest.TestCase):
             name = clearskies.columns.String()
             date_of_birth = clearskies.columns.Date()
 
-        thing = Context(clearskies.endpoints.Callable(
-            lambda users: users.create({"name":"Example","date_of_birth": datetime.datetime(2050, 1, 15)}),
-            readable_column_names=["name", "date_of_birth"],
-            internal_casing="snake_case",
-            external_casing="TitleCase",
-            model_class=User,
-        ), classes=[User])
+        thing = Context(
+            clearskies.endpoints.Callable(
+                lambda users: users.create({"name": "Example", "date_of_birth": datetime.datetime(2050, 1, 15)}),
+                readable_column_names=["name", "date_of_birth"],
+                internal_casing="snake_case",
+                external_casing="TitleCase",
+                model_class=User,
+            ),
+            classes=[User],
+        )
 
         (status_code, response, response_headers) = thing()
         assert response == {
             "Status": "Success",
             "Error": "",
-            "Data": {
-                "Name": "Example",
-                "DateOfBirth": "2050-01-15"
-            },
+            "Data": {"Name": "Example", "DateOfBirth": "2050-01-15"},
             "Pagination": {},
-            "InputErrors": {}
+            "InputErrors": {},
         }
 
     def test_security_headers(self):
-        context = Context(clearskies.endpoints.Callable(
-            lambda: {"hello": "world"},
-            request_methods=["PATCH", "POST"],
-            authentication=clearskies.authentication.SecretBearer(environment_key="MY_SECRET"),
-            security_headers=[
-                clearskies.security_headers.Hsts(),
-                clearskies.security_headers.Cors(origin="https://example.com"),
-            ],
-        ))
+        context = Context(
+            clearskies.endpoints.Callable(
+                lambda: {"hello": "world"},
+                request_methods=["PATCH", "POST"],
+                authentication=clearskies.authentication.SecretBearer(environment_key="MY_SECRET"),
+                security_headers=[
+                    clearskies.security_headers.Hsts(),
+                    clearskies.security_headers.Cors(origin="https://example.com"),
+                ],
+            )
+        )
 
         (status_code, response, response_headers) = context(request_method="OPTIONS")
         assert response_headers.access_control_allow_methods == "PATCH, POST"

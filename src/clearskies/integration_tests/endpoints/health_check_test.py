@@ -42,7 +42,9 @@ class HealthCheckTest(unittest.TestCase):
             pass
 
         context = clearskies.contexts.Context(
-            clearskies.endpoints.HealthCheck(callables=[my_function],),
+            clearskies.endpoints.HealthCheck(
+                callables=[my_function],
+            ),
         )
         (status_code, response_data, response_headers) = context()
 

@@ -12,7 +12,8 @@ class MemoryBackendTest(unittest.TestCase):
             backend = clearskies.backends.CursorBackend()
             id = clearskies.columns.Uuid()
 
-        context = clearskies.contexts.Context(clearskies.endpoints.Callable(
+        context = clearskies.contexts.Context(
+            clearskies.endpoints.Callable(
                 lambda user_preferences: user_preferences.create(no_data=True).id,
             ),
             classes=[UserPreference],
@@ -69,11 +70,16 @@ class MemoryBackendTest(unittest.TestCase):
                         ],
                     },
                 ],
-            }
+            },
         )
         (status_code, response, response_headers) = context()
         assert response["data"] == [
-            {'id': 'a-b-c-d', 'name': 'Fido', 'species': 'Dog', 'owner': {'id': '1-2-3-4', 'name': 'John Doe'}},
-            {'id': 'i-j-k-l', 'name': 'Puss in Boots', 'species': 'Cat', 'owner': {'id': '5-6-7-8', 'name': 'Jane Doe'}},
-            {'id': 'e-f-g-h', 'name': 'Spot', 'species': 'Dog', 'owner': {'id': '1-2-3-4', 'name': 'John Doe'}},
+            {"id": "a-b-c-d", "name": "Fido", "species": "Dog", "owner": {"id": "1-2-3-4", "name": "John Doe"}},
+            {
+                "id": "i-j-k-l",
+                "name": "Puss in Boots",
+                "species": "Cat",
+                "owner": {"id": "5-6-7-8", "name": "Jane Doe"},
+            },
+            {"id": "e-f-g-h", "name": "Spot", "species": "Dog", "owner": {"id": "1-2-3-4", "name": "John Doe"}},
         ]

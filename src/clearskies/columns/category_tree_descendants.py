@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class CategoryTreeDescendants(CategoryTreeChildren):
     """
-    Returns all descendants from a category tree column.
+    Return all descendants from a category tree column.
 
     See the CategoryTree column for usage examples.
 

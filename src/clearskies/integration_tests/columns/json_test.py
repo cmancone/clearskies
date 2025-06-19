@@ -20,8 +20,10 @@ class JsonTest(unittest.TestCase):
                 writeable_column_names=["my_data"],
                 readable_column_names=["id", "my_data"],
             ),
-            classes=[MyModel]
+            classes=[MyModel],
         )
 
-        (status_code, response_data, response_headers) = context(request_method="POST", body={"my_data":{"count":[1,2,3,4,{"thing":True}]}})
-        assert response_data["data"]["my_data"] == {"count":[1,2,3,4,{"thing":True}]}
+        (status_code, response_data, response_headers) = context(
+            request_method="POST", body={"my_data": {"count": [1, 2, 3, 4, {"thing": True}]}}
+        )
+        assert response_data["data"]["my_data"] == {"count": [1, 2, 3, 4, {"thing": True}]}

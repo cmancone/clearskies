@@ -30,7 +30,7 @@ class BelongsToId(String):
     will automatically verify that the given id corresponds to an actual record.  Here's a simple
     usage example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -87,7 +87,7 @@ class BelongsToId(String):
     depenency errors in python.  To work around this, clearskies requires the addition of
     a "model reference" class that looks like this:
 
-    ```
+    ```python
     import some_model
 
 
@@ -112,7 +112,7 @@ class BelongsToId(String):
     The files would then contain:
 
     category.py
-    ```
+    ```python
     import clearskies
     import models.product_reference
 
@@ -127,7 +127,7 @@ class BelongsToId(String):
     ```
 
     category_reference.py
-    ```
+    ```python
     from clearskies.model import ModelClassReference
     import models.cateogry
 
@@ -138,7 +138,7 @@ class BelongsToId(String):
     ```
 
     product.py
-    ```
+    ```python
     import clearskies
     import models.category_reference
 
@@ -154,7 +154,7 @@ class BelongsToId(String):
     ```
 
     product_reference.py
-    ```
+    ```python
     from clearskies.model import ModelClassReference
     import models.product
 
@@ -182,7 +182,7 @@ class BelongsToId(String):
     If you do this, you must set readable_parent_columns on the BelongsToId column to specify which
     columns from the parent model should be returned in the response.  See this example:
 
-    ```
+    ```python
     import clearskies
 
     class Owner(clearskies.Model):
@@ -240,7 +240,7 @@ class BelongsToId(String):
     With readable_parent_columns set in the Pet.owner_id column, and owner set in the list configuration,
     The owner id and name are included in the `owner` key of the returned Pet dictionary:
 
-    ```
+    ```bash
     $ ./test.py  | jq
     {
         "status": "success",
@@ -366,9 +366,7 @@ class BelongsToId(String):
         return ""
 
     def n_plus_one_add_joins(self, model: Model, column_names: list[str] = []) -> Model:
-        """
-        Add any additional joins to solve the N+1 problem.
-        """
+        """Add any additional joins to solve the N+1 problem."""
         if not column_names:
             column_names = self.readable_parent_columns
         if not column_names:
@@ -400,9 +398,7 @@ class BelongsToId(String):
         return self.parent_model.destination_name() + "_" + self.name
 
     def is_allowed_operator(self, operator, relationship_reference=None):
-        """
-        This is called when processing user data to decide if the end-user is specifying an allowed operator
-        """
+        """Proces user data to decide if the end-user is specifying an allowed operator."""
         if not relationship_reference:
             return "="
         parent_columns = self.parent_columns

@@ -110,7 +110,7 @@ class Di:
     and then clearskies itself will build your class or call your functions as needed.  Full explanation comes after
     the example.
 
-    ```
+    ```python
     from clearskies.di import Di, AdditionalConfig
 
 
@@ -160,7 +160,9 @@ class Di:
         def build_class(self, class_to_provide: type, argument_name: str, di, context: str = ""):
             if class_to_provide == SomeClass:
                 return SomeClass(5)
-            raise ValueError(f"I was asked to build a class I didn't expect '{class_to_provide.__name__}'")
+            raise ValueError(
+                f"I was asked to build a class I didn't expect '{class_to_provide.__name__}'"
+            )
 
 
     di = Di(
@@ -346,7 +348,9 @@ class Di:
         import my_module
 
         di = Di()
-        di.add_modules([my_module])  # also equivalent: di.add_modules(my_module), or Di(modules=[my_module])
+        di.add_modules([
+            my_module
+        ])  # also equivalent: di.add_modules(my_module), or Di(modules=[my_module])
 
 
         def my_function(my_class):
@@ -411,7 +415,7 @@ class Di:
 
     def add_additional_configs(self, additional_configs: AdditionalConfig | list[AdditionalConfig]) -> None:
         """
-        Adds an additional config instance to the dependency injection container.
+        Add an additional config instance to the dependency injection container.
 
         Additional config class provide an additional way to provide dependencies into the dependency
         injection system.  For more details about how to use them, see both base classes:
@@ -421,7 +425,7 @@ class Di:
 
         To use this method:
 
-        ```
+        ```python
         import clearskies.di
 
 
@@ -457,7 +461,7 @@ class Di:
 
         This method attaches a value to a specific dependency injection name.
 
-        ```
+        ```python
         import clearskies.di
 
         di = clearskies.di.Di()
@@ -486,14 +490,14 @@ class Di:
 
     def add_class_override(self, class_to_override: type, replacement: Any) -> None:
         """
-        Overrides a class for type-based injection.
+        Override a class for type-based injection.
 
         This function allows you to replace/mock class provided when relying on type hinting for injection.
         This is most often (but not exclusively) used for mocking out classes during texting.  Note that
         this only overrides that specific class - not classes that extend it.
 
         Example:
-        ```
+        ```python
         from clearskies.import Di
 
         class TypeHintedClass:
@@ -535,9 +539,7 @@ class Di:
         return override
 
     def add_override(self, name: str, replacement_class: type) -> None:
-        """
-        Overrides a specific injection name by specifying a class that should be injected in its place.
-        """
+        """Override a specific injection name by specifying a class that should be injected in its place."""
         if not inspect.isclass(replacement_class):
             raise ValueError(
                 "Invalid value passed to add_override for 'replacement_class' parameter: a class should be passed but I got a "
@@ -547,9 +549,7 @@ class Di:
         self._class_overrides_by_name[name] = replacement_class
 
     def set_now(self, now: datetime.datetime) -> None:
-        """
-        Set the current time which will be passed along to any dependency arguments named `now`.
-        """
+        """Set the current time which will be passed along to any dependency arguments named `now`."""
         if now.tzinfo is not None:
             raise ValueError(
                 "set_now() was passed a datetime object with timezone information - it should only be given timezone-naive datetime objects.  Maybe you meant to use di.set_utcnow()"
@@ -557,9 +557,7 @@ class Di:
         self._now = now
 
     def set_utcnow(self, utcnow: datetime.datetime) -> None:
-        """
-        Set the current time which will be passed along to any dependency arguments named `utcnow`.
-        """
+        """Set the current time which will be passed along to any dependency arguments named `utcnow`."""
         if not utcnow.tzinfo:
             raise ValueError(
                 "set_utcnow() was passed a datetime object without timezone information - it should only be given timezone-aware datetime objects.  Maybe you meant to use di.set_now()"
@@ -584,7 +582,7 @@ class Di:
 
     def build_from_name(self, name: str, context: str | None = None, cache: bool = False) -> Any:
         """
-        Builds a dependency based on its name
+        Build a dependency based on its name.
 
         Order of priority:
           1. Things set via `add_binding(name, value)`
@@ -656,7 +654,7 @@ class Di:
 
     def build_class(self, class_to_build: type, context=None, cache=True) -> Any:
         """
-        Builds a class.
+        Build a class.
 
         The class constructor cannot accept any kwargs.   See self._disallow_kwargs for more details
         """
@@ -766,7 +764,7 @@ class Di:
 
     def call_function(self, callable_to_execute: Callable, **kwargs):
         """
-        Calls a function, building any positional arguments and providing them.
+        Call a function, building any positional arguments and providing them.
 
         Any kwargs passed to call_function will populate the equivalent dependencies.
 
@@ -802,10 +800,12 @@ class Di:
         kwarg_names = call_arguments[nargs - nkwargs :]
 
         callable_args = [
-            kwargs[arg]
-            if arg in kwargs
-            else self.build_argument(
-                arg, args_data.annotations.get(arg, None), context=callable_to_execute.__name__, cache=True
+            (
+                kwargs[arg]
+                if arg in kwargs
+                else self.build_argument(
+                    arg, args_data.annotations.get(arg, None), context=callable_to_execute.__name__, cache=True
+                )
             )
             for arg in arg_names
         ]
@@ -819,7 +819,7 @@ class Di:
 
     def _disallow_kwargs(self, action):
         """
-        Raises an exception
+        Raise an exception.
 
         This is used to raise an exception and stop building a class if its constructor accepts kwargs. To be clear,
         we actually can support kwargs - it just doesn't make much sense.  The issue is that keywords are
@@ -838,9 +838,7 @@ class Di:
         raise ValueError(f"Cannot {action} because it has keyword arguments.")
 
     def can_cache(self, name: str, context: str) -> bool:
-        """
-        Control whether or not to cache a value built by the DI container.
-        """
+        """Control whether or not to cache a value built by the DI container."""
         if name == "now" or name == "utcnow":
             return False
         return True

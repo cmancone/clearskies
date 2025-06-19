@@ -57,20 +57,18 @@ class SimpleSearchTest(unittest.TestCase):
             {"id": "1-2-3-7", "name": "Bob", "grade": 2},
         ]
 
-        (status_code, response_data, response_headers) = context(query_parameters={"sort": "grade", "direction": "desc", "limit": 2})
+        (status_code, response_data, response_headers) = context(
+            query_parameters={"sort": "grade", "direction": "desc", "limit": 2}
+        )
         assert response_data["data"] == [
             {"id": "1-2-3-4", "name": "Bob", "grade": 5},
             {"id": "1-2-3-5", "name": "Jane", "grade": 3},
         ]
-        assert response_data["pagination"] == {
-            "number_results": 4,
-            "limit": 2,
-            "next_page": {
-                "start": 2
-            }
-        }
+        assert response_data["pagination"] == {"number_results": 4, "limit": 2, "next_page": {"start": 2}}
 
-        (status_code, response_data, response_headers) = context(query_parameters={"sort": "grade", "direction": "desc", "limit": 2, "start": 2})
+        (status_code, response_data, response_headers) = context(
+            query_parameters={"sort": "grade", "direction": "desc", "limit": 2, "start": 2}
+        )
         assert response_data["data"] == [
             {"id": "1-2-3-6", "name": "Greg", "grade": 3},
             {"id": "1-2-3-7", "name": "Bob", "grade": 2},

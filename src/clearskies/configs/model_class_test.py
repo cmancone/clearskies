@@ -7,6 +7,7 @@ from clearskies import Configurable, Model, configs, parameters_to_properties
 class MyModel(Model):
     destination_name = "asdf"  # type: ignore
 
+
 class HasConfigs(Configurable):
     some_model_class = configs.ModelClass()
 

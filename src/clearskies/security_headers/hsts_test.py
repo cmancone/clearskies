@@ -31,4 +31,6 @@ class HstsTest(unittest.TestCase):
             },
         )
         hsts.set_headers_for_input_output(input_output)
-        input_output.response_headers.add.assert_called_with("strict-transport-security", "max-age=3600 ; includeSubDomains")
+        input_output.response_headers.add.assert_called_with(
+            "strict-transport-security", "max-age=3600 ; includeSubDomains"
+        )

@@ -12,9 +12,7 @@ class UpdateTest(unittest.TestCase):
             backend = clearskies.backends.MemoryBackend()
             id = clearskies.columns.Uuid()
             name = clearskies.columns.String()
-            username = clearskies.columns.String(
-                validators=[clearskies.validators.Required()]
-            )
+            username = clearskies.columns.String(validators=[clearskies.validators.Required()])
 
         context = clearskies.contexts.Context(
             clearskies.endpoints.Update(

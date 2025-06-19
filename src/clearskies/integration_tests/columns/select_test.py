@@ -24,14 +24,12 @@ class SelectTest(unittest.TestCase):
         )
 
         (status_code, response_data, response_headers) = context(
-            request_method="POST",
-            body={"total": 125, "status": "Open"}
+            request_method="POST", body={"total": 125, "status": "Open"}
         )
         assert response_data["data"]["status"] == "Open"
 
         (status_code, response_data, response_headers) = context(
-            request_method="POST",
-            body={"total": 125, "status": "huh"}
+            request_method="POST", body={"total": 125, "status": "huh"}
         )
         assert "status" not in response_data["data"]
         assert "status" in response_data["input_errors"]

@@ -55,7 +55,7 @@ class AdditionalConfig:
 
     def can_cache(self, name: str, di, context: str) -> bool:
         """
-        Cache control!
+        Cache control.
 
         The Di container caches values by default, but this method allows you to override that.
         After fetching an object from the AdditionalConfig class, the Di container will call this method to
@@ -118,19 +118,13 @@ class AdditionalConfig:
         return di.call_function(getattr(self, f"provide_{name}"))
 
     def can_build_class(self, class_to_check: type) -> bool:
-        """
-        Return True/False to denote if this AdditionalConfig class can provide a given class.
-        """
+        """Return True/False to denote if this AdditionalConfig class can provide a given class."""
         return False
 
     def build_class(self, class_to_provide: type, argument_name: str, di, context: str = "") -> Any:
-        """
-        Return the desired instance of a given class.
-        """
+        """Return the desired instance of a given class."""
         pass
 
     def can_cache_class(self, class_to_build: type, di, context: str) -> bool:
-        """
-        Control whether or not the Di container caches the instance after building a class
-        """
+        """Control whether or not the Di container caches the instance after building a class."""
         return False

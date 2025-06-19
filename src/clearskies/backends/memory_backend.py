@@ -99,14 +99,22 @@ class MemoryTable:
     _operator_lambda_builders = {
         "<=>": lambda column, values, null: lambda row: row.get(column, null) == values[0],
         "!=": lambda column, values, null: lambda row: row.get(column, null) != values[0],
-        "<=": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
-        <= gentle_float_conversion(values[0]),
-        ">=": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
-        >= gentle_float_conversion(values[0]),
-        ">": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
-        > gentle_float_conversion(values[0]),
-        "<": lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
-        < gentle_float_conversion(values[0]),
+        "<=": (
+            lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+            <= gentle_float_conversion(values[0])
+        ),
+        ">=": (
+            lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+            >= gentle_float_conversion(values[0])
+        ),
+        ">": (
+            lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+            > gentle_float_conversion(values[0])
+        ),
+        "<": (
+            lambda column, values, null: lambda row: gentle_float_conversion(row.get(column, null))
+            < gentle_float_conversion(values[0])
+        ),
         "=": cheating_equals,
         "is not null": lambda column, values, null: lambda row: (column in row and row[column] is not None),
         "is null": lambda column, values, null: lambda row: (column not in row or row[column] is None),
@@ -352,7 +360,12 @@ class MemoryBackend(Backend, InjectableProperties):
                     "records": [
                         {"id": "a-b-c-d", "name": "Fido", "species": "Dog", "owner_id": "1-2-3-4"},
                         {"id": "e-f-g-h", "name": "Spot", "species": "Dog", "owner_id": "1-2-3-4"},
-                        {"id": "i-j-k-l", "name": "Puss in Boots", "species": "Cat", "owner_id": "5-6-7-8"},
+                        {
+                            "id": "i-j-k-l",
+                            "name": "Puss in Boots",
+                            "species": "Cat",
+                            "owner_id": "5-6-7-8",
+                        },
                     ],
                 },
             ],
@@ -636,7 +649,7 @@ class MemoryBackend(Backend, InjectableProperties):
         self, table_name: str, conditions: list[clearskies.query.Condition], is_left=False
     ) -> list[clearskies.query.Condition]:
         """
-        Returns only the conditions for the given table
+        Return only the conditions for the given table.
 
         If you set is_left=True then it assumes this is the "default" table and so will also return conditions
         without a table name.
@@ -655,7 +668,7 @@ class MemoryBackend(Backend, InjectableProperties):
         joined_tables: list[str],
     ) -> list[dict[str, Any]]:
         """
-        Adds the rows in `join_rows` in to the `rows` holder.
+        Add the rows in `join_rows` in to the `rows` holder.
 
         `rows` should be something like:
 

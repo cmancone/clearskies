@@ -39,7 +39,7 @@ class Schema:
     @classmethod
     def get_columns(cls: type[Self], overrides={}) -> dict[str, Column]:
         """
-        Returns an ordered dictionary with the configuration for the columns
+        Return an ordered dictionary with the configuration for the columns.
 
         Generally, this method is meant for internal use.  It just pulls the column configuration
         information out of class attributes.  It doesn't return the fully prepared columns,

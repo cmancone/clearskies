@@ -13,7 +13,7 @@ from clearskies.functional import string
 
 class End(ABC):
     """
-    DRY for endpoint and endpoint groups
+    DRY for endpoint and endpoint groups.
 
     This class is just here to hold some common functionality between Endpoints and EndpointGroups.
     The two classes have plenty of overlap but are different enough that I don't want either to inherit
@@ -45,7 +45,7 @@ class End(ABC):
 
     def __call__(self, input_output: InputOutput) -> Any:
         """
-        Execute the endpoint!
+        Execute the endpoint.
 
         This function mostly just checks AuthN/AuthZ and then passes along control to the handle method.
         It also checks for all the appropriate exceptions from clearskies.exceptions and turns those into the

@@ -13,13 +13,13 @@ class CreateTest(unittest.TestCase):
             backend = clearskies.backends.MemoryBackend()
 
             id = columns.Uuid()
-            name = clearskies.columns.String(validators=[
-                validators.Required(),
-                validators.MaximumLength(50),
-            ])
-            email = columns.Email(
-                validators=[validators.Unique()]
+            name = clearskies.columns.String(
+                validators=[
+                    validators.Required(),
+                    validators.MaximumLength(50),
+                ]
             )
+            email = columns.Email(validators=[validators.Unique()])
             some_number = columns.Integer()
             expires_at = columns.Date()
             created_at = columns.Created()
@@ -36,7 +36,7 @@ class CreateTest(unittest.TestCase):
         )
         (status_code, response_data, response_headers) = context(
             request_method="POST",
-            body={"name":"Example", "email":"test@example.com","some_number":5,"expires_at":"2024-12-31"}
+            body={"name": "Example", "email": "test@example.com", "some_number": 5, "expires_at": "2024-12-31"},
         )
 
         assert len(response_data["data"]["id"]) == 36

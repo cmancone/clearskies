@@ -15,10 +15,12 @@ class RestfulApiTest(unittest.TestCase):
 
             id = columns.Uuid()
             name = columns.String(validators=[Required()])
-            username = columns.String(validators=[
-                Required(),
-                Unique(),
-            ])
+            username = columns.String(
+                validators=[
+                    Required(),
+                    Unique(),
+                ]
+            )
             age = columns.Integer(validators=[Required()])
             created_at = columns.Created()
             updated_at = columns.Updated()
@@ -27,10 +29,10 @@ class RestfulApiTest(unittest.TestCase):
             clearskies.endpoints.RestfulApi(
                 url="users",
                 model_class=User,
-                readable_column_names=['id', 'name', 'username', 'age', 'created_at', 'updated_at'],
-                writeable_column_names=['name', 'username', 'age'],
-                sortable_column_names=['id', 'name', 'username', 'age', 'created_at', 'updated_at'],
-                searchable_column_names=['id', 'name', 'username', 'age', 'created_at', 'updated_at'],
+                readable_column_names=["id", "name", "username", "age", "created_at", "updated_at"],
+                writeable_column_names=["name", "username", "age"],
+                sortable_column_names=["id", "name", "username", "age", "created_at", "updated_at"],
+                searchable_column_names=["id", "name", "username", "age", "created_at", "updated_at"],
                 default_sort_column_name="name",
             )
         )

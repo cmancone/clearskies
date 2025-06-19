@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class CategoryTreeChildren(Column):
     """
-    Returns the child categories from a category tree column.
+    Return the child categories from a category tree column.
 
     See the CategoryTree column for usage examples.
 
@@ -44,9 +44,7 @@ class CategoryTreeChildren(Column):
         pass
 
     def finalize_configuration(self, model_class: type, name: str) -> None:
-        """
-        Finalize and check the configuration.
-        """
+        """Finalize and check the configuration."""
         getattr(self.__class__, "category_tree_column_name").set_model_class(model_class)
         self.model_class = model_class
         self.name = name

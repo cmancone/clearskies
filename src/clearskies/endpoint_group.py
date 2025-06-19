@@ -72,7 +72,15 @@ class EndpointGroup(
         company = columns.BelongsToModel("company_id")
 
 
-    readable_user_column_names = ["id", "name", "username", "age", "created_at", "updated_at", "company"]
+    readable_user_column_names = [
+        "id",
+        "name",
+        "username",
+        "age",
+        "created_at",
+        "updated_at",
+        "company",
+    ]
     writeable_user_column_names = ["name", "username", "age", "company_id"]
     users_api = clearskies.EndpointGroup(
         [
@@ -286,7 +294,5 @@ class EndpointGroup(
         return endpoint(input_output)
 
     def error(self, input_output: InputOutput, message: str, status_code: int) -> Any:
-        """
-        Return a client-side error (e.g. 400)
-        """
+        """Return a client-side error (e.g. 400)."""
         return self.respond_json(input_output, {"status": "client_error", "error": message}, status_code)

@@ -9,9 +9,7 @@ if TYPE_CHECKING:
 
 
 class Columns(config.Config):
-    """
-    This is for a configuration that should be a dictionary of columns with the key being the column name.
-    """
+    """This is for a configuration that should be a dictionary of columns with the key being the column name."""
 
     def __set__(self, instance, value: dict[str, Column]):
         if value is None:

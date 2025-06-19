@@ -17,10 +17,12 @@ class TimestampTest(unittest.TestCase):
             last_fed = clearskies.columns.Timestamp()
 
         def demo_timestamp(utcnow: datetime.datetime, pets: Pet) -> dict[str, str | int]:
-            pet = pets.create({
-                "name": "Spot",
-                "last_fed": utcnow,
-            })
+            pet = pets.create(
+                {
+                    "name": "Spot",
+                    "last_fed": utcnow,
+                }
+            )
             return {
                 "last_fed": pet.last_fed.isoformat(),
                 "raw_data": pet.get_raw_data()["last_fed"],

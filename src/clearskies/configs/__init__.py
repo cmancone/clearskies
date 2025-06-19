@@ -1,5 +1,5 @@
 """
-This module helps classes declare their configuration parameters via properties
+This module helps classes declare their configuration parameters via properties.
 
 To use it, the class needs to include the clearskies.configs.Confirgurable in its parent chain and
 then create properties as needed using the various classes in the clearskies.configs module.  Each

@@ -5,6 +5,8 @@ from .jwks import Jwks
 
 class AuthorizationPassThrough(Jwks):
     """
+    Authentication class with pass through.
+
     This authentication class takes the authentication header from the incoming request and reflects
     it on outgoing requests.
     """

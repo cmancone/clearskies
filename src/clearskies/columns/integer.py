@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class Integer(Column):
     """
-    A column that stores integer data
+    A column that stores integer data.
 
     ```
     import clearskies

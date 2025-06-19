@@ -46,10 +46,28 @@ class AdvancedSearchTest(unittest.TestCase):
                     {
                         "model_class": User,
                         "records": [
-                            {"id": "1-2-3-4", "name": "Bob Brown", "username": "bobbrown", "age": 18, "company_id": "5-5-5-5"},
-                            {"id": "1-2-3-5", "name": "Jane Doe", "username": "janedoe", "age": 52, "company_id": "7-7-7-7"},
+                            {
+                                "id": "1-2-3-4",
+                                "name": "Bob Brown",
+                                "username": "bobbrown",
+                                "age": 18,
+                                "company_id": "5-5-5-5",
+                            },
+                            {
+                                "id": "1-2-3-5",
+                                "name": "Jane Doe",
+                                "username": "janedoe",
+                                "age": 52,
+                                "company_id": "7-7-7-7",
+                            },
                             {"id": "1-2-3-6", "name": "Greg", "username": "greg", "age": 37, "company_id": "7-7-7-7"},
-                            {"id": "1-2-3-7", "name": "Curious George", "username": "curious", "age": 7, "company_id": "3-3-3-3"},
+                            {
+                                "id": "1-2-3-7",
+                                "name": "Curious George",
+                                "username": "curious",
+                                "age": 7,
+                                "company_id": "3-3-3-3",
+                            },
                         ],
                     },
                 ],
@@ -59,11 +77,24 @@ class AdvancedSearchTest(unittest.TestCase):
         (status_code, response_data, response_headers) = context()
         assert ["bobbrown", "curious", "greg", "janedoe"] == [record["username"] for record in response_data["data"]]
 
-        (status_code, response_data, response_headers) = context(request_method="POST", body={"limit": 2, "start": 1, "sort": [{"column": "name", "direction": "desc"}]})
+        (status_code, response_data, response_headers) = context(
+            request_method="POST", body={"limit": 2, "start": 1, "sort": [{"column": "name", "direction": "desc"}]}
+        )
         assert ["greg", "curious"] == [record["username"] for record in response_data["data"]]
 
-        (status_code, response_data, response_headers) = context(request_method="POST", body={"sort": [{"column": "company.name", "direction": "desc"}, {"column": "age", "direction": "asc"}]})
+        (status_code, response_data, response_headers) = context(
+            request_method="POST",
+            body={"sort": [{"column": "company.name", "direction": "desc"}, {"column": "age", "direction": "asc"}]},
+        )
         assert ["curious", "greg", "janedoe", "bobbrown"] == [record["username"] for record in response_data["data"]]
 
-        (status_code, response_data, response_headers) = context(request_method="POST", body={"where": [{"column": "age", "operator": "<=", "value": 37}, {"column": "username", "operator": "in", "value": ["curious", "greg"]}]})
+        (status_code, response_data, response_headers) = context(
+            request_method="POST",
+            body={
+                "where": [
+                    {"column": "age", "operator": "<=", "value": 37},
+                    {"column": "username", "operator": "in", "value": ["curious", "greg"]},
+                ]
+            },
+        )
         assert ["curious", "greg"] == [record["username"] for record in response_data["data"]]

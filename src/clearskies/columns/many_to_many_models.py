@@ -38,9 +38,7 @@ class ManyToManyModels(Column):
         pass
 
     def finalize_configuration(self, model_class: type, name: str) -> None:
-        """
-        Finalize and check the configuration.
-        """
+        """Finalize and check the configuration."""
         getattr(self.__class__, "many_to_many_column_name").set_model_class(model_class)
         self.model_class = model_class
         self.name = name

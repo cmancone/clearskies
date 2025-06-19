@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class InjectableProperties:
     """
-    Fetch dependencies via properties rather than constructor arguments
+    Fetch dependencies via properties rather than constructor arguments.
 
     This class allows you to specify dependencies by setting them as class properties instead of constructor
     arguments.  This is common in clearskies as it helps make easily reusable classes - configuration can

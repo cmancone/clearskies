@@ -196,9 +196,7 @@ class Date(Datetime):
         return ""
 
     def values_match(self, value_1, value_2):
-        """
-        Compares two values to see if they are the same
-        """
+        """Compare two values to see if they are the same."""
         # in this function we deal with data directly out of the backend, so our date is likely
         # to be string-ified and we want to look for default (e.g. null) values in string form.
         if type(value_1) == str and ("0000-00-00" in value_1 or value_1 == self.backend_default):

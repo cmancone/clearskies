@@ -31,10 +31,10 @@ class ListTest(unittest.TestCase):
                             {"id": "1-2-3-4", "name": "Bob"},
                             {"id": "1-2-3-5", "name": "Jane"},
                             {"id": "1-2-3-6", "name": "Greg"},
-                        ]
+                        ],
                     },
                 ]
-            }
+            },
         )
         (status_code, response_data, response_headers) = context()
 
@@ -96,5 +96,5 @@ class ListTest(unittest.TestCase):
 
         assert response_data["data"] == [
             {"id": "1-2-3-4", "name": "Bob", "grade": 5},
-            {"id": "1-2-3-5", "name": "Jane", "grade": 3}
+            {"id": "1-2-3-5", "name": "Jane", "grade": 3},
         ]

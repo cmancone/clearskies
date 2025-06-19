@@ -14,9 +14,7 @@ if TYPE_CHECKING:
 
 
 class AfterColumn(Validator):
-    """
-    The name of the other date column for comparison.
-    """
+    """The name of the other date column for comparison."""
 
     other_column_name = clearskies.configs.String(default="", required=True)
 

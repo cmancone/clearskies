@@ -20,7 +20,7 @@ class FloatTest(unittest.TestCase):
                 writeable_column_names=["score"],
                 readable_column_names=["id", "score"],
             ),
-            classes=[MyModel]
+            classes=[MyModel],
         )
 
         (status_code, response_data, response_headers) = context(request_method="POST", body={"score": 15.2})

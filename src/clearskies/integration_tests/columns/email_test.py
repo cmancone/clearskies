@@ -20,10 +20,12 @@ class EmailTest(unittest.TestCase):
                 writeable_column_names=["email"],
                 readable_column_names=["id", "email"],
             ),
-            classes=[MyModel]
+            classes=[MyModel],
         )
 
-        (status_code, response_data, response_headers) = context(request_method="POST", body={"email": "test@example.com"})
+        (status_code, response_data, response_headers) = context(
+            request_method="POST", body={"email": "test@example.com"}
+        )
         assert response_data["data"]["email"] == "test@example.com"
 
         (status_code, response_data, response_headers) = context(request_method="POST", body={"email": "Bob"})

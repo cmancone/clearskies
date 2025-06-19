@@ -94,7 +94,13 @@ class AdvancedSearch(SimpleSearch):
                             "age": 52,
                             "company_id": "7-7-7-7",
                         },
-                        {"id": "1-2-3-6", "name": "Greg", "username": "greg", "age": 37, "company_id": "7-7-7-7"},
+                        {
+                            "id": "1-2-3-6",
+                            "name": "Greg",
+                            "username": "greg",
+                            "age": 37,
+                            "company_id": "7-7-7-7",
+                        },
                         {
                             "id": "1-2-3-7",
                             "name": "Curious George",

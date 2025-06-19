@@ -3,7 +3,7 @@ import re
 
 def match_route(expected_route, incoming_route, allow_partial=False) -> tuple[bool, dict[str, str]]:
     """
-    Checks if two routes match, and returns the routing data if so.
+    Check if two routes match, and returns the routing data if so.
 
     A partial match happens when the beginning of the incoming route matches the expected route.  It's okay for the
     incoming route to be longer because the routing system is hierarchical, so a partial match at the beginning
@@ -49,12 +49,14 @@ def match_route(expected_route, incoming_route, allow_partial=False) -> tuple[bo
 
 def extract_url_parameter_name_map(url: str) -> dict[str, int]:
     """
-    This creates a map to help match URLs with routing parameters.
+    Create a map to help match URLs with routing parameters.
 
     Routing parameters are either brace enclosed or start with colons:
 
     ```
-    print(routing.extract_url_parameter_name_map("my/path/{some_parameter}/:other_parameter/more/paths"))
+    print(
+        routing.extract_url_parameter_name_map("my/path/{some_parameter}/:other_parameter/more/paths")
+    )
     # prints {"some_parameter": 2, "other_parameter": 3}
     ```
 

@@ -116,8 +116,12 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
         # The API endpoint let's us sort by `created`/`updated`.  Note that the names of the columns (based on the data returned
         # by the API endpoint) are `created_at`/`updated_at`.  As above, clearskies strictly validates data, so we need columns
         # named created/updated so that we can sort by them.  We can set some flags to (hopefully) avoid confusion
-        updated = clearskies.columns.Datetime(is_searchable=False, is_readable=False, is_writeable=False)
-        created = clearskies.columns.Datetime(is_searchable=False, is_readable=False, is_writeable=False)
+        updated = clearskies.columns.Datetime(
+            is_searchable=False, is_readable=False, is_writeable=False
+        )
+        created = clearskies.columns.Datetime(
+            is_searchable=False, is_readable=False, is_writeable=False
+        )
 
 
     class User(clearskies.Model):
@@ -141,7 +145,9 @@ class ApiBackend(clearskies.configurable.Configurable, Backend, InjectableProper
         # backend, so clearskies can issue API calls to fetch related records just like it would be able
         # to fetch children from a related database table.
         repos = clearskies.columns.HasMany(
-            UserRepo, foreign_column_name="login", readable_child_columns=["id", "full_name", "html_url"]
+            UserRepo,
+            foreign_column_name="login",
+            readable_child_columns=["id", "full_name", "html_url"],
         )
 
 
@@ -596,7 +602,7 @@ $ curl http://localhost:8080 | jq
 
     def finalize_url(self, url: str, available_routing_data: dict[str, str], operation: str) -> tuple[str, list[str]]:
         """
-        Given a URL, this will append the base URL, fill in any routing data, and also return any used routing parameters
+        Given a URL, this will append the base URL, fill in any routing data, and also return any used routing parameters.
 
         For example, consider a base URL of `/my/api/{record_id}/:other_id` and then this is called as so:
 
@@ -646,7 +652,7 @@ $ curl http://localhost:8080 | jq
 
     def finalize_url_from_data(self, url: str, data: dict[str, Any], operation: str) -> tuple[str, list[str]]:
         """
-        Create the final URL using a data dictionary to fill in any URL parameters
+        Create the final URL using a data dictionary to fill in any URL parameters.
 
         See finalize_url for more details about the return value
         """
@@ -654,7 +660,7 @@ $ curl http://localhost:8080 | jq
 
     def finalize_url_from_query(self, query: clearskies.query.Query, operation: str) -> tuple[str, list[str]]:
         """
-        Create the URL using a query to fill in any URL parameters
+        Create the URL using a query to fill in any URL parameters.
 
         See finalize_url for more details about the return value
         """
@@ -679,35 +685,31 @@ $ curl http://localhost:8080 | jq
 
     def records_url(self, query: clearskies.query.Query) -> tuple[str, list[str]]:
         """
-        Calculate the URL to use for a records request.  Also, return the list of any query parameters used to construct the URL
+        Calculate the URL to use for a records request.  Also, return the list of any query parameters used to construct the URL.
 
         See finalize_url for more details on the return value.
         """
         return self.finalize_url_from_query(query, "records")
 
     def records_method(self, query: clearskies.query.Query) -> str:
-        """
-        Return the request method to use when fetching records from the API
-        """
+        """Return the request method to use when fetching records from the API."""
         return "GET"
 
     def count_url(self, query: clearskies.query.Query) -> tuple[str, list[str]]:
         """
-        Calculate the URL to use for a request to get a record count..  Also, return the list of any query parameters used to construct the URL
+        Calculate the URL to use for a request to get a record count..  Also, return the list of any query parameters used to construct the URL.
 
         See finalize_url for more details on the return value.
         """
         return self.records_url(query)
 
     def count_method(self, query: clearskies.query.Query) -> str:
-        """
-        Return the request method to use when making a request for a record count.
-        """
+        """Return the request method to use when making a request for a record count."""
         return self.records_method(query)
 
     def delete_url(self, id: int | str, model: clearskies.model.Model) -> tuple[str, list[str]]:
         """
-        Calculate the URL to use for a delete request.  Also, return the list of any query parameters used to construct the URL
+        Calculate the URL to use for a delete request.  Also, return the list of any query parameters used to construct the URL.
 
         See finalize_url for more details on the return value.
         """
@@ -715,14 +717,12 @@ $ curl http://localhost:8080 | jq
         return self.finalize_url_from_data(f"{model_base_url}{id}", model.get_raw_data(), "delete")
 
     def delete_method(self, id: int | str, model: clearskies.model.Model) -> str:
-        """
-        Return the request method to use when deleting records via the API
-        """
+        """Return the request method to use when deleting records via the API."""
         return "DELETE"
 
     def update_url(self, id: int | str, data: dict[str, Any], model: clearskies.model.Model) -> tuple[str, list[str]]:
         """
-        Calculate the URL to use for an update request.  Also, return the list of any query parameters used to construct the URL
+        Calculate the URL to use for an update request.  Also, return the list of any query parameters used to construct the URL.
 
         See finalize_url for more details on the return value.
         """
@@ -730,15 +730,11 @@ $ curl http://localhost:8080 | jq
         return self.finalize_url_from_data(f"{model_base_url}{id}", {**model.get_raw_data(), **data}, "update")
 
     def update_method(self, id: int | str, data: dict[str, Any], model: clearskies.model.Model) -> str:
-        """
-        Return the request method to use for an update request.
-        """
+        """Return the request method to use for an update request."""
         return "PATCH"
 
     def update(self, id: int | str, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
-        """
-        Update a record
-        """
+        """Update a record."""
         data = {**data}
         (url, used_routing_parameters) = self.update_url(id, data, model)
         request_method = self.update_method(id, data, model)
@@ -754,16 +750,14 @@ $ curl http://localhost:8080 | jq
 
     def map_update_response(self, response_data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
         """
-        Take the response from the API endpoint for an update request and figure out where the data lives/return it to build a new model
+        Take the response from the API endpoint for an update request and figure out where the data lives/return it to build a new model.
 
         See self.map_record_response for goals/motiviation
         """
         return self.map_record_response(response_data, model.get_columns(), "update")
 
     def create(self, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
-        """
-        Create a record.
-        """
+        """Create a record."""
         data = {**data}
         (url, used_routing_parameters) = self.create_url(data, model)
         request_method = self.create_method(data, model)
@@ -881,9 +875,7 @@ $ curl http://localhost:8080 | jq
     def map_records_response(
         self, response_data: Any, query: clearskies.query.Query, query_data: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
-        """
-        Take the response from an API endpoint that returns a list of records and find the actual list of records
-        """
+        """Take the response from an API endpoint that returns a list of records and find the actual list of records."""
         columns = query.model_class.get_columns()
         # turn all of our conditions into record data and inject these into the results.  We do this to keep around
         # any query parameters.  This is especially important for any URL parameters, wihch aren't always returned in
@@ -929,7 +921,7 @@ $ curl http://localhost:8080 | jq
         self, response_data: dict[str, Any], columns: dict[str, clearskies.column.Column], operation: str
     ) -> dict[str, Any]:
         """
-        Take the response from an API endpoint that returns a single record (typically update and create requests) and return the data for a new model
+        Take the response from an API endpoint that returns a single record (typically update and create requests) and return the data for a new model.
 
         The goal of this method is to try to use the model schema to automatically understand the response from the
         the API endpoint.  The goal is for the backend to work out-of-the-box with most APIs.  In general, it works
@@ -960,7 +952,9 @@ $ curl http://localhost:8080 | jq
         query_data: dict[str, Any] = {},
     ) -> dict[str, Any] | None:
         """
-        This checks a dictionary in the response to decide if it contains the data for a record.  If not, it will search the keys for something that looks like a record.
+        Check a dictionary in the response to decide if it contains the data for a record.
+
+        If not, it will search the keys for something that looks like a record.
         """
         # first let's get a coherent map of expected-key-names in the response to model names
         response_to_model_map = self.build_response_to_model_map(columns)
@@ -1010,7 +1004,7 @@ $ curl http://localhost:8080 | jq
         self, next_page_data: dict[str, Any], query: clearskies.query.Query, response: requests.models.Response
     ) -> None:  # type: ignore
         """
-        Update the next_page_data dictionary with the appropriate data needed to fetch the next page of records
+        Update the next_page_data dictionary with the appropriate data needed to fetch the next page of records.
 
         This method has a very important job, which is to inform clearskies about how to make another API call to fetch the next
         page of records.  The way this happens is by updating the `next_page_data` dictionary in place with whatever pagination
@@ -1059,7 +1053,7 @@ $ curl http://localhost:8080 | jq
         is_retry=False,
     ) -> requests.models.Response:  # type: ignore
         """
-        Executes the actual API request and returns the response object.
+        Execute the actual API request and returns the response object.
 
         We don't directly call the requests library to support retries in the event of failed authentication.  The goal
         is to support short-lived credentials, and our authentication classes denote if they support this feature.  If
@@ -1159,18 +1153,14 @@ $ curl http://localhost:8080 | jq
         ]
 
     def column_from_backend(self, column: clearskies.column.Column, value: Any) -> Any:
-        """
-        We have a couple columns we want to override transformations for
-        """
+        """We have a couple columns we want to override transformations for."""
         # most importantly, there's no need to transform a JSON column in either direction
         if isinstance(column, clearskies.columns.json.Json):
             return value
         return super().column_from_backend(column, value)
 
     def column_to_backend(self, column: clearskies.column.Column, backend_data: dict[str, Any]) -> dict[str, Any]:
-        """
-        We have a couple columns we want to override transformations for
-        """
+        """We have a couple columns we want to override transformations for."""
         # most importantly, there's no need to transform a JSON column in either direction
         if isinstance(column, clearskies.columns.json.Json):
             return backend_data

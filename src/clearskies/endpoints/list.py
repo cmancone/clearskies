@@ -32,7 +32,7 @@ class List(Endpoint):
 
     Here's a basic working example:
 
-    ```
+    ```python
     import clearskies
 
 
@@ -71,7 +71,7 @@ class List(Endpoint):
 
     You can then fetch your records:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/' | jq
     {
         "status": "success",
@@ -92,7 +92,7 @@ class List(Endpoint):
 
     Pagination can be set via query parameters or the JSON body:
 
-    ```
+    ```bash
     $ curl 'http://localhost:8080/?sort=name&direction=desc&limit=2' | jq
     {
         "status": "success",
@@ -118,7 +118,7 @@ class List(Endpoint):
     Use `where`, `joins`, and `group_by` to automatically adjust the query used by the list endpoint.  In particular, where is a list of either
     conditions (as a string) or a callable that can modify the query directly via the model class.  For example:
 
-    ```
+    ```python
     list_users = clearskies.endpoints.List(
         model_class=User,
         readable_column_names=["id", "name"],
@@ -131,7 +131,7 @@ class List(Endpoint):
     With the above definition, the list endpoint will only ever return records with a name of "Jane".  The following uses standard dependency
     injection rules to execute a similar filter based on arbitrary logic required:
 
-    ```
+    ```python
     import datetime
 
     list_users = clearskies.endpoints.List(
@@ -139,7 +139,11 @@ class List(Endpoint):
         readable_column_names=["id", "name"],
         sortable_column_names=["id", "name"],
         default_sort_column_name="name",
-        where=[lambda model, now: model.where("name=Jane") if now > datetime.datetime(2025, 1, 1) else model],
+        where=[
+            lambda model, now: model.where("name=Jane")
+            if now > datetime.datetime(2025, 1, 1)
+            else model
+        ],
     )
     ```
 
@@ -391,7 +395,7 @@ class List(Endpoint):
 
     def resolve_references_for_query(self, column_name: str) -> list[str | None]:
         """
-        Takes the column name and returns the name and table.
+        Take the column name and returns the name and table.
 
         If it's just a column name, we assume the table is the table for our model class.
         If it's something like `belongs_to_column.column_name`, then it will find the appropriate
@@ -407,7 +411,7 @@ class List(Endpoint):
 
     def add_join(self, column_name: str, model: Model) -> Model:
         """
-        Adds a join to the query for the given column name in the case where it references a column in a belongs to.
+        Add a join to the query for the given column name in the case where it references a column in a belongs to.
 
         If column_name is something like `belongs_to_column.column_name`, this will add have the belongs to column
         add it's typical join condition, so that further sorting/searching can work.
@@ -422,9 +426,7 @@ class List(Endpoint):
         return self.columns[relationship_column_name].add_join(model)
 
     def from_either(self, request_data, query_parameters, key, default=None, ignore_none=True):
-        """
-        Returns the key from either object.  Assumes it is not present in both
-        """
+        """Return the key from either object.  Assumes it is not present in both."""
         if key in request_data:
             if request_data[key] is not None or not ignore_none:
                 return request_data[key]

@@ -11,9 +11,7 @@ if TYPE_CHECKING:
 
 
 class ModelClass(config.Config):
-    """
-    A config that accepts a model class.
-    """
+    """A config that accepts a model class."""
 
     def __set__(self, instance, value: type[Model | ModelClassReference]):
         try:

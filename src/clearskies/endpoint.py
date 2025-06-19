@@ -1019,21 +1019,15 @@ class Endpoint(
         return self.respond_json(input_output, {"status": "failure"}, 500)
 
     def input_errors(self, input_output: InputOutput, errors: dict[str, str], status_code: int = 200) -> Any:
-        """
-        Return input errors to the client.
-        """
+        """Return input errors to the client."""
         return self.respond_json(input_output, {"status": "input_errors", "input_errors": errors}, status_code)
 
     def error(self, input_output: InputOutput, message: str, status_code: int) -> Any:
-        """
-        Return a client-side error (e.g. 400)
-        """
+        """Return a client-side error (e.g. 400)."""
         return self.respond_json(input_output, {"status": "client_error", "error": message}, status_code)
 
     def redirect(self, input_output: InputOutput, location: str, status_code: int) -> Any:
-        """
-        Return a redirect.
-        """
+        """Return a redirect."""
         input_output.response_headers.add("content-type", "text/html")
         input_output.response_headers.add("location", location)
         return self.respond(
@@ -1048,9 +1042,7 @@ class Endpoint(
         limit: int | None = None,
         next_page: Any = None,
     ) -> Any:
-        """
-        Return a successful response.
-        """
+        """Return a successful response."""
         response_data = {"status": "success", "data": data, "pagination": {}}
 
         if next_page or number_results:
@@ -1176,7 +1168,9 @@ class Endpoint(
             return {}
 
         return {
-            self.authentication.documentation_security_scheme_name(): self.authentication.documentation_security_scheme(),
+            self.authentication.documentation_security_scheme_name(): (
+                self.authentication.documentation_security_scheme()
+            ),
         }
 
     def documentation_models(self) -> dict[str, schema.Schema]:
