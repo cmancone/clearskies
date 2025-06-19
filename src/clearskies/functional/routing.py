@@ -53,7 +53,7 @@ def extract_url_parameter_name_map(url: str) -> dict[str, int]:
 
     Routing parameters are either brace enclosed or start with colons:
 
-    ```
+    ```python
     print(
         routing.extract_url_parameter_name_map("my/path/{some_parameter}/:other_parameter/more/paths")
     )

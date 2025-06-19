@@ -51,6 +51,8 @@ repos:
           types: [python]
           additional_dependencies: [types-requests, types-dateparser, types-PyMySQL]
           stages: ["pre-commit"]
+          args:
+            - --check
     - repo: https://github.com/psf/black
       rev: 25.1.0
       hooks:
@@ -72,7 +74,7 @@ repos:
         - id: pytest
           name: pytest
           verbose: true
-          entry: bash -c 'cd src && poetry run pytest || true' -- 
+          entry: bash -c 'cd src && poetry run pytest . --cache-clear || true' -- 
           language: system
           types: [python]
           pass_filenames: false

@@ -27,7 +27,7 @@ class Condition:
 
     Some examples:
 
-    ```
+    ```python
     condition = Condition("id=asdf-qwerty")  # note: same results for: Condition("id = asdf-qwerty")
     print(condition.table_name)  # prints ''
     print(condition.column_name)  # prints 'id'
