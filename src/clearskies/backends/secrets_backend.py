@@ -27,6 +27,8 @@ class SecretsBackend(Backend):
     """The secrets instance."""
     secrets = inject.Secrets()
 
+    can_count = False
+
     def __init__(self):
         pass
 
@@ -65,14 +67,6 @@ class SecretsBackend(Backend):
         Note that this isn't implemented yet, and always returns True.
         """
         return True
-
-    def count(self, query: clearskies.query.Query) -> int:
-        """
-        Return the number of records which match the given query configuration.
-
-        Note that this isn't implemented yet, and always returns 1.
-        """
-        return 1
 
     def records(
         self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None = None
