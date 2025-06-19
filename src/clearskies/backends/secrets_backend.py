@@ -1,19 +1,54 @@
+from typing import Any, override
+
+import clearskies
+from clearskies import parameters_to_properties
+from clearskies.autodoc.schema import Integer as AutoDocInteger
+from clearskies.autodoc.schema import Schema as AutoDocSchema
+from clearskies.autodoc.schema import String as AutoDocString
 from clearskies.backends.backend import Backend
+from clearskies.di import InjectableProperties, inject
+from clearskies.functional import routing, string
 
 
 class SecretsBackend(Backend):
-    _secrets = None
+    """
+    Fetch and store data from a secret provider.
 
-    def __init__(self, secrets):
-        self._secrets = secrets
+    ## Installing Dependencies
 
-    def update(self, id, data, model):
+    Clearskies uses Akeyless by default to manage the secrets.
+    This is not installed by default, but is a named extra that you can install when needed via:
+
+    ```bash
+    pip install clear-skies[secrets]
+    ```
+    """
+
+    """The secrets instance."""
+    secrets = inject.Secrets()
+
+    def __init__(self):
+        pass
+
+    def check_query(self, query: clearskies.query.Query) -> None:
+        if not query.conditions:
+            raise KeyError(f"You must search by an id when using the secrets backend.")
+
+    @override
+    def update(self, id: str, data: dict[str, Any], model: clearskies.model.Model) -> dict[str, Any]:
+        """Update the record with the given id with the information from the data dictionary."""
         folder_path = self._make_folder_path(model, id)
         for key, value in data.items():
             if key == model.id_column_name:
                 continue
-            self._secrets.update(f"{folder_path}{key}", value)
-        return self.records({"wheres": [{"column": model.id_column_name, "values": [id]}]}, model)[0]
+            self.secrets.update(f"{folder_path}{key}", value)
+
+        # and now query again to fetch the updated record.
+        return self.records(
+            clearskies.query.Query(
+                model.__class__, conditions=[clearskies.query.Condition(f"{model.id_column_name}={id}")]
+            )
+        )[0]
 
     def create(self, data, model):
         if not model.id_column_name in data:
@@ -22,26 +57,43 @@ class SecretsBackend(Backend):
             )
         return self.update(data[model.id_column_name], data, model)
 
-    def delete(self, id):
+    @override
+    def delete(self, id: str) -> bool:
+        """
+        Delete the record with the given id.
+
+        Note that this isn't implemented yet, and always returns True.
+        """
         return True
 
-    def count(self, configuration, model):
+    def count(self, query: clearskies.query.Query) -> int:
+        """
+        Return the number of records which match the given query configuration.
+
+        Note that this isn't implemented yet, and always returns 1.
+        """
         return 1
 
-    def records(self, configuration, model, next_page_data=None):
-        if not configuration["wheres"]:
-            raise ValueError("You must search by an id when using the secrets backend")
-        id = None
-        for condition in configuration["wheres"]:
-            if condition["column"] == model.id_column_name:
-                id = condition["values"][0]
+    def records(
+        self, query: clearskies.query.Query, next_page_data: dict[str, str | int] | None = None
+    ) -> list[dict[str, Any]]:
+        """Return a list of records that match the given query configuration."""
+        self.check_query(query)
+        for condition in query.conditions:
+            if condition.operator != "=":
+                raise ValueError(
+                    f"I'm not very smart and only know how to search with the equals operator, but I received a condition of {condition.parsed}.  If you need to support this, you'll have to extend the ApiBackend and overwrite the build_records_request method."
+                )
+            if condition.column_name == query.model_class.id_column_name:
+                id = condition.values[0]
+                break
         if id is None:
-            raise ValueError(f"You must search by '{model.id_column_name}' when using the secrets backend")
+            raise ValueError(f"You must search by '{query.model_class.id_column_name}' when using the secrets backend")
 
-        folder_path = self._make_folder_path(model, id)
-        data = {model.id_column_name: id}
-        for path in self._secrets.list_secrets(folder_path):
-            data[path[len(folder_path) :]] = self._secrets.get(path)
+        folder_path = self._make_folder_path(query.model_class, id)
+        data = {query.model_class.id_column_name: id}
+        for path in self.secrets.list_secrets(folder_path):
+            data[path[len(folder_path) :]] = self.secrets.get(path)
         return [data]
 
     def _make_folder_path(self, model, id):
