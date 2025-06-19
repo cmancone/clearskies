@@ -63,3 +63,11 @@ line-length = 120
 # to match your Ruff config.
 skip-magic-trailing-comma = false
 preview = true
+
+[tool.mypy]
+python_version = "3.11"
+
+exclude = [
+ ".*_test\\.py$"
+]
+
