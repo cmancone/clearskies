@@ -41,13 +41,6 @@ class Endpoint(
     with a minimal amount of configuration.  Instead of making an endpoint that creates records, just deploy
     a create endpoint.  Each endpoint has their own configuration settings, but there are some configuration
     settings that are common to all endpoints, which are listed below:
-
-    ## Url
-
-    The URL for the endpoint.  Note that this is a relative URL.  If the endpoint is attached directly to a context,
-    then it will become the exact path to execute the endpoint.  Endpoints can also be attached to endpoint groups,
-    which have their own URL prefixes, in which case the endpoint
-
     """
 
     """

@@ -41,4 +41,8 @@ class CategoryTreeDescendants(CategoryTreeChildren):
             self.model_class = cls
             return self  # type:  ignore
 
+        # this makes sure we're initialized
+        if "name" not in self._config:
+            model.get_columns()
+
         return self.relatives(model, include_all=True)

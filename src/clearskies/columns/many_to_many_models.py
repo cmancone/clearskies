@@ -79,6 +79,11 @@ class ManyToManyModels(Column):
         if instance is None:
             self.model_class = cls
             return self
+
+        # this makes sure we're initialized
+        if "name" not in self._config:
+            instance.get_columns()
+
         return self.many_to_many_column.get_related_models(instance)
 
     def __set__(self, instance, value: Model | list[Model] | list[dict[str, Any]]) -> None:

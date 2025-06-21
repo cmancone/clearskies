@@ -57,6 +57,10 @@ class BelongsToModel(Column):
             self.model_class = cls
             return self  # type:  ignore
 
+        # this makes sure we're initialized
+        if "name" not in self._config:
+            model.get_columns()
+
         belongs_to_column = getattr(model.__class__, self.belongs_to_column_name)
         parent_id = getattr(model, self.belongs_to_column_name)
         parent_class = belongs_to_column.parent_model_class

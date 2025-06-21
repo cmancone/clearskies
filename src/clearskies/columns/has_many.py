@@ -443,6 +443,10 @@ class HasMany(Column):
             self.model_class = cls
             return self  # type:  ignore
 
+        # this makes sure we're initialized
+        if "name" not in self._config:
+            model.get_columns()
+
         foreign_column_name = self.foreign_column_name
         model_id = getattr(model, model.id_column_name)
         children = self.child_model.where(f"{foreign_column_name}={model_id}")

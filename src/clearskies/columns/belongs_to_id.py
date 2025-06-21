@@ -96,8 +96,9 @@ class BelongsToId(String):
             return some_model.SomeModel
     ```
 
-    These have to live in their own file.  So, sticking with the example of categories and
-    products, you would have the following directory structure:
+    These have to live in their own file, should use relative imports to import the file containing
+    the model, and should not be imported into the module they live in.  So, sticking with the example
+    of categories and products, you would have the following directory structure:
 
     ```
     ├── models
@@ -129,12 +130,12 @@ class BelongsToId(String):
     category_reference.py
     ```python
     from clearskies.model import ModelClassReference
-    import models.cateogry
+    from . import cateogry
 
 
     class CategoryReference(ModelClassReference):
         def get_model_class(self):
-            return models.category.Category
+            return category.Category
     ```
 
     product.py
@@ -156,12 +157,12 @@ class BelongsToId(String):
     product_reference.py
     ```python
     from clearskies.model import ModelClassReference
-    import models.product
+    from . import product
 
 
     class ProductReference(ModelClassReference):
         def get_model_class(self):
-            return models.product.Product
+            return product.Product
     ```
     """
 

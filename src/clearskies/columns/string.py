@@ -79,6 +79,10 @@ class String(Column):
             self.model_class = cls
             return self
 
+        # this makes sure we're initialized
+        if "name" not in self._config:
+            instance.get_columns()
+
         if self.name not in instance._data:
             return None  # type: ignore
 
