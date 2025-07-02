@@ -27,22 +27,23 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-dateparser = "^1.1.8"
-requests = "^2.31.0"
-akeyless = {version = "^4.0.0", optional = true}
-akeyless-cloud-id = {version = "^0.2.3", optional = true}
-pymysql = {version = "^1.1.0", optional = true}
+akeyless = {version = "^5.0.4", optional = true}
+akeyless-cloud-id = {version = "^0.3.0", optional = true}
+dateparser = "^1.2.2"
 jose = {version = "^1.0.0", optional = true}
 jwcrypto = {version = "^1.5.6", optional = true}
-typing-extensions = {version = "^4.12.0", python = ">=3.10,<3.11"}
+pymysql = {version = "^1.1.1", optional = true}
+requests = "^2.32.4"
+typing-extensions = {version = "^4.14.0", python = ">=3.10,<3.11"}
 
 [[tool.poetry.source]]
 name = "PyPI"
 priority = "primary"
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^3.2.2"
-black = "^23.3.0"
+black = "^23.12.1"
+pre-commit = "^3.8.0"
+pytest = "^8.4.1"
 
 [tool.poetry.extras]
 secrets = ["akeyless", "akeyless-cloud-id"]
