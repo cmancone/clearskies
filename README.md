@@ -1,15 +1,7 @@
 # clearskies
 
-clearskies is a very opinionated Python framework intended for developing microservices in the cloud via declarative programming principles.  It is mainly intended for backend services and so is designed for RESTful API endpoints, queue listeners, scheduled tasks, and the like.
+This is for clearskies 1.0.  Clearskies2 can be found here:
 
-# Installation, Documentation, and Usage
+[https://github.com/clearskies-py/clearskies](https://github.com/clearskies-py/clearskies)
 
-To install:
-
-```
-pip3 install clear-skies
-```
-
-Documentation is under construction here:
-
-[https://clearskies.info](https://clearskies.info)
+Note that clearskies 1.0 is still supported with bugfixes as needed.  So, deprecated, but not EOL.
